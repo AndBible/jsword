@@ -15,7 +15,7 @@ package org.crosswire.jsword.examples;
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * (C) CrossWire Bible Society, 2005 - 2016
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
 import java.util.List;

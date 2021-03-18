@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * (C) CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2007 - 2016
  *
  */
 package org.crosswire.common.diff;
@@ -23,7 +23,7 @@ package org.crosswire.common.diff;
  * Computes the difference between two texts to create a patch. Applies the
  * patch onto another text, allowing for errors.
  * 
- * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright (C) 2006<br>
+ * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.

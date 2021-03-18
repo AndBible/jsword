@@ -14,13 +14,13 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * (C) CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2007 - 2016
  *
  */
 /**
  * An implementation of Diff that works within the line.
  * 
- * <p>Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright (C) 2006<br>
+ * <p>Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a></p>
  * 
  */
