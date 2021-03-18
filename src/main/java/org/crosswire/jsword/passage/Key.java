@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * (C) CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.passage;
@@ -60,15 +60,6 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * @return The string representation
      */
     String getName(Key base);
-
-    /**
-     * A Human readable version of the Key's top level name. For Biblical
-     * passages this uses short books names. For a dictionary it might return
-     * A-Z.
-     *
-     * @return a String containing a description of the Key
-     */
-    String getRootName();
 
     /**
      * The OSIS defined reference specification for this Key. When the key is a

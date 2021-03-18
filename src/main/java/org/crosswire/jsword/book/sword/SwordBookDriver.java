@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * (C) CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.sword;
@@ -162,8 +162,7 @@ public class SwordBookDriver extends AbstractBookDriver {
         }
 
         // Delete all conf files
-        List<File> failures = new ArrayList<File>(4);
-        deleteLinkedConfFiles(failures, sbmd);
+        List<File> failures = FileUtil.delete(confFile);
         if (failures.isEmpty()) {
             URI loc = sbmd.getLocation();
             if (loc != null) {
@@ -179,20 +178,6 @@ public class SwordBookDriver extends AbstractBookDriver {
             // TRANSLATOR: Common error condition: The file could not be deleted. There can be many reasons.
             // {0} is a placeholder for the file.
             throw new BookException(JSMsg.gettext("Unable to delete: {0}", failures.get(0)));
-        }
-    }
-
-    /**
-     * Deletes all files that are linked to the conf file, recursively through the parents
-     * @param failures a list of files that was not deleted
-     * @param sbmd sword book meta data
-     */
-    private void deleteLinkedConfFiles(final List<File> failures, final SwordBookMetaData sbmd) {
-        //delete current file
-        failures.addAll(FileUtil.delete(sbmd.getConfigEntryTable().getConfigFile()));
-
-        if(sbmd.getParent() != null) {
-            deleteLinkedConfFiles(failures, sbmd.getParent());
         }
     }
 

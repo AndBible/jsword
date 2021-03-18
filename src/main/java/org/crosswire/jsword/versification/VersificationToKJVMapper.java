@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2013 - 2016
+ * (C) CrossWire Bible Society, 2013 - 2016
  *
  */
 package org.crosswire.jsword.versification;
@@ -653,8 +653,6 @@ public class VersificationToKJVMapper {
     private Map<QualifiedKey, Passage> fromKJVMappings;
     private boolean hasErrors;
     
-    private OsisParser osisParser = new OsisParser();
-
     private OsisParser osisParser = new OsisParser();
 
     private static final Versification KJV = Versifications.instance().getVersification(Versifications.DEFAULT_V11N);

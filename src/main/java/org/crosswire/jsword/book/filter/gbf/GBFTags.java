@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * (C) CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.filter.gbf;
@@ -104,27 +104,6 @@ public final class GBFTags {
        }
    }
 
-    /**
-     *
-     */
-    public static final class BookTitleStartTag extends AbstractTag {
-       /**
-        * @param name
-        */
-       public BookTitleStartTag(String name) {
-           super(name);
-       }
-
-       public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-           Element ele = OSIS_FACTORY.createTitle();
-           ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "main");
-           GBFTags.updateOsisStack(stack, ele);
-       }
-   }
-
-    /**
-     *
-     */
     public static final class CrossRefStartTag extends AbstractTag {
         public CrossRefStartTag(String name) {
             super(name);

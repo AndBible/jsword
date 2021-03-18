@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2008 - 2016
+ * (C) CrossWire Bible Society, 2008 - 2016
  *
  */
 package org.crosswire.jsword.bridge;
