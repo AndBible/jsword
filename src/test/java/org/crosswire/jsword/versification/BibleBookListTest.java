@@ -41,6 +41,7 @@ public class BibleBookListTest {
         BibleBook.LUKE,
         BibleBook.JOHN,
         BibleBook.ACTS,
+        BibleBook.DID,
         BibleBook.JAS,
         BibleBook.PET1,
         BibleBook.PET2,
