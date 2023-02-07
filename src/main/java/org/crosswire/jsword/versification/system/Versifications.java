@@ -131,6 +131,9 @@ public final class Versifications {
         if (SystemLXX.V11N_NAME.equals(name)) {
             return new SystemLXX();
         }
+        if (SystemLXXLCV.V11N_NAME.equals(name)) {
+            return new SystemLXXLCV();
+        }
         if (SystemMT.V11N_NAME.equals(name)) {
             return new SystemMT();
         }
@@ -200,6 +203,7 @@ public final class Versifications {
         known.add(SystemLeningrad.V11N_NAME);
         known.add(SystemLuther.V11N_NAME);
         known.add(SystemLXX.V11N_NAME);
+        known.add(SystemLXXLCV.V11N_NAME);
         known.add(SystemMT.V11N_NAME);
         known.add(SystemNRSV.V11N_NAME);
         known.add(SystemNRSVA.V11N_NAME);

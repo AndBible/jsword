@@ -83,6 +83,7 @@ public enum BibleBook {
     LUKE("Luke"),
     JOHN("John"),
     ACTS("Acts"),
+    DID("Didache"),
     ROM("Rom"),
     COR1("1Cor"),
     COR2("2Cor"),

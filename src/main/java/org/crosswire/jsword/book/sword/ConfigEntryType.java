@@ -187,6 +187,7 @@ import org.crosswire.jsword.book.BookMetaData;
         "KJV",
         "KJVA",
         "LXX",
+        "LXXLCV",
         "Leningrad",
         "Luther",
         "MT",
