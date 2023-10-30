@@ -21,14 +21,16 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.util.Arrays;
 
+import org.apache.lucene.analysis.AbstractBookAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.AnalyzerFactory;
 import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.EnglishLuceneAnalyzer;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -42,7 +44,7 @@ public class AnalyzerFactoryTest {
 
     /**
      * Test method for
-     * {@link org.crosswire.jsword.index.lucene.analysis.AnalyzerFactory#createAnalyzer(org.crosswire.jsword.book.Book)}
+     * {@link AnalyzerFactory#createAnalyzer(org.crosswire.jsword.book.Book)}
      * .
      */
     @Test

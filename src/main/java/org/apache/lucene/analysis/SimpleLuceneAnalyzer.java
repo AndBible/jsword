@@ -17,13 +17,12 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
 import java.io.Reader;
 
-import org.apache.lucene.analysis.ASCIIFoldingFilter;
-import org.apache.lucene.analysis.LowerCaseTokenizer;
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.analysis.core.LetterTokenizer;
 
 /**
  * Simple Analyzer providing same function as
@@ -47,9 +46,10 @@ final public class SimpleLuceneAnalyzer extends AbstractBookAnalyzer {
     }
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream result = new LowerCaseTokenizer(reader);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new LetterTokenizer();
+        TokenStream result = new LowerCaseFilter(source);
         result = new ASCIIFoldingFilter(result);
-        return result;
+        return new TokenStreamComponents(source, result);
     }
 }

@@ -17,50 +17,37 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import java.io.IOException;
-
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.crosswire.jsword.book.Book;
 
 /**
- * A KeyFilter normalizes Key.
+ * A specialized analyzer that normalizes Strong's Numbers.
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class KeyFilter extends AbstractBookTokenFilter {
+final public class KeyAnalyzer extends AbstractBookAnalyzer {
     /**
-     * Construct a KeyFilter not tied to a Book.
-     * 
-     * @param in
-     *            the input TokenStream
+     * Construct a default KeyAnalyzer.
      */
-    public KeyFilter(TokenStream in) {
-        this(null, in);
+    public KeyAnalyzer() {
     }
 
     /**
-     * Construct a KeyFilter tied to a Book.
+     * Construct an KeyAnalyzer tied to a book.
      * 
-     * @param book
-     *            the book to which this TokenFilter is tied.
-     * @param in
-     *            the input TokenStream
+     * @param book the book
      */
-    public KeyFilter(Book book, TokenStream in) {
-        super(book, in);
+    public KeyAnalyzer(Book book) {
+        setBook(book);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.apache.lucene.analysis.TokenStream#incrementToken()
-     */
     @Override
-    public boolean incrementToken() throws IOException {
-        // TODO(DMS): actually normalize
-        return input.incrementToken();
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new KeywordTokenizer();
+        return new TokenStreamComponents(source, new KeyFilter(getBook(), source));
     }
+
 }

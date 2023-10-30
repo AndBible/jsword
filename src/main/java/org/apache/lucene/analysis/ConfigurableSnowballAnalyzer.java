@@ -17,28 +17,23 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import java.io.IOException;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.analysis.LowerCaseTokenizer;
-import org.apache.lucene.analysis.StopAnalyzer;
-import org.apache.lucene.analysis.StopFilter;
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.LetterTokenizer;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.fr.FrenchAnalyzer;
 import org.apache.lucene.analysis.nl.DutchAnalyzer;
 import org.apache.lucene.analysis.snowball.SnowballFilter;
-import org.apache.lucene.util.Version;
 import org.crosswire.jsword.book.Book;
 
 /**
  * An Analyzer whose {@link TokenStream} is built from a
- * {@link LowerCaseTokenizer} filtered with {@link SnowballFilter} (optional)
+ * {@link LetterTokenizer} filtered with {@link SnowballFilter} and {@link org.apache.lucene.analysis.LowerCaseFilter}(optional)
  * and {@link StopFilter} (optional) Default behavior: Stemming is done, Stop
  * words not removed A snowball stemmer is configured according to the language
  * of the Book. Currently it takes following stemmer names (available stemmers
@@ -73,15 +68,12 @@ final public class ConfigurableSnowballAnalyzer extends AbstractBookAnalyzer {
     public ConfigurableSnowballAnalyzer() {
     }
 
-    /**
-     * Filters {@link LowerCaseTokenizer} with {@link StopFilter} if enabled and
-     * {@link SnowballFilter}.
-     */
     @Override
-    public final TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream result = new LowerCaseTokenizer(reader);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new LetterTokenizer();
+        TokenStream result = new LowerCaseFilter(source);
         if (doStopWords && stopSet != null) {
-            result = new StopFilter(false, result, stopSet);
+            result = new StopFilter(result, (CharArraySet) stopSet);
         }
 
         // Configure Snowball filter based on language/stemmerName
@@ -89,30 +81,7 @@ final public class ConfigurableSnowballAnalyzer extends AbstractBookAnalyzer {
             result = new SnowballFilter(result, stemmerName);
         }
 
-        return result;
-    }
-
-    /* (non-Javadoc)
-     * @see org.apache.lucene.analysis.Analyzer#reusableTokenStream(java.lang.String, java.io.Reader)
-     */
-    @Override
-    public TokenStream reusableTokenStream(String fieldName, Reader reader) throws IOException {
-        SavedStreams streams = (SavedStreams) getPreviousTokenStream();
-        if (streams == null) {
-            streams = new SavedStreams(new LowerCaseTokenizer(reader));
-            if (doStopWords && stopSet != null) {
-                streams.setResult(new StopFilter(StopFilter.getEnablePositionIncrementsVersionDefault(matchVersion), streams.getResult(), stopSet));
-            }
-
-            if (doStemming) {
-                streams.setResult(new SnowballFilter(streams.getResult(), stemmerName));
-            }
-
-            setPreviousTokenStream(streams);
-        } else {
-            streams.getSource().reset(reader);
-        }
-        return streams.getResult();
+        return new TokenStreamComponents(source, result);
     }
 
     @Override
@@ -173,8 +142,7 @@ final public class ConfigurableSnowballAnalyzer extends AbstractBookAnalyzer {
         defaultStopWordMap.put("fr", FrenchAnalyzer.getDefaultStopSet());
         defaultStopWordMap.put("de", GermanAnalyzer.getDefaultStopSet());
         defaultStopWordMap.put("nl", DutchAnalyzer.getDefaultStopSet());
-        defaultStopWordMap.put("en", StopAnalyzer.ENGLISH_STOP_WORDS_SET);
+        defaultStopWordMap.put("en", EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
     }
 
-    private final Version matchVersion = Version.LUCENE_29;
 }

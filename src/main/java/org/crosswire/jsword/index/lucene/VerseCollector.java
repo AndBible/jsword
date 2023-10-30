@@ -23,9 +23,13 @@ import java.io.IOException;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Scorable;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Searcher;
+import org.apache.lucene.search.SimpleCollector;
 import org.crosswire.jsword.passage.Key;
 import org.crosswire.jsword.passage.NoSuchVerseException;
 import org.crosswire.jsword.passage.VerseFactory;
@@ -37,7 +41,7 @@ import org.crosswire.jsword.versification.Versification;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class VerseCollector extends Collector {
+public class VerseCollector extends SimpleCollector {
 
     /**
      * Create a collector for the searcher that populates results.
@@ -46,21 +50,10 @@ public class VerseCollector extends Collector {
      * @param searcher 
      * @param results 
      */
-    public VerseCollector(Versification v11n, Searcher searcher, Key results) {
+    public VerseCollector(Versification v11n, IndexSearcher searcher, Key results) {
         this.v11n = v11n;
         this.searcher = searcher;
         this.results = results;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.apache.lucene.search.Collector#acceptsDocsOutOfOrder()
-     */
-    @Override
-    public boolean acceptsDocsOutOfOrder() {
-        // Order is unimportant
-        return true;
     }
 
     /*
@@ -93,8 +86,8 @@ public class VerseCollector extends Collector {
      * .IndexReader, int)
      */
     @Override
-    public void setNextReader(IndexReader reader, int docBase) throws IOException {
-        this.docBase = docBase;
+    public void doSetNextReader(LeafReaderContext context) throws IOException {
+        this.docBase = context.docBase;
     }
 
     /*
@@ -105,12 +98,17 @@ public class VerseCollector extends Collector {
      * .Scorer)
      */
     @Override
-    public void setScorer(Scorer scorer) throws IOException {
+    public void setScorer(Scorable scorer) throws IOException {
         // This collector does no scoring. It collects all hits.
+    }
+
+    @Override
+    public ScoreMode scoreMode() {
+        return ScoreMode.COMPLETE_NO_SCORES;
     }
 
     private int docBase;
     private Versification v11n;
-    private Searcher searcher;
+    private IndexSearcher searcher;
     private Key results;
 }

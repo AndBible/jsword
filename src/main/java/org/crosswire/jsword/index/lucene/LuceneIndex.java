@@ -29,17 +29,21 @@ import java.util.List;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.crosswire.common.progress.JobManager;
 import org.crosswire.common.progress.Progress;
 import org.crosswire.common.util.FileUtil;
@@ -55,7 +59,7 @@ import org.crosswire.jsword.book.OSISUtil;
 import org.crosswire.jsword.index.AbstractIndex;
 import org.crosswire.jsword.index.IndexPolicy;
 import org.crosswire.jsword.index.IndexStatus;
-import org.crosswire.jsword.index.lucene.analysis.LuceneAnalyzer;
+import org.apache.lucene.analysis.LuceneAnalyzer;
 import org.crosswire.jsword.index.search.SearchModifier;
 import org.crosswire.jsword.passage.AbstractPassage;
 import org.crosswire.jsword.passage.Key;
@@ -214,9 +218,10 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
                 IndexWriter writer = null;
                 try {
                     // Write the core index to disk.
-                    final Directory destination = FSDirectory.open(new File(tempPath.getCanonicalPath()));
-                    writer = new IndexWriter(destination, analyzer, true, IndexWriter.MaxFieldLength.UNLIMITED);
-                    writer.setRAMBufferSizeMB(policy.getRAMBufferSize());
+                    final Directory destination = FSDirectory.open(new File(tempPath.getCanonicalPath()).toPath());
+                    IndexWriterConfig config = new IndexWriterConfig(analyzer);
+                    config.setRAMBufferSizeMB(policy.getRAMBufferSize());
+                    writer = new IndexWriter(destination, config);
 
                     generateSearchIndexImpl(job, errors, writer, book.getGlobalKeyList(), 0, policy);
 
@@ -269,8 +274,9 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
      */
     private void initDirectoryAndSearcher() {
         try {
-            directory = FSDirectory.open(new File(path));
-            searcher = new IndexSearcher(directory, true);
+            directory = FSDirectory.open(new File(path).toPath());
+            reader = DirectoryReader.open(directory);
+            searcher = new IndexSearcher(reader);
         } catch (IOException ex) {
             log.warn("second load failure", ex);
         }
@@ -291,7 +297,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
             try {
                 Analyzer analyzer = new LuceneAnalyzer(book);
 
-                QueryParser parser = new QueryParser(Version.LUCENE_29, LuceneIndex.FIELD_BODY, analyzer);
+                QueryParser parser = new QueryParser(LuceneIndex.FIELD_BODY, analyzer);
                 parser.setAllowLeadingWildcard(true);
                 Query query = parser.parse(search);
                 log.info("ParsedQuery- {}", query.toString());
@@ -303,7 +309,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
                     tally.raiseNormalizeProtection();
                     results = tally;
 
-                    TopScoreDocCollector collector = TopScoreDocCollector.create(modifier.getMaxResults(), false);
+                    TopScoreDocCollector collector = TopScoreDocCollector.create(modifier.getMaxResults(), modifier.getMaxResults());
                     searcher.search(query, collector);
                     tally.setTotal(collector.getTotalHits());
                     ScoreDoc[] hits = collector.topDocs().scoreDocs;
@@ -371,7 +377,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
      * @see org.crosswire.jsword.index.Index#close()
      */
     public final void close() {
-        IOUtil.close(searcher);
+        IOUtil.close(reader);
         searcher = null;
         IOUtil.close(directory);
         directory = null;
@@ -401,17 +407,22 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
 
         // Set up for reuse.
         Document doc = new Document();
-        Field keyField = new Field(FIELD_KEY, "", Field.Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO);
-        Field bodyField = new Field(FIELD_BODY, "", Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field bodyStemField = new Field(FIELD_BODY_STEM, "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field introField = new Field(FIELD_INTRO, "", Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field introStemField = new Field(FIELD_INTRO_STEM, "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field strongField = new Field(FIELD_STRONG, "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.YES);
-        Field xrefField = new Field(FIELD_XREF, "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field noteField = new Field(FIELD_NOTE, "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field headingField = new Field(FIELD_HEADING, "", Field.Store.YES, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field headingStemField = new Field(FIELD_HEADING_STEM, "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.NO);
-        Field morphologyField  = new Field(FIELD_MORPHOLOGY , "", Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.NO);
+        FieldType stored_not_analyzed = new FieldType(StringField.TYPE_STORED);
+        stored_not_analyzed.setOmitNorms(false);
+        FieldType strongFieldType = new FieldType(TextField.TYPE_NOT_STORED);
+        strongFieldType.setStoreTermVectors(true);
+        // For this change, see 9de01b56ebf252ffefe05e606e330a1787b94c9d:lucene/MIGRATE.txt
+        Field keyField = new Field(FIELD_KEY, "", stored_not_analyzed);
+        Field bodyField = new TextField(FIELD_BODY, "", Field.Store.YES);
+        Field bodyStemField = new TextField(FIELD_BODY_STEM, "", Field.Store.NO);
+        Field introField = new TextField(FIELD_INTRO, "", Field.Store.YES);
+        Field introStemField = new TextField(FIELD_INTRO_STEM, "", Field.Store.NO);
+        Field strongField = new Field(FIELD_STRONG, "", strongFieldType);
+        Field xrefField = new TextField(FIELD_XREF, "", Field.Store.NO);
+        Field noteField = new TextField(FIELD_NOTE, "", Field.Store.NO);
+        Field headingField = new TextField(FIELD_HEADING, "", Field.Store.YES);
+        Field headingStemField = new TextField(FIELD_HEADING_STEM, "", Field.Store.NO);
+        Field morphologyField  = new TextField(FIELD_MORPHOLOGY , "", Field.Store.NO);
 
         int size = key.getCardinality();
         int subCount = count;
@@ -439,7 +450,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
 
             // Do the actual indexing
             // Always add the key
-            keyField.setValue(subkey.getOsisRef());
+            keyField.setStringValue(subkey.getOsisRef());
             doc.add(keyField);
 
             final String canonicalText = OSISUtil.getCanonicalText(osis);
@@ -515,7 +526,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
      */
     private void addField(Document doc, Field field, String text) {
         if (text != null && text.length() > 0) {
-            field.setValue(text);
+            field.setStringValue(text);
             doc.add(field);
         }
     }
@@ -528,7 +539,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
      * See {@link org.crosswire.jsword.index.IndexManager#closeAllIndexes()} for more information
      * @return the searcher
      */
-    public Searcher getSearcher() {
+    public IndexSearcher getSearcher() {
         return searcher;
     }
 
@@ -547,10 +558,11 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
      */
     private Directory directory;
 
+    private IndexReader reader;
     /**
      * The Lucene search engine
      */
-    private Searcher searcher;
+    private IndexSearcher searcher;
 
     /**
      * A synchronization lock point to prevent us from doing 2 index runs at a

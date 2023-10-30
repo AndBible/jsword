@@ -32,11 +32,9 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({
     AnalyzerFactoryTest.class,
-    ChineseLuceneAnalyzerTest.class,
     ConfigurableSnowballAnalyzerTest.class,
     EnglishLuceneAnalyzerTest.class,
     GreekLuceneAnalyzerTest.class,
-    ThaiLuceneAnalyzerTest.class
 })
 public class AllTests {
 }

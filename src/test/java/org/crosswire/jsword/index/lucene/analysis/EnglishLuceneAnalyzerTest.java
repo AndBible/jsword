@@ -21,7 +21,9 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.util.Arrays;
 
+import org.apache.lucene.analysis.AbstractBookAnalyzer;
 import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.EnglishLuceneAnalyzer;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;

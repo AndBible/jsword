@@ -17,13 +17,9 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import java.io.Reader;
-
-import org.apache.lucene.analysis.LowerCaseFilter;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
 /**
  * Robinson Morphological Codes are separated by whitespace.
@@ -34,8 +30,9 @@ import org.apache.lucene.analysis.WhitespaceAnalyzer;
 final public class MorphologyAnalyzer extends AbstractBookAnalyzer {
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream ts = new WhitespaceAnalyzer().tokenStream(fieldName, reader);
-        return new LowerCaseFilter(ts);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream ts = new LowerCaseFilter(source);
+        return new TokenStreamComponents(source, ts);
     }
 }

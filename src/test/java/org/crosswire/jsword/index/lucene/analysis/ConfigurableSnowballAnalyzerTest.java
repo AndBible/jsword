@@ -20,6 +20,8 @@
 package org.crosswire.jsword.index.lucene.analysis;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.ConfigurableSnowballAnalyzer;
+import org.apache.lucene.analysis.GermanLuceneAnalyzer;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;

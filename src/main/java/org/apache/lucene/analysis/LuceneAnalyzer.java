@@ -17,14 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.PerFieldAnalyzerWrapper;
-import org.apache.lucene.analysis.SimpleAnalyzer;
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.index.lucene.IndexMetadata;
 import org.crosswire.jsword.index.lucene.InstalledIndex;
@@ -36,9 +35,9 @@ import org.slf4j.LoggerFactory;
  * A specialized analyzer for Books that analyzes different fields differently.
  * This is book specific since it is possible that each book has specialized
  * search requirements.
- * 
+ *
  * Uses AnalyzerFactory for InstalledIndexVersion &gt; 1.1
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
@@ -46,29 +45,29 @@ public class LuceneAnalyzer extends Analyzer {
 
     public LuceneAnalyzer(Book book) {
         // The default analysis
-        analyzer = new PerFieldAnalyzerWrapper(new SimpleAnalyzer());
+        Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
 
         if (InstalledIndex.instance().getInstalledIndexDefaultVersion() > IndexMetadata.INDEX_VERSION_1_1) {
             // Content is analyzed using natural language analyzer
             // (stemming, stopword etc)
             Analyzer myNaturalLanguageAnalyzer = AnalyzerFactory.getInstance().createAnalyzer(book);
-            analyzer.addAnalyzer(LuceneIndex.FIELD_BODY, myNaturalLanguageAnalyzer);
-            //analyzer.addAnalyzer(LuceneIndex.FIELD_HEADING, myNaturalLanguageAnalyzer);  //heading to use same analyzer as BODY
-            //analyzer.addAnalyzer(LuceneIndex.FIELD_INTRO, myNaturalLanguageAnalyzer);
+            analyzerPerField.put(LuceneIndex.FIELD_BODY, myNaturalLanguageAnalyzer);
+            //analyzerPerField.put(LuceneIndex.FIELD_HEADING, myNaturalLanguageAnalyzer);  //heading to use same analyzer as BODY
+            //analyzerPerField.put(LuceneIndex.FIELD_INTRO, myNaturalLanguageAnalyzer);
             log.debug("{}: Using languageAnalyzer: {}", book.getBookMetaData().getInitials(), myNaturalLanguageAnalyzer.getClass().getName());
         }
 
         // Keywords are normalized to osisIDs
-        analyzer.addAnalyzer(LuceneIndex.FIELD_KEY, new KeyAnalyzer());
+        analyzerPerField.put(LuceneIndex.FIELD_KEY, new KeyAnalyzer());
 
         // Strong's Numbers are normalized to a consistent representation
-        analyzer.addAnalyzer(LuceneIndex.FIELD_STRONG, new StrongsNumberAnalyzer());
+        analyzerPerField.put(LuceneIndex.FIELD_STRONG, new StrongsNumberAnalyzer());
 
         // Strong's Numbers and Robinson's morphological codes are normalized to a consistent representation
-        analyzer.addAnalyzer(LuceneIndex.FIELD_MORPHOLOGY, new MorphologyAnalyzer());
+        analyzerPerField.put(LuceneIndex.FIELD_MORPHOLOGY, new MorphologyAnalyzer());
 
         // XRefs are normalized from ranges into a list of osisIDs
-        analyzer.addAnalyzer(LuceneIndex.FIELD_XREF, new XRefAnalyzer());
+        analyzerPerField.put(LuceneIndex.FIELD_XREF, new XRefAnalyzer());
 
         //add stemmers if available
         try {
@@ -79,19 +78,20 @@ public class LuceneAnalyzer extends Analyzer {
             // may or may not be configured to use stemming, with different stemmers. There seem to be a mix
             //of using the snowball stemmer with the default lucene stemmers. Most internet posts seem to suggest
             //that snowball stemmers are better.
-            analyzer.addAnalyzer(LuceneIndex.FIELD_BODY_STEM, configurableSnowballAnalyzer);
-            analyzer.addAnalyzer(LuceneIndex.FIELD_INTRO_STEM, configurableSnowballAnalyzer);
-            analyzer.addAnalyzer(LuceneIndex.FIELD_HEADING_STEM, configurableSnowballAnalyzer);
+            analyzerPerField.put(LuceneIndex.FIELD_BODY_STEM, configurableSnowballAnalyzer);
+            analyzerPerField.put(LuceneIndex.FIELD_INTRO_STEM, configurableSnowballAnalyzer);
+            analyzerPerField.put(LuceneIndex.FIELD_HEADING_STEM, configurableSnowballAnalyzer);
         } catch(IllegalArgumentException ex) {
             //no stepper available
             log.info("No snowball stemmer available for book [{}]", book);
             log.trace(ex.getMessage(), ex);
         }
+        analyzer = new PerFieldAnalyzerWrapper(new SimpleAnalyzer(), analyzerPerField);
     }
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        return analyzer.tokenStream(fieldName, reader);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        return analyzer.createComponents(fieldName);
     }
 
     private PerFieldAnalyzerWrapper analyzer;
