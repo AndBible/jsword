@@ -130,6 +130,11 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
     public static final String FIELD_MORPHOLOGY = "morph";
 
     /**
+     * Full text without tokenization.
+     */
+    public static final String FIELD_FULL_TEXT = "full_text";
+
+    /**
      * Combines the strong numbers with the morphology field
      */
     public static final String FIELD_INTRO = "intro";
@@ -297,10 +302,10 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
             try {
                 Analyzer analyzer = new LuceneAnalyzer(book);
 
-                QueryParser parser = new QueryParser(LuceneIndex.FIELD_BODY, analyzer);
+                QueryParser parser = new QueryParser(LuceneIndex.FIELD_FULL_TEXT, analyzer);
                 parser.setAllowLeadingWildcard(true);
                 Query query = parser.parse(search);
-                log.info("ParsedQuery- {}", query.toString());
+                log.info("ParsedQuery {} {}", query.getClass().toString(), query.toString());
 
                 // For ranking we use a PassageTally
                 if (modifier != null && modifier.isRanked()) {
@@ -423,6 +428,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
         Field headingField = new TextField(FIELD_HEADING, "", Field.Store.YES);
         Field headingStemField = new TextField(FIELD_HEADING_STEM, "", Field.Store.NO);
         Field morphologyField  = new TextField(FIELD_MORPHOLOGY , "", Field.Store.NO);
+        Field fullText = new StringField(FIELD_FULL_TEXT, "", Field.Store.YES);
 
         int size = key.getCardinality();
         int subCount = count;
@@ -446,7 +452,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
             }
 
             // Remove all fields from the document
-            doc.getFields().clear();
+            doc.clear();
 
             // Do the actual indexing
             // Always add the key
@@ -461,6 +467,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
                 addField(doc, bodyField, canonicalText);
                 addField(doc, bodyStemField, canonicalText);
             }
+            addField(doc, fullText, canonicalText);
 
             if (includeStrongs) {
                 addField(doc, strongField, OSISUtil.getStrongsNumbers(osis));

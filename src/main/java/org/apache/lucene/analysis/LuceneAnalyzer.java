@@ -81,7 +81,7 @@ public class LuceneAnalyzer extends Analyzer {
             analyzerPerField.put(LuceneIndex.FIELD_BODY_STEM, configurableSnowballAnalyzer);
             analyzerPerField.put(LuceneIndex.FIELD_INTRO_STEM, configurableSnowballAnalyzer);
             analyzerPerField.put(LuceneIndex.FIELD_HEADING_STEM, configurableSnowballAnalyzer);
-        } catch(IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             //no stepper available
             log.info("No snowball stemmer available for book [{}]", book);
             log.trace(ex.getMessage(), ex);
