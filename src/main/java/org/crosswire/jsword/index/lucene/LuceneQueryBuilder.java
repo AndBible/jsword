@@ -62,7 +62,7 @@ public final class LuceneQueryBuilder implements QueryBuilder {
         Matcher regexMatcher = REGEX_PATTERN.matcher(sought);
         if (regexMatcher.find()) {
             // The regex needs to match the whole string, so we add parts that always match the start and end of the string.
-            return new BaseQuery("/.*?" + regexMatcher.group(1) + ".*/");
+            return new RegexpQuery("/.*?" + regexMatcher.group(1) + ".*/");
         }
 
         Query range = null;

@@ -287,10 +287,14 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
         }
     }
 
+    public Key find(String search) throws BookException {
+        return find(search, false);
+    }
+
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.Index#find(java.lang.String)
      */
-    public Key find(String search) throws BookException {
+    public Key find(String search, boolean full_text) throws BookException {
         String v11nName = book.getBookMetaData().getProperty("Versification").toString();
         Versification v11n = Versifications.instance().getVersification(v11nName);
 
@@ -302,10 +306,10 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
             try {
                 Analyzer analyzer = new LuceneAnalyzer(book);
 
-                QueryParser parser = new QueryParser(LuceneIndex.FIELD_FULL_TEXT, analyzer);
+                QueryParser parser = new QueryParser(full_text ? LuceneIndex.FIELD_FULL_TEXT : LuceneIndex.FIELD_BODY, analyzer);
                 parser.setAllowLeadingWildcard(true);
                 Query query = parser.parse(search);
-                log.info("ParsedQuery {} {}", query.getClass().toString(), query.toString());
+                log.info("ParsedQuery {} {}", query.getClass().toString(), query);
 
                 // For ranking we use a PassageTally
                 if (modifier != null && modifier.isRanked()) {
@@ -467,7 +471,8 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
                 addField(doc, bodyField, canonicalText);
                 addField(doc, bodyStemField, canonicalText);
             }
-            addField(doc, fullText, canonicalText);
+            //osis.getValue() differs from getCanonicalText in that special characters are not separated from words by whitespace.
+            addField(doc, fullText, osis.getValue());
 
             if (includeStrongs) {
                 addField(doc, strongField, OSISUtil.getStrongsNumbers(osis));
