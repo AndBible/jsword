@@ -33,6 +33,8 @@ public interface QueryDecorator {
 
     String decorateAnyWords(String queryWords);
 
+    String decorateRegex(String queryWords);
+
     String decorateNotWords(String queryWords);
 
     String decorateStartWords(String queryWords);
