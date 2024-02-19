@@ -472,7 +472,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
                 addField(doc, bodyStemField, canonicalText);
             }
             //osis.getValue() differs from getCanonicalText in that special characters are not separated from words by whitespace.
-            addField(doc, fullText, osis.getValue());
+            addField(doc, fullText, osis.getValue().toLowerCase());
 
             if (includeStrongs) {
                 addField(doc, strongField, OSISUtil.getStrongsNumbers(osis));
