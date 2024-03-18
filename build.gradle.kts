@@ -28,6 +28,7 @@ dependencies {
 
     implementation("org.jdom:jdom2:2.0.6.1")
     implementation("org.apache.lucene:lucene-analyzers-common:8.11.2")
+    implementation("org.apache.lucene:lucene-analyzers-smartcn:8.11.2")
     implementation("org.apache.lucene:lucene-queryparser:8.11.2")
 
     // To upgrade Lucene, change to
