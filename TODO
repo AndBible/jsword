@@ -1,4 +1,3 @@
-Fix ArabicLuceneAnalyzer (ArabicLetterTokenizer)
 Fix ChineseAnalyzer (cn.ChineseAnalyzer is invalid)
     mmseg4j is outdated
     implementation("com.chenlb.mmseg4j:mmseg4j-analysis:1.8.6")
