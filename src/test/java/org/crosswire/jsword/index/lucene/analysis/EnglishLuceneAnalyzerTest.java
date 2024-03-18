@@ -24,8 +24,8 @@ import java.util.Arrays;
 import org.apache.lucene.analysis.AbstractBookAnalyzer;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.EnglishLuceneAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
@@ -45,7 +45,7 @@ public class EnglishLuceneAnalyzerTest {
     public void setUp() throws Exception {
         myAnalyzer = new EnglishLuceneAnalyzer();
 
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        parser = new QueryParser(FIELD, myAnalyzer);
     }
 
     @Test
@@ -62,7 +62,7 @@ public class EnglishLuceneAnalyzerTest {
     public void testSetDoStopWords() throws ParseException {
         myAnalyzer = new EnglishLuceneAnalyzer();
         myAnalyzer.setDoStopWords(true);
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
         Query query = parser.parse(testInput);
 
@@ -78,7 +78,7 @@ public class EnglishLuceneAnalyzerTest {
         String[] stopWords = {
                 "thy", "ye", "unto", "shalt"};
         myAnalyzer.setStopWords(new CharArraySet(Arrays.asList(stopWords), false));
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Upon thy belly Shalt thou go";
         Query query = parser.parse(testInput);
         // System.out.println("ParsedQuery- "+ query.toString());
@@ -93,7 +93,7 @@ public class EnglishLuceneAnalyzerTest {
     public void testSetDoStemming() throws ParseException {
         myAnalyzer = new EnglishLuceneAnalyzer();
         myAnalyzer.setDoStemming(false);
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
         Query query = parser.parse(testInput);
 

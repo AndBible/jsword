@@ -22,8 +22,8 @@ package org.crosswire.jsword.index.lucene.analysis;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.ConfigurableSnowballAnalyzer;
 import org.apache.lucene.analysis.GermanLuceneAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
@@ -43,7 +43,7 @@ public class ConfigurableSnowballAnalyzerTest {
     @Before
     public void setUp() throws Exception {
         myAnalyzer = new ConfigurableSnowballAnalyzer();
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        parser = new QueryParser(FIELD, myAnalyzer);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class ConfigurableSnowballAnalyzerTest {
 
         // Compare with custom analyzer
         Analyzer anal = new GermanLuceneAnalyzer();
-        QueryParser gparser = new QueryParser(Version.LUCENE_29, FIELD, anal);
+        QueryParser gparser = new QueryParser(FIELD, anal);
         query = gparser.parse(testInput);
         Assert.assertTrue(query.toString().indexOf(FIELD + ":denn ") > -1);
 

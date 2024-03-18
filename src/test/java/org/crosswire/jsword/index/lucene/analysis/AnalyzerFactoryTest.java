@@ -26,8 +26,8 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.AnalyzerFactory;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.EnglishLuceneAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
@@ -59,7 +59,7 @@ public class AnalyzerFactoryTest {
     @Test
     public void testCustomStopWordFiltering() throws ParseException {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
 
         // set custom stop word
         myAnalyzer.setDoStopWords(true);
@@ -78,7 +78,7 @@ public class AnalyzerFactoryTest {
     @Test
     public void testDiacriticFiltering() throws Exception {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
 
         Query query = parser.parse(testInput);
@@ -90,7 +90,7 @@ public class AnalyzerFactoryTest {
     @Test
     public void testStopWordsFiltering() throws Exception {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
         // enable stop words
         myAnalyzer.setDoStopWords(true);
@@ -102,7 +102,7 @@ public class AnalyzerFactoryTest {
     @Test
     public void testWithStemmingDisabled() throws Exception {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
         myAnalyzer.setDoStemming(false);
         Query query = parser.parse(testInput);
