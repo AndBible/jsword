@@ -83,9 +83,9 @@ public class EnglishLuceneAnalyzerTest {
         Query query = parser.parse(testInput);
         // System.out.println("ParsedQuery- "+ query.toString());
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":shalt") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":thy") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":upon") > -1);
+        Assert.assertTrue(!query.toString().contains(FIELD + ":shalt"));
+        Assert.assertTrue(!query.toString().contains(FIELD + ":thy"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":upon"));
 
     }
 
@@ -97,8 +97,8 @@ public class EnglishLuceneAnalyzerTest {
         String testInput = "Surely will every man walketh";
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":surely") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":every") > -1);
+        Assert.assertTrue(query.toString().contains(FIELD + ":surely"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":every"));
 
     }
 

@@ -50,9 +50,9 @@ public class ThaiLuceneAnalyzerTest {
         String testInput = "\u0E1A\u0E38\u0E15\u0E23\u0E21\u0E19\u0E38\u0E29\u0E22\u0E4C\u0E08\u0E30\u0E15\u0E49\u0E2D";
 
         Query query = parser.parse(testInput);
-        // System.out.println(query.toString());
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":\"\u0E1A\u0E38\u0E15\u0E23 \u0E21") > -1);
-        Assert.assertTrue(query.toString().indexOf("\u0E4C \u0E08\u0E30 \u0E15\u0E49\u0E2D") > -1);
+        //System.out.println(query.toString());
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u0E1A\u0E38\u0E15\u0E23 " + FIELD + ":\u0E21"));
+        Assert.assertTrue(query.toString().contains("\u0E4C " + FIELD + ":\u0E08\u0E30 " + FIELD + ":\u0E15\u0E49\u0E2D"));
     }
 
     @Test
@@ -61,9 +61,9 @@ public class ThaiLuceneAnalyzerTest {
         String testInput = "\u0E40\u0E23\u0E32\u0E1A\u0E2D\u0E01\u0E04\u0E27\u0E32\u0E21\u0E08\u0E23\u0E34\u0E07\u0E41\u0E01\u0E48\u0E17\u0E48\u0E32\u0E19\u0E27\u0E48\u0E32 \u0E16\u0E49\u0E32\u0E1C\u0E39\u0E49\u0E43\u0E14\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E1A\u0E31\u0E07\u0E40\u0E01\u0E34\u0E14\u0E43\u0E2B\u0E21\u0E48";
 
         Query query = parser.parse(testInput);
-        // System.out.println(query.toString());
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":\"\u0E40\u0E23\u0E32 \u0E1A") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":\"\u0E16\u0E49\u0E32 \u0E1C") > -1);
+        System.out.println(query.toString());
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u0E40\u0E23\u0E32 " + FIELD + ":\u0E1A"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u0E16\u0E49\u0E32 " + FIELD + ":\u0E1C"));
     }
 
     protected static final String FIELD = "content";

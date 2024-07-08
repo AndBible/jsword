@@ -20,44 +20,36 @@
 package org.crosswire.jsword.index.lucene.analysis;
 
 import org.apache.lucene.analysis.AbstractBookAnalyzer;
-import org.apache.lucene.analysis.GreekLuceneAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.analysis.SmartChineseLuceneAnalyzer;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test the Greek Analyzer
+ * Tokenization and query parsing test
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Sijo Cherian
  * @author DM Smith
  */
-public class GreekLuceneAnalyzerTest {
-
-    @Before
-    public void setUp() throws Exception {
-        AbstractBookAnalyzer myAnalyzer = new GreekLuceneAnalyzer();
-
-        parser = new QueryParser(FIELD, myAnalyzer);
-    }
+public class ChineseLuceneAnalyzerTest {
 
     @Test
     public void testTokenization() throws ParseException {
-        // From john 3:16
+        AbstractBookAnalyzer myAnalyzer = new SmartChineseLuceneAnalyzer();
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
 
-        String testInput = "\u0394\u03B9\u03BF\u03C4\u03B9 \u03C4\u03BF\u03C3\u03BF\u03BD \u03B7\u03B3\u03B1\u03C0\u03B7\u03C3\u03B5\u03BD \u03BF \u0398\u03B5\u03BF\u03C2 \u03C4\u03BF\u03BD \u03BA\u03BF\u03C3\u03BC\u03BF\u03BD\u002C \u03C9\u03C3\u03C4\u03B5 \u03B5\u03B4\u03C9\u03BA\u03B5 \u03C4\u03BF\u03BD \u03A5\u03B9\u03BF\u03BD \u03B1\u03C5\u03C4\u03BF\u03C5";
+        String testInput = "\u795E\u7231\u4E16\u4EBA\uFF0C\u751A\u81F3\u628A\u4ED6\u7684\u72EC\u751F\u5B50\u8D50\u7ED9\u4ED6\u4EEC";
+
         Query query = parser.parse(testInput);
+        System.out.println(query.toString());
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u795E " + FIELD + ":\u7231"));
+        Assert.assertTrue(query.toString().contains("\u7ED9 " + FIELD + ":\u4ED6\u4EEC"));
         // System.out.println(query.toString());
-        // Lowercased test
-        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B4\u03B9\u03BF\u03C4\u03B9 "));
-        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B1\u03C5\u03C4\u03BF\u03C5"));
-
     }
 
     protected static final String FIELD = "content";
-    private QueryParser parser;
 }

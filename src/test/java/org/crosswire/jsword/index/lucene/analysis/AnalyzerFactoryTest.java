@@ -70,9 +70,9 @@ public class AnalyzerFactoryTest {
 
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":shalt") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":thy") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":upon") > -1);
+        Assert.assertTrue(!query.toString().contains(FIELD + ":shalt"));
+        Assert.assertTrue(!query.toString().contains(FIELD + ":thy"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":upon"));
     }
 
     @Test
@@ -83,8 +83,8 @@ public class AnalyzerFactoryTest {
 
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":sure ") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":everi") > -1);
+        Assert.assertTrue(query.toString().contains(FIELD + ":sure "));
+        Assert.assertTrue(query.toString().contains(FIELD + ":everi"));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class AnalyzerFactoryTest {
         myAnalyzer.setDoStopWords(true);
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":will") == -1);
+        Assert.assertTrue(!query.toString().contains(FIELD + ":will"));
     }
 
     @Test
@@ -106,8 +106,8 @@ public class AnalyzerFactoryTest {
         String testInput = "Surely will every man walketh";
         myAnalyzer.setDoStemming(false);
         Query query = parser.parse(testInput);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":surely") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":every") > -1);
+        Assert.assertTrue(query.toString().contains(FIELD + ":surely"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":every"));
     }
 
     /*
