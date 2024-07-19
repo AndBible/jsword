@@ -14,28 +14,31 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2012 - 2016
+ * © CrossWire Bible Society, 2009 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import java.io.Reader;
-
-import org.apache.lucene.analysis.LowerCaseFilter;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 
 /**
- * Robinson Morphological Codes are separated by whitespace.
- *
+ * A simple wrapper for {@link SmartChineseAnalyzer}, which takes overlapping
+ * two character tokenization approach which leads to larger index size, like
+ * <code>org.apache.lucene.analyzer.cjk.CJKAnalyzer</code>. This analyzer's stop list
+ * is merely of punctuation. It does stemming of English.
+ * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-final public class MorphologyAnalyzer extends AbstractBookAnalyzer {
+final public class SmartChineseLuceneAnalyzer extends AbstractBookAnalyzer {
+    public SmartChineseLuceneAnalyzer() {
+        myAnalyzer = new SmartChineseAnalyzer();
+    }
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream ts = new WhitespaceAnalyzer().tokenStream(fieldName, reader);
-        return new LowerCaseFilter(ts);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        return myAnalyzer.createComponents(fieldName);
     }
+
+    private SmartChineseAnalyzer myAnalyzer;
 }

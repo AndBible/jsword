@@ -21,14 +21,16 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.util.Arrays;
 
+import org.apache.lucene.analysis.AbstractBookAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.AnalyzerFactory;
 import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.analysis.EnglishLuceneAnalyzer;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -42,7 +44,7 @@ public class AnalyzerFactoryTest {
 
     /**
      * Test method for
-     * {@link org.crosswire.jsword.index.lucene.analysis.AnalyzerFactory#createAnalyzer(org.crosswire.jsword.book.Book)}
+     * {@link AnalyzerFactory#createAnalyzer(org.crosswire.jsword.book.Book)}
      * .
      */
     @Test
@@ -57,7 +59,7 @@ public class AnalyzerFactoryTest {
     @Test
     public void testCustomStopWordFiltering() throws ParseException {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
 
         // set custom stop word
         myAnalyzer.setDoStopWords(true);
@@ -68,44 +70,44 @@ public class AnalyzerFactoryTest {
 
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":shalt") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":thy") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":upon") > -1);
+        Assert.assertTrue(!query.toString().contains(FIELD + ":shalt"));
+        Assert.assertTrue(!query.toString().contains(FIELD + ":thy"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":upon"));
     }
 
     @Test
     public void testDiacriticFiltering() throws Exception {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
 
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":sure ") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":everi") > -1);
+        Assert.assertTrue(query.toString().contains(FIELD + ":sure "));
+        Assert.assertTrue(query.toString().contains(FIELD + ":everi"));
     }
 
     @Test
     public void testStopWordsFiltering() throws Exception {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
         // enable stop words
         myAnalyzer.setDoStopWords(true);
         Query query = parser.parse(testInput);
 
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":will") == -1);
+        Assert.assertTrue(!query.toString().contains(FIELD + ":will"));
     }
 
     @Test
     public void testWithStemmingDisabled() throws Exception {
         AbstractBookAnalyzer myAnalyzer = new EnglishLuceneAnalyzer();
-        QueryParser parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
         String testInput = "Surely will every man walketh";
         myAnalyzer.setDoStemming(false);
         Query query = parser.parse(testInput);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":surely") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":every") > -1);
+        Assert.assertTrue(query.toString().contains(FIELD + ":surely"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":every"));
     }
 
     /*

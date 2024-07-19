@@ -17,13 +17,9 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import java.io.IOException;
-import java.io.Reader;
-
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceTokenizer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.crosswire.jsword.book.Book;
 
 /**
@@ -48,30 +44,11 @@ final public class XRefAnalyzer extends AbstractBookAnalyzer {
         setBook(book);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.apache.lucene.analysis.Analyzer#tokenStream(java.lang.String,
-     * java.io.Reader)
-     */
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        return new KeyFilter(getBook(), new WhitespaceTokenizer(reader));
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream result = new KeyFilter(getBook(), source);
+        return new TokenStreamComponents(source, result);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.lucene.analysis.Analyzer#reusableTokenStream(java.lang.String, java.io.Reader)
-     */
-    @Override
-    public TokenStream reusableTokenStream(String fieldName, Reader reader) throws IOException {
-        SavedStreams streams = (SavedStreams) getPreviousTokenStream();
-        if (streams == null) {
-            streams = new SavedStreams(new WhitespaceTokenizer(reader));
-            streams.setResult(new KeyFilter(getBook(), streams.getResult()));
-            setPreviousTokenStream(streams);
-        } else {
-            streams.getSource().reset(reader);
-        }
-        return streams.getResult();
-    }
 }

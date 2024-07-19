@@ -14,27 +14,25 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
 /**
- * JUnit Test.
- * 
+ * Robinson Morphological Codes are separated by whitespace.
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-    AnalyzerFactoryTest.class,
-    ConfigurableSnowballAnalyzerTest.class,
-    EnglishLuceneAnalyzerTest.class,
-    GreekLuceneAnalyzerTest.class,
-})
-public class AllTests {
+final public class MorphologyAnalyzer extends AbstractBookAnalyzer {
+
+    @Override
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream ts = new LowerCaseFilter(source);
+        return new TokenStreamComponents(source, ts);
+    }
 }

@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2009 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;

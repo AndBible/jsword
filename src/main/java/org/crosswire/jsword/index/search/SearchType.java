@@ -60,6 +60,16 @@ public enum SearchType {
     },
 
     /**
+     * Find this regex
+     */
+    REGEX ("Regex") {
+        @Override
+        public String decorate(String queryWords) {
+            return SEARCH_SYNTAX.decorateRegex(queryWords);
+        }
+    },
+
+    /**
      * Find verses not containing these words. Note this may require being added
      * after words being sought.
      */

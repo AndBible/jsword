@@ -18,13 +18,10 @@
  *     The copyright to this program is held by it's authors.
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
-import org.apache.lucene.analysis.StopFilter;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.el.GreekAnalyzer;
-import org.apache.lucene.analysis.el.GreekLowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.queryparser.classic.Token;
 import org.apache.lucene.util.Version;
 
 import java.io.IOException;
@@ -38,32 +35,13 @@ import java.io.Reader;
  * @author Sijo Cherian [sijocherian at yahoo dot com]
  */
 public class HebrewLuceneAnalyzer extends AbstractBookAnalyzer {
-    public HebrewLuceneAnalyzer() {
-
-    }
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream result = new StandardTokenizer(matchVersion, reader);
-        result = new HebrewPointingFilter(result);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new StandardTokenizer();
+        TokenStream result = new HebrewPointingFilter(source);
 
-        return result;
+        return new TokenStreamComponents(source, result);
     }
 
-
-    @Override
-    public TokenStream reusableTokenStream(String fieldName, Reader reader) throws IOException {
-        SavedStreams streams = (SavedStreams) getPreviousTokenStream();
-        if (streams == null) {
-            streams = new SavedStreams(new StandardTokenizer(matchVersion, reader));
-            streams.setResult(new HebrewPointingFilter(streams.getResult()));
-
-            setPreviousTokenStream(streams);
-        } else {
-            streams.getSource().reset(reader);
-        }
-        return streams.getResult();
-    }
-
-    private final Version matchVersion = Version.LUCENE_29;
 }

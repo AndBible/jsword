@@ -19,13 +19,14 @@
  */
 package org.crosswire.jsword.index.lucene.analysis;
 
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.analysis.AbstractBookAnalyzer;
+import org.apache.lucene.analysis.GreekLuceneAnalyzer;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -39,9 +40,9 @@ public class GreekLuceneAnalyzerTest {
 
     @Before
     public void setUp() throws Exception {
-        myAnalyzer = new GreekLuceneAnalyzer();
+        AbstractBookAnalyzer myAnalyzer = new GreekLuceneAnalyzer();
 
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        parser = new QueryParser(FIELD, myAnalyzer);
     }
 
     @Test
@@ -52,12 +53,11 @@ public class GreekLuceneAnalyzerTest {
         Query query = parser.parse(testInput);
         // System.out.println(query.toString());
         // Lowercased test
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":\u03B4\u03B9\u03BF\u03C4\u03B9 ") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":\u03B1\u03C5\u03C4\u03BF\u03C5") > -1);
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B4\u03B9\u03BF\u03C4\u03B9 "));
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B1\u03C5\u03C4\u03BF\u03C5"));
 
     }
 
     protected static final String FIELD = "content";
-    private AbstractBookAnalyzer myAnalyzer;
     private QueryParser parser;
 }

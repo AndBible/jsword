@@ -17,37 +17,38 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
+package org.apache.lucene.analysis;
 
 import java.io.IOException;
 
-import org.apache.lucene.analysis.TokenStream;
 import org.crosswire.jsword.book.Book;
 
 /**
- * A KeyFilter normalizes OSISrefs.
+ * A KeyFilter normalizes Key.
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class XRefFilter extends AbstractBookTokenFilter {
+public class KeyFilter extends AbstractBookTokenFilter {
     /**
-     * Construct filtering <i>in</i>.
-     * @param in 
+     * Construct a KeyFilter not tied to a Book.
+     * 
+     * @param in
+     *            the input TokenStream
      */
-    public XRefFilter(TokenStream in) {
+    public KeyFilter(TokenStream in) {
         this(null, in);
     }
 
     /**
-     * Construct an XRefFilter tied to a Book.
+     * Construct a KeyFilter tied to a Book.
      * 
      * @param book
      *            the book to which this TokenFilter is tied.
      * @param in
      *            the input TokenStream
      */
-    public XRefFilter(Book book, TokenStream in) {
+    public KeyFilter(Book book, TokenStream in) {
         super(book, in);
     }
 
@@ -61,5 +62,4 @@ public class XRefFilter extends AbstractBookTokenFilter {
         // TODO(DMS): actually normalize
         return input.incrementToken();
     }
-
 }
