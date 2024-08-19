@@ -51,8 +51,18 @@ import org.slf4j.LoggerFactory;
  */
 public final class AnalyzerFactory {
     public Analyzer createAnalyzer(Book book) {
+        if (book == null) {
+            return createAnalyzer((Language) null);
+        } else {
+            Analyzer analyzer = createAnalyzer(book.getLanguage());
+            log.debug("{}: Using languageAnalyzer: {}", book.getBookMetaData().getInitials(), analyzer.getClass().getName());
+            return analyzer;
+        }
+    }
+
+    public Analyzer createAnalyzer(Language lang) {
         Analyzer analyzer = null;
-        Language lang = book == null ? null : book.getLanguage();
+
         if (lang != null) {
             String aClass = getAnalyzerValue(lang);
 
@@ -83,7 +93,6 @@ public final class AnalyzerFactory {
         analyzerPerField.put(LuceneIndex.FIELD_HEADING_STEM, analyzer);
         //analyzerPerField.put(LuceneIndex.FIELD_HEADING, myNaturalLanguageAnalyzer);  //heading to use same analyzer as BODY
         //analyzerPerField.put(LuceneIndex.FIELD_INTRO, myNaturalLanguageAnalyzer);
-        log.debug("{}: Using languageAnalyzer: {}", book.getBookMetaData().getInitials(), analyzer.getClass().getName());
 
         // Keywords are normalized to osisIDs
         analyzerPerField.put(LuceneIndex.FIELD_KEY, new KeyAnalyzer());

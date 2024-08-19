@@ -14,10 +14,10 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword;
+package org.crosswire.jsword.index.lucene.analysis;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -31,15 +31,11 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-    org.crosswire.jsword.prerequisites.AllTests.class,
-    org.crosswire.jsword.book.AllTests.class,
-    org.crosswire.jsword.book.filter.thml.AllTests.class,
-    org.crosswire.jsword.book.sword.AllTests.class,
-    org.crosswire.jsword.bridge.AllTests.class,
-    org.crosswire.jsword.index.lucene.analysis.AllTests.class,
-    org.crosswire.jsword.passage.AllTests.class,
-    org.crosswire.jsword.versification.AllTests.class,
-    org.crosswire.jsword.versification.system.AllTests.class
+    AnalyzerFactoryTest.class,
+    EnglishLuceneAnalyzerTest.class,
+    GreekLuceneAnalyzerTest.class,
+    ThaiLuceneAnalyzerTest.class,
+    ChineseLuceneAnalyzerTest.class
 })
-public class JSwordAllTests {
+public class AllTests {
 }
