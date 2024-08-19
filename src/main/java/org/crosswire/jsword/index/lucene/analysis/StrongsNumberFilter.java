@@ -17,13 +17,14 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.TokenFilter;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.study.StrongsNumber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class StrongsNumberFilter extends AbstractBookTokenFilter {
+public class StrongsNumberFilter extends TokenFilter {
 
     /**
      * Construct filtering <i>in</i>.
@@ -42,18 +43,7 @@ public class StrongsNumberFilter extends AbstractBookTokenFilter {
      * @param in 
      */
     public StrongsNumberFilter(TokenStream in) {
-        this(null, in);
-    }
-
-    /**
-     * Construct filtering <i>in</i>.
-     * 
-     * @param book the book
-     * @param in 
-     */
-    public StrongsNumberFilter(Book book, TokenStream in) {
-        super(book, in);
-        termAtt = addAttribute(CharTermAttribute.class);
+        super(in);
     }
 
     /*

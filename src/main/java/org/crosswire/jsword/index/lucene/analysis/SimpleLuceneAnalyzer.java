@@ -17,10 +17,14 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
 import java.io.Reader;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseFilter;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.core.LetterTokenizer;
 
@@ -39,10 +43,10 @@ import org.apache.lucene.analysis.core.LetterTokenizer;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Sijo Cherian
  */
-final public class SimpleLuceneAnalyzer extends AbstractBookAnalyzer {
+final public class SimpleLuceneAnalyzer extends Analyzer {
 
     public SimpleLuceneAnalyzer() {
-        doStemming = false;
+
     }
 
     @Override

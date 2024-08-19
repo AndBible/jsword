@@ -17,36 +17,38 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
-import org.apache.lucene.analysis.core.LetterTokenizer;
-import org.apache.lucene.analysis.de.GermanAnalyzer;
-import org.apache.lucene.analysis.de.GermanStemFilter;
+import java.io.IOException;
+
+import org.apache.lucene.analysis.TokenFilter;
+import org.apache.lucene.analysis.TokenStream;
+import org.crosswire.jsword.book.Book;
 
 /**
- * Based on Lucene's GermanAnalyzer
+ * A KeyFilter normalizes OSISrefs.
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author Sijo Cherian
+ * @author DM Smith
  */
-final public class GermanLuceneAnalyzer extends AbstractBookAnalyzer {
-    public GermanLuceneAnalyzer() {
-        stopSet = GermanAnalyzer.getDefaultStopSet();
+public class XRefFilter extends TokenFilter {
+    /**
+     * Construct filtering <i>in</i>.
+     * @param in 
+     */
+    public XRefFilter(TokenStream in) {
+        super(in);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.lucene.analysis.TokenStream#incrementToken()
+     */
     @Override
-    protected TokenStreamComponents createComponents(String fieldName) {
-        Tokenizer source = new LetterTokenizer();
-        TokenStream result = new LowerCaseFilter(source);
-
-        if (doStopWords && stopSet != null) {
-            result = new StopFilter(result, (CharArraySet) stopSet);
-        }
-
-        if (doStemming) {
-            result = new GermanStemFilter(result);
-        }
-
-        return new TokenStreamComponents(source, result);
+    public boolean incrementToken() throws IOException {
+        // TODO(DMS): actually normalize
+        return input.incrementToken();
     }
+
 }

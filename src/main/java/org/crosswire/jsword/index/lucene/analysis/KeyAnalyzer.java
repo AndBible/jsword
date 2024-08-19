@@ -17,10 +17,11 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
-import org.crosswire.jsword.book.Book;
 
 /**
  * A specialized analyzer that normalizes Strong's Numbers.
@@ -28,26 +29,17 @@ import org.crosswire.jsword.book.Book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-final public class KeyAnalyzer extends AbstractBookAnalyzer {
+final public class KeyAnalyzer extends Analyzer {
     /**
      * Construct a default KeyAnalyzer.
      */
     public KeyAnalyzer() {
     }
 
-    /**
-     * Construct an KeyAnalyzer tied to a book.
-     * 
-     * @param book the book
-     */
-    public KeyAnalyzer(Book book) {
-        setBook(book);
-    }
-
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer source = new KeywordTokenizer();
-        return new TokenStreamComponents(source, new KeyFilter(getBook(), source));
+        return new TokenStreamComponents(source, new KeyFilter(source));
     }
 
 }

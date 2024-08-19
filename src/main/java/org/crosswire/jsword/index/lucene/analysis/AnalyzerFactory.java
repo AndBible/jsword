@@ -17,15 +17,21 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.crosswire.common.util.Language;
 import org.crosswire.common.util.PropertyMap;
 import org.crosswire.common.util.ReflectionUtil;
 import org.crosswire.common.util.ResourceUtil;
 import org.crosswire.jsword.book.Book;
+import org.crosswire.jsword.index.lucene.LuceneIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +50,8 @@ import org.slf4j.LoggerFactory;
  * @author Sijo Cherian
  */
 public final class AnalyzerFactory {
-    public AbstractBookAnalyzer createAnalyzer(Book book) {
-        AbstractBookAnalyzer newObject = null;
+    public Analyzer createAnalyzer(Book book) {
+        Analyzer analyzer = null;
         Language lang = book == null ? null : book.getLanguage();
         if (lang != null) {
             String aClass = getAnalyzerValue(lang);
@@ -54,22 +60,44 @@ public final class AnalyzerFactory {
 
             if (aClass != null) {
                 try {
-                    newObject = ReflectionUtil.construct(aClass);
+                    analyzer = ReflectionUtil.construct(aClass);
                 } catch (ReflectiveOperationException e) {
                     log.error("Configuration error in AnalyzerFactory properties", e);
                 }
             }
         }
 
-        if (newObject == null) {
-            newObject = new SimpleLuceneAnalyzer();
+        if (analyzer == null) {
+            analyzer = new SimpleLuceneAnalyzer();
         }
 
         // Configure the analyzer
-        newObject.setBook(book);
-        newObject.setDoStemming(getDefaultStemmingProperty());
-        newObject.setDoStopWords(getDefaultStopWordProperty());
-        return newObject;
+// The default analysis
+        Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
+
+        // Content is analyzed using natural language analyzer
+        // (stemming, stopword etc)
+        analyzerPerField.put(LuceneIndex.FIELD_BODY, analyzer);
+        analyzerPerField.put(LuceneIndex.FIELD_BODY_STEM, analyzer);
+        analyzerPerField.put(LuceneIndex.FIELD_INTRO_STEM, analyzer);
+        analyzerPerField.put(LuceneIndex.FIELD_HEADING_STEM, analyzer);
+        //analyzerPerField.put(LuceneIndex.FIELD_HEADING, myNaturalLanguageAnalyzer);  //heading to use same analyzer as BODY
+        //analyzerPerField.put(LuceneIndex.FIELD_INTRO, myNaturalLanguageAnalyzer);
+        log.debug("{}: Using languageAnalyzer: {}", book.getBookMetaData().getInitials(), analyzer.getClass().getName());
+
+        // Keywords are normalized to osisIDs
+        analyzerPerField.put(LuceneIndex.FIELD_KEY, new KeyAnalyzer());
+
+        // Strong's Numbers are normalized to a consistent representation
+        analyzerPerField.put(LuceneIndex.FIELD_STRONG, new StrongsNumberAnalyzer());
+
+        // Strong's Numbers and Robinson's morphological codes are normalized to a consistent representation
+        analyzerPerField.put(LuceneIndex.FIELD_MORPHOLOGY, new MorphologyAnalyzer());
+
+        // XRefs are normalized from ranges into a list of osisIDs
+        analyzerPerField.put(LuceneIndex.FIELD_XREF, new XRefAnalyzer());
+
+        return new PerFieldAnalyzerWrapper(new SimpleAnalyzer(), analyzerPerField);
     }
 
     public static AnalyzerFactory getInstance() {
@@ -85,16 +113,6 @@ public final class AnalyzerFactory {
         return myProperties.get(key);
     }
 
-    public boolean getDefaultStemmingProperty() {
-        String key = DEFAULT_ID + ".Stemming";
-        return Boolean.valueOf(myProperties.get(key)).booleanValue();
-    }
-
-    public boolean getDefaultStopWordProperty() {
-        String key = DEFAULT_ID + ".StopWord";
-        return Boolean.valueOf(myProperties.get(key)).booleanValue();
-    }
-
     private void loadProperties() {
         try {
             myProperties = ResourceUtil.getProperties(getClass());
@@ -103,7 +121,6 @@ public final class AnalyzerFactory {
         }
     }
 
-    public static final String DEFAULT_ID = "Default";
     private static AnalyzerFactory myInstance = new AnalyzerFactory();
 
     private PropertyMap myProperties;

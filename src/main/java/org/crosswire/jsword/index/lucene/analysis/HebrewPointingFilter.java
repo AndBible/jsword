@@ -1,5 +1,6 @@
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
+import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
@@ -8,7 +9,7 @@ import java.io.IOException;
 /**
  * Simply removes pointing from the given term
  */
-public class HebrewPointingFilter extends AbstractBookTokenFilter {
+public class HebrewPointingFilter extends TokenFilter {
     private final CharTermAttribute termAtt;
 
     /**

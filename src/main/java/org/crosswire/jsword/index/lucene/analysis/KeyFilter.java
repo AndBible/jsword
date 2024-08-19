@@ -14,25 +14,42 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2012 - 2016
+ * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
-import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import java.io.IOException;
+
+import org.apache.lucene.analysis.TokenFilter;
+import org.apache.lucene.analysis.TokenStream;
+import org.crosswire.jsword.book.Book;
 
 /**
- * Robinson Morphological Codes are separated by whitespace.
- *
+ * A KeyFilter normalizes Key.
+ * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-final public class MorphologyAnalyzer extends AbstractBookAnalyzer {
+public class KeyFilter extends TokenFilter {
+    /**
+     * Construct a KeyFilter not tied to a Book.
+     *
+     * @param in
+     *            the input TokenStream
+     */
+    public KeyFilter(TokenStream in) {
+        super(in);
+    }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.lucene.analysis.TokenStream#incrementToken()
+     */
     @Override
-    protected TokenStreamComponents createComponents(String fieldName) {
-        Tokenizer source = new WhitespaceTokenizer();
-        TokenStream ts = new LowerCaseFilter(source);
-        return new TokenStreamComponents(source, ts);
+    public boolean incrementToken() throws IOException {
+        // TODO(DMS): actually normalize
+        return input.incrementToken();
     }
 }

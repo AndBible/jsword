@@ -1,4 +1,4 @@
-/**
+/*
  * Distribution License:
  * JSword is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License, version 2.1 or later
@@ -14,27 +14,10 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.lucene.analysis;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
-
 /**
- * JUnit Test.
- * 
- * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author DM Smith
+ * Implementation of various Lucene analyzers, providing language dependent customizations.
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-    AnalyzerFactoryTest.class,
-    ConfigurableSnowballAnalyzerTest.class,
-    EnglishLuceneAnalyzerTest.class,
-    GreekLuceneAnalyzerTest.class,
-})
-public class AllTests {
-}
+package org.crosswire.jsword.index.lucene.analysis;

@@ -14,35 +14,29 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
-import org.apache.lucene.analysis.core.LetterTokenizer;
-import org.apache.lucene.analysis.cz.CzechAnalyzer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseFilter;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
 /**
- * An Analyzer whose {@link TokenStream} is built from a
- * {@link LetterTokenizer} filtered with {@link LowerCaseFilter and @link StopFilter} (optional).
- * Stemming not implemented yet
- * 
+ * Robinson Morphological Codes are separated by whitespace.
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author Sijo Cherian
- * @author DM SMITH
+ * @author DM Smith
  */
-final public class CzechLuceneAnalyzer extends AbstractBookAnalyzer {
-    public CzechLuceneAnalyzer() {
-        stopSet = CzechAnalyzer.getDefaultStopSet();
-    }
+final public class MorphologyAnalyzer extends Analyzer {
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        Tokenizer source = new LetterTokenizer();
-        TokenStream result = new LowerCaseFilter(source);
-        if (doStopWords && stopSet != null) {
-            result = new StopFilter(result, (CharArraySet) stopSet);
-        }
-        return new TokenStreamComponents(source, result);
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream ts = new LowerCaseFilter(source);
+        return new TokenStreamComponents(source, ts);
     }
 }

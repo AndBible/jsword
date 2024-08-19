@@ -14,31 +14,34 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2009 - 2016
+ * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
-import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
 /**
- * A simple wrapper for {@link SmartChineseAnalyzer}, which takes overlapping
- * two character tokenization approach which leads to larger index size, like
- * <code>org.apache.lucene.analyzer.cjk.CJKAnalyzer</code>. This analyzer's stop list
- * is merely of punctuation. It does stemming of English.
+ * A specialized analyzer that normalizes Cross References.
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-final public class SmartChineseLuceneAnalyzer extends AbstractBookAnalyzer {
-    public SmartChineseLuceneAnalyzer() {
-        myAnalyzer = new SmartChineseAnalyzer();
+final public class XRefAnalyzer extends Analyzer {
+    /**
+     * Construct a default XRefAnalyzer.
+     */
+    public XRefAnalyzer() {
     }
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        return myAnalyzer.createComponents(fieldName);
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream result = new KeyFilter(source);
+        return new TokenStreamComponents(source, result);
     }
 
-    private SmartChineseAnalyzer myAnalyzer;
 }

@@ -18,14 +18,12 @@
  *     The copyright to this program is held by it's authors.
  *
  */
-package org.apache.lucene.analysis;
+package org.crosswire.jsword.index.lucene.analysis;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
-import org.apache.lucene.queryparser.classic.Token;
-import org.apache.lucene.util.Version;
-
-import java.io.IOException;
-import java.io.Reader;
 
 /**
  * Analyzer that removes the accents from the Hebrew text
@@ -34,7 +32,7 @@ import java.io.Reader;
  *      The copyright to this program is held by it's authors.
  * @author Sijo Cherian [sijocherian at yahoo dot com]
  */
-public class HebrewLuceneAnalyzer extends AbstractBookAnalyzer {
+public class HebrewLuceneAnalyzer extends Analyzer {
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {

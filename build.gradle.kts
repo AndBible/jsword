@@ -30,10 +30,8 @@ dependencies {
     implementation("org.apache.lucene:lucene-analyzers-common:8.11.2")
     implementation("org.apache.lucene:lucene-analyzers-smartcn:8.11.2")
     implementation("org.apache.lucene:lucene-analyzers-kuromoji:8.11.2")
-    implementation("org.apache.lucene:lucene-queryparser:8.11.2")
 
-    // To upgrade Lucene, change to
-    // implementation("org.apache.lucene:lucene-analyzers-common:x")
+    implementation("org.apache.lucene:lucene-queryparser:8.11.2")
 
     //implementation("org.slf4j:slf4j-api:1.7.6")
     implementation("org.slf4j:slf4j-api:1.7.6")

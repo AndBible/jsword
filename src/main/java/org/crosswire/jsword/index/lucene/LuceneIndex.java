@@ -59,7 +59,7 @@ import org.crosswire.jsword.book.OSISUtil;
 import org.crosswire.jsword.index.AbstractIndex;
 import org.crosswire.jsword.index.IndexPolicy;
 import org.crosswire.jsword.index.IndexStatus;
-import org.apache.lucene.analysis.LuceneAnalyzer;
+import org.crosswire.jsword.index.lucene.analysis.AnalyzerFactory;
 import org.crosswire.jsword.index.search.SearchModifier;
 import org.crosswire.jsword.passage.AbstractPassage;
 import org.crosswire.jsword.passage.Key;
@@ -215,8 +215,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
 
             try {
                 // When misconfigured, this can throw errors.
-                Analyzer analyzer = new LuceneAnalyzer(book);
-
+                Analyzer analyzer = AnalyzerFactory.getInstance().createAnalyzer(book);
 
                 book.setIndexStatus(IndexStatus.CREATING);
 
@@ -304,7 +303,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
         if (search != null) {
             Throwable theCause = null;
             try {
-                Analyzer analyzer = new LuceneAnalyzer(book);
+                Analyzer analyzer = AnalyzerFactory.getInstance().createAnalyzer(book);
 
                 QueryParser parser = new QueryParser(full_text ? LuceneIndex.FIELD_FULL_TEXT : LuceneIndex.FIELD_BODY, analyzer);
                 parser.setAllowLeadingWildcard(true);
