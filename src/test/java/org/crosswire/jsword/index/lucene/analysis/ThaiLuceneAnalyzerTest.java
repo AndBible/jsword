@@ -20,6 +20,7 @@
 package org.crosswire.jsword.index.lucene.analysis;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.th.ThaiAnalyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
@@ -49,7 +50,7 @@ public class ThaiLuceneAnalyzerTest {
         String testInput = "\u0E1A\u0E38\u0E15\u0E23\u0E21\u0E19\u0E38\u0E29\u0E22\u0E4C\u0E08\u0E30\u0E15\u0E49\u0E2D";
 
         Query query = parser.parse(testInput);
-        //System.out.println(query.toString());
+        System.out.println(query.toString());
         Assert.assertTrue(query.toString().contains(FIELD + ":\u0E1A\u0E38\u0E15\u0E23 " + FIELD + ":\u0E21"));
         Assert.assertTrue(query.toString().contains("\u0E4C " + FIELD + ":\u0E08\u0E30 " + FIELD + ":\u0E15\u0E49\u0E2D"));
     }
@@ -61,6 +62,7 @@ public class ThaiLuceneAnalyzerTest {
 
         Query query = parser.parse(testInput);
         System.out.println(query.toString());
+
         Assert.assertTrue(query.toString().contains(FIELD + ":\u0E40\u0E23\u0E32 " + FIELD + ":\u0E1A"));
         Assert.assertTrue(query.toString().contains(FIELD + ":\u0E16\u0E49\u0E32 " + FIELD + ":\u0E1C"));
     }

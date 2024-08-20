@@ -57,7 +57,8 @@ public class EnglishLuceneAnalyzerTest {
 
     @Test
     public void testStopwords() throws ParseException {
-        parser = new QueryParser(FIELD, myAnalyzer);
+        Analyzer analyzer = AnalyzerFactory.getInstance().createAnalyzer(new Language("en"), true);
+        parser = new QueryParser(FIELD, analyzer);
         String testInput = "Surely will every man walketh";
         Query query = parser.parse(testInput);
 

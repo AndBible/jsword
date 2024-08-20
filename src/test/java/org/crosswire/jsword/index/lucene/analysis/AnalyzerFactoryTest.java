@@ -68,17 +68,6 @@ public class AnalyzerFactoryTest {
         Assert.assertTrue(query.toString().contains(FIELD + ":everi"));
     }
 
-    @Test
-    public void testStopWordsFiltering() throws Exception {
-        Analyzer myAnalyzer = AnalyzerFactory.getInstance().createAnalyzer(new Language("en"));
-        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
-        String testInput = "Surely will every man walketh";
-        // enable stop words
-        Query query = parser.parse(testInput);
-        System.out.println(query.toString());
-        Assert.assertTrue(!query.toString().contains(FIELD + ":will"));
-    }
-
     /*
      * public void testLatin1Language() throws ParseException { Analyzer
      * myAnalyzer = AnalyzerFactory.getInstance().createAnalyzer("Latin");

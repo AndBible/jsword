@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.crosswire.common.util.Language;
@@ -51,16 +52,24 @@ import org.slf4j.LoggerFactory;
  */
 public final class AnalyzerFactory {
     public Analyzer createAnalyzer(Book book) {
+        return createAnalyzer(book, false);
+    }
+
+    public Analyzer createAnalyzer(Book book, Boolean stopwording) {
         if (book == null) {
-            return createAnalyzer((Language) null);
+            return createAnalyzer((Language) null, stopwording);
         } else {
-            Analyzer analyzer = createAnalyzer(book.getLanguage());
+            Analyzer analyzer = createAnalyzer(book.getLanguage(), stopwording);
             log.debug("{}: Using languageAnalyzer: {}", book.getBookMetaData().getInitials(), analyzer.getClass().getName());
             return analyzer;
         }
     }
 
     public Analyzer createAnalyzer(Language lang) {
+        return createAnalyzer(lang, false);
+    }
+
+    public Analyzer createAnalyzer(Language lang, Boolean stopwording) {
         Analyzer analyzer = null;
 
         if (lang != null) {
@@ -70,7 +79,13 @@ public final class AnalyzerFactory {
 
             if (aClass != null) {
                 try {
-                    analyzer = ReflectionUtil.construct(aClass);
+                    if (stopwording) {
+                        analyzer = ReflectionUtil.construct(aClass);
+                    } else {
+                        // Set stopwords to empty to disable stopwording
+                        CharArraySet stopWords = new CharArraySet(0, true);
+                        analyzer = ReflectionUtil.construct(aClass, stopWords);
+                    }
                 } catch (ReflectiveOperationException e) {
                     log.error("Configuration error in AnalyzerFactory properties", e);
                 }
