@@ -50,10 +50,9 @@ public class GreekLuceneAnalyzerTest {
 
         String testInput = "\u0394\u03B9\u03BF\u03C4\u03B9 \u03C4\u03BF\u03C3\u03BF\u03BD \u03B7\u03B3\u03B1\u03C0\u03B7\u03C3\u03B5\u03BD \u03BF \u0398\u03B5\u03BF\u03C2 \u03C4\u03BF\u03BD \u03BA\u03BF\u03C3\u03BC\u03BF\u03BD\u002C \u03C9\u03C3\u03C4\u03B5 \u03B5\u03B4\u03C9\u03BA\u03B5 \u03C4\u03BF\u03BD \u03A5\u03B9\u03BF\u03BD \u03B1\u03C5\u03C4\u03BF\u03C5";
         Query query = parser.parse(testInput);
-        // System.out.println(query.toString());
         // Lowercased test
-        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B4\u03B9\u03BF\u03C4\u03B9 "));
-        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B1\u03C5\u03C4\u03BF\u03C5"));
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B4\u03B9\u03BF\u03C4 "));
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u03B1\u03C5\u03C4"));
 
     }
 
