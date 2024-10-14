@@ -45,7 +45,7 @@ public class ChineseLuceneAnalyzerTest {
         String testInput = "\u795E\u7231\u4E16\u4EBA\uFF0C\u751A\u81F3\u628A\u4ED6\u7684\u72EC\u751F\u5B50\u8D50\u7ED9\u4ED6\u4EEC";
 
         Query query = parser.parse(testInput);
-        System.out.println(query.toString());
+        //System.out.println(query.toString());
         Assert.assertTrue(query.toString().contains(FIELD + ":\u795E " + FIELD + ":\u7231"));
         Assert.assertTrue(query.toString().contains("\u7ED9 " + FIELD + ":\u4ED6\u4EEC"));
         // System.out.println(query.toString());
