@@ -50,10 +50,10 @@ public class AnalyzerFactoryTest {
     @Test
     public void testCreateAnalyzer() {
         Analyzer myAnalyzer = AnalyzerFactory.getInstance().createAnalyzer(new Language("en"));
-        Assert.assertTrue(myAnalyzer != null);
+        Assert.assertNotNull(myAnalyzer);
 
         myAnalyzer = AnalyzerFactory.getInstance().createAnalyzer((Book) null);
-        Assert.assertTrue(myAnalyzer != null);
+        Assert.assertNotNull(myAnalyzer);
     }
 
     @Test
