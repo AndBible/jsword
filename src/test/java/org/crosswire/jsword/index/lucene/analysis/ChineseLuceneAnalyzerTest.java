@@ -19,10 +19,12 @@
  */
 package org.crosswire.jsword.index.lucene.analysis;
 
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
+import org.crosswire.common.util.Language;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,18 +39,17 @@ public class ChineseLuceneAnalyzerTest {
 
     @Test
     public void testTokenization() throws ParseException {
-        myAnalyzer = new ChineseLuceneAnalyzer();
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        Analyzer myAnalyzer = AnalyzerFactory.getInstance().createAnalyzer(new Language("zh"));
+        QueryParser parser = new QueryParser(FIELD, myAnalyzer);
 
         String testInput = "\u795E\u7231\u4E16\u4EBA\uFF0C\u751A\u81F3\u628A\u4ED6\u7684\u72EC\u751F\u5B50\u8D50\u7ED9\u4ED6\u4EEC";
 
         Query query = parser.parse(testInput);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":\"\u795E \u7231") > -1);
-        Assert.assertTrue(query.toString().indexOf("\u4ED6 \u4EEC\"") > -1);
+        //System.out.println(query.toString());
+        Assert.assertTrue(query.toString().contains(FIELD + ":\u795E " + FIELD + ":\u7231"));
+        Assert.assertTrue(query.toString().contains("\u7ED9 " + FIELD + ":\u4ED6\u4EEC"));
         // System.out.println(query.toString());
     }
 
     protected static final String FIELD = "content";
-    private AbstractBookAnalyzer myAnalyzer;
-    private QueryParser parser;
 }

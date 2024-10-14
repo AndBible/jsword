@@ -20,6 +20,7 @@
 package org.crosswire.jsword.index.lucene;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.crosswire.common.util.PropertyMap;
 import org.crosswire.common.util.ResourceUtil;
@@ -41,17 +42,20 @@ import org.slf4j.LoggerFactory;
 public final class IndexMetadata {
 
     /** latest version on top */
-    public static final float INDEX_VERSION_1_2 = 1.2f;
+    public static final float INDEX_VERSION_1_3 = 1.3f;
+
     /**
      * A prior version.
      *
      * @deprecated do not use
      */
     @Deprecated
+    public static final float INDEX_VERSION_1_2 = 1.2f;
+
+    @Deprecated
     public static final float INDEX_VERSION_1_1 = 1.1f;
 
     public static final String LATEST_INDEX_VERSION = "Latest.Index.Version";
-    public static final String LUCENE_VERSION = "Lucene.Version";
 
     public static final String PREFIX_LATEST_INDEX_VERSION_BOOK_OVERRIDE = "Latest.Index.Version.Book.";
     /**
@@ -69,28 +73,11 @@ public final class IndexMetadata {
         return myInstance;
     }
 
-    /**
-     * default Installed IndexVersion
-     *
-     * @return the index version
-     * @deprecated see InstalledIndex.java
-     */
-    @Deprecated
-    public float getInstalledIndexVersion() {
-        String value = props.get(INDEX_VERSION, "1.1"); // todo At some point
-                                                        // default should be 1.2
-        return Float.parseFloat(value);
-    }
-
     // Default Latest IndexVersion : Default version number of Latest indexing
     // schema: PerBook index version must be equal or greater than this
     public float getLatestIndexVersion() {
-        String value = props.get(LATEST_INDEX_VERSION, "1.2");
-        return Float.parseFloat(value);
-    }
-    public String getLatestIndexVersionStr() {
-        String value = props.get(LATEST_INDEX_VERSION, "1.2");
-        return value;
+        String value = props.get(LATEST_INDEX_VERSION);
+        return (value == null) ? InstalledIndex.DEFAULT_INSTALLED_INDEX_VERSION : Float.parseFloat(value);
     }
 
     public float getLatestIndexVersion(Book b) {
@@ -98,9 +85,8 @@ public final class IndexMetadata {
             return getLatestIndexVersion();
         }
 
-        String value = props.get(PREFIX_LATEST_INDEX_VERSION_BOOK_OVERRIDE + IndexMetadata.getBookIdentifierPropSuffix(b.getBookMetaData()),
-                props.get(LATEST_INDEX_VERSION));
-        return Float.parseFloat(value);
+        String value = props.get(PREFIX_LATEST_INDEX_VERSION_BOOK_OVERRIDE + IndexMetadata.getBookIdentifierPropSuffix(b.getBookMetaData()));
+        return (value == null) ? getLatestIndexVersion() : Float.parseFloat(value);
     }
 
     // used in property keys e.g. Installed.Index.Version.Book.ESV[1.0.1]
@@ -112,9 +98,6 @@ public final class IndexMetadata {
         return meta.getInitials() + moduleVer;
     }
 
-    public float getLuceneVersion() {
-        return Float.parseFloat(props.get(LUCENE_VERSION));
-    }
     private IndexMetadata() {
         try {
             props = ResourceUtil.getProperties(getClass());

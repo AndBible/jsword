@@ -57,6 +57,15 @@ public class LuceneQueryDecorator implements QueryDecorator {
         return queryWords;
     }
 
+    public String decorateRegex(String queryWords) {
+        StringBuilder search = new StringBuilder();
+        search.append(SLASH);
+        // Lucene does not support the very useful \b, so we implement it ourselves.
+        search.append(queryWords.replace("\\b", "(^|$|[^A-Za-z0-9_])"));
+        search.append(SLASH);
+        return search.toString();
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -139,6 +148,7 @@ public class LuceneQueryDecorator implements QueryDecorator {
     private static final char QUOTE = '"';
     private static final char PLUS = '+';
     private static final String SPACE_PLUS = " +";
+    private static final char SLASH = '/';
 
     private static final char MINUS = '-';
     private static final String SPACE_MINUS = " -";

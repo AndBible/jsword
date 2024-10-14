@@ -19,11 +19,11 @@
  */
 package org.crosswire.jsword.index.lucene.analysis;
 
-import java.io.Reader;
-
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
 /**
  * Robinson Morphological Codes are separated by whitespace.
@@ -31,11 +31,12 @@ import org.apache.lucene.analysis.WhitespaceAnalyzer;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-final public class MorphologyAnalyzer extends AbstractBookAnalyzer {
+final public class MorphologyAnalyzer extends Analyzer {
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream ts = new WhitespaceAnalyzer().tokenStream(fieldName, reader);
-        return new LowerCaseFilter(ts);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream ts = new LowerCaseFilter(source);
+        return new TokenStreamComponents(source, ts);
     }
 }

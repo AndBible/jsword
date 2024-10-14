@@ -21,11 +21,11 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.util.Arrays;
 
-import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
+import org.crosswire.common.util.Language;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,9 +41,8 @@ public class EnglishLuceneAnalyzerTest {
 
     @Before
     public void setUp() throws Exception {
-        myAnalyzer = new EnglishLuceneAnalyzer();
-
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+        myAnalyzer = AnalyzerFactory.getInstance().createAnalyzer(new Language("en"));
+        parser = new QueryParser(FIELD, myAnalyzer);
     }
 
     @Test
@@ -57,10 +56,9 @@ public class EnglishLuceneAnalyzerTest {
     }
 
     @Test
-    public void testSetDoStopWords() throws ParseException {
-        myAnalyzer = new EnglishLuceneAnalyzer();
-        myAnalyzer.setDoStopWords(true);
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
+    public void testStopwords() throws ParseException {
+        Analyzer analyzer = AnalyzerFactory.getInstance().createAnalyzer(new Language("en"), true);
+        parser = new QueryParser(FIELD, analyzer);
         String testInput = "Surely will every man walketh";
         Query query = parser.parse(testInput);
 
@@ -68,39 +66,7 @@ public class EnglishLuceneAnalyzerTest {
         Assert.assertTrue(query.toString().indexOf(FIELD + ":will") == -1);
     }
 
-    @Test
-    public void testCustomStopWords() throws Exception {
-        myAnalyzer = new EnglishLuceneAnalyzer();
-        // set custom stop word
-        myAnalyzer.setDoStopWords(true);
-        String[] stopWords = {
-                "thy", "ye", "unto", "shalt"};
-        myAnalyzer.setStopWords(new CharArraySet(Arrays.asList(stopWords), false));
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
-        String testInput = "Upon thy belly Shalt thou go";
-        Query query = parser.parse(testInput);
-        // System.out.println("ParsedQuery- "+ query.toString());
-
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":shalt") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":thy") == -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":upon") > -1);
-
-    }
-
-    @Test
-    public void testSetDoStemming() throws ParseException {
-        myAnalyzer = new EnglishLuceneAnalyzer();
-        myAnalyzer.setDoStemming(false);
-        parser = new QueryParser(Version.LUCENE_29, FIELD, myAnalyzer);
-        String testInput = "Surely will every man walketh";
-        Query query = parser.parse(testInput);
-
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":surely") > -1);
-        Assert.assertTrue(query.toString().indexOf(FIELD + ":every") > -1);
-
-    }
-
     protected static final String FIELD = "content";
-    private AbstractBookAnalyzer myAnalyzer;
+    private Analyzer myAnalyzer;
     private QueryParser parser;
 }

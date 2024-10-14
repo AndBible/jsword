@@ -21,9 +21,12 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.io.Reader;
 
-import org.apache.lucene.analysis.ASCIIFoldingFilter;
-import org.apache.lucene.analysis.LowerCaseTokenizer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.analysis.core.LetterTokenizer;
 
 /**
  * Simple Analyzer providing same function as
@@ -40,16 +43,17 @@ import org.apache.lucene.analysis.TokenStream;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Sijo Cherian
  */
-final public class SimpleLuceneAnalyzer extends AbstractBookAnalyzer {
+final public class SimpleLuceneAnalyzer extends Analyzer {
 
     public SimpleLuceneAnalyzer() {
-        doStemming = false;
+
     }
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
-        TokenStream result = new LowerCaseTokenizer(reader);
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new LetterTokenizer();
+        TokenStream result = new LowerCaseFilter(source);
         result = new ASCIIFoldingFilter(result);
-        return result;
+        return new TokenStreamComponents(source, result);
     }
 }

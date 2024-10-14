@@ -36,6 +36,7 @@ import org.crosswire.jsword.book.sword.AbstractBackend;
 import org.crosswire.jsword.book.sword.Backend;
 import org.crosswire.jsword.book.sword.processing.NoOpRawTextProcessor;
 import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
+import org.crosswire.jsword.index.IndexManagerFactory;
 import org.crosswire.jsword.index.IndexStatus;
 import org.crosswire.jsword.index.IndexStatusEvent;
 import org.crosswire.jsword.index.IndexStatusListener;
@@ -186,6 +187,9 @@ public abstract class AbstractBook implements Book {
      * @see org.crosswire.jsword.book.Book#getIndexStatus()
      */
     public IndexStatus getIndexStatus() {
+        if (IndexManagerFactory.getIndexManager().needsReindexing(this)) {
+            return IndexStatus.INVALID;
+        }
         return bmd.getIndexStatus();
     }
 

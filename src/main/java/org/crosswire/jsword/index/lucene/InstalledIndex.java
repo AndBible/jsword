@@ -49,7 +49,7 @@ public final class InstalledIndex {
     public static final String PREFIX_INSTALLED_INDEX_VERSION_BOOK_OVERRIDE = "Installed.Index.Version.Book.";
     // TODO(Sijo): change this value on lucene upgrade
     /** The Index version for new indexes */
-    public static final float DEFAULT_INSTALLED_INDEX_VERSION = IndexMetadata.INDEX_VERSION_1_2;
+    public static final float DEFAULT_INSTALLED_INDEX_VERSION = IndexMetadata.INDEX_VERSION_1_3;
 
     /**
      * All access through this single instance.

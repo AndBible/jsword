@@ -15,3 +15,5 @@ rebel.xml
 /.gradle/
 /build/
 atlassian-ide-plugin.xml
+.DS_Store
+local.properties

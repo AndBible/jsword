@@ -21,6 +21,7 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.crosswire.jsword.book.Book;
 
@@ -30,27 +31,15 @@ import org.crosswire.jsword.book.Book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class KeyFilter extends AbstractBookTokenFilter {
+public class KeyFilter extends TokenFilter {
     /**
      * Construct a KeyFilter not tied to a Book.
-     * 
+     *
      * @param in
      *            the input TokenStream
      */
     public KeyFilter(TokenStream in) {
-        this(null, in);
-    }
-
-    /**
-     * Construct a KeyFilter tied to a Book.
-     * 
-     * @param book
-     *            the book to which this TokenFilter is tied.
-     * @param in
-     *            the input TokenStream
-     */
-    public KeyFilter(Book book, TokenStream in) {
-        super(book, in);
+        super(in);
     }
 
     /*
