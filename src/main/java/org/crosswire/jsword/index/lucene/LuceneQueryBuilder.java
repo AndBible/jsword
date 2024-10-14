@@ -59,12 +59,6 @@ public final class LuceneQueryBuilder implements QueryBuilder {
 
         int i = 0;
 
-        Matcher regexMatcher = REGEX_PATTERN.matcher(sought);
-        if (regexMatcher.find()) {
-            // The regex needs to match the whole string, so we add parts that always match the start and end of the string.
-            return new RegexpQuery("/.*?" + regexMatcher.group(1) + ".*/");
-        }
-
         Query range = null;
         String rangeModifier = "";
         // Look for a range +[...], -[...], or [...]
@@ -85,10 +79,10 @@ public final class LuceneQueryBuilder implements QueryBuilder {
                 blurFactor = Integer.parseInt(blur);
             }
             Query left = new BaseQuery(sought.substring(i, blurMatcher.start()));
-            Query right = new BaseQuery(sought.substring(blurMatcher.end()));
+            Query right = parseRest(sought.substring(blurMatcher.end()));
             query = new BlurQuery(left, right, blurFactor);
-        } else if (sought.length() > 0) {
-            query = new BaseQuery(sought);
+        } else if (!sought.isEmpty()) {
+            query = parseRest(sought);
         }
 
         if (range != null && !NULL_QUERY.equals(query)) {
@@ -101,6 +95,19 @@ public final class LuceneQueryBuilder implements QueryBuilder {
         }
 
         return query;
+    }
+
+    /**
+     * Parse the rest of the query, after range and BlurQuery processing is done.
+     */
+    private Query parseRest(String aSearch) {
+        Matcher regexMatcher = REGEX_PATTERN.matcher(aSearch);
+        if (regexMatcher.find()) {
+            // The regex needs to match the whole string, so we add parts that always match the start and end of the string.
+            return new RegexpQuery("/.*?" + regexMatcher.group(1) + ".*/");
+        } else {
+            return new BaseQuery(aSearch);
+        }
     }
 
     /**
