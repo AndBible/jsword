@@ -27,11 +27,11 @@ dependencies {
     implementation("org.apache.commons:commons-compress:1.12")
 
     implementation("org.jdom:jdom2:2.0.6.1")
-    implementation("org.apache.lucene:lucene-analyzers-common:8.11.2")
-    implementation("org.apache.lucene:lucene-analyzers-smartcn:8.11.2")
-    implementation("org.apache.lucene:lucene-analyzers-kuromoji:8.11.2")
+    implementation("org.apache.lucene:lucene-analyzers-common:8.11.4")
+    //implementation("org.apache.lucene:lucene-analyzers-smartcn:8.11.4")
+    //implementation("org.apache.lucene:lucene-analyzers-kuromoji:8.11.4")
 
-    implementation("org.apache.lucene:lucene-queryparser:8.11.2")
+    implementation("org.apache.lucene:lucene-queryparser:8.11.4")
 
     //implementation("org.slf4j:slf4j-api:1.7.6")
     implementation("org.slf4j:slf4j-api:1.7.6")
