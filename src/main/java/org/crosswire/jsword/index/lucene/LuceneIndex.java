@@ -293,7 +293,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.Index#find(java.lang.String)
      */
-    public Key find(String search, boolean full_text) throws BookException {
+    public Key find(String search, boolean fullText) throws BookException {
         String v11nName = book.getBookMetaData().getProperty("Versification").toString();
         Versification v11n = Versifications.instance().getVersification(v11nName);
 
@@ -305,7 +305,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
             try {
                 Analyzer analyzer = AnalyzerFactory.getInstance().createAnalyzer(book);
 
-                QueryParser parser = new QueryParser(full_text ? LuceneIndex.FIELD_FULL_TEXT : LuceneIndex.FIELD_BODY, analyzer);
+                QueryParser parser = new QueryParser(fullText ? LuceneIndex.FIELD_FULL_TEXT : LuceneIndex.FIELD_BODY, analyzer);
                 parser.setAllowLeadingWildcard(true);
                 Query query = parser.parse(search);
                 log.info("ParsedQuery {} {}", query.getClass().toString(), query);
@@ -409,18 +409,18 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
 
         String oldRootName = "";
         int percent = 0;
-        String rootName = "";
-        BookData data = null;
-        Element osis = null;
+        String rootName;
+        BookData data;
+        Element osis;
 
         // Set up for reuse.
         Document doc = new Document();
-        FieldType stored_not_analyzed = new FieldType(StringField.TYPE_STORED);
-        stored_not_analyzed.setOmitNorms(false);
+        FieldType storedNotAnalyzed = new FieldType(StringField.TYPE_STORED);
+        storedNotAnalyzed.setOmitNorms(false);
         FieldType strongFieldType = new FieldType(TextField.TYPE_NOT_STORED);
         strongFieldType.setStoreTermVectors(true);
         // For this change, see 9de01b56ebf252ffefe05e606e330a1787b94c9d:lucene/MIGRATE.txt
-        Field keyField = new Field(FIELD_KEY, "", stored_not_analyzed);
+        Field keyField = new Field(FIELD_KEY, "", storedNotAnalyzed);
         Field bodyField = new TextField(FIELD_BODY, "", Field.Store.YES);
         Field bodyStemField = new TextField(FIELD_BODY_STEM, "", Field.Store.NO);
         Field introField = new TextField(FIELD_INTRO, "", Field.Store.YES);

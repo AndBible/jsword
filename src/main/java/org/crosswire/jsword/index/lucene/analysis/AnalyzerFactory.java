@@ -55,11 +55,11 @@ public final class AnalyzerFactory {
         return createAnalyzer(book, false);
     }
 
-    public Analyzer createAnalyzer(Book book, Boolean stopwording) {
+    public Analyzer createAnalyzer(Book book, Boolean stopWording) {
         if (book == null) {
-            return createAnalyzer((Language) null, stopwording);
+            return createAnalyzer((Language) null, stopWording);
         } else {
-            Analyzer analyzer = createAnalyzer(book.getLanguage(), stopwording);
+            Analyzer analyzer = createAnalyzer(book.getLanguage(), stopWording);
             log.debug("{}: Using languageAnalyzer: {}", book.getBookMetaData().getInitials(), analyzer.getClass().getName());
             return analyzer;
         }
@@ -69,7 +69,7 @@ public final class AnalyzerFactory {
         return createAnalyzer(lang, false);
     }
 
-    public Analyzer createAnalyzer(Language lang, Boolean stopwording) {
+    public Analyzer createAnalyzer(Language lang, Boolean stopWording) {
         Analyzer analyzer = null;
 
         if (lang != null) {
@@ -79,7 +79,7 @@ public final class AnalyzerFactory {
 
             if (aClass != null) {
                 try {
-                    if (stopwording) {
+                    if (stopWording) {
                         analyzer = ReflectionUtil.construct(aClass);
                     } else {
                         // Set stopwords to empty to disable stopwording
@@ -97,8 +97,7 @@ public final class AnalyzerFactory {
         }
 
         // Configure the analyzer
-// The default analysis
-        Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
+        Map<String, Analyzer> analyzerPerField = new HashMap<>();
 
         // Content is analyzed using natural language analyzer
         // (stemming, stopword etc)
@@ -106,8 +105,6 @@ public final class AnalyzerFactory {
         analyzerPerField.put(LuceneIndex.FIELD_BODY_STEM, analyzer);
         analyzerPerField.put(LuceneIndex.FIELD_INTRO_STEM, analyzer);
         analyzerPerField.put(LuceneIndex.FIELD_HEADING_STEM, analyzer);
-        //analyzerPerField.put(LuceneIndex.FIELD_HEADING, myNaturalLanguageAnalyzer);  //heading to use same analyzer as BODY
-        //analyzerPerField.put(LuceneIndex.FIELD_INTRO, myNaturalLanguageAnalyzer);
 
         // Keywords are normalized to osisIDs
         analyzerPerField.put(LuceneIndex.FIELD_KEY, new KeyAnalyzer());
