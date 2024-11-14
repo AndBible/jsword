@@ -21,6 +21,7 @@ package org.crosswire.jsword.index.lucene.analysis;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.crosswire.jsword.book.Book;
 
@@ -30,25 +31,13 @@ import org.crosswire.jsword.book.Book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class XRefFilter extends AbstractBookTokenFilter {
+public class XRefFilter extends TokenFilter {
     /**
      * Construct filtering <i>in</i>.
      * @param in 
      */
     public XRefFilter(TokenStream in) {
-        this(null, in);
-    }
-
-    /**
-     * Construct an XRefFilter tied to a Book.
-     * 
-     * @param book
-     *            the book to which this TokenFilter is tied.
-     * @param in
-     *            the input TokenStream
-     */
-    public XRefFilter(Book book, TokenStream in) {
-        super(book, in);
+        super(in);
     }
 
     /*

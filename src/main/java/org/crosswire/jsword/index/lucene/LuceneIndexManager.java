@@ -115,7 +115,7 @@ public class LuceneIndexManager implements IndexManager {
         //should Clients use IndexStatus.INVALID
         float installedV = InstalledIndex.instance().getInstalledIndexVersion(book);
         if (installedV < IndexMetadata.instance().getLatestIndexVersion(book)) {
-            log.info("{}: needs reindexing, Installed index version @{}", book.getBookMetaData().getInitials(), Float.toString(installedV));
+            log.info("{}: needs reindexing, Installed index version @{}", book.getBookMetaData().getInitials(), installedV);
             return true;
         }
         return false;

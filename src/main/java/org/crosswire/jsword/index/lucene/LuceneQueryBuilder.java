@@ -21,6 +21,7 @@ package org.crosswire.jsword.index.lucene;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.lucene.index.Term;
 import org.crosswire.jsword.index.query.AndNotQuery;
 import org.crosswire.jsword.index.query.AndQuery;
 import org.crosswire.jsword.index.query.BaseQuery;
@@ -29,6 +30,7 @@ import org.crosswire.jsword.index.query.NullQuery;
 import org.crosswire.jsword.index.query.Query;
 import org.crosswire.jsword.index.query.QueryBuilder;
 import org.crosswire.jsword.index.query.RangeQuery;
+import org.crosswire.jsword.index.query.RegexpQuery;
 
 /**
  * A query can have a optional range specifier and an optional blur specifier.
@@ -77,10 +79,10 @@ public final class LuceneQueryBuilder implements QueryBuilder {
                 blurFactor = Integer.parseInt(blur);
             }
             Query left = new BaseQuery(sought.substring(i, blurMatcher.start()));
-            Query right = new BaseQuery(sought.substring(blurMatcher.end()));
+            Query right = parseRest(sought.substring(blurMatcher.end()));
             query = new BlurQuery(left, right, blurFactor);
-        } else if (sought.length() > 0) {
-            query = new BaseQuery(sought);
+        } else if (!sought.isEmpty()) {
+            query = parseRest(sought);
         }
 
         if (range != null && !NULL_QUERY.equals(query)) {
@@ -94,6 +96,25 @@ public final class LuceneQueryBuilder implements QueryBuilder {
 
         return query;
     }
+
+    /**
+     * Parse the rest of the query, after range and BlurQuery processing is done.
+     */
+    private Query parseRest(String aSearch) {
+        Matcher regexMatcher = REGEX_PATTERN.matcher(aSearch);
+        if (regexMatcher.find()) {
+            // The regex needs to match the whole string, so we add parts that always match the start and end of the string.
+            return new RegexpQuery("/.*?" + regexMatcher.group(1) + ".*/");
+        } else {
+            return new BaseQuery(aSearch);
+        }
+    }
+
+    /**
+     * The pattern of a regex query. Currently does not allow "/" characters in the regex string.
+     * Probably, "/" characters in text searches are not necessary, later the query can always be improved.
+     */
+    private static final Pattern REGEX_PATTERN = Pattern.compile("/([^/]+)/");
 
     /**
      * The pattern of a range. This is anything that is contained between a

@@ -44,6 +44,7 @@ public interface Index {
      * @throws BookException 
      */
     Key find(String query) throws BookException;
+    Key find(String query, boolean fullText) throws BookException;
 
     /**
      * An index must be able to create KeyLists for users in a similar way to
