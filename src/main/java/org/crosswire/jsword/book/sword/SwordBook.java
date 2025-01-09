@@ -37,6 +37,7 @@ import org.crosswire.jsword.versification.Versification;
 import org.jdom2.Attribute;
 import org.jdom2.Content;
 import org.jdom2.Element;
+import org.jdom2.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -223,11 +224,15 @@ public class SwordBook extends AbstractPassageBook {
 
         // See if the text is marked up with verse elements
         // If it is then just add it.
+        int textFound = 0;
         int start = 0;
-        int found = -1;
+        int preverseFound = -1;
         boolean wrapped = false;
         Element preverse = null;
         for (Content content : osisContent) {
+            if (content instanceof Text) {
+                textFound = start;
+            }
             if (content instanceof Element) {
                 Element ele = (Element) content;
                 String name = ele.getName();
@@ -241,7 +246,7 @@ public class SwordBook extends AbstractPassageBook {
                 if (subTypeAttr != null && "x-preverse".equals(subTypeAttr.getValue())) {
                     if (OSISUtil.OSIS_ELEMENT_DIV.equals(name) || OSISUtil.OSIS_ELEMENT_TITLE.equals(name)) {
                         preverse = ele;
-                        found = start;
+                        preverseFound = start;
                     }
                 } else if (typeAttr != null && "psalm".equals(typeAttr.getValue()) && OSISUtil.OSIS_ELEMENT_TITLE.equals(name)) {
                     // Psalm titles should be both canonical and preverse
@@ -253,7 +258,7 @@ public class SwordBook extends AbstractPassageBook {
                     if (subTypeAttr == null) {
                         ele.setAttribute(OSISUtil.OSIS_ATTR_SUBTYPE, "x-preverse");
                         preverse = ele;
-                        found = start;
+                        preverseFound = start;
                     }
                 }
             }
@@ -266,6 +271,9 @@ public class SwordBook extends AbstractPassageBook {
             return;
         }
 
+        // If x-preverse content is after text, it belongs before the next verse, not before this verse.
+        boolean preverseIsForNextVerse = preverseFound > textFound;
+
         // If we get here then the text is not marked up with verse
         // In this case we add the verse markup, if the verse is not 0.
         Element everse = OSISUtil.factory().createVerse();
@@ -274,7 +282,12 @@ public class SwordBook extends AbstractPassageBook {
         if (preverse == null) {
             everse.addContent(osisContent);
         } else {
-            List<Content> sublist = osisContent.subList(found + 1, osisContent.size());
+            int startPoint = Math.min(preverseFound + 1, textFound);
+            int endPoint = preverseIsForNextVerse
+                ? preverseFound - 1
+                : osisContent.size();
+
+            List<Content> sublist = osisContent.subList(startPoint, endPoint);
             everse.addContent(sublist);
             // a sub list is actually part of the original list
             // clearing it removes it from the original list
