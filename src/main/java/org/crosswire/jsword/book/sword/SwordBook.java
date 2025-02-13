@@ -230,7 +230,7 @@ public class SwordBook extends AbstractPassageBook {
         boolean wrapped = false;
         Element preverse = null;
         for (Content content : osisContent) {
-            if (content instanceof Text || (content instanceof Element && !((Element) content).getText().isEmpty())) {
+            if (content instanceof Text) {
                 textFound = start;
             }
             if (content instanceof Element) {
