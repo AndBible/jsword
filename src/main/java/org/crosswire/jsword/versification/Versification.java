@@ -323,13 +323,16 @@ public class Versification implements ReferenceSystem, Serializable {
      *
      * @param book the desired book
      * @param locale the desired locale for book name. If left null, returns with default locale
-     * @return The full name of the book
+     * @return The full name of the book or null if not in this versification
      */
     public String getPreferredNameInLocale(BibleBook book, Locale locale) {
-        if (locale != null) {
-            return BibleNames.instance().getPreferredNameInLocale(book, locale);
+        if (containsBook(book)) {
+            if (locale != null) {
+                return BibleNames.instance().getPreferredNameInLocale(book, locale);
+            }
+            return BibleNames.instance().getPreferredName(book);
         }
-        return BibleNames.instance().getPreferredName(book);
+        return null;
     }
 
     /**
@@ -692,6 +695,10 @@ public class Versification implements ReferenceSystem, Serializable {
      * @return The new Verse
      */
     public Verse subtract(Verse verse, int n) {
+        // Check to see if we are blurring 
+        if (n == 0) {
+            return verse;
+        }
         int newVerse = verse.getVerse() - n;
         // Try the simple case of the verse being in the same chapter
         if (newVerse >= 0) {
@@ -750,6 +757,10 @@ public class Versification implements ReferenceSystem, Serializable {
      * @return The new verse
      */
     public Verse add(Verse verse, int n) {
+        // Check to see if we are blurring 
+        if (n == 0) {
+            return verse;
+        }
         int newVerse = verse.getVerse() + n;
         // Try the simple case of the verse being in the same chapter
         if (newVerse <= getLastVerse(verse.getBook(), verse.getChapter())) {

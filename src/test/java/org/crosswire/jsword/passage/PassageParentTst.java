@@ -383,7 +383,6 @@ import org.junit.Test;
         Assert.assertEquals("Gen 1:26, 3:22, 11:7, 20:13, 31:7, 53, 35:7", keyf.getKey(v11n, "Ge 1:26  3:22  11:7  20:13  31:7, 53  35:7").getName());
     }
 
-    @Ignore
     @Test
     public void testWriteBlur() throws Exception {
         temp = (Passage) genC1V135r.clone();
@@ -409,19 +408,19 @@ import org.junit.Test;
         Assert.assertEquals(temp, keyf.getKey(v11n, "Gen 1:0-17"));
         temp = (Passage) genC1V135r.clone();
         temp.blur(12, RestrictionType.NONE);
-        Assert.assertEquals(temp, keyf.getKey(v11n, "Intro.OT 0:0-Gen 1:17"));
+        Assert.assertEquals(temp, keyf.getKey(v11n, "Bible.Intro-Gen 1:17"));
         temp = (Passage) genC1V135r.clone();
         temp.blur(26, RestrictionType.CHAPTER);
         Assert.assertEquals(temp, keyf.getKey(v11n, "Gen 1:0-31"));
         temp = (Passage) genC1V135r.clone();
         temp.blur(26, RestrictionType.NONE);
-        Assert.assertEquals(temp, keyf.getKey(v11n, "Intro.OT-Gen 1:31"));
+        Assert.assertEquals(temp, keyf.getKey(v11n, "Bible.Intro-Gen 1:31"));
         temp = (Passage) genC1V135r.clone();
         temp.blur(27, RestrictionType.CHAPTER);
         Assert.assertEquals(temp, keyf.getKey(v11n, "Gen 1:0-31"));
         temp = (Passage) genC1V135r.clone();
         temp.blur(27, RestrictionType.NONE);
-        Assert.assertEquals(temp, keyf.getKey(v11n, "Intro.OT-Gen 2:0"));
+        Assert.assertEquals(temp, keyf.getKey(v11n, "Bible.Intro-Gen 2:0"));
         temp = (Passage) exoC2V1To10C2V1To11r.clone();
         temp.blur(0, RestrictionType.CHAPTER);
         Assert.assertEquals(temp, keyf.getKey(v11n, "Exo 2:1-10, Exo 3:1-11"));
@@ -469,7 +468,7 @@ import org.junit.Test;
         Assert.assertEquals(temp, keyf.getKey(v11n, "Exo 2:1-3:22"));
         temp = (Passage) exoC2V1To10C2V1To11r.clone();
         temp.blur(99999, RestrictionType.NONE);
-        Assert.assertEquals(temp, keyf.getKey(v11n, "Intro.OT-Rev 22:21"));
+        Assert.assertEquals(temp, keyf.getKey(v11n, "Bible.Intro-Rev 22:21"));
     }
 
     @Test
@@ -567,16 +566,16 @@ import org.junit.Test;
 
     @Test
     public void testWriteCountVerses() {
-        Assert.assertEquals(genC1V135r.countVerses(), 3);
-        Assert.assertEquals(exoC2V1To10C2V1To11r.countVerses(), 21);
-        Assert.assertEquals(empty.countVerses(), 0);
+        Assert.assertEquals(3, genC1V135r.countVerses());
+        Assert.assertEquals(21, exoC2V1To10C2V1To11r.countVerses());
+        Assert.assertEquals(0, empty.countVerses());
     }
 
     @Test
     public void testWriteCountRanges() {
-        Assert.assertEquals(genC1V135r.countRanges(RestrictionType.NONE), 3);
-        Assert.assertEquals(exoC2V1To10C2V1To11r.countRanges(RestrictionType.NONE), 2);
-        Assert.assertEquals(empty.countVerses(), 0);
+        Assert.assertEquals(3, genC1V135r.countRanges(RestrictionType.NONE));
+        Assert.assertEquals(2, exoC2V1To10C2V1To11r.countRanges(RestrictionType.NONE));
+        Assert.assertEquals(0, empty.countVerses());
     }
 
     @Test
@@ -601,8 +600,8 @@ import org.junit.Test;
 
     @Test
     public void testWriteBooksInPassage() {
-        Assert.assertEquals(genC1V135r.booksInPassage(), 1);
-        Assert.assertEquals(exoC2V1To10C2V1To11r.booksInPassage(), 1);
+        Assert.assertEquals(1, genC1V135r.booksInPassage());
+        Assert.assertEquals(1, exoC2V1To10C2V1To11r.booksInPassage());
     }
 
     @Test
@@ -665,88 +664,87 @@ import org.junit.Test;
     public void testWriteAdd() throws Exception {
         temp = (Passage) genC1V135r.clone();
         temp.add(VerseFactory.fromString(v11n, "Gen 1:2"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-3, 5");
+        Assert.assertEquals("Gen 1:1-3, 5", temp.getName());
         temp.add(VerseFactory.fromString(v11n, "Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-5");
+        Assert.assertEquals("Gen 1:1-5", temp.getName());
         temp = (Passage) genC1V135r.clone();
         temp.add(VerseRangeFactory.fromString(v11n, "Gen 1:2-4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-5");
+        Assert.assertEquals("Gen 1:1-5", temp.getName());
         temp = (Passage) genC1V135r.clone();
         temp.add(VerseRangeFactory.fromString(v11n, "Gen 1:2"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-3, 5");
+        Assert.assertEquals("Gen 1:1-3, 5", temp.getName());
         temp.add(VerseRangeFactory.fromString(v11n, "Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-5");
+        Assert.assertEquals("Gen 1:1-5", temp.getName());
         temp = (Passage) genC1V135r.clone();
         temp.add(VerseRangeFactory.fromString(v11n, "Gen 1:1-5"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-5");
+        Assert.assertEquals("Gen 1:1-5", temp.getName());
     }
 
     @Test
     public void testWriteAddAll() throws Exception {
         temp = (Passage) genC1V135r.clone();
         temp.addAll(keyf.getKey(v11n, "Gen 1:2, Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-5");
+        Assert.assertEquals("Gen 1:1-5", temp.getName());
     }
 
     @Test
     public void testWriteClear() {
         temp = (Passage) genC1V135r.clone();
         temp.clear();
-        Assert.assertEquals(temp.getName(), "");
+        Assert.assertEquals("", temp.getName());
         temp.clear();
-        Assert.assertEquals(temp.getName(), "");
+        Assert.assertEquals("", temp.getName());
     }
 
     @Test
     public void testWriteRemove() throws Exception {
         temp = (Passage) genC1V135r.clone();
         temp.remove(VerseFactory.fromString(v11n, "Gen 1:3"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1, 5");
+        Assert.assertEquals("Gen 1:1, 5", temp.getName());
         temp.remove(VerseFactory.fromString(v11n, "Gen 1:5"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1");
+        Assert.assertEquals("Gen 1:1", temp.getName());
         temp.remove(VerseFactory.fromString(v11n, "Gen 1:1"));
-        Assert.assertEquals(temp.getName(), "");
+        Assert.assertEquals("", temp.getName());
         temp = keyf.getKey(v11n, "Gen 1:1-5");
         temp.remove(VerseFactory.fromString(v11n, "Gen 1:3"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1-2, 4-5");
+        Assert.assertEquals("Gen 1:1-2, 4-5", temp.getName());
     }
 
     @Test
     public void testWriteRemoveAllCollection() throws Exception {
         temp = keyf.getKey(v11n, "Gen 1:1-5");
         temp.removeAll(keyf.getKey(v11n, "Gen 1:2, Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1, 3, 5");
+        Assert.assertEquals("Gen 1:1, 3, 5", temp.getName());
         temp.removeAll(keyf.getKey(v11n, "Exo 1:2, Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1, 3, 5");
+        Assert.assertEquals("Gen 1:1, 3, 5", temp.getName());
         temp.removeAll(keyf.getKey(v11n, "Gen 1:2-Rev 22:21"));
-        Assert.assertEquals(temp.getName(), "Gen 1:1");
+        Assert.assertEquals("Gen 1:1", temp.getName());
         temp.removeAll(keyf.getKey(v11n, "Gen 1:1"));
-        Assert.assertEquals(temp.getName(), "");
+        Assert.assertEquals("", temp.getName());
     }
 
-    @Ignore
     @Test
     public void testWriteRetainAllCollection() throws Exception {
         temp = keyf.getKey(v11n, "Gen 1:1-5");
         temp.retainAll(keyf.getKey(v11n, "Gen 1:2, Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:2, 4");
+        Assert.assertEquals("Gen 1:2, 4", temp.getName());
         temp.retainAll(keyf.getKey(v11n, "Exo 1:2, Gen 1:4"));
-        Assert.assertEquals(temp.getName(), "Gen 1:4");
+        Assert.assertEquals("Gen 1:4", temp.getName());
         temp.retainAll(keyf.getKey(v11n, "Gen 1:2-Rev 22:21"));
-        Assert.assertEquals(temp.getName(), "Gen 1:4");
+        Assert.assertEquals("Gen 1:4", temp.getName());
         temp.retainAll(keyf.getKey(v11n, "Gen 1:1"));
-        Assert.assertEquals(temp.getName(), "");
+        Assert.assertEquals("", temp.getName());
 
         temp.addAll(grace);
         Assert.assertEquals(temp.countVerses(), grace.countVerses());
         temp.retainAll(genToRev);
         Assert.assertEquals(temp, grace);
         temp.retainAll(keyf.getKey(v11n, "gen"));
-        Assert.assertEquals(temp.countVerses(), 10);
+        Assert.assertEquals(10, temp.countVerses());
         temp.retainAll(keyf.getKey(v11n, "gen 35:1-rev"));
-        Assert.assertEquals(temp.countVerses(), 4);
+        Assert.assertEquals(4, temp.countVerses());
         temp.retainAll(keyf.getKey(v11n, "exo-rev"));
-        Assert.assertEquals(temp.getName(), "");
+        Assert.assertEquals("", temp.getName());
     }
 
     @Test
