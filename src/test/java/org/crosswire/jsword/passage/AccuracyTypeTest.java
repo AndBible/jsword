@@ -94,4 +94,62 @@ public class AccuracyTypeTest {
         }
     }
 
+    @Test
+    public void testTokenizeBookNamesWithDigits() throws NoSuchVerseException {
+        // Test that book names starting with digits are not split incorrectly
+        String[] result1 = AccuracyType.tokenize("2Macc.10.38");
+        Assert.assertEquals("Book name '2Macc' should not be split", 3, result1.length);
+        Assert.assertEquals("First token should be '2Macc'", "2Macc", result1[0]);
+        Assert.assertEquals("Second token should be '10'", "10", result1[1]);
+        Assert.assertEquals("Third token should be '38'", "38", result1[2]);
+
+        String[] result2 = AccuracyType.tokenize("1Esd.1.12");
+        Assert.assertEquals("Book name '1Esd' should not be split", 3, result2.length);
+        Assert.assertEquals("First token should be '1Esd'", "1Esd", result2[0]);
+        Assert.assertEquals("Second token should be '1'", "1", result2[1]);
+        Assert.assertEquals("Third token should be '12'", "12", result2[2]);
+
+        String[] result3 = AccuracyType.tokenize("3John.1.1");
+        Assert.assertEquals("Book name '3John' should not be split", 3, result3.length);
+        Assert.assertEquals("First token should be '3John'", "3John", result3[0]);
+        Assert.assertEquals("Second token should be '1'", "1", result3[1]);
+        Assert.assertEquals("Third token should be '1'", "1", result3[2]);
+    }
+
+    @Test
+    public void testTokenizeRegularVerseStillWorks() throws NoSuchVerseException {
+        // Test that regular verse parsing still works correctly
+        String[] result1 = AccuracyType.tokenize("Gen.1.1");
+        Assert.assertEquals("Regular verse should have 3 parts", 3, result1.length);
+        Assert.assertEquals("First token should be 'Gen'", "Gen", result1[0]);
+        Assert.assertEquals("Second token should be '1'", "1", result1[1]);
+        Assert.assertEquals("Third token should be '1'", "1", result1[2]);
+
+        String[] result2 = AccuracyType.tokenize("Genesis 1:1");
+        Assert.assertEquals("Regular verse should have 3 parts", 3, result2.length);
+        Assert.assertEquals("First token should be 'Genesis'", "Genesis", result2[0]);
+        Assert.assertEquals("Second token should be '1'", "1", result2[1]);
+        Assert.assertEquals("Third token should be '1'", "1", result2[2]);
+    }
+
+    @Test
+    public void testTokenizeManualVerification() throws NoSuchVerseException {
+        // Manual verification that our fix solves the GitHub issue cases
+        System.out.println("Testing tokenization for problematic cases:");
+        
+        String[] test1 = AccuracyType.tokenize("2Macc.10.38");
+        System.out.println("2Macc.10.38 -> " + java.util.Arrays.toString(test1));
+        Assert.assertEquals("Should have 3 tokens", 3, test1.length);
+        Assert.assertEquals("First should be book name", "2Macc", test1[0]);
+        
+        String[] test2 = AccuracyType.tokenize("1Esd.1.12");
+        System.out.println("1Esd.1.12 -> " + java.util.Arrays.toString(test2));
+        Assert.assertEquals("Should have 3 tokens", 3, test2.length);
+        Assert.assertEquals("First should be book name", "1Esd", test2[0]);
+        
+        // Test the case from GitHub issue #3214
+        String[] test3 = AccuracyType.tokenize("Bible:Gen.4.26");
+        System.out.println("Bible:Gen.4.26 -> " + java.util.Arrays.toString(test3));
+        // This should still work but may have more tokens due to the prefix
+    }
 }

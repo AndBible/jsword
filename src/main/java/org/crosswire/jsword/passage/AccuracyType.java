@@ -626,9 +626,13 @@ public enum AccuracyType {
                 if (charWasDigit || Character.isLetter(lastChar)) {
                     foundBoundary = false;
                     // Replace transitions between digits and letters with
-                    // spaces.
+                    // spaces, but not for book names that start with digits
                     if (normalizedLength > 0 && charWasDigit != charIsDigit) {
-                        foundBoundary = true;
+                        // Don't split if this looks like a book name (digit followed by letters at start of token)
+                        boolean isBookNamePattern = charWasDigit && Character.isLetter(curChar) && tokenCount == 0;
+                        if (!isBookNamePattern) {
+                            foundBoundary = true;
+                        }
                     }
                 }
                 if (foundBoundary) {
