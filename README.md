@@ -11,7 +11,7 @@
 
 JSword aims to make the Bible and related texts freely available in a wide range of languages and translations. It supports a variety of modern and ancient Bible versions, commentaries, dictionaries, daily devotionals, and other resources.
 
-JSword powers several open-source projects, including [BibleDesktop](https://github.com/crosswire/bibledesktop) and [And Bible](https://github.com/AndBible/and-bible). The library is designed for cross-platform use and can be integrated into both desktop and mobile applications.
+JSword powers several open-source projects, including [BibleDesktop](https://crosswire.org/bibledesktop/download.html) and [And Bible](https://github.com/AndBible/and-bible). The library is designed for cross-platform use and can be integrated into both desktop and mobile applications.
 
 ---
 
