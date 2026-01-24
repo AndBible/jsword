@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.crypt;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * The Sapphire II Stream Cipher is a port of Sword's C++ implementation of
  * Michael Paul Johnson's 2 January 1995 public domain cipher. Below is the
@@ -475,8 +477,24 @@ package org.crosswire.common.crypt;
 public class Sapphire {
 
     /**
+     * Character mapping table used by personalize() for key derivation.
+     * Ported from libsword's swcipher.cpp.
+     */
+    private static final char[] LATS = {
+        'b', 'c', 'e', 'a', 'f', 'g', 'i', 'j', 'k', 'l',
+        'h', 'm', 'p', 'q', 'B', 'r', 'H', 'o', 's', 't',
+        'T', 'u', 'w', 'x', 'y', 'A', 'd', 'C', 'D', 'z',
+        'E', 'F', 'I', 'J', 'K', 'G', 'L', 'N', 'O', '7',
+        'P', 'Q', 'M', 'R', 'S', 'U', 'V', 'W', 'X', 'Y',
+        '9', '0', '1', '2', 'Z', '3', '6', '4', 'n', '8',
+        'v', '5'
+    };
+
+    /**
      * Construct a Sapphire Stream Cipher from a key, possibly null or empty.
-     * 
+     * The key is first processed through personalize() to handle SWORD-style
+     * license keys (e.g., "Hae1406-QW0c-0jvi-719j-0Hby").
+     *
      * @param aKey the cipher key
      */
     public Sapphire(byte[] aKey) {
@@ -486,10 +504,151 @@ public class Sapphire {
         }
         cards = new int[256];
         if (key.length > 0) {
+            // Apply personalize() to derive the actual cipher key from license key format
+            key = personalize(key);
             initialize(key);
         } else {
             hashInit();
         }
+    }
+
+    /**
+     * Derives the actual cipher key from a SWORD-style license key.
+     * <p>
+     * License keys have the format "XXXX-XXXX-XXXX-XXXX-CCCC" where the last
+     * segment is a checksum. If the checksum validates, the key is transformed
+     * into the internal cipher key. If validation fails (e.g., for simple keys
+     * or already-transformed keys), the original key is returned unchanged.
+     * </p>
+     * <p>
+     * This provides backward compatibility: existing modules using simple keys
+     * continue to work, while new license-format keys are properly transformed.
+     * </p>
+     * <p>
+     * Ported from libsword's SWCipher::personalize() in swcipher.cpp.
+     * </p>
+     *
+     * @param key the input key bytes
+     * @return the derived cipher key, or the original if not in license format
+     */
+    private static byte[] personalize(byte[] key) {
+        String buf = new String(key, StandardCharsets.ISO_8859_1);
+
+        // Build character hash map
+        int[] charHash = new int[128];
+        for (int i = 0; i < 62; i++) {
+            charHash[LATS[i]] = i;
+        }
+
+        // Split into segments by '-'
+        String[] segs = new String[5];
+        int segn = 0;
+        StringBuilder currentSeg = new StringBuilder();
+        for (int i = 0; i < buf.length() && segn < 5; i++) {
+            if (buf.charAt(i) == '-') {
+                segs[segn++] = currentSeg.toString();
+                currentSeg = new StringBuilder();
+            } else {
+                currentSeg.append(buf.charAt(i));
+            }
+        }
+        if (segn < 5) {
+            segs[segn] = currentSeg.toString();
+        }
+
+        // Fill empty segments
+        for (int i = 0; i < 5; i++) {
+            if (segs[i] == null) {
+                segs[i] = "";
+            }
+        }
+
+        String chkSum = segs[4];
+
+        // Ensure segs[4] has at least 4 characters for checksum storage
+        if (segs[4].length() < 4) {
+            StringBuilder sb = new StringBuilder(segs[4]);
+            while (sb.length() < 4) {
+                sb.append(' ');
+            }
+            segs[4] = sb.toString();
+        }
+
+        StringBuilder[] segBuilders = new StringBuilder[5];
+        for (int i = 0; i < 5; i++) {
+            segBuilders[i] = new StringBuilder(segs[i]);
+        }
+
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < 4; i++) {
+            int csum = 0;
+            int segLen = segs[i].length();
+            int seg0Len = segs[0].length();
+
+            if (seg0Len == 0) {
+                // Can't process without first segment
+                continue;
+            }
+
+            for (int j = 0; j < segLen && j < seg0Len; j++) {
+                char c = segs[i].charAt(j);
+                char c0 = segs[0].charAt(j % seg0Len);
+
+                // Check if characters are in valid range
+                if (c >= 128 || c0 >= 128 || charHash[c] == 0 && c != 'b' || charHash[c0] == 0 && c0 != 'b') {
+                    // Character not in LATS, skip
+                    // Note: 'b' maps to 0, so we need special handling
+                    boolean cValid = false;
+                    boolean c0Valid = false;
+                    for (char lat : LATS) {
+                        if (lat == c) cValid = true;
+                        if (lat == c0) c0Valid = true;
+                    }
+                    if (!cValid || !c0Valid) {
+                        continue;
+                    }
+                }
+
+                int hash = charHash[c];
+                int obfusHash = charHash[c0];
+
+                // Decode mode (encode = false)
+                obfusHash = hash + (i != 0 ? obfusHash : 0);
+                obfusHash %= 62;
+
+                if (i != 0) {
+                    segBuilders[i].setCharAt(j, LATS[obfusHash]);
+                }
+                csum += hash;
+            }
+
+            // Update checksum character
+            if (i < 4 && segBuilders[4].length() > i) {
+                segBuilders[4].setCharAt(i, LATS[csum % 62]);
+            }
+
+            // Build result (skip first segment when decoding)
+            if (i == 0) {
+                // Don't add first segment to result when decoding
+            } else {
+                if (result.length() > 0) {
+                    result.append('-');
+                }
+                result.append(segBuilders[i].toString());
+            }
+        }
+
+        // Verify checksum - if it doesn't match, return original key
+        String computedChecksum = segBuilders[4].toString().substring(0, Math.min(4, segBuilders[4].length()));
+        String originalChecksum = chkSum.length() >= 4 ? chkSum.substring(0, 4) : chkSum;
+
+        if (!computedChecksum.equals(originalChecksum)) {
+            // Checksum mismatch - return original key unchanged (backward compatibility)
+            return key;
+        }
+
+        return result.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
     /**
