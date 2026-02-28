@@ -267,12 +267,14 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
     /**
      * Initializes the directory and searcher.
      */
-    private void initDirectoryAndSearcher() {
+    private void initDirectoryAndSearcher() throws BookException {
         try {
             directory = FSDirectory.open(new File(path));
             searcher = new IndexSearcher(directory, true);
         } catch (IOException ex) {
-            log.warn("second load failure", ex);
+            log.warn("Failed to open Lucene index at {}", path, ex);
+            // TRANSLATOR: Error condition: Could not initialize a search index.
+            throw new BookException(JSMsg.gettext("Failed to initialize Lucene search engine."), ex);
         }
     }
 
@@ -280,6 +282,11 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
      * @see org.crosswire.jsword.index.Index#find(java.lang.String)
      */
     public Key find(String search) throws BookException {
+        if (searcher == null) {
+            // TRANSLATOR: Error condition: An unexpected error happened that caused search to fail.
+            throw new BookException(JSMsg.gettext("Search failed."));
+        }
+
         String v11nName = book.getBookMetaData().getProperty("Versification").toString();
         Versification v11n = Versifications.instance().getVersification(v11nName);
 
