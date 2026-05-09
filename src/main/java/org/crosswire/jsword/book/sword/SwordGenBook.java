@@ -70,18 +70,21 @@ public class SwordGenBook extends AbstractBook {
      * @see org.crosswire.jsword.book.basic.AbstractBook#activate(org.crosswire.common.activate.Lock)
      */
     @Override
-    public final void activate(Lock lock) {
+    public final synchronized void activate(Lock lock) {
         super.activate(lock);
 
-        set = getBackend().readIndex();
-
-        map = new HashMap<String, Key>();
-        for (Key key : set) {
-            map.put(key.getOsisRef(), key);
+        Key newSet = getBackend().readIndex();
+        Map<String, Key> newMap = new HashMap<String, Key>();
+        for (Key key : newSet) {
+            newMap.put(key.getOsisRef(), key);
         }
 
-        global = new ReadOnlyKeyList(set, false);
-
+        // Publish fully-populated state before flipping active=true so that
+        // a concurrent reader observing active=true is guaranteed to see a
+        // non-null, fully-populated map.
+        set = newSet;
+        map = newMap;
+        global = new ReadOnlyKeyList(newSet, false);
         active = true;
 
         // We don't need to activate the backend because it should be capable
@@ -92,14 +95,18 @@ public class SwordGenBook extends AbstractBook {
      * @see org.crosswire.jsword.book.basic.AbstractBook#deactivate(org.crosswire.common.activate.Lock)
      */
     @Override
-    public final void deactivate(Lock lock) {
+    public final synchronized void deactivate(Lock lock) {
         super.deactivate(lock);
+
+        // Flip active=false BEFORE nulling the fields so that a concurrent
+        // reader passing checkActive() (active==true) is guaranteed to still
+        // see non-null map/set/global. Otherwise a race between deactivate
+        // and getKey() can produce NPE on map.get().
+        active = false;
 
         map = null;
         set = null;
         global = null;
-
-        active = false;
     }
 
     /* (non-Javadoc)
@@ -254,9 +261,11 @@ public class SwordGenBook extends AbstractBook {
     private Key global;
 
     /**
-     * Are we active
+     * Are we active.
+     * Volatile so that a reader thread sees the latest value without
+     * needing to enter the synchronized block (cf. checkActive()).
      */
-    private boolean active;
+    private volatile boolean active;
 
     /**
      * So we can quickly find a Key given the text for the key
