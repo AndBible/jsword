@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.versification;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import java.util.Locale;
@@ -119,7 +120,16 @@ public class BibleNamesTest {
 
     @Test
     public void testLoadIN() {
+        // "in" is the legacy ISO code for Indonesian (modern "id"); both must yield
+        // Indonesian book names, never Hindi. BibleNames_in.properties previously held
+        // a copy of the Hindi names, which surfaced as Hindi for Indonesian users on
+        // runtimes that resolve Indonesian to the "in" bundle (e.g. Android's ART).
         BibleNames.instance().load(new Locale("in"));
+        String viaIn = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, new Locale("in"));
+        String viaId = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, new Locale("id"));
+        String hindi = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, new Locale("hi"));
+        assertEquals(viaId, viaIn);
+        assertNotEquals(hindi, viaIn);
     }
 
     @Test
