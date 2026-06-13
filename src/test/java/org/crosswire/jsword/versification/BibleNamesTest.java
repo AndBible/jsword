@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.versification;
 
+import static org.junit.Assert.assertNotEquals;
+
 import java.util.Locale;
 
 import org.junit.Test;
@@ -233,6 +235,15 @@ public class BibleNamesTest {
     @Test
     public void testLoadSwahili() {
         BibleNames.instance().load(new Locale("sw"));
+    }
+
+    @Test
+    public void testLoadMS() {
+        Locale locale = new Locale("ms");
+        BibleNames.instance().load(locale);
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        assertNotEquals(english, localized);
     }
 
 }
