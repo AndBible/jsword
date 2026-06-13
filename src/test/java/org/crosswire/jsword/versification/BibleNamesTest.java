@@ -265,4 +265,13 @@ public class BibleNamesTest {
         assertNotEquals(english, localized);
     }
 
+    @Test
+    public void testLoadNE() {
+        Locale locale = new Locale("ne");
+        BibleNames.instance().load(locale);
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        assertNotEquals(english, localized);
+    }
+
 }
