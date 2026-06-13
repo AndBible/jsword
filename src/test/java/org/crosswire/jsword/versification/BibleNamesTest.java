@@ -255,4 +255,14 @@ public class BibleNamesTest {
         assertNotEquals(english, localized);
     }
 
+    @Test
+    public void testLoadFIL() {
+        // Filipino Genesis is also "Genesis"; assert on Exodus ("Exodo") instead.
+        Locale locale = new Locale("fil");
+        BibleNames.instance().load(locale);
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.EXOD, locale);
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.EXOD, Locale.ENGLISH);
+        assertNotEquals(english, localized);
+    }
+
 }
