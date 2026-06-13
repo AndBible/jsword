@@ -274,4 +274,13 @@ public class BibleNamesTest {
         assertNotEquals(english, localized);
     }
 
+    @Test
+    public void testLoadUR() {
+        Locale locale = new Locale("ur");
+        BibleNames.instance().load(locale);
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        assertNotEquals(english, localized);
+    }
+
 }
