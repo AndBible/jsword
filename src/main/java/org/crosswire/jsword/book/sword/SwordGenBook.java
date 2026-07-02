@@ -206,29 +206,42 @@ public class SwordGenBook extends AbstractBook {
     public Key getKey(String text) throws NoSuchKeyException {
         checkActive();
 
-        Key key = map.get(text);
+        // Snapshot the map into a local reference. A concurrent deactivate()
+        // may null the map field after checkActive() has returned, so working
+        // off the field directly could hit map.get() on null. If we lost that
+        // race, force a re-activation and re-snapshot before giving up.
+        Map<String, Key> localMap = map;
+        if (localMap == null) {
+            Activator.activate(this);
+            localMap = map;
+        }
+        if (localMap == null) {
+            throw new NoSuchKeyException(JSMsg.gettext("No entry for '{0}' in {1}.", text, getInitials()));
+        }
+
+        Key key = localMap.get(text);
         if (key != null) {
             return key;
         }
 
         // First check for keys that match ignoring case
-        for (String keyName : map.keySet()) {
+        for (String keyName : localMap.keySet()) {
             if (keyName.equalsIgnoreCase(text)) {
-                return map.get(keyName);
+                return localMap.get(keyName);
             }
         }
 
         // Next keys that start with the given text
-        for (String keyName : map.keySet()) {
+        for (String keyName : localMap.keySet()) {
             if (keyName.startsWith(text)) {
-                return map.get(keyName);
+                return localMap.get(keyName);
             }
         }
 
         // Next try keys that contain the given text
-        for (String keyName : map.keySet()) {
+        for (String keyName : localMap.keySet()) {
             if (keyName.indexOf(text) != -1) {
-                return map.get(keyName);
+                return localMap.get(keyName);
             }
         }
 

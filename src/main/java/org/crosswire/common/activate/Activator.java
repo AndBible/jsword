@@ -42,12 +42,19 @@ public final class Activator {
 
     /**
      * Check that a subject is activated and call activate() if not.
-     * 
+     *
+     * <p>Synchronized so the contains-check and the activate()/add() form a
+     * single atomic operation. Otherwise a concurrent {@link #deactivate} could
+     * leave the {@code activated} set desynced from the subject's own state,
+     * causing a reactivation to be wrongly skipped (see JSword issue: NPE in
+     * SwordGenBook.getKey when a book is (de)activated on one thread while read
+     * on another).
+     *
      * @param subject
      *            The thing to activate
      */
-    public static void activate(Activatable subject) {
-        if (!activated.contains(subject) && subject != null) {
+    public static synchronized void activate(Activatable subject) {
+        if (subject != null && !activated.contains(subject)) {
             subject.activate(lock);
             activated.add(subject);
         }
@@ -71,17 +78,20 @@ public final class Activator {
      * @param subject
      *            The thing to deactivate
      */
-    public static void deactivate(Activatable subject) {
-        if (activated.contains(subject) && subject != null) {
+    public static synchronized void deactivate(Activatable subject) {
+        if (subject != null && activated.contains(subject)) {
             subject.deactivate(lock);
             activated.remove(subject);
         }
     }
 
-    public static void deactivateAll() {
+    public static synchronized void deactivateAll() {
+        // Deactivate directly (not via deactivate()) and clear afterwards so we
+        // don't remove entries while iterating the set.
         for (Activatable item : activated) {
-            deactivate(item);
+            item.deactivate(lock);
         }
+        activated.clear();
     }
 
     /**
