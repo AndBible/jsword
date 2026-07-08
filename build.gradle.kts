@@ -5,6 +5,15 @@ plugins {
 }
 
 
+java {
+    // Emit Java 17 bytecode regardless of the JDK running Gradle, so :jsword classes
+    // load in the :app module's Java 17 test/runtime toolchain. (CI runs on JDK 17;
+    // the in-container JAVA_HOME is JDK 21, which would otherwise produce Java 21
+    // bytecode the Java 17 test JVM cannot load.)
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 tasks.withType<JavaCompile>() {
     options.encoding = "UTF-8"
 }
@@ -17,10 +26,6 @@ tasks.withType<Test>() {
 
 group = "org.crosswire"
 version = "2.3-SNAPSHOT"
-
-repositories {
-    mavenCentral()
-}
 
 dependencies {
 //    implementation("org.jetbrains.kotlin:kotlin-stdlib")
