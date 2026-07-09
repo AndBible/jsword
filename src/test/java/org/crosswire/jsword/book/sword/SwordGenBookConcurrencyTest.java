@@ -140,4 +140,78 @@ public class SwordGenBookConcurrencyTest {
             throw new AssertionError("getKey() must not fail under concurrent (de)activation, but threw: " + t, t);
         }
     }
+
+    /**
+     * Reproduces OSTicket 3369: {@link SwordGenBook#getGlobalKeyList()} returned
+     * the {@code global} field directly after {@code checkActive()}. A concurrent
+     * {@code deactivate()} nulls {@code global}, so the reader (CachedKeyPage on
+     * the WebView handler thread, iterating {@code doc.getGlobalKeyList()}) could
+     * receive null and crash. getGlobalKeyList() must never return null.
+     */
+    @Test
+    public void testGetGlobalKeyListDoesNotReturnNullUnderConcurrentActivation() throws Exception {
+        final SwordGenBook book = createBook();
+
+        Activator.activate(book);
+
+        final int readers = 4;
+        final int iterations = 20000;
+        final AtomicReference<Throwable> failure = new AtomicReference<Throwable>();
+        final CountDownLatch start = new CountDownLatch(1);
+        final CountDownLatch done = new CountDownLatch(readers + 1);
+
+        Thread refresher = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    start.await();
+                    for (int i = 0; i < iterations && failure.get() == null; i++) {
+                        Activator.deactivate(book);
+                        Activator.activate(book);
+                    }
+                } catch (Throwable t) {
+                    failure.compareAndSet(null, t);
+                } finally {
+                    done.countDown();
+                }
+            }
+        }, "refresher");
+        refresher.start();
+
+        // Reader threads mimic CachedKeyPage.cachedGlobalKeyList's
+        // `for (key in doc.globalKeyList)` iteration.
+        for (int r = 0; r < readers; r++) {
+            Thread reader = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        start.await();
+                        for (int i = 0; i < iterations && failure.get() == null; i++) {
+                            Key global = book.getGlobalKeyList();
+                            if (global == null) {
+                                failure.compareAndSet(null,
+                                        new AssertionError("getGlobalKeyList() returned null"));
+                                return;
+                            }
+                            // Iterating (as CachedKeyPage does) must not NPE either.
+                            for (Key ignored : global) {
+                                // no-op
+                            }
+                        }
+                    } catch (Throwable t) {
+                        failure.compareAndSet(null, t);
+                    } finally {
+                        done.countDown();
+                    }
+                }
+            }, "reader-" + r);
+            reader.start();
+        }
+
+        start.countDown();
+        Assert.assertTrue("threads did not finish in time", done.await(60, TimeUnit.SECONDS));
+
+        Throwable t = failure.get();
+        if (t != null) {
+            throw new AssertionError("getGlobalKeyList() must not return null or NPE under concurrent (de)activation, but: " + t, t);
+        }
+    }
 }

@@ -186,7 +186,21 @@ public class SwordGenBook extends AbstractBook {
     public Key getGlobalKeyList() {
         checkActive();
 
-        return global;
+        // Snapshot the field into a local reference. A concurrent deactivate()
+        // may null the global field after checkActive() has returned, so
+        // returning the field directly could hand back null to the caller. If
+        // we lost that race, force a re-activation and re-snapshot before
+        // falling back to an empty key list.
+        Key localGlobal = global;
+        if (localGlobal == null) {
+            Activator.activate(this);
+            localGlobal = global;
+        }
+        if (localGlobal == null) {
+            return createEmptyKeyList();
+        }
+
+        return localGlobal;
     }
 
     /* (non-Javadoc)
