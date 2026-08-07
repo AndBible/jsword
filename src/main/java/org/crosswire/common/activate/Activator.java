@@ -19,7 +19,8 @@
  */
 package org.crosswire.common.activate;
 
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 /**
@@ -95,9 +96,18 @@ public final class Activator {
     }
 
     /**
-     * The list of things that we have activated
+     * The list of things that we have activated.
+     *
+     * <p>Identity-based on purpose. Activation state lives in the instance
+     * (e.g. SwordGenBook's key map), so it must be tracked per instance, not
+     * per equal value. Book equality is by (category, name, initials), so a
+     * replacement instance for the same module compares equal to the one it
+     * replaced. With a value-based set, activating the replacement would be
+     * skipped as "already activated" and its key map would stay null, making
+     * every getKey() throw NoSuchKeyException and getGlobalKeyList() return an
+     * empty list until something forced a deactivate/activate cycle.
      */
-    private static Set<Activatable> activated = new HashSet<Activatable>();
+    private static Set<Activatable> activated = Collections.newSetFromMap(new IdentityHashMap<Activatable, Boolean>());
 
     /**
      * The object we use to prevent others from
