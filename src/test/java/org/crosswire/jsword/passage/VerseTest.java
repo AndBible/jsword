@@ -23,6 +23,7 @@ import org.crosswire.jsword.versification.BibleBook;
 import org.crosswire.jsword.versification.BookName;
 import org.crosswire.jsword.versification.Versification;
 import org.crosswire.jsword.versification.system.Versifications;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,9 +59,11 @@ public class VerseTest {
     private Verse ssa00;
     private Verse ssa10;
     private Verse ssa11;
+    private boolean fullName;
 
     @Before
     public void setUp() throws Exception {
+        fullName = BookName.isFullBookName();
         BookName.setFullBookName(false);
         // AV11N(DMS): Update test to test all V11Ns
         v11n = Versifications.instance().getVersification("KJV");
@@ -86,6 +89,11 @@ public class VerseTest {
         ssa00 = new Verse(v11n, BibleBook.SAM2, 0, 0);
         ssa10 = new Verse(v11n, BibleBook.SAM2, 1, 0);
         ssa11 = new Verse(v11n, BibleBook.SAM2, 1, 1);
+    }
+
+    @After
+    public void tearDown() {
+        BookName.setFullBookName(fullName);
     }
 
    @Test
