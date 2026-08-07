@@ -21,9 +21,23 @@ package org.crosswire.jsword.versification;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -33,6 +47,23 @@ import org.junit.Test;
  * @author DM Smith
  */
 public class BibleNamesTest {
+    private boolean fullName;
+
+    /**
+     * {@link BookName#setFullBookName(boolean)} is global state that several other test classes
+     * change without restoring it. Pin it here so that these tests do not depend on test order.
+     */
+    @Before
+    public void setUp() {
+        fullName = BookName.isFullBookName();
+        BookName.setFullBookName(true);
+    }
+
+    @After
+    public void tearDown() {
+        BookName.setFullBookName(fullName);
+    }
+
     @Test
     public void testLoadEnglish() {
         BibleNames.instance().load(Locale.ENGLISH);
@@ -300,6 +331,66 @@ public class BibleNamesTest {
         String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
         String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
         assertNotEquals(english, localized);
+    }
+
+    /**
+     * Short book names are used whenever {@link BookName#isFullBookName()} is false. A locale
+     * bundle that defines &lt;book&gt;.Full but omits &lt;book&gt;.Short does not fail loudly:
+     * ResourceBundle silently inherits the ENGLISH abbreviation from BibleNames.properties through
+     * the parent chain, so that locale ends up showing English abbreviations. Require every bundle
+     * to define its own Short (and Alt) key for each Full key it defines. An empty value is fine —
+     * it makes the localized full name serve as the short name.
+     */
+    @Test
+    public void testEveryBundleDefinesItsOwnShortAndAltNames() throws IOException {
+        List<String> problems = new ArrayList<String>();
+        for (File bundle : listBibleNamesBundles()) {
+            Properties props = new Properties();
+            InputStream in = new FileInputStream(bundle);
+            try {
+                // Keys are ASCII, so the ISO-8859-1 decoding used by Properties is harmless here.
+                props.load(in);
+            } finally {
+                in.close();
+            }
+            for (String key : props.stringPropertyNames()) {
+                if (!key.endsWith(".Full")) {
+                    continue;
+                }
+                String book = key.substring(0, key.length() - ".Full".length());
+                for (String suffix : new String[] {".Short", ".Alt"}) {
+                    if (!props.containsKey(book + suffix)) {
+                        problems.add(bundle.getName() + " defines " + key + " but not " + book + suffix);
+                    }
+                }
+            }
+        }
+        if (!problems.isEmpty()) {
+            fail("Incomplete BibleNames bundles (missing keys inherit English values):\n"
+                    + String.join("\n", problems));
+        }
+    }
+
+    private List<File> listBibleNamesBundles() {
+        URL base = BibleNames.class.getClassLoader().getResource("BibleNames.properties");
+        assertNotNull("BibleNames.properties must be on the classpath", base);
+        assertEquals("BibleNames.properties must be an unpacked file", "file", base.getProtocol());
+
+        File dir;
+        try {
+            dir = new File(base.toURI()).getParentFile();
+        } catch (URISyntaxException e) {
+            throw new AssertionError(e);
+        }
+        File[] files = dir.listFiles((d, name) -> name.startsWith("BibleNames") && name.endsWith(".properties"));
+        assertNotNull("Could not list " + dir, files);
+
+        List<File> bundles = new ArrayList<File>();
+        for (File file : files) {
+            bundles.add(file);
+        }
+        assertTrue("Expected to find several BibleNames bundles, found " + bundles.size(), bundles.size() > 10);
+        return bundles;
     }
 
 }
