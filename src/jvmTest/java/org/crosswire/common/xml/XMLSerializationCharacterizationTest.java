@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2026
+ * \u00A9 CrossWire Bible Society, 2026
  *
  */
 package org.crosswire.common.xml;
@@ -51,8 +51,8 @@ import org.xml.sax.helpers.AttributesImpl;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
 public class XMLSerializationCharacterizationTest {
-    /** é and the euro sign, written as escapes so that the source stays ASCII. */
-    private static final String UNICODE = "é€";
+    /** \u00E9 and the euro sign, written as escapes so that the source stays ASCII. */
+    private static final String UNICODE = "\u00E9\u20AC";
 
     private static AttributesImpl attrs(String... namesAndValues) {
         AttributesImpl attrs = new AttributesImpl();
@@ -405,7 +405,7 @@ public class XMLSerializationCharacterizationTest {
     public void testCleanAllEntities() {
         // &nbsp; becomes U+00A0, &amp; stays, unknown &foo; becomes a space, numeric references stay
         // (also the hex one with decimal digits), and the final bare & is escaped
-        Assert.assertEquals(" &amp; &#65;&#x42;&amp;", XMLUtil.cleanAllEntities("&nbsp;&amp;&foo;&#65;&#x42;&"));
+        Assert.assertEquals("\u00A0&amp; &#65;&#x42;&amp;", XMLUtil.cleanAllEntities("&nbsp;&amp;&foo;&#65;&#x42;&"));
         // The numeric pattern only allows 2-4 decimal digits: letters in a hex reference are not accepted
         Assert.assertEquals("&amp;#xAB;", XMLUtil.cleanAllEntities("&#xAB;"));
         Assert.assertEquals("&amp;#1;", XMLUtil.cleanAllEntities("&#1;"));
@@ -415,13 +415,13 @@ public class XMLSerializationCharacterizationTest {
     public void testCleanAllCharacters() {
         Assert.assertEquals("", XMLUtil.cleanAllCharacters(""));
         Assert.assertEquals("a\tb\r\nc" + UNICODE, XMLUtil.cleanAllCharacters("a\tb\r\nc" + UNICODE));
-        Assert.assertEquals("a b c d", XMLUtil.cleanAllCharacters("a\u0001b￾c￿d"));
+        Assert.assertEquals("a b c d", XMLUtil.cleanAllCharacters("a\u0001b\uFFFEc\uFFFFd"));
         // The range ends at U+FFFD
-        Assert.assertEquals("퟿�", XMLUtil.cleanAllCharacters("퟿�"));
+        Assert.assertEquals("\uD7FF\uE000\uFFFD", XMLUtil.cleanAllCharacters("\uD7FF\uE000\uFFFD"));
         Assert.assertEquals(" ", XMLUtil.cleanAllCharacters("\u0000"));
         Assert.assertEquals(" ", XMLUtil.cleanAllCharacters("\u0008"));
         // A supplementary character is one code point for the regex and not in the allowed set: one space
-        Assert.assertEquals("a b", XMLUtil.cleanAllCharacters("a😀b"));
+        Assert.assertEquals("a b", XMLUtil.cleanAllCharacters("a\uD83D\uDE00b"));
         // A lone surrogate is replaced too
         Assert.assertEquals("a b", XMLUtil.cleanAllCharacters("a\ud83db"));
         try {

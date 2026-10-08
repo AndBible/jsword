@@ -33,7 +33,7 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
 public class StringUtilCharacterizationTest {
-    private static final String EMOJI = "a,😀,b";
+    private static final String EMOJI = "a,\uD83D\uDE00,b";
 
     private static void check(String msg, String[] expected, String[] actual) {
         Assert.assertArrayEquals(msg, expected, actual);
@@ -55,8 +55,8 @@ public class StringUtilCharacterizationTest {
         check("emoji", a(EMOJI), StringUtil.split(EMOJI));
         check("leading", a("a"), StringUtil.split(" a"));
         // Character.isWhitespace: NO-BREAK SPACE is not whitespace, EM SPACE is
-        check("nbsp", a("a b"), StringUtil.split("a b"));
-        check("emspace", a("a", "b"), StringUtil.split("a b"));
+        check("nbsp", a("a\u00A0b"), StringUtil.split("a\u00A0b"));
+        check("emspace", a("a", "b"), StringUtil.split("a\u2003b"));
         check("tab", a("a", "b"), StringUtil.split("a\tb"));
     }
 
@@ -83,7 +83,7 @@ public class StringUtilCharacterizationTest {
         check("commas", a("a", "b"), StringUtil.split(",a,,b,", ','));
         check("single", a("a"), StringUtil.split("a", ','));
         check("no separator", a("  a  b "), StringUtil.split("  a  b ", ','));
-        check("emoji", a("a", "😀", "b"), StringUtil.split(EMOJI, ','));
+        check("emoji", a("a", "\uD83D\uDE00", "b"), StringUtil.split(EMOJI, ','));
         // Quirk: when exactly one part is counted the whole input is returned, separators included
         check("leading separator", a(",a"), StringUtil.split(",a", ','));
         check("trailing separator", a("a,"), StringUtil.split("a,", ','));
@@ -100,7 +100,7 @@ public class StringUtilCharacterizationTest {
         check("commas max 0", a("a", "b"), StringUtil.split(",a,,b,", ',', 0));
         check("single", a("a"), StringUtil.split("a", ',', 2));
         check("no separator", a("  a  b "), StringUtil.split("  a  b ", ',', 2));
-        check("emoji max 2", a("a", "😀"), StringUtil.split(EMOJI, ',', 2));
+        check("emoji max 2", a("a", "\uD83D\uDE00"), StringUtil.split(EMOJI, ',', 2));
         check("a.b.c max 2", a("a", "b"), StringUtil.split("a.b.c", '.', 2));
     }
 
@@ -112,7 +112,7 @@ public class StringUtilCharacterizationTest {
         check("commas", a("a", "b"), StringUtil.split(",a,,b,", " ,"));
         check("single", a("a"), StringUtil.split("a", " ,"));
         check("padded", a("a", "b"), StringUtil.split("  a  b ", " ,"));
-        check("emoji", a("a", "😀", "b"), StringUtil.split(EMOJI, " ,"));
+        check("emoji", a("a", "\uD83D\uDE00", "b"), StringUtil.split(EMOJI, " ,"));
         // Quirk: one counted part returns the whole input
         check("leading separator", a(",a"), StringUtil.split(",a", " ,"));
         // Delegations
@@ -145,7 +145,7 @@ public class StringUtilCharacterizationTest {
         check("commas", a("", "a", "", "b", ""), StringUtil.splitAll(",a,,b,", ','));
         check("single", a("a"), StringUtil.splitAll("a", ','));
         check("no separator", a("  a  b "), StringUtil.splitAll("  a  b ", ','));
-        check("emoji", a("a", "😀", "b"), StringUtil.splitAll(EMOJI, ','));
+        check("emoji", a("a", "\uD83D\uDE00", "b"), StringUtil.splitAll(EMOJI, ','));
         check("a..b.c", a("a", "", "b", "c"), StringUtil.splitAll("a..b.c", '.'));
     }
 
@@ -158,7 +158,7 @@ public class StringUtilCharacterizationTest {
         check("commas max 0", a("", "a", "", "b", ""), StringUtil.splitAll(",a,,b,", ',', 0));
         check("single", a("a"), StringUtil.splitAll("a", ',', 2));
         check("no separator", a("  a  b "), StringUtil.splitAll("  a  b ", ',', 2));
-        check("emoji max 2", a("a", "😀"), StringUtil.splitAll(EMOJI, ',', 2));
+        check("emoji max 2", a("a", "\uD83D\uDE00"), StringUtil.splitAll(EMOJI, ',', 2));
         check("a..b.c max 2", a("a", ""), StringUtil.splitAll("a..b.c", '.', 2));
     }
 
@@ -235,8 +235,8 @@ public class StringUtilCharacterizationTest {
         Assert.assertEquals(-1, StringUtil.indexOfWhitespace(str, 5));
         Assert.assertEquals(-1, StringUtil.indexOfWhitespace(str, 6));
         Assert.assertEquals(-1, StringUtil.indexOfWhitespace(str, 99));
-        Assert.assertEquals(-1, StringUtil.indexOfWhitespace("a b".toCharArray(), 0));
-        Assert.assertEquals(1, StringUtil.indexOfWhitespace("a b".toCharArray(), 0));
+        Assert.assertEquals(-1, StringUtil.indexOfWhitespace("a\u00A0b".toCharArray(), 0));
+        Assert.assertEquals(1, StringUtil.indexOfWhitespace("a\u2003b".toCharArray(), 0));
     }
 
     @Test
