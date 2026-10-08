@@ -17,9 +17,15 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.internationalisation;
+/**
+ * The org.crosswire.jsword.internationalisation package contains the
+ * framework for providing a Locales to JSword.
+ * By using classes in this package, the third-party application can override the default behavior
+ * which is to get the Locale configured by the JVM (and most likely by the Operating System)
+ */
+package org.crosswire.jsword.internationalisation
 
-import java.util.Locale;
+import java.util.Locale
 
 /**
  * Provides the correct Locale to use
@@ -27,11 +33,11 @@ import java.util.Locale;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Chris Burrell
  */
-public interface LocaleProvider {
+interface LocaleProvider {
     /**
      * Gets the user locale.
      *
      * @return the user locale
      */
-    Locale getUserLocale();
+    fun getUserLocale(): Locale
 }

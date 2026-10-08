@@ -17,48 +17,56 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.compress;
+/**
+ * An common interface to Zip, LZSS, GZip, BZip2, XZ and perhaps others.
+ */
+package org.crosswire.common.compress
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 /**
  * A compressor provides the ability to compress and uncompress block text.
  * Implementing classes are expected to provide a way to supply the input.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface Compressor {
-    /**
-     * The size to read/write when unzipping a compressed byte array of unknown
-     * size.
-     */
-    int BUF_SIZE = 2048;
+interface Compressor {
+    companion object {
+        /**
+         * The size to read/write when unzipping a compressed byte array of unknown
+         * size.
+         */
+        const val BUF_SIZE = 2048
+    }
 
     /**
      * Compresses the input and provides the result.
-     * 
+     *
      * @return the compressed result
      * @throws IOException if an exception is encountered
      */
-    ByteArrayOutputStream compress() throws IOException;
+    @Throws(IOException::class)
+    fun compress(): ByteArrayOutputStream
 
     /**
      * Uncompresses the input and provides the result.
-     * 
+     *
      * @return the uncompressed result
      * @throws IOException if an exception is encountered
      */
-    ByteArrayOutputStream uncompress() throws IOException;
+    @Throws(IOException::class)
+    fun uncompress(): ByteArrayOutputStream
 
     /**
      * Uncompresses the input and provides the result.
-     * 
+     *
      * @param expectedLength
      *            the size of the result buffer
      * @return the uncompressed result
      * @throws IOException if an exception is encountered
      */
-    ByteArrayOutputStream uncompress(int expectedLength) throws IOException;
+    @Throws(IOException::class)
+    fun uncompress(expectedLength: Int): ByteArrayOutputStream
 }

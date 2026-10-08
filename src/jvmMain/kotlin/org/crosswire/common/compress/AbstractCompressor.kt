@@ -17,20 +17,17 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.compress;
+package org.crosswire.common.compress
 
-import java.io.InputStream;
+import java.io.InputStream
 
 /**
  * A compressor provides the ability to compress and uncompress text.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractCompressor implements Compressor {
-    public AbstractCompressor(InputStream input) {
-        this.input = input;
-    }
-
-    protected InputStream input;
+abstract class AbstractCompressor(input: InputStream) : Compressor {
+    @JvmField
+    protected var input: InputStream = input
 }

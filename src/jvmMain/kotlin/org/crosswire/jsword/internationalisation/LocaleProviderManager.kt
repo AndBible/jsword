@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.internationalisation;
+package org.crosswire.jsword.internationalisation
 
-import java.util.Locale;
+import java.util.Locale
 
 /**
  * A factory for creating LocaleProvider objects, to support all the static instances of where JSword needs access to the the Locale.
@@ -27,44 +27,42 @@ import java.util.Locale;
  * It is expected that the LocaleProvider will only be set once, as a result, no effort is made to make this thread-safe as this should happen on
  * start up of the application. A default locale provider is given which simply returns the default locale. See {@link DefaultLocaleProvider} for more details.
  * </p>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Chris Burrell
  */
-public final class LocaleProviderManager {
-    /**
-     * Prevent public access. Instantiates a new locale provider factory.
-     */
-    private LocaleProviderManager() {
-        //No OP
-    }
+class LocaleProviderManager private constructor() {
+    companion object {
+        /**
+         * Gets the locale provider.
+         *
+         * @return the locale provider
+         */
+        @JvmStatic
+        fun getLocaleProvider(): LocaleProvider {
+            return localeProvider
+        }
 
-    /**
-     * Gets the locale provider.
-     *
-     * @return the locale provider
-     */
-    public static LocaleProvider getLocaleProvider() {
-        return localeProvider;
-    }
+        /**
+         * Gets the locale to be used by the JSword library
+         *
+         * @return the locale
+         */
+        @JvmStatic
+        fun getLocale(): Locale {
+            return localeProvider.getUserLocale()
+        }
 
-    /**
-     * Gets the locale to be used by the JSword library
-     *
-     * @return the locale
-     */
-    public static Locale getLocale() {
-        return localeProvider.getUserLocale();
-    }
+        /**
+         * Allow third-party applications to.
+         *
+         * @param provider the new locale provider
+         */
+        @JvmStatic
+        fun setLocaleProvider(provider: LocaleProvider) {
+            localeProvider = provider
+        }
 
-    /**
-     * Allow third-party applications to.
-     *
-     * @param provider the new locale provider
-     */
-    public static void setLocaleProvider(LocaleProvider provider) {
-        localeProvider = provider;
+        private var localeProvider: LocaleProvider = DefaultLocaleProvider()
     }
-
-    private static LocaleProvider localeProvider = new DefaultLocaleProvider();
 }

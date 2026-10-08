@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.internationalisation;
+package org.crosswire.jsword.internationalisation
 
-import java.util.Locale;
+import java.util.Locale
 
 /**
  * A default Locale provider simply returns Locale.getDefault()
@@ -27,13 +27,13 @@ import java.util.Locale;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Chris Burrell
  */
-public class DefaultLocaleProvider implements LocaleProvider {
+open class DefaultLocaleProvider : LocaleProvider {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.internationalisation.LocaleProvider#getUserLocale()
      */
-    public Locale getUserLocale() {
+    override fun getUserLocale(): Locale {
         //Default locale are cached by the underlying java implementation, so no need to cache here.
-        return Locale.getDefault();
+        return Locale.getDefault()
     }
 }
