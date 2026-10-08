@@ -16,27 +16,23 @@
  *
  * © CrossWire Bible Society, 2015 - 2016
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
+import java.io.Reader
+import java.io.Writer
+import java.util.ArrayList
+import java.util.Collections
+import java.util.HashMap
 
 /**
  * A utility class for a section of an INI style configuration file.
@@ -55,7 +51,7 @@ import java.util.Map;
  * Since the most common use case is for a single section, this
  * implementation has an API for delegating to the first IniSection.
  * </p>
- * 
+ *
  * This implementation allows for:
  * <ul>
  * <li><strong>Case Insensitive</strong> -- Section names, keys and values are case insensitive.</li>
@@ -64,7 +60,7 @@ import java.util.Map;
  * <li><strong>Multiple Values</strong> -- Each key can have one or more values.</li>
  * <li><strong>Order</strong> -- Order of sections, keys and values are retained</li>
  * </ul>
- * 
+ *
  * This implementation does not allow for:
  * <ul>
  * <li><strong>Globals</strong> -- (key,value) pairs before the first section.</li>
@@ -76,88 +72,73 @@ import java.util.Map;
  * <li><strong>nulls</strong> -- null values.</li>
  * </ul>
  *
-
  * @author DM Smith
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br>
  */
-public final class IniSection implements Iterable {
-
+class IniSection : Iterable<Any?> {
     /**
      * Create an empty INI config without a name.
      */
-    public IniSection() {
-        this((String) null);
-    }
+    constructor() : this(null as String?)
+
     /**
      * Create an empty INI Config.
      * @param name the section name
      */
-    public IniSection(String name) {
-        this.name = name;
-        section = new HashMap<String, List<String>>();
-        warnings = new StringBuilder();
+    constructor(name: String?) {
+        this.name = name
+        section = HashMap()
+        warnings = StringBuilder()
     }
 
     /**
      * Copy constructor
-     * 
+     *
      * @param config the config to copy
      */
-    public IniSection(IniSection config) {
-        this.name = config.getName();
-        section = new HashMap<String, List<String>>();
-        for (String key : config.getKeys()) {
-            for (String value : config.getValues(key)) {
-                add(key, value);
+    constructor(config: IniSection) {
+        this.name = config.name
+        section = HashMap()
+        for (key in config.keys) {
+            for (value in config.getValues(key)!!) {
+                add(key, value)
             }
         }
     }
+
     /**
      * Start over.
      */
-    public void clear() {
-        section.clear();
-        warnings.setLength(0);
-        warnings.trimToSize();
-        report = "";
+    fun clear() {
+        section.clear()
+        warnings!!.setLength(0)
+        warnings!!.trimToSize()
+        report = ""
     }
 
     /**
-     * Set the name of this INI config.
-     * 
-     * @param name
+     * The [name] of this section. Set the name of this INI config.
      */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Get the [name] of this section
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+    var name: String?
 
     /**
      * Get the number of keys in this section.
-     * 
+     *
      * @return the count
      */
-    public int size() {
-        return section.size();
+    fun size(): Int {
+        return section.size
     }
 
     /**
      * Get the number of values for a key.
-     * 
+     *
      * @param key the key
      * @return the number of values for a key or 0 if the key does not exist.
      */
-    public int size(String key) {
-        Collection<String> values = section.get(key);
-        return values == null ? 0 : values.size();
+    fun size(key: String?): Int {
+        val values: Collection<String>? = valuesOf(key)
+        return if (values == null) 0 else values.size
     }
 
     /**
@@ -165,21 +146,20 @@ public final class IniSection implements Iterable {
      *
      * @return {@code true} if this section is empty
      */
-    public boolean isEmpty() {
-        return section.isEmpty();
+    val isEmpty: Boolean
+        get() = section.isEmpty()
+
+    override fun iterator(): Iterator<Any?> {
+        return section.keys.iterator()
     }
 
-    public Iterator iterator() {
-        return section.keySet().iterator();
-    }
     /**
      * Get the unmodifiable unordered list of keys.
      *
      * @return the set of keys
      */
-    public Collection<String> getKeys() {
-        return Collections.unmodifiableSet(section.keySet());
-    }
+    val keys: Collection<String>
+        get() = Collections.unmodifiableSet(section.keys)
 
     /**
      * Returns {@code true} if the IniSection contains any values for the specified key.
@@ -187,8 +167,8 @@ public final class IniSection implements Iterable {
      * @param key key to search for in IniSection
      * @return {@code true} if the key exists
      */
-    public boolean containsKey(String key) {
-        return section.containsKey(key);
+    fun containsKey(key: String?): Boolean {
+        return key != null && section.containsKey(key)
     }
 
     /**
@@ -197,13 +177,13 @@ public final class IniSection implements Iterable {
      * @param value value to search for in IniSection
      * @return {@code true} if the value exists.
      */
-    public boolean containsValue(String value) {
-        for (Collection<String> collection : section.values()) {
+    fun containsValue(value: String?): Boolean {
+        for (collection in section.values) {
             if (collection.contains(value)) {
-                return true;
+                return true
             }
         }
-        return false;
+        return false
     }
 
     /**
@@ -213,9 +193,9 @@ public final class IniSection implements Iterable {
      * @param value value to search for in IniSection
      * @return {@code true} if the value exists.
      */
-    public boolean containsValue(String key, String value) {
-        Collection<String> values = section.get(key);
-        return values != null && values.contains(value);
+    fun containsValue(key: String?, value: String?): Boolean {
+        val values: Collection<String>? = valuesOf(key)
+        return values != null && values.contains(value)
     }
 
     /**
@@ -225,17 +205,17 @@ public final class IniSection implements Iterable {
      * @param value the value for the key
      * @return whether the value was added or is already present.
      */
-    public boolean add(String key, String value) {
+    fun add(key: String?, value: String?): Boolean {
         if (!allowed(key, value)) {
-            return false;
+            return false
         }
 
-        Collection<String> values = getOrCreateValues(key);
+        val values = getOrCreateValues(key!!)
         if (values.contains(value)) {
-            warnings.append("Duplicate value: ").append(key).append(" = ").append(value).append('\n');
-            return true;
+            warnings!!.append("Duplicate value: ").append(key).append(" = ").append(value).append('\n')
+            return true
         }
-        return values.add(value);
+        return values.add(value!!)
     }
 
     /**
@@ -247,79 +227,73 @@ public final class IniSection implements Iterable {
      * @param key the key
      * @return the keyed values or null if the key doesn't exist
      */
-    public Collection<String> getValues(String key) {
-        if (section.containsKey(key)) {
-            return Collections.unmodifiableCollection(section.get(key));
+    fun getValues(key: String?): Collection<String>? {
+        if (containsKey(key)) {
+            return Collections.unmodifiableCollection(valuesOf(key))
         }
-        return null;
+        return null
     }
 
     /**
      * Get the value for the key specified by the index.
-     * 
+     *
      * @param key the key
      * @param index the index
      * @return the value at the specified index
      * @throws ArrayIndexOutOfBoundsException when the index is out of bounds
      */
-    public String get(String key, int index) {
-        List<String> values = section.get(key);
-        return values == null ? null : values.get(index);
+    fun get(key: String?, index: Int): String? {
+        val values = valuesOf(key)
+        return if (values == null) null else values[index]
     }
 
     /**
      * Get the first value for the key.
-     * 
+     *
      * @param key the key
      * @return the value at the specified index or null
      */
-    public String get(String key) {
-        List<String> values = section.get(key);
-        return values == null ? null : values.get(0);
+    fun get(key: String?): String? {
+        val values = valuesOf(key)
+        return if (values == null) null else values[0]
     }
 
-    public String get(String key, String defaultValue) {
-        List<String> values = section.get(key);
-        return values == null ? defaultValue : values.get(0);
+    fun get(key: String?, defaultValue: String?): String? {
+        val values = valuesOf(key)
+        return if (values == null) defaultValue else values[0]
     }
 
     /**
      * Remove the value if present.
      * If it were the last value for the key, the key is removed.
-     * 
+     *
      * @param key the key for the section
      * @param value the value for the key
      * @return whether the value was present and removed
      */
-    public boolean remove(String key, String value) {
-        Collection<String> values = section.get(key);
-        if (values == null) {
-            return false;
-        }
+    fun remove(key: String?, value: String?): Boolean {
+        val values = valuesOf(key) ?: return false
 
-        boolean changed = values.remove(value);
+        val changed = values.remove(value)
         if (changed) {
             if (values.isEmpty()) {
-                section.remove(key);
+                section.remove(key)
             }
         }
 
-        return changed;
+        return changed
     }
 
     /**
      * Remove the key and all its values, if present.
-     * 
+     *
      * @param key the key for the section
      * @return whether the key was present and removed
      */
-    public boolean remove(String key) {
-        Collection<String> values = section.get(key);
-        if (values == null) {
-            return false;
-        }
-        section.remove(key);
-        return true;
+    fun remove(key: String?): Boolean {
+        valuesOf(key) ?: return false
+        section.remove(key)
+        return true
     }
 
     /**
@@ -329,14 +303,14 @@ public final class IniSection implements Iterable {
      * @param value the value for the key
      * @return whether the replace happened
      */
-    public boolean replace(String key, String value) {
+    fun replace(key: String?, value: String?): Boolean {
         if (!allowed(key, value)) {
-            return false;
+            return false
         }
 
-        Collection<String> values = getOrCreateValues(key);
-        values.clear();
-        return values.add(value);
+        val values = getOrCreateValues(key!!)
+        values.clear()
+        return values.add(value!!)
     }
 
     /**
@@ -346,8 +320,9 @@ public final class IniSection implements Iterable {
      * @param encoding the encoding of the file
      * @throws IOException
      */
-    public void load(InputStream is, String encoding) throws IOException {
-        load(is, encoding, null);
+    @Throws(IOException::class)
+    fun load(`is`: InputStream?, encoding: String?) {
+        load(`is`, encoding, null)
     }
 
     /**
@@ -358,15 +333,16 @@ public final class IniSection implements Iterable {
      * @param filter the filter, possibly null, for the desired keys
      * @throws IOException
      */
-    public void load(InputStream is, String encoding, Filter<String> filter) throws IOException {
-        Reader in = null;
+    @Throws(IOException::class)
+    fun load(`is`: InputStream?, encoding: String?, filter: Filter<String>?) {
+        var reader: Reader? = null
         try {
-            in = new InputStreamReader(is, encoding);
-            doLoad(in, filter);
+            reader = InputStreamReader(`is`, encoding)
+            doLoad(reader, filter)
         } finally {
-            if (in != null) {
-                in.close();
-                in = null;
+            if (reader != null) {
+                reader.close()
+                reader = null
             }
         }
     }
@@ -378,8 +354,9 @@ public final class IniSection implements Iterable {
      * @param encoding the encoding of the file
      * @throws IOException
      */
-    public void load(File file, String encoding) throws IOException {
-        load(file, encoding, null);
+    @Throws(IOException::class)
+    fun load(file: File?, encoding: String?) {
+        load(file, encoding, null)
     }
 
     /**
@@ -390,17 +367,18 @@ public final class IniSection implements Iterable {
      * @param filter the filter, possibly null, for the desired keys
      * @throws IOException
      */
-    public void load(File file, String encoding, Filter<String> filter) throws IOException {
-        this.configFile = file;
-        this.charset = encoding;
-        InputStream in = null;
+    @Throws(IOException::class)
+    fun load(file: File?, encoding: String?, filter: Filter<String>?) {
+        this.configFile = file
+        this.charset = encoding
+        var input: InputStream? = null
         try {
-            in = new FileInputStream(file);
-            load(in, encoding, filter);
+            input = FileInputStream(file)
+            load(input, encoding, filter)
         } finally {
-            if (in != null) {
-                in.close();
-                in = null;
+            if (input != null) {
+                input.close()
+                input = null
             }
         }
     }
@@ -413,8 +391,9 @@ public final class IniSection implements Iterable {
      * @param encoding the character encoding of this INI
      * @throws IOException
      */
-    public void load(byte[] buffer, String encoding) throws IOException {
-        load(buffer, encoding, null);
+    @Throws(IOException::class)
+    fun load(buffer: ByteArray?, encoding: String?) {
+        load(buffer, encoding, null)
     }
 
     /**
@@ -426,15 +405,16 @@ public final class IniSection implements Iterable {
      * @param filter the filter, possibly null, for the desired keys
      * @throws IOException
      */
-    public void load(byte[] buffer, String encoding, Filter<String> filter) throws IOException {
-        InputStream in = null;
+    @Throws(IOException::class)
+    fun load(buffer: ByteArray?, encoding: String?, filter: Filter<String>?) {
+        var input: InputStream? = null
         try {
-            in = new ByteArrayInputStream(buffer);
-            load(in, encoding, filter);
+            input = ByteArrayInputStream(buffer)
+            load(input, encoding, filter)
         } finally {
-            if (in != null) {
-                in.close();
-                in = null;
+            if (input != null) {
+                input.close()
+                input = null
             }
         }
     }
@@ -443,11 +423,12 @@ public final class IniSection implements Iterable {
      * Save this INI to the file from which it was loaded.
      * @throws IOException
      */
-    public void save() throws IOException {
-        assert configFile != null;
-        assert charset != null;
+    @Throws(IOException::class)
+    fun save() {
+        jswordAssert(configFile != null) { "" }
+        jswordAssert(charset != null) { "" }
         if (configFile != null && charset != null) {
-            save(configFile, charset);
+            save(configFile, charset)
         }
     }
 
@@ -458,17 +439,18 @@ public final class IniSection implements Iterable {
      * @param encoding the encoding of the file
      * @throws IOException
      */
-    public void save(File file, String encoding) throws IOException {
-        this.configFile = file;
-        this.charset = encoding;
-        Writer out = null;
+    @Throws(IOException::class)
+    fun save(file: File?, encoding: String?) {
+        this.configFile = file
+        this.charset = encoding
+        var out: Writer? = null
         try {
-            out = new OutputStreamWriter(new FileOutputStream(file), encoding);
-            save(out);
+            out = OutputStreamWriter(FileOutputStream(file), encoding)
+            save(out)
         } finally {
             if (out != null) {
-                out.close();
-                out = null;
+                out.close()
+                out = null
             }
         }
     }
@@ -476,54 +458,54 @@ public final class IniSection implements Iterable {
     /**
      * Output this section using the print writer. The section ends with a blank line.
      * The items are output in insertion order.
-     * 
+     *
      * @param out the output stream
      */
-    public void save(Writer out) {
-        PrintWriter writer = null;
-        if (out instanceof PrintWriter) {
-            writer = (PrintWriter) out;
+    fun save(out: Writer?) {
+        var writer: PrintWriter? = null
+        if (out is PrintWriter) {
+            writer = out
         } else {
-            writer = new PrintWriter(out);
+            writer = PrintWriter(out)
         }
 
-        writer.print("[");
-        writer.print(name);
-        writer.print("]");
-        writer.println();
+        writer.print("[")
+        writer.print(name)
+        writer.print("]")
+        writer.println()
 
-        boolean first = true;
-        Iterator<String> keys = section.keySet().iterator();
+        var first = true
+        val keys = section.keys.iterator()
         while (keys.hasNext()) {
-            String key = keys.next();
-            Collection<String> values = section.get(key);
-            Iterator<String> iter = values.iterator();
-            String value;
+            val key = keys.next()
+            val values = section[key]!!
+            val iter = values.iterator()
+            var value: String
             while (iter.hasNext()) {
                 if (!first) {
-                    writer.println();
-                    first = false;
+                    writer.println()
+                    first = false
                 }
-                value = iter.next();
-                writer.print(key);
-                writer.print(" = ");
-                writer.print(format(value));
-                writer.println();
+                value = iter.next()
+                writer.print(key)
+                writer.print(" = ")
+                writer.print(format(value))
+                writer.println()
             }
         }
 
-        writer.flush();
+        writer.flush()
     }
 
     /**
      * Obtain a report of issues with this IniSection. It only reports once per load.
-     * 
+     *
      * @return the report with one issue per line or an empty string if there are no issues
      */
-    public String report() {
-        String str = report;
-        report = "";
-        return str;
+    fun report(): String? {
+        val str = report
+        report = ""
+        return str
     }
 
     /**
@@ -531,68 +513,73 @@ public final class IniSection implements Iterable {
      * @param value the value to be formatted
      * @return the transformed value
      */
-    private String format(final String value) {
+    private fun format(value: String): String {
         // Find continuations and replace newlines with a ' \'
         // Indenting the next line
         // Note: if the quoting of values is allowed this may need to be revisited.
-        return value.replaceAll("\n", " \\\\\n\t");
+        return value.replace("\n", " \\\n\t")
     }
 
-    private Collection<String> getOrCreateValues(final String key) {
-        List<String> values = section.get(key);
+    /**
+     * The values of a key, or null when the key is null (a HashMap lookup of null finds nothing here) or unknown.
+     */
+    private fun valuesOf(key: String?): MutableList<String>? {
+        return if (key == null) null else section[key]
+    }
+
+    private fun getOrCreateValues(key: String): MutableList<String> {
+        var values = section[key]
         if (values == null) {
-            values = new ArrayList<String>();
-            section.put(key, values);
+            values = ArrayList()
+            section[key] = values
         }
-        return values;
+        return values
     }
 
-    private void doLoad(Reader in, Filter<String> filter) throws IOException {
-        BufferedReader bin = null;
+    @Throws(IOException::class)
+    private fun doLoad(`in`: Reader, filter: Filter<String>?) {
+        var bin: BufferedReader? = null
         try {
-            if (in instanceof BufferedReader) {
-                bin = (BufferedReader) in;
+            if (`in` is BufferedReader) {
+                bin = `in`
             } else {
                 // Quiet Android from complaining about using the default
                 // BufferReader buffer size.
                 // The actual buffer size is undocumented. So this is a good
                 // idea any way.
-                bin = new BufferedReader(in, MAX_BUFF_SIZE);
+                bin = BufferedReader(`in`, MAX_BUFF_SIZE)
             }
 
             while (true) {
-                String line = advance(bin);
-                if (line == null) {
-                    break;
-                }
+                val line = advance(bin) ?: break
 
                 if (isSectionLine(line)) {
                     // The conf file contains a leading line of the form [KJV]
                     // This is the acronym by which Sword refers to it.
-                    name = line.substring(1, line.length() - 1);
-                    continue;
+                    name = line.substring(1, line.length - 1)
+                    continue
                 }
 
                 // Is this a key line?
-                int splitPos = getSplitPos(line);
+                val splitPos = getSplitPos(line)
                 if (splitPos < 0) {
-                    warnings.append("Skipping: Expected to see '=' in: ").append(line).append('\n');
-                    continue;
+                    warnings!!.append("Skipping: Expected to see '=' in: ").append(line).append('\n')
+                    continue
                 }
 
-                String key = line.substring(0, splitPos).trim();
-                String value = more(bin, line.substring(splitPos + 1).trim());
+                val key = line.substring(0, splitPos).trim { it <= ' ' }
+                val value = more(bin, line.substring(splitPos + 1).trim { it <= ' ' })
                 if (filter == null || filter.test(key)) {
-                    add(key, value);
+                    add(key, value)
                 }
             }
-            report = warnings.toString();
-            warnings.setLength(0);
-            warnings.trimToSize();
+            report = warnings!!.toString()
+            warnings!!.setLength(0)
+            warnings!!.trimToSize()
         } finally {
             if (bin != null) {
-                bin.close();
-                bin = null;
+                bin.close()
+                bin = null
             }
         }
     }
@@ -604,21 +591,24 @@ public final class IniSection implements Iterable {
      * @return the next line or null if there is nothing more
      * @throws IOException if encountered
      */
-    private String advance(BufferedReader bin) throws IOException {
+    @Throws(IOException::class)
+    private fun advance(bin: BufferedReader): String? {
         // Get the next non-blank, non-comment line
-        String trimmed = null;
-        for (String line = bin.readLine(); line != null; line = bin.readLine()) {
+        var trimmed: String? = null
+        var line = bin.readLine()
+        while (line != null) {
             // Remove leading and trailing whitespace
-            trimmed = line.trim();
+            trimmed = line.trim { it <= ' ' }
             if (trimmed.startsWith("\uFEFF")) {
-                trimmed = trimmed.substring(1);
+                trimmed = trimmed.substring(1)
             }
             // skip blank and comment lines
             if (!isCommentLine(trimmed)) {
-                return trimmed;
+                return trimmed
             }
+            line = bin.readLine()
         }
-        return null;
+        return null
     }
 
     /**
@@ -628,15 +618,15 @@ public final class IniSection implements Iterable {
      * @return true if the line is empty or starts with one of the comment
      *         characters
      */
-    private boolean isCommentLine(final String line) {
+    private fun isCommentLine(line: String?): Boolean {
         if (line == null) {
-            return false;
+            return false
         }
-        if (line.length() == 0) {
-            return true;
+        if (line.length == 0) {
+            return true
         }
-        char firstChar = line.charAt(0);
-        return firstChar == ';' || firstChar == '#';
+        val firstChar = line[0]
+        return firstChar == ';' || firstChar == '#'
     }
 
     /**
@@ -645,98 +635,96 @@ public final class IniSection implements Iterable {
      * @param line The line to check.
      * @return true if the line designates a section
      */
-    private boolean isSectionLine(final String line) {
-        return line.charAt(0) == '[' && line.charAt(line.length() - 1) == ']';
+    private fun isSectionLine(line: String): Boolean {
+        return line[0] == '[' && line[line.length - 1] == ']'
     }
 
     /**
      * Does this line of text represent a key/value pair?
-     * 
+     *
      * @param line The line to check.
      * @return the position of the split position or -1
      */
-    private int getSplitPos(final String line) {
-        return line.indexOf('=');
+    private fun getSplitPos(line: String): Int {
+        return line.indexOf('=')
     }
 
     /**
      * Get continuation lines, if any.
      */
-    private String more(BufferedReader bin, String value) throws IOException {
-        boolean moreCowBell = false;
-        String line = value;
-        StringBuilder buf = new StringBuilder();
+    @Throws(IOException::class)
+    private fun more(bin: BufferedReader, value: String): String {
+        var moreCowBell = false
+        var line: String? = value
+        val buf = StringBuilder()
 
         do {
-            moreCowBell = more(line);
+            moreCowBell = more(line!!)
             if (moreCowBell) {
-                line = line.substring(0, line.length() - 1).trim();
+                line = line.substring(0, line.length - 1).trim { it <= ' ' }
             }
-            buf.append(line);
+            buf.append(line)
             if (moreCowBell) {
-                buf.append('\n');
-                line = advance(bin);
+                buf.append('\n')
+                line = advance(bin)
                 // Is this new line a potential key line?
                 // It cannot both continue the prior
                 // and also be a key line.
-                int splitPos = getSplitPos(line);
+                val splitPos = getSplitPos(line!!)
                 if (splitPos >= 0) {
-                    warnings.append("Possible trailing continuation on previous line. Found: ").append(line).append('\n');
+                    warnings!!.append("Possible trailing continuation on previous line. Found: ").append(line).append('\n')
                 }
             }
-        } while (moreCowBell && line != null);
-        String cowBell = buf.toString();
-        buf = null;
-        line = null;
-        return cowBell;
+        } while (moreCowBell && line != null)
+        return buf.toString()
     }
 
-    /**
-     * Is there more following this line
-     *
-     * @param line the trimmed string to check
-     * @return whether this line continues
-     */
-    private static boolean more(final String line) {
-        int length = line.length();
-        return length > 0 && line.charAt(length - 1) == '\\';
-    }
-
-    private boolean allowed(String key, String value) {
-        if (key == null || key.length() == 0 || value == null) {
+    private fun allowed(key: String?, value: String?): Boolean {
+        if (key == null || key.length == 0 || value == null) {
             if (key == null) {
-                warnings.append("Null keys not allowed: ").append(" = ").append(value).append('\n');
-            } else if (key.length() == 0) {
-                warnings.append("Empty keys not allowed: ").append(" = ").append(value).append('\n');
+                warnings!!.append("Null keys not allowed: ").append(" = ").append(value).append('\n')
+            } else if (key.length == 0) {
+                warnings!!.append("Empty keys not allowed: ").append(" = ").append(value).append('\n')
             }
             if (value == null) {
-                warnings.append("Null values are not allowed: ").append(key).append(" = ").append('\n');
+                warnings!!.append("Null values are not allowed: ").append(key).append(" = ").append('\n')
             }
-            return false;
+            return false
         }
-        return true;
+        return true
     }
-
-    /**
-     * The name of the section.
-     */
-    private String name;
 
     /**
      * A map of values by key names.
      */
-    private Map<String, List<String>> section;
+    private var section: MutableMap<String, MutableList<String>>
 
-    private File configFile;
+    private var configFile: File? = null
 
-    private String charset;
-
-    private StringBuilder warnings;
-
-    private String report;
+    private var charset: String? = null
 
     /**
-     * Buffer size is based on file size but keep it with within reasonable limits
+     * Null in an IniSection made by the copy constructor, as in Java.
      */
-    private static final int MAX_BUFF_SIZE = 2 * 1024;
+    private var warnings: StringBuilder? = null
+
+    private var report: String? = null
+
+    companion object {
+        /**
+         * More: Is there more following this line
+         *
+         * @param line the trimmed string to check
+         * @return whether this line continues
+         */
+        private fun more(line: String): Boolean {
+            val length = line.length
+            return length > 0 && line[length - 1] == '\\'
+        }
+
+        /**
+         * Buffer size is based on file size but keep it with within reasonable limits
+         */
+        private const val MAX_BUFF_SIZE = 2 * 1024
+    }
 }

@@ -17,150 +17,160 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.util.Locale;
-import java.util.Map;
-
-import org.crosswire.common.config.ChoiceFactory;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
+import java.util.Locale
+import org.crosswire.common.config.ChoiceFactory
+import org.slf4j.LoggerFactory
 
 /**
  * Translations provides a list of locales that BibleDesktop has been translated
  * into.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class Translations {
+class Translations
+/**
+ * Singleton classes have private constructors.
+ */
+private constructor() {
     /**
-     * Singleton classes have private constructors.
+     * The translation that BibleDesktop should use.
      */
-    private Translations() {
+    private var translation: String? = null
+
+    /**
+     * List of available translations.
+     */
+    private var translations: Array<String>? = null
+
+    init {
+        initTranslation()
+    }
+
+    // The body of the Java constructor, a function so that its early returns stay returns
+    private fun initTranslation() {
         try {
-            loadSupportedTranslations();
-            PropertyMap props = ResourceUtil.getProperties(getClass());
-            translation = props.get(TRANSLATION_KEY);
-            if (translation == null || translation.length() == 0) {
+            loadSupportedTranslations()
+            val props = ResourceUtil.getProperties(javaClass)
+            translation = props.get(TRANSLATION_KEY)
+            val current = translation
+            if (current == null || current.length == 0) {
                 // check for a match against language and country
                 // This pertains to zh_TW and zh_CN
-                for (int i = 0; i < translations.length; i++) {
-                    Locale supportedLocale = new Locale(translations[i]);
-                    if (supportedLocale.getLanguage().equals(originalLocale.getLanguage()) && supportedLocale.getCountry().equals(originalLocale.getCountry())) {
-                        translation = translations[i];
-                        return;
+                for (i in translations!!.indices) {
+                    val supportedLocale = Locale(translations!![i])
+                    if (supportedLocale.language == originalLocale.language && supportedLocale.country == originalLocale.country) {
+                        translation = translations!![i]
+                        return
                     }
                 }
 
                 // check for a match against just language
-                for (int i = 0; i < translations.length; i++) {
-                    Locale supportedLocale = new Locale(translations[i]);
-                    if (supportedLocale.getLanguage().equals(originalLocale.getLanguage())) {
-                        translation = translations[i];
-                        return;
+                for (i in translations!!.indices) {
+                    val supportedLocale = Locale(translations!![i])
+                    if (supportedLocale.language == originalLocale.language) {
+                        translation = translations!![i]
+                        return
                     }
                 }
 
                 // if we don't have a matching locale then just use the default.
-                translation = DEFAULT_TRANSLATION;
+                translation = DEFAULT_TRANSLATION
             }
-        } catch (IOException e) {
-            translation = DEFAULT_TRANSLATION;
+        } catch (e: IOException) {
+            translation = DEFAULT_TRANSLATION
         }
-    }
-
-    /**
-     * All access to Translations is through this single instance.
-     * 
-     * @return the singleton instance
-     */
-    public static Translations instance() {
-        return instance;
     }
 
     /**
      * Gets a listing of all the translations that Bible Desktop supports.
-     * 
+     *
      * @return an string array of translations in locale friendly names.
      */
-    public PropertyMap getSupported() {
-        loadSupportedTranslations();
+    val supported: PropertyMap
+        get() {
+            loadSupportedTranslations()
 
-        // I18N(DMS) Collate these according to the current locale, putting the
-        // current locale's locale first.
-        PropertyMap names = new PropertyMap();
+            // I18N(DMS) Collate these according to the current locale, putting the
+            // current locale's locale first.
+            val names = PropertyMap()
 
-        for (int i = 0; i < translations.length; i++) {
-            names.put(translations[i], toString(translations[i]));
+            for (i in translations!!.indices) {
+                names.put(translations!![i], toString(translations!![i]))
+            }
+
+            return names
         }
-
-        return names;
-    }
 
     /**
      * Get the locale for the current translation.
-     * 
+     *
      * @return the translation's locale
      */
-    public Locale getCurrentLocale() {
-        // If there is no particular translation, then return the default
-        // locale.
-        if (translation == null || DEFAULT_TRANSLATION.equals(translation)) {
-            return DEFAULT_LOCALE;
+    val currentLocale: Locale
+        get() {
+            // If there is no particular translation, then return the default
+            // locale.
+            val current = translation
+            if (current == null || DEFAULT_TRANSLATION == current) {
+                return DEFAULT_LOCALE
+            }
+
+            // If the local consists of a language and a country then use both
+            if (current.indexOf('_') != -1) {
+                val locale = StringUtil.split(current, '_')
+                return Locale(locale[0], locale[1])
+            }
+
+            // otherwise just use the country.
+            return Locale(current)
         }
 
-        // If the local consists of a language and a country then use both
-        if (translation.indexOf('_') != -1) {
-            String[] locale = StringUtil.split(translation, '_');
-            return new Locale(locale[0], locale[1]);
-        }
-
-        // otherwise just use the country.
-        return new Locale(translation);
-    }
+    // getCurrent() and setCurrent(String) are kept as functions: the setter accepts null (the Java code
+    // compared it with equals) while the getter's type is a non-null String.
 
     /**
      * Get the current translation as a human readable string.
-     * 
+     *
      * @return the current translation
      */
-    public String getCurrent() {
-        return toString(translation);
+    fun getCurrent(): String {
+        return toString(translation!!)
     }
 
     /**
      * Set the current translation, using human readable string.
-     * 
+     *
      * @param newTranslation
      *            the translation to use
      */
-    public void setCurrent(String newTranslation) {
-        String found = DEFAULT_TRANSLATION;
-        String currentTranslation = "";
-        for (int i = 0; i < translations.length; i++) {
-            String trans = translations[i];
-            currentTranslation = toString(translation);
+    fun setCurrent(newTranslation: String?) {
+        var found = DEFAULT_TRANSLATION
+        var currentTranslation = ""
+        for (i in translations!!.indices) {
+            val trans = translations!![i]
+            currentTranslation = toString(translation!!)
 
-            if (trans.equals(newTranslation) || currentTranslation.equals(newTranslation)) {
-                found = trans;
-                break;
+            if (trans == newTranslation || currentTranslation == newTranslation) {
+                found = trans
+                break
             }
         }
 
         try {
-            translation = found;
-            PropertyMap props = new PropertyMap();
-            if (!DEFAULT_TRANSLATION.equals(translation)) {
-                props.put(TRANSLATION_KEY, translation);
+            translation = found
+            val props = PropertyMap()
+            if (DEFAULT_TRANSLATION != translation) {
+                props.put(TRANSLATION_KEY, translation!!)
             }
 
-            URI outputURI = CWProject.instance().getWritableURI(getClass().getName(), FileUtil.EXTENSION_PROPERTIES);
-            NetUtil.storeProperties(props, outputURI, "BibleDesktop UI Translation");
-        } catch (IOException ex) {
-            log.error("Failed to save BibleDesktop UI Translation", ex);
+            val outputURI = CWProject.instance().getWritableURI(javaClass.name, FileUtil.EXTENSION_PROPERTIES)
+            NetUtil.storeProperties(props, outputURI!!, "BibleDesktop UI Translation")
+        } catch (ex: IOException) {
+            log.error("Failed to save BibleDesktop UI Translation", ex)
         }
     }
 
@@ -168,109 +178,115 @@ public final class Translations {
      * Set the locale for the program to the one the user has selected. But
      * don't set it to the default translation, so that the user's actual
      * locale, is used for Bible book names.
-     * 
+     *
      * This only makes sense after config has called setCurrentTranslation.
      */
-    public void setLocale() {
-        Locale.setDefault(getCurrentLocale());
+    fun setLocale() {
+        Locale.setDefault(currentLocale)
     }
 
     /**
      * Register this class with the common config engine.
      */
-    public void register() {
-        ChoiceFactory.getDataMap().put(TRANSLATION_KEY, getSupportedTranslations());
-    }
-
-    /**
-     * Get the current translation as a human readable string.
-     * 
-     * @return the current translation
-     */
-    public static String getCurrentTranslation() {
-        return Translations.instance().getCurrent();
-    }
-
-    /**
-     * Set the current translation, using human readable string.
-     * 
-     * @param newTranslation
-     *            the translation to use
-     */
-    public static void setCurrentTranslation(String newTranslation) {
-        Translations.instance().setCurrent(newTranslation);
-    }
-
-    /**
-     * Gets a listing of all the translations that Bible Desktop supports.
-     * 
-     * @return an string array of translations in locale friendly names.
-     */
-    public static Map<String, String> getSupportedTranslations() {
-        return Translations.instance().getSupported();
+    fun register() {
+        ChoiceFactory.getDataMap().put(TRANSLATION_KEY, getSupportedTranslations())
     }
 
     /**
      * Get a list of the supported translations
      */
-    private void loadSupportedTranslations() {
+    private fun loadSupportedTranslations() {
         if (translations == null) {
             try {
-                URL index = ResourceUtil.getResource(Translations.class, "translations.txt");
-                translations = NetUtil.listByIndexFile(NetUtil.toURI(index));
-            } catch (IOException ex) {
-                translations = new String[0];
+                val index = ResourceUtil.getResource(Translations::class.java, "translations.txt")
+                translations = NetUtil.listByIndexFile(NetUtil.toURI(index)!!)
+            } catch (ex: IOException) {
+                translations = arrayOf()
             }
         }
     }
 
-    public String toString(String translationCode) {
-        StringBuilder currentTranslation = new StringBuilder(Languages.getName(translationCode));
+    fun toString(translationCode: String): String {
+        val currentTranslation = StringBuilder(Languages.getName(translationCode))
 
         if (translationCode.indexOf('_') != -1) {
-            String[] locale = StringUtil.split(translationCode, '_');
-            currentTranslation.append(", ");
-            currentTranslation.append(Countries.getCountry(locale[1]));
+            val locale = StringUtil.split(translationCode, '_')
+            currentTranslation.append(", ")
+            currentTranslation.append(Countries.getCountry(locale[1]))
         }
 
-        return currentTranslation.toString();
+        return currentTranslation.toString()
     }
 
-    /**
-     * The key used in config.xml
-     */
-    private static final String TRANSLATION_KEY = "translation-codes";
+    companion object {
+        /**
+         * All access to Translations is through this single instance.
+         *
+         * @return the singleton instance
+         */
+        @JvmStatic
+        fun instance(): Translations {
+            return instance
+        }
 
-    /**
-     * The default translation, if the user has not chosen anything else.
-     */
-    public static final String DEFAULT_TRANSLATION = "en";
+        /**
+         * Get the current translation as a human readable string.
+         *
+         * @return the current translation
+         */
+        @JvmStatic
+        fun getCurrentTranslation(): String {
+            return Translations.instance().getCurrent()
+        }
 
-    /**
-     * The default Locale, it the user has not chosen anything else.
-     */
-    public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
+        /**
+         * Set the current translation, using human readable string.
+         *
+         * @param newTranslation
+         *            the translation to use
+         */
+        @JvmStatic
+        fun setCurrentTranslation(newTranslation: String?) {
+            Translations.instance().setCurrent(newTranslation)
+        }
 
-    /**
-     * The translation that BibleDesktop should use.
-     */
-    private String translation;
+        /**
+         * Gets a listing of all the translations that Bible Desktop supports.
+         *
+         * @return an string array of translations in locale friendly names.
+         */
+        @JvmStatic
+        fun getSupportedTranslations(): Map<String, String> {
+            return Translations.instance().supported
+        }
 
-    /**
-     * List of available translations.
-     */
-    private String[] translations;
+        /**
+         * The key used in config.xml
+         */
+        private const val TRANSLATION_KEY: String = "translation-codes"
 
-    /**
-     * The locale that the program starts with. This needs to precede
-     * "instance."
-     */
-    private static Locale originalLocale = Locale.getDefault();
+        /**
+         * The default translation, if the user has not chosen anything else.
+         */
+        const val DEFAULT_TRANSLATION: String = "en"
 
-    private static Translations instance = new Translations();
+        /**
+         * The default Locale, it the user has not chosen anything else.
+         */
+        @JvmField
+        val DEFAULT_LOCALE: Locale = Locale.ENGLISH
 
-    /**
-     * The log stream
-     */
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(Translations.class);
+        /**
+         * The locale that the program starts with. This needs to precede
+         * "instance."
+         */
+        private val originalLocale: Locale = Locale.getDefault()
+
+        private val instance: Translations = Translations()
+
+        /**
+         * The log stream
+         */
+        private val log: org.slf4j.Logger = LoggerFactory.getLogger(Translations::class.java)
+    }
 }

@@ -17,89 +17,81 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.Set;
-
-import org.crosswire.jsword.book.Books;
-import org.crosswire.jsword.internationalisation.LocaleProviderManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
+import java.util.HashMap
+import java.util.HashSet
+import java.util.Locale
+import java.util.MissingResourceException
+import java.util.ResourceBundle
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A utility class that converts bcp-47 codes as supported by {@link Language} to their
  * localized language name.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class Languages {
-
-    /**
-     * Make the class a true utility class by having a private constructor.
-     */
-    private Languages() {
-    }
-
+// An object, not a companion: initLanguages() resolves its class loader through CWClassLoader.instance(), which
+// identifies the calling class from the stack, so the caller must be Languages itself (not Languages$Companion).
+// Being an object also makes the constructor private, as the Java utility class had.
+object Languages {
     /**
      * Get the language name for the BCP-47 specification of the language.
-     * 
+     *
      * @param code the BCP-47 specification for the language
      * @return the name of the language
      */
-    public static String getName(String code) {
+    @JvmStatic
+    fun getName(code: String?): String? {
         // Returning the code is the fallback for lookup
-        String name = code;
+        var name = code
         try {
-            ResourceBundle langs = getLocalisedCommonLanguages();
+            val langs = getLocalisedCommonLanguages()
             if (langs != null) {
-                name = langs.getString(code);
+                name = langs.getString(code)
             }
-        } catch (MissingResourceException e) {
+        } catch (e: MissingResourceException) {
             // This is allowed
         }
-        return name;
+        return name
     }
 
     /**
-     * Gets the localised common languages. Caching here, is done to prevent extra logging 
+     * Gets the localised common languages. Caching here, is done to prevent extra logging
      * happening every time we miss the iso639 ResourceBundle
      * and end up having to lookup the iso639full
-     * 
+     *
      * @return the localised common languages
      */
-    private static ResourceBundle getLocalisedCommonLanguages() {
-        Locale locale = LocaleProviderManager.getLocale();
-        ResourceBundle langs = localisedCommonLanguages.get(locale);
+    private fun getLocalisedCommonLanguages(): ResourceBundle? {
+        val locale = LocaleProviderManager.getLocale()
+        var langs = localisedCommonLanguages.get(locale)
         if (langs == null) {
-            synchronized (Languages.class) {
-                langs = localisedCommonLanguages.get(locale);
+            synchronized(Languages::class.java) {
+                langs = localisedCommonLanguages.get(locale)
                 if (langs == null) {
-                    langs = initLanguages(locale);
+                    langs = initLanguages(locale)
                     if (langs != null) {
-                        localisedCommonLanguages.put(locale, langs);
+                        localisedCommonLanguages.put(locale, langs!!)
                     }
                 }
             }
         }
-        return langs;
+        return langs
     }
 
-    private static ResourceBundle initLanguages(Locale locale) {
+    private fun initLanguages(locale: Locale): ResourceBundle? {
         try {
-            return ResourceBundle.getBundle("iso639", locale, CWClassLoader.instance());
-        } catch (MissingResourceException e) {
-            log.info("Unable to find language in iso639 bundle", e);
+            return ResourceBundle.getBundle("iso639", locale, CWClassLoader.instance())
+        } catch (e: MissingResourceException) {
+            log.info("Unable to find language in iso639 bundle", e)
         }
-        return null;
+        return null
     }
 
     /**
@@ -107,40 +99,40 @@ public final class Languages {
      * The basic list has a few hundred languages. The full list has
      * over 7000. As a fallback, this file is not internationalized.
      */
-    public static final class AllLanguages {
-        /**
-         * This is a singleton class. Do not allow construction.
-         */
-        private AllLanguages() { }
-
+    // An object (private constructor, as in Java); its init block calls ResourceUtil.getProperties(String), which
+    // identifies the calling class from the stack, so the caller must be Languages$AllLanguages.
+    object AllLanguages {
         /**
          * Get the language name for the code. If the language name is not known
          * then return the code.
-         * 
+         *
          * @param languageCode the language code
          * @return the name for the language.
          */
-        public static String getName(String languageCode) {
+        @JvmStatic
+        fun getName(languageCode: String?): String? {
             if (instance != null) {
-                String name = instance.get(languageCode);
+                // A null code finds nothing (the map has no null key)
+                val name = if (languageCode == null) null else instance!!.get(languageCode)
                 if (name != null) {
-                    return name;
+                    return name
                 }
             }
-            return languageCode;
+            return languageCode
         }
 
         /**
          * Do lazy loading of the huge file of languages.
          * Note: It is OK for it not to be present.
          */
-        private static PropertyMap instance;
-        static {
+        private var instance: PropertyMap? = null
+
+        init {
             try {
-                instance = ResourceUtil.getProperties("iso639full");
-                log.debug("Loading iso639full.properties file");
-            } catch (IOException e) {
-                log.info("Unable to load iso639full.properties", e);
+                instance = ResourceUtil.getProperties("iso639full")
+                log.debug("Loading iso639full.properties file")
+            } catch (e: IOException) {
+                log.info("Unable to load iso639full.properties", e)
             }
         }
     }
@@ -150,12 +142,7 @@ public final class Languages {
      * The basic list has a few hundred languages. The full list has
      * over 7000. As a fallback, this file is not internationalized.
      */
-    public static final class RtoL {
-        /**
-         * This is a singleton class. Do not allow construction.
-         */
-        private RtoL() { }
-
+    object RtoL {
         /**
          * Determine whether this language is a Left-to-Right or a Right-to-Left
          * language. If the language has a script, it is used for the determination.
@@ -165,47 +152,51 @@ public final class Languages {
          * Scripts do. Further, there are over 7000 living languages, many of which
          * are written in Right-to-Left scripts and are not listed here.
          * </p>
-         * 
+         *
          * @param script the iso15924 script code, must be in Title case
          * @param lang the iso639 language code, must be lower case
          * @return true if the language is Right-to-Left
          */
-        public static boolean isRtoL(String script, String lang) {
+        @JvmStatic
+        fun isRtoL(script: String?, lang: String?): Boolean {
             if (script != null) {
-                return rtol.contains(script);
+                return rtol.contains(script)
             }
             if (lang != null) {
-                return rtol.contains(lang);
+                return rtol.contains(lang)
             }
-            return false;
+            return false
         }
 
         /**
          * Do lazy loading of the huge file of languages.
          * Note: It is OK for it not to be present.
          */
-        private static Set rtol = new HashSet();
+        private val rtol: MutableSet<String> = HashSet()
+
         /**
          * load RtoL data
          */
-        static {
+        init {
             try {
-                URL index = ResourceUtil.getResource(Translations.class, "rtol.txt");
-                String[] list = NetUtil.listByIndexFile(NetUtil.toURI(index));
-                log.debug("Loading iso639full.properties file");
-                for (int i = 0; i < list.length; i++) {
-                    rtol.add(list[i]);
+                val index = ResourceUtil.getResource(Translations::class.java, "rtol.txt")
+                val list = NetUtil.listByIndexFile(NetUtil.toURI(index)!!)
+                log.debug("Loading iso639full.properties file")
+                for (i in list.indices) {
+                    rtol.add(list[i])
                 }
-            } catch (IOException ex) {
-                log.info("Unable to load rtol.txt", ex);
+            } catch (ex: IOException) {
+                log.info("Unable to load rtol.txt", ex)
             }
         }
     }
 
-    private static Map<Locale, ResourceBundle> localisedCommonLanguages = new HashMap<Locale, ResourceBundle>();
+    private val localisedCommonLanguages: MutableMap<Locale, ResourceBundle> = HashMap()
 
     /**
      * The log stream
      */
-    protected static final Logger log = LoggerFactory.getLogger(Languages.class);
+    // was protected static (package access in Java): Kotlin has no protected members in an object, so public
+    @JvmField
+    val log: Logger = LoggerFactory.getLogger(Languages::class.java)
 }

@@ -17,159 +17,167 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.Map;
-
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory
 
 /**
  * Conversions between various types and Strings.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class Convert {
-    /**
-     * We don't want anyone doing this ...
-     */
-    private Convert() {
-    }
-
-    /**
-     * Convert a String to a boolean
-     * 
-     * @param data
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static boolean string2Boolean(String data) {
-        return Boolean.valueOf(data).booleanValue()
-                || "yes".equalsIgnoreCase(data)
-                || "ok".equalsIgnoreCase(data)
-                || "okay".equalsIgnoreCase(data)
-                || "on".equalsIgnoreCase(data)
-                || "1".equals(data);
-    }
-
-    /**
-     * Convert a boolean to a String
-     * 
-     * @param data
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static String boolean2String(boolean data) {
-        return Boolean.toString(data);
-    }
-
-    /**
-     * Convert a String to an int
-     * 
-     * @param data
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static int string2Int(String data) {
-        try {
-            return Integer.parseInt(data);
-        } catch (NumberFormatException ex) {
-            return 0;
+class Convert
+/**
+ * We don't want anyone doing this ...
+ */
+private constructor() {
+    companion object {
+        /**
+         * Convert a String to a boolean
+         *
+         * @param data
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun string2Boolean(data: String?): Boolean {
+            return java.lang.Boolean.parseBoolean(data)
+                    || "yes".equals(data, ignoreCase = true)
+                    || "ok".equals(data, ignoreCase = true)
+                    || "okay".equals(data, ignoreCase = true)
+                    || "on".equals(data, ignoreCase = true)
+                    || "1" == data
         }
-    }
 
-    /**
-     * Convert an int to a String
-     * 
-     * @param data
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static String int2String(int data) {
-        return Integer.toString(data);
-    }
+        /**
+         * Convert a boolean to a String
+         *
+         * @param data
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun boolean2String(data: Boolean): String {
+            return data.toString()
+        }
 
-    /**
-     * Convert a String to an Object
-     * 
-     * @param data the thing to convert
-     * @return the converted data
-     * @throws ReflectiveOperationException
-     *               if this {@code data} represents an abstract class,
-     *               an interface, an array class, a primitive type, or void;
-     *               or if the class has no reachable nullary constructor;
-     *               or if the instantiation fails for some other reason.
-     */
-    public static Object string2Object(String data) throws ReflectiveOperationException {
-        return ReflectionUtil.construct(data);
-    }
-
-    /**
-     * Convert an Object to a String
-     * 
-     * @param data
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static String object2String(Object data) {
-        return data.getClass().getName();
-    }
-
-    /**
-     * Convert a String to a Map, without type checking
-     * 
-     * @param data
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static PropertyMap string2Map(String data) {
-        PropertyMap commands = new PropertyMap();
-
-        String[] parts = StringUtil.split(data, " ");
-        String entry = "";
-        for (int i = 0; i < parts.length; i++) {
+        /**
+         * Convert a String to an int
+         *
+         * @param data
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun string2Int(data: String?): Int {
             try {
-                entry = parts[i];
-                int pos = entry.indexOf('=');
-                String key = entry.substring(0, pos);
-                String value = entry.substring(pos + 1);
-                Class<?> clazz = ClassUtil.forName(value);
-
-                if (clazz.isAssignableFrom(Object.class)) {
-                    assert false;
-                } else {
-                    commands.put(key, value);
-                }
-            } catch (ClassNotFoundException ex) {
-                log.warn("Invalid config file entry: {} System message: {}", entry, ex.getMessage());
-                Reporter.informUser(Convert.class, ex);
+                return java.lang.Integer.parseInt(data)
+            } catch (ex: NumberFormatException) {
+                return 0
             }
         }
 
-        return commands;
-    }
-
-    /**
-     * Convert a Map to a Sting
-     * 
-     * @param commands
-     *            the thing to convert
-     * @return the converted data
-     */
-    public static String map2String(Map<? extends Object, ? extends Object> commands) {
-        StringBuilder retcode = new StringBuilder();
-        for (Map.Entry<? extends Object, ? extends Object> entry : commands.entrySet()) {
-            retcode.append(entry.getKey());
-            retcode.append('=');
-            retcode.append(entry.getValue());
-            retcode.append(' ');
+        /**
+         * Convert an int to a String
+         *
+         * @param data
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun int2String(data: Int): String {
+            return data.toString()
         }
 
-        return retcode.toString().trim();
-    }
+        /**
+         * Convert a String to an Object
+         *
+         * @param data the thing to convert
+         * @return the converted data
+         * @throws ReflectiveOperationException
+         *               if this {@code data} represents an abstract class,
+         *               an interface, an array class, a primitive type, or void;
+         *               or if the class has no reachable nullary constructor;
+         *               or if the instantiation fails for some other reason.
+         */
+        @JvmStatic
+        @Throws(ReflectiveOperationException::class)
+        fun string2Object(data: String?): Any {
+            return ReflectionUtil.construct<Any>(data)
+        }
 
-    /**
-     * The log stream
-     */
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(Convert.class);
+        /**
+         * Convert an Object to a String
+         *
+         * @param data
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun object2String(data: Any): String {
+            return data.javaClass.name
+        }
+
+        /**
+         * Convert a String to a Map, without type checking
+         *
+         * @param data
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun string2Map(data: String?): PropertyMap {
+            val commands = PropertyMap()
+
+            val parts = StringUtil.split(data, " ")
+            var entry = ""
+            for (i in parts.indices) {
+                try {
+                    entry = parts[i]
+                    val pos = entry.indexOf('=')
+                    val key = entry.substring(0, pos)
+                    val value = entry.substring(pos + 1)
+                    val clazz = ClassUtil.forName(value)
+
+                    if (clazz.isAssignableFrom(Any::class.java)) {
+                        jswordAssert(false) { "" }
+                    } else {
+                        commands.put(key, value)
+                    }
+                } catch (ex: ClassNotFoundException) {
+                    log.warn("Invalid config file entry: {} System message: {}", entry, ex.message)
+                    Reporter.informUser(Convert::class.java, ex)
+                }
+            }
+
+            return commands
+        }
+
+        /**
+         * Convert a Map to a Sting
+         *
+         * @param commands
+         *            the thing to convert
+         * @return the converted data
+         */
+        @JvmStatic
+        fun map2String(commands: Map<out Any?, out Any?>): String {
+            val retcode = StringBuilder()
+            for (entry in commands.entries) {
+                retcode.append(entry.key)
+                retcode.append('=')
+                retcode.append(entry.value)
+                retcode.append(' ')
+            }
+
+            // Java String.trim() strips everything up to U+0020, unlike Kotlin trim()
+            return retcode.toString().trim { it <= ' ' }
+        }
+
+        /**
+         * The log stream
+         */
+        private val log = LoggerFactory.getLogger(Convert::class.java)
+    }
 }

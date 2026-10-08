@@ -503,7 +503,7 @@ internal constructor(
         val predictions = PropertyMap()
         for (sectionName in nextPredictionMap!!.keys) {
             val age = nextPredictionMap!![sectionName]
-            predictions[sectionName] = age!!.toString()
+            predictions[sectionName!!] = age!!.toString()
         }
 
         // And save. It's not a disaster if this goes wrong

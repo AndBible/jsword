@@ -17,15 +17,12 @@
  * © CrossWire Bible Society, 2008 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.Properties;
-
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.Properties
 
 /**
  * A PropertyMap is a Map&lt;String,String&gt; sitting over top a Property file.
@@ -35,22 +32,16 @@ import java.util.Properties;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class PropertyMap extends LinkedHashMap<String, String> {
+open class PropertyMap(
+    /**
+     * Default values for any keys not found in this property map.
+     */
+    private var defaults: PropertyMap?
+) : LinkedHashMap<String, String>() {
     /**
      * Creates an empty property list with no default values.
      */
-    public PropertyMap() {
-        this(null);
-    }
-
-    /**
-     * Creates an empty property map with the specified defaults.
-     *
-     * @param   defaults   the defaults.
-     */
-    public PropertyMap(PropertyMap defaults) {
-        this.defaults = defaults;
-    }
+    constructor() : this(null)
 
     /**
      * Searches for the property with the specified key in this property list.
@@ -62,9 +53,10 @@ public class PropertyMap extends LinkedHashMap<String, String> {
      * @return  the value in this property list with the specified key value.
      * @see     java.util.Properties#setProperty
      */
-    public String get(String key) {
-        String value = super.get(key);
-        return ((value == null) && (defaults != null)) ? defaults.get(key) : value;
+    override fun get(key: String): String? {
+        val value = super.get(key)
+        val d = defaults
+        return if ((value == null) && (d != null)) d.get(key) else value
     }
 
     /**
@@ -79,9 +71,9 @@ public class PropertyMap extends LinkedHashMap<String, String> {
      * @return  the value in this property list with the specified key value.
      * @see     java.util.Properties#setProperty
      */
-    public String get(String key, String defaultValue) {
-        String value = get(key);
-        return value == null ? defaultValue : value;
+    open fun get(key: String, defaultValue: String?): String? {
+        val value = get(key)
+        return value ?: defaultValue
     }
 
     /**
@@ -103,14 +95,16 @@ public class PropertyMap extends LinkedHashMap<String, String> {
      *         malformed Unicode escape sequence.
      * @since 1.2
      */
-    public void load(InputStream inStream) throws IOException {
-        Properties prop = new Properties();
-        prop.load(inStream);
-        for (Enumeration<Object> e = prop.keys(); e.hasMoreElements(); ) {
-            Object k = e.nextElement();
-            Object v = prop.get(k);
-            if (k instanceof String && v instanceof String) {
-                put((String) k, (String) v);
+    @Throws(IOException::class)
+    open fun load(inStream: InputStream) {
+        val prop = Properties()
+        prop.load(inStream)
+        val e = prop.keys()
+        while (e.hasMoreElements()) {
+            val k: Any = e.nextElement()
+            val v: Any? = prop.get(k)
+            if (k is String && v is String) {
+                put(k, v)
             }
         }
     }
@@ -124,11 +118,11 @@ public class PropertyMap extends LinkedHashMap<String, String> {
      * Properties from the defaults table of this <code>PropertyMap</code>
      * table (if any) are <i>not</i> written out by this method.
      * <p>
-     * This method outputs the comments, properties keys and values in 
+     * This method outputs the comments, properties keys and values in
      * the same format as specified in
      * {@link java.util.Properties#store(java.io.OutputStream, java.lang.String) store(Writer)},
      * <p>
-     * After the entries have been written, the output stream is flushed.  
+     * After the entries have been written, the output stream is flushed.
      * The output stream remains open after this method returns.
      * <p>
      * @param   out      an output stream.
@@ -138,19 +132,17 @@ public class PropertyMap extends LinkedHashMap<String, String> {
      * @exception  NullPointerException  if <code>out</code> is null.
      * @since 1.2
      */
-    public void store(OutputStream out, String comments) throws IOException {
-        Properties temp = new Properties();
-        temp.putAll(this);
-        temp.store(out, comments);
+    @Throws(IOException::class)
+    open fun store(out: OutputStream, comments: String?) {
+        val temp = Properties()
+        temp.putAll(this)
+        temp.store(out, comments)
     }
 
-    /**
-     * Default values for any keys not found in this property map.
-     */
-    private PropertyMap defaults;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 2821277155924802795L;
+    companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 2821277155924802795L
+    }
 }

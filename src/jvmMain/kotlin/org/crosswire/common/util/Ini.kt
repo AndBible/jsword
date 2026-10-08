@@ -16,29 +16,25 @@
  *
  * © CrossWire Bible Society, 2015 - 2016
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.BufferedReader
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
+import java.io.Reader
+import java.io.Writer
+import java.util.ArrayList
+import java.util.Collections
+import java.util.TreeMap
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A utility class for loading an INI style, Multimap configuration file.
@@ -56,7 +52,7 @@ import org.slf4j.LoggerFactory;
  * Since the most common use case is for a single section, this
  * implementation has an API for delegating to the first IniSection.
  * </p>
- * 
+ *
  * This implementation allows for:
  * <ul>
  * <li><strong>Case Insensitive</strong> -- Section names, keys and values are case insensitive.</li>
@@ -65,7 +61,7 @@ import org.slf4j.LoggerFactory;
  * <li><strong>Multiple Values</strong> -- Each key can have one or more values.</li>
  * <li><strong>Order</strong> -- Order of sections, keys and values are retained</li>
  * </ul>
- * 
+ *
  * This implementation does not allow for:
  * <ul>
  * <li><strong>Globals</strong> -- (key,value) pairs before the first section.</li>
@@ -80,122 +76,116 @@ import org.slf4j.LoggerFactory;
  * @author DM Smith
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br>
  */
-final class Ini {
-
-    /**
-     * Create an empty INI Config.
-     */
-    Ini() {
-        sectionMap = new TreeMap<String, IniSection>(String.CASE_INSENSITIVE_ORDER);
-        list = new ArrayList();
-    }
-
+internal class Ini
+/**
+ * Create an empty INI Config.
+ */
+// was package-private (the class too); no Java caller outside the package, but internal compiles to public
+internal constructor() {
     /**
      * Start over.
      */
-    public void clear() {
-        sectionMap.clear();
-        list.clear();
+    fun clear() {
+        sectionMap.clear()
+        list.clear()
     }
 
     /**
      * Get the number of sections
-     * 
+     *
      * @return the number of known sections
      */
-    public int size() {
-        return sectionMap.size();
+    fun size(): Int {
+        return sectionMap.size
     }
 
     /**
      * Get an unmodifiable collection of the sections in this INI.
-     * 
+     *
      * @return the ordered section names
      */
-    public List<String> getSections() {
-        return Collections.unmodifiableList(list);
-    }
+    val sections: List<String>
+        get() = Collections.unmodifiableList(list)
 
-    public String getSectionName(int index) {
-        return list.get(index);
+    fun getSectionName(index: Int): String {
+        return list[index]
     }
 
     /**
      * Get the name of the first section.
-     * 
+     *
      * @return the name of the first section or null if there are no sections
      * @throws ArrayIndexOutOfBoundsException if there are no sections
      */
-    public String getSectionName() {
-        return size() == 0 ? null : list.get(0);
-    }
+    val sectionName: String?
+        get() = if (size() == 0) null else list[0]
 
-    public int getValueSize(String sectionName, String key) {
-        IniSection section = doGetSection(sectionName);
-        return section == null ? 0 : section.size(key);
+    fun getValueSize(sectionName: String, key: String?): Int {
+        val section = doGetSection(sectionName)
+        return if (section == null) 0 else section.size(key)
     }
 
     /**
      * Get the number of values for a key in the first section
-     * 
+     *
      * @param key the key
      * @return the number of values for a key in the first section
      */
-    public int getValueSize(String key) {
-        IniSection section = getSection();
-        return section == null ? 0 : section.size(key);
+    fun getValueSize(key: String?): Int {
+        val section = section
+        return if (section == null) 0 else section.size(key)
     }
 
     /**
      * Get the value for the key specified by the index and the section.
-     * 
+     *
      * @param sectionName the name of the section
      * @param key the key for the section
      * @param index the index in the list of values
      * @return the value at the specified index
      * @throws ArrayIndexOutOfBoundsException when the index is out of bounds
      */
-    public String getValue(String sectionName, String key, int index) {
-        IniSection section = doGetSection(sectionName);
-        return section == null ? null : section.get(key, index);
+    fun getValue(sectionName: String, key: String?, index: Int): String? {
+        val section = doGetSection(sectionName)
+        return if (section == null) null else section.get(key, index)
     }
 
     /**
      * Get the first value for the key specified by the index and the section.
-     * 
+     *
      * @param sectionName the name of the section
      * @param key the key for the section
      * @return the value at the specified index
      * @throws ArrayIndexOutOfBoundsException when the index is out of bounds
      */
-    public String getValue(String sectionName, String key) {
-        IniSection section = doGetSection(sectionName);
-        return section == null ? null : section.get(key, 0);
+    fun getValue(sectionName: String, key: String?): String? {
+        val section = doGetSection(sectionName)
+        return if (section == null) null else section.get(key, 0)
     }
 
     /**
      * Get the value for the key specified by the index for the first section.
-     * 
+     *
      * @param key the key
      * @param index the index
      * @return the value at the specified index
      * @throws ArrayIndexOutOfBoundsException when the index is out of bounds
      */
-    public String getValue(String key, int index) {
-        IniSection section = getSection();
-        return section == null ? null : section.get(key, index);
+    fun getValue(key: String?, index: Int): String? {
+        val section = section
+        return if (section == null) null else section.get(key, index)
     }
 
     /**
      * Get the first value for the key in the first section.
-     * 
+     *
      * @param key the key
      * @return the value at the specified index
      * @throws ArrayIndexOutOfBoundsException when the index is out of bounds
      */
-    public String getValue(String key) {
-        IniSection section = getSection();
-        return section == null ? null : section.get(key);
+    fun getValue(key: String?): String? {
+        val section = section
+        return if (section == null) null else section.get(key)
     }
 
     /**
@@ -209,9 +199,9 @@ final class Ini {
      * @param value the value for the key
      * @return {@code true} if the element was added or already was present
      */
-    public boolean add(String sectionName, String key, String value) {
-        IniSection section = getOrCreateSection(sectionName);
-        return section.add(key, value);
+    fun add(sectionName: String, key: String?, value: String?): Boolean {
+        val section = getOrCreateSection(sectionName)
+        return section.add(key, value)
     }
 
     /**
@@ -224,90 +214,84 @@ final class Ini {
      * @param value the value for the key
      * @return {@code true} if the element was added or already was present
      */
-    public boolean replace(String sectionName, String key, String value) {
-        IniSection section = getOrCreateSection(sectionName);
-        return section.replace(key, value);
+    fun replace(sectionName: String, key: String?, value: String?): Boolean {
+        val section = getOrCreateSection(sectionName)
+        return section.replace(key, value)
     }
 
     /**
      * Remove the value if present.
      * If it were the last value for the key, the key is removed.
      * If it were the last key, the section is removed.
-     * 
+     *
      * @param sectionName the name of the section
      * @param key the key for the section
      * @param value the value for the key
      * @return whether the value was present and removed
      */
-    public boolean remove(String sectionName, String key, String value) {
-        IniSection section = sectionMap.get(sectionName);
-        if (section == null) {
-            return false;
-        }
-        boolean changed = section.remove(key, value);
+    fun remove(sectionName: String, key: String?, value: String?): Boolean {
+        val section = sectionMap[sectionName] ?: return false
+        val changed = section.remove(key, value)
         if (changed) {
-            if (section.isEmpty()) {
-                sectionMap.remove(sectionName);
-                list.remove(sectionName);
+            if (section.isEmpty) {
+                sectionMap.remove(sectionName)
+                list.remove(sectionName)
             }
         }
 
-        return changed;
+        return changed
     }
 
     /**
      * Remove the key if present.
      * If it were the last key for the section, the section is removed.
-     * 
+     *
      * @param sectionName the name of the section
      * @param key the key for the section
      * @return whether the key was present and removed
      */
-    public boolean remove(String sectionName, String key) {
-        IniSection section = sectionMap.get(sectionName);
-        if (section == null) {
-            return false;
-        }
-        boolean changed = section.remove(key);
-        sectionMap.remove(sectionName);
-        list.remove(sectionName);
+    fun remove(sectionName: String, key: String?): Boolean {
+        val section = sectionMap[sectionName] ?: return false
+        val changed = section.remove(key)
+        sectionMap.remove(sectionName)
+        list.remove(sectionName)
 
-        return changed;
+        return changed
     }
 
     // Routines that work on the first section
     /**
      * Get the first section.
-     * 
+     *
      * @return the first section or null if there are no sections
      */
-    public IniSection getSection() {
-        return size() == 0 ? null : sectionMap.get(list.get(0));
-    }
+    val section: IniSection?
+        get() = if (size() == 0) null else sectionMap[list[0]]
 
     /**
      * Get the unmodifiable set of keys of the first section.
      * The set has insertion order.
-     * 
+     *
      * @return the keys of the first section
      */
-    public Collection<String> getKeys() {
-        IniSection section = getSection();
-        return section == null ? null : section.getKeys();
-    }
+    val keys: Collection<String>?
+        get() {
+            val section = section
+            return if (section == null) null else section.keys
+        }
 
     /**
      * Get the values of a key of the first section.
      * The collection has insertion order.
      * Note many keys only have one value.
      * A key that has no values returns null.
-     * 
+     *
      * @param key the key
      * @return the keyed values or null if the key doesn't exist
      */
-    public Collection<String> getValues(String key) {
-        IniSection section = getSection();
-        return section == null ? null : section.getValues(key);
+    fun getValues(key: String?): Collection<String>? {
+        val section = section
+        return if (section == null) null else section.getValues(key)
     }
 
     /**
@@ -317,35 +301,35 @@ final class Ini {
      * @param value the value for the key
      * @return whether the value was added or is already present.
      */
-    public boolean addValue(String key, String value) {
-        IniSection section = getSection();
-        return section == null || section.add(key, value);
+    fun addValue(key: String?, value: String?): Boolean {
+        val section = section
+        return section == null || section.add(key, value)
     }
 
     /**
      * Remove the value if present in the first section.
      * If it were the last value for the key, the key is removed.
      * If it were the last key, the section is removed.
-     * 
+     *
      * @param key the key for the section
      * @param value the value for the key
      * @return whether the value was present and removed
      */
-    public boolean removeValue(String key, String value) {
-        String section = getSectionName();
-        return section == null || remove(section, key, value);
+    fun removeValue(key: String?, value: String?): Boolean {
+        val section = sectionName
+        return section == null || remove(section, key, value)
     }
 
     /**
      * Remove the key if present.
      * If it were the last key for the section, the section is removed.
-     * 
+     *
      * @param key the key for the section
      * @return whether the key was present and removed
      */
-    public boolean removeValue(String key) {
-        String section = getSectionName();
-        return section == null || remove(section, key);
+    fun removeValue(key: String?): Boolean {
+        val section = sectionName
+        return section == null || remove(section, key)
     }
 
     /**
@@ -357,20 +341,21 @@ final class Ini {
      * @param value the value for the key
      * @return {@code true} if the element was added or already was present
      */
-    public boolean replaceValue(String key, String value) {
-        IniSection section = getSection();
-        return section == null || section.replace(key, value);
+    fun replaceValue(key: String?, value: String?): Boolean {
+        val section = section
+        return section == null || section.replace(key, value)
     }
 
-    public void load(InputStream is, String encoding) throws IOException {
-        Reader in = null;
+    @Throws(IOException::class)
+    fun load(`is`: InputStream?, encoding: String?) {
+        var reader: Reader? = null
         try {
-            in = new InputStreamReader(is, encoding);
-            doLoad(in);
+            reader = InputStreamReader(`is`, encoding)
+            doLoad(reader)
         } finally {
-            if (in != null) {
-                in.close();
-                in = null;
+            if (reader != null) {
+                reader.close()
+                reader = null
             }
         }
     }
@@ -382,15 +367,16 @@ final class Ini {
      * @param encoding the encoding of the file
      * @throws IOException
      */
-    public void load(File file, String encoding) throws IOException {
-        InputStream in = null;
+    @Throws(IOException::class)
+    fun load(file: File?, encoding: String?) {
+        var input: InputStream? = null
         try {
-            in = new FileInputStream(file);
-            load(in, encoding);
+            input = FileInputStream(file)
+            load(input, encoding)
         } finally {
-            if (in != null) {
-                in.close();
-                in = null;
+            if (input != null) {
+                input.close()
+                input = null
             }
         }
     }
@@ -403,15 +389,16 @@ final class Ini {
      * @param encoding the character encoding for this INI
      * @throws IOException
      */
-    public void load(byte[] buffer, String encoding) throws IOException {
-        InputStream in = null;
+    @Throws(IOException::class)
+    fun load(buffer: ByteArray?, encoding: String?) {
+        var input: InputStream? = null
         try {
-            in = new ByteArrayInputStream(buffer);
-            load(in, encoding);
+            input = ByteArrayInputStream(buffer)
+            load(input, encoding)
         } finally {
-            if (in != null) {
-                in.close();
-                in = null;
+            if (input != null) {
+                input.close()
+                input = null
             }
         }
     }
@@ -423,40 +410,41 @@ final class Ini {
      * @param encoding the encoding of the file
      * @throws IOException
      */
-    public void save(File file, String encoding) throws IOException {
-        Writer out = null;
+    @Throws(IOException::class)
+    fun save(file: File?, encoding: String?) {
+        var out: Writer? = null
         try {
-            out = new OutputStreamWriter(new FileOutputStream(file), encoding);
-            save(out);
+            out = OutputStreamWriter(FileOutputStream(file), encoding)
+            save(out)
         } finally {
             if (out != null) {
-                out.close();
-                out = null;
+                out.close()
+                out = null
             }
         }
     }
 
     /**
      * Output the Ini to the given Writer.
-     * 
+     *
      * @param out the Writer to which this Ini should be written
      */
-    private void save(Writer out) {
-        PrintWriter writer = null;
-        if (out instanceof PrintWriter) {
-            writer = (PrintWriter) out;
+    private fun save(out: Writer) {
+        var writer: PrintWriter? = null
+        if (out is PrintWriter) {
+            writer = out
         } else {
-            writer = new PrintWriter(out);
+            writer = PrintWriter(out)
         }
 
-        for (String sectionName : list) {
-            IniSection section = doGetSection(sectionName);
-            section.save(writer);
+        for (sectionName in list) {
+            val section = doGetSection(sectionName)
+            section!!.save(writer)
         }
     }
 
-    private IniSection doGetSection(String sectionName) {
-        return sectionMap.get(sectionName);
+    private fun doGetSection(sectionName: String): IniSection? {
+        return sectionMap[sectionName]
     }
 
     /**
@@ -465,64 +453,62 @@ final class Ini {
      * @param sectionName
      * @return the found or created section
      */
-    private IniSection getOrCreateSection(final String sectionName) {
-        IniSection section = sectionMap.get(sectionName);
+    private fun getOrCreateSection(sectionName: String): IniSection {
+        var section = sectionMap[sectionName]
         if (section == null) {
-            section = new IniSection(sectionName);
-            sectionMap.put(sectionName, section);
-            list.add(sectionName);
+            section = IniSection(sectionName)
+            sectionMap[sectionName] = section
+            list.add(sectionName)
         }
-        return section;
+        return section
     }
 
-    private void doLoad(Reader in) throws IOException {
-        BufferedReader bin = null;
+    @Throws(IOException::class)
+    private fun doLoad(`in`: Reader) {
+        var bin: BufferedReader? = null
         try {
-            if (in instanceof BufferedReader) {
-                bin = (BufferedReader) in;
+            if (`in` is BufferedReader) {
+                bin = `in`
             } else {
                 // Quiet Android from complaining about using the default
                 // BufferReader buffer size.
                 // The actual buffer size is undocumented. So this is a good
                 // idea any way.
-                bin = new BufferedReader(in, MAX_BUFF_SIZE);
+                bin = BufferedReader(`in`, MAX_BUFF_SIZE)
             }
 
-            String sectionName = "";
-            StringBuilder buf = new StringBuilder();
+            var sectionName = ""
+            val buf = StringBuilder()
             while (true) {
                 // Empty out the buffer
-                buf.setLength(0);
-                String line = advance(bin);
-                if (line == null) {
-                    break;
-                }
+                buf.setLength(0)
+                val line = advance(bin) ?: break
 
                 if (isSectionLine(line)) {
                     // The conf file contains a leading line of the form [KJV]
                     // This is the acronym by which Sword refers to it.
-                    sectionName = line.substring(1, line.length() - 1);
-                    continue;
+                    sectionName = line.substring(1, line.length - 1)
+                    continue
                 }
 
                 // Is this a key line?
-                int splitPos = getSplitPos(line);
+                val splitPos = getSplitPos(line)
                 if (splitPos < 0) {
-                    LOGGER.warn("Expected to see '=' in [{}]: {}", sectionName, line);
-                    continue;
+                    LOGGER.warn("Expected to see '=' in [{}]: {}", sectionName, line)
+                    continue
                 }
 
-                String key = line.substring(0, splitPos).trim();
-                if (key.length() == 0) {
-                    LOGGER.warn("Empty key in [{}]: {}", sectionName, line);
+                val key = line.substring(0, splitPos).trim { it <= ' ' }
+                if (key.length == 0) {
+                    LOGGER.warn("Empty key in [{}]: {}", sectionName, line)
                 }
-                String value = more(bin, line.substring(splitPos + 1).trim());
-                add(sectionName, key, value);
+                val value = more(bin, line.substring(splitPos + 1).trim { it <= ' ' })
+                add(sectionName, key, value)
             }
         } finally {
             if (bin != null) {
-                bin.close();
-                bin = null;
+                bin.close()
+                bin = null
             }
         }
     }
@@ -534,19 +520,22 @@ final class Ini {
      * @return the next line or null if there is nothing more
      * @throws IOException if encountered
      */
-    private String advance(BufferedReader bin) throws IOException {
+    @Throws(IOException::class)
+    private fun advance(bin: BufferedReader): String? {
         // Get the next non-blank, non-comment line
-        String trimmed = null;
-        for (String line = bin.readLine(); line != null; line = bin.readLine()) {
+        var trimmed: String? = null
+        var line = bin.readLine()
+        while (line != null) {
             // Remove leading and trailing whitespace
-            trimmed = line.trim();
+            trimmed = line.trim { it <= ' ' }
 
             // skip blank and comment lines
             if (!isCommentLine(trimmed)) {
-                return trimmed;
+                return trimmed
             }
+            line = bin.readLine()
         }
-        return null;
+        return null
     }
 
     /**
@@ -556,15 +545,15 @@ final class Ini {
      * @return true if the line is empty or starts with one of the comment
      *         characters
      */
-    private boolean isCommentLine(final String line) {
+    private fun isCommentLine(line: String?): Boolean {
         if (line == null) {
-            return false;
+            return false
         }
-        if (line.length() == 0) {
-            return true;
+        if (line.length == 0) {
+            return true
         }
-        char firstChar = line.charAt(0);
-        return firstChar == ';' || firstChar == '#';
+        val firstChar = line[0]
+        return firstChar == ';' || firstChar == '#'
     }
 
     /**
@@ -573,70 +562,73 @@ final class Ini {
      * @param line The line to check.
      * @return true if the line designates a section
      */
-    private boolean isSectionLine(final String line) {
-        return line.charAt(0) == '[' && line.charAt(line.length() - 1) == ']';
+    private fun isSectionLine(line: String): Boolean {
+        return line[0] == '[' && line[line.length - 1] == ']'
     }
 
     /**
      * Does this line of text represent a key/value pair?
-     * 
+     *
      * @param line The line to check.
      * @return the position of the split position or -1
      */
-    private int getSplitPos(final String line) {
-        return line.indexOf('=');
+    private fun getSplitPos(line: String): Int {
+        return line.indexOf('=')
     }
 
     /**
      * Get continuation lines, if any.
      */
-    private String more(BufferedReader bin, String value) throws IOException {
-        boolean moreCowBell = false;
-        String line = value;
-        StringBuilder buf = new StringBuilder();
+    @Throws(IOException::class)
+    private fun more(bin: BufferedReader, value: String): String {
+        var moreCowBell = false
+        var line: String? = value
+        val buf = StringBuilder()
 
         do {
-            moreCowBell = more(line);
+            moreCowBell = more(line!!)
             if (moreCowBell) {
-                line = line.substring(0, line.length() - 1).trim();
+                line = line.substring(0, line.length - 1).trim { it <= ' ' }
             }
-            buf.append(line);
+            buf.append(line)
             if (moreCowBell) {
-                buf.append('\n');
-                line = advance(bin);
+                buf.append('\n')
+                line = advance(bin)
             }
-        } while (moreCowBell && line != null);
-        return buf.toString();
-    }
-
-    /**
-     * Is there more following this line
-     *
-     * @param line the trimmed string to check
-     * @return whether this line continues
-     */
-    private static boolean more(final String line) {
-        int length = line.length();
-        return length > 0 && line.charAt(length - 1) == '\\';
+        } while (moreCowBell && line != null)
+        return buf.toString()
     }
 
     /**
      * A map of sections by section names.
      */
-    private Map<String, IniSection> sectionMap;
+    private var sectionMap: MutableMap<String, IniSection> = TreeMap(String.CASE_INSENSITIVE_ORDER)
 
     /**
      * Indexed list of sections maintaining insertion order.
      */
-    private List<String> list;
+    private var list: MutableList<String> = ArrayList()
 
-    /**
-     * Buffer size is based on file size but keep it with within reasonable limits
-     */
-    private static final int MAX_BUFF_SIZE = 8 * 1024;
+    private companion object {
+        /**
+         * Is there more following this line
+         *
+         * @param line the trimmed string to check
+         * @return whether this line continues
+         */
+        private fun more(line: String): Boolean {
+            val length = line.length
+            return length > 0 && line[length - 1] == '\\'
+        }
 
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(Ini.class);
+        /**
+         * Buffer size is based on file size but keep it with within reasonable limits
+         */
+        private const val MAX_BUFF_SIZE = 8 * 1024
+
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(Ini::class.java)
+    }
 }
