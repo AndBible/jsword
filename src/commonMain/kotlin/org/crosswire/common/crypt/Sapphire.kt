@@ -17,9 +17,21 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.crypt;
+@file:OptIn(ExperimentalMultiplatform::class) // kotlin.jvm.JvmStatic is an optional expectation in common code
 
-import java.nio.charset.StandardCharsets;
+/*
+ * Package org.crosswire.common.crypt (was package-info.java):
+ *
+ * The Sapphire II Stream Cipher is a port of Sword's C++ implementation of
+ * Michael Paul Johnson's 2 January 1995 public domain cipher.
+ */
+package org.crosswire.common.crypt
+
+import org.crosswire.common.util.latin1Bytes
+import org.crosswire.common.util.latin1String
+import kotlin.jvm.JvmStatic
+import kotlin.math.min
+
 
 /**
  * The Sapphire II Stream Cipher is a port of Sword's C++ implementation of
@@ -474,21 +486,15 @@ import java.nio.charset.StandardCharsets;
  * @author unascribed Sword's C++ implementation
  * @author DM Smith Java port from Sword's C++ implementation
  */
-public class Sapphire {
-
-    /**
-     * Character mapping table used by personalize() for key derivation.
-     * Ported from libsword's swcipher.cpp.
-     */
-    private static final char[] LATS = {
-        'b', 'c', 'e', 'a', 'f', 'g', 'i', 'j', 'k', 'l',
-        'h', 'm', 'p', 'q', 'B', 'r', 'H', 'o', 's', 't',
-        'T', 'u', 'w', 'x', 'y', 'A', 'd', 'C', 'D', 'z',
-        'E', 'F', 'I', 'J', 'K', 'G', 'L', 'N', 'O', '7',
-        'P', 'Q', 'M', 'R', 'S', 'U', 'V', 'W', 'X', 'Y',
-        '9', '0', '1', '2', 'Z', '3', '6', '4', 'n', '8',
-        'v', '5'
-    };
+open class Sapphire(aKey: ByteArray?) {
+    private val cards: IntArray = IntArray(256)
+    private var rotor = 0
+    private var ratchet = 0
+    private var avalanche = 0
+    private var lastPlain = 0
+    private var lastCipher = 0
+    private var keypos = 0
+    private var rsum = 0
 
     /**
      * Construct a Sapphire Stream Cipher from a key, possibly null or empty.
@@ -497,168 +503,28 @@ public class Sapphire {
      *
      * @param aKey the cipher key
      */
-    public Sapphire(byte[] aKey) {
-        byte[] key = aKey;
+    init {
+        var key = aKey
         if (key == null) {
-            key = new byte[0];
+            key = ByteArray(0)
         }
-        cards = new int[256];
-        if (key.length > 0) {
+        if (key.size > 0) {
             // Apply personalize() to derive the actual cipher key from license key format
-            key = personalize(key);
-            initialize(key);
+            key = personalize(key)
+            initialize(key)
         } else {
-            hashInit();
+            hashInit()
         }
-    }
-
-    /**
-     * Derives the actual cipher key from a SWORD-style license key.
-     * <p>
-     * License keys have the format "XXXX-XXXX-XXXX-XXXX-CCCC" where the last
-     * segment is a checksum. If the checksum validates, the key is transformed
-     * into the internal cipher key. If validation fails (e.g., for simple keys
-     * or already-transformed keys), the original key is returned unchanged.
-     * </p>
-     * <p>
-     * This provides backward compatibility: existing modules using simple keys
-     * continue to work, while new license-format keys are properly transformed.
-     * </p>
-     * <p>
-     * Ported from libsword's SWCipher::personalize() in swcipher.cpp.
-     * </p>
-     *
-     * @param key the input key bytes
-     * @return the derived cipher key, or the original if not in license format
-     */
-    private static byte[] personalize(byte[] key) {
-        String buf = new String(key, StandardCharsets.ISO_8859_1);
-
-        // Build character hash map
-        int[] charHash = new int[128];
-        for (int i = 0; i < 62; i++) {
-            charHash[LATS[i]] = i;
-        }
-
-        // Split into segments by '-'
-        String[] segs = new String[5];
-        int segn = 0;
-        StringBuilder currentSeg = new StringBuilder();
-        for (int i = 0; i < buf.length() && segn < 5; i++) {
-            if (buf.charAt(i) == '-') {
-                segs[segn++] = currentSeg.toString();
-                currentSeg = new StringBuilder();
-            } else {
-                currentSeg.append(buf.charAt(i));
-            }
-        }
-        if (segn < 5) {
-            segs[segn] = currentSeg.toString();
-        }
-
-        // Fill empty segments
-        for (int i = 0; i < 5; i++) {
-            if (segs[i] == null) {
-                segs[i] = "";
-            }
-        }
-
-        String chkSum = segs[4];
-
-        // Ensure segs[4] has at least 4 characters for checksum storage
-        if (segs[4].length() < 4) {
-            StringBuilder sb = new StringBuilder(segs[4]);
-            while (sb.length() < 4) {
-                sb.append(' ');
-            }
-            segs[4] = sb.toString();
-        }
-
-        StringBuilder[] segBuilders = new StringBuilder[5];
-        for (int i = 0; i < 5; i++) {
-            segBuilders[i] = new StringBuilder(segs[i]);
-        }
-
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < 4; i++) {
-            int csum = 0;
-            int segLen = segs[i].length();
-            int seg0Len = segs[0].length();
-
-            if (seg0Len == 0) {
-                // Can't process without first segment
-                continue;
-            }
-
-            for (int j = 0; j < segLen && j < seg0Len; j++) {
-                char c = segs[i].charAt(j);
-                char c0 = segs[0].charAt(j % seg0Len);
-
-                // Check if characters are in valid range
-                if (c >= 128 || c0 >= 128 || charHash[c] == 0 && c != 'b' || charHash[c0] == 0 && c0 != 'b') {
-                    // Character not in LATS, skip
-                    // Note: 'b' maps to 0, so we need special handling
-                    boolean cValid = false;
-                    boolean c0Valid = false;
-                    for (char lat : LATS) {
-                        if (lat == c) cValid = true;
-                        if (lat == c0) c0Valid = true;
-                    }
-                    if (!cValid || !c0Valid) {
-                        continue;
-                    }
-                }
-
-                int hash = charHash[c];
-                int obfusHash = charHash[c0];
-
-                // Decode mode (encode = false)
-                obfusHash = hash + (i != 0 ? obfusHash : 0);
-                obfusHash %= 62;
-
-                if (i != 0) {
-                    segBuilders[i].setCharAt(j, LATS[obfusHash]);
-                }
-                csum += hash;
-            }
-
-            // Update checksum character
-            if (i < 4 && segBuilders[4].length() > i) {
-                segBuilders[4].setCharAt(i, LATS[csum % 62]);
-            }
-
-            // Build result (skip first segment when decoding)
-            if (i == 0) {
-                // Don't add first segment to result when decoding
-            } else {
-                if (result.length() > 0) {
-                    result.append('-');
-                }
-                result.append(segBuilders[i].toString());
-            }
-        }
-
-        // Verify checksum - if it doesn't match, return original key
-        String computedChecksum = segBuilders[4].toString().substring(0, Math.min(4, segBuilders[4].length()));
-        String originalChecksum = chkSum.length() >= 4 ? chkSum.substring(0, 4) : chkSum;
-
-        if (!computedChecksum.equals(originalChecksum)) {
-            // Checksum mismatch - return original key unchanged (backward compatibility)
-            return key;
-        }
-
-        return result.toString().getBytes(StandardCharsets.ISO_8859_1);
     }
 
     /**
      * Decipher a single byte, presumably the next.
-     * 
+     *
      * @param b
      *            the next byte to decipher
      * @return the enciphered byte
      */
-    public byte cipher(byte b) {
+    open fun cipher(b: Byte): Byte {
         // Picture a single enigma rotor with 256 positions, rewired
         // on the fly by card-shuffling.
 
@@ -669,142 +535,141 @@ public class Sapphire {
 
         // Convert from a byte to an int, but prevent sign extension.
         // So -16 becomes 240
-        int bVal = b & 0xFF;
-        ratchet += cards[rotor++];
+        val bVal = b.toInt() and 0xFF
+        ratchet += cards[rotor++]
         // Keep ratchet and rotor in the range of 0-255
         // The C++ code relied upon overflow of an unsigned char
-        ratchet &= 0xFF;
-        rotor &= 0xFF;
-        int swaptemp = cards[lastCipher];
-        cards[lastCipher] = cards[ratchet];
-        cards[ratchet] = cards[lastPlain];
-        cards[lastPlain] = cards[rotor];
-        cards[rotor] = swaptemp;
-        avalanche += cards[swaptemp];
+        ratchet = ratchet and 0xFF
+        rotor = rotor and 0xFF
+        val swaptemp = cards[lastCipher]
+        cards[lastCipher] = cards[ratchet]
+        cards[ratchet] = cards[lastPlain]
+        cards[lastPlain] = cards[rotor]
+        cards[rotor] = swaptemp
+        avalanche += cards[swaptemp]
         // Keep avalanche in the range of 0-255
-        avalanche &= 0xFF;
+        avalanche = avalanche and 0xFF
 
         // Output one byte from the state in such a way as to make it
         // very hard to figure out which one you are looking at.
-        lastPlain = bVal ^ cards[(cards[ratchet] + cards[rotor]) & 0xFF] ^ cards[cards[(cards[lastPlain] + cards[lastCipher] + cards[avalanche]) & 0xFF]];
+        lastPlain = bVal xor cards[(cards[ratchet] + cards[rotor]) and 0xFF] xor cards[cards[(cards[lastPlain] + cards[lastCipher] + cards[avalanche]) and 0xFF]]
 
-        lastCipher = bVal;
+        lastCipher = bVal
 
         // Convert back to a byte
         // E.g. 240 becomes -16
-        return (byte) lastPlain;
+        return lastPlain.toByte()
     }
 
     /**
      * Destroy the key and state information in RAM.
      */
-    public void burn() {
+    open fun burn() {
         // Destroy the key and state information in RAM.
-        for (int i = 0; i < 256; i++) {
-            cards[i] = 0;
+        for (i in 0 until 256) {
+            cards[i] = 0
         }
-        rotor = 0;
-        ratchet = 0;
-        avalanche = 0;
-        lastPlain = 0;
-        lastCipher = 0;
+        rotor = 0
+        ratchet = 0
+        avalanche = 0
+        lastPlain = 0
+        lastCipher = 0
     }
 
     /**
      * @param hash the destination
      */
-    public void hashFinal(byte[] hash) { // Destination
-        for (int i = 255; i >= 0; i--) {
-            cipher((byte) i);
+    open fun hashFinal(hash: ByteArray) { // Destination
+        for (i in 255 downTo 0) {
+            cipher(i.toByte())
         }
-        for (int i = 0; i < hash.length; i++) {
-            hash[i] = cipher((byte) 0);
+        for (i in 0 until hash.size) {
+            hash[i] = cipher(0.toByte())
         }
     }
 
     /**
      * Initializes the cards array to be deterministically random based upon the
      * key.
-     * <p>
+     *
      * Key size may be up to 256 bytes. Pass phrases may be used directly, with
      * longer length compensating for the low entropy expected in such keys.
      * Alternatively, shorter keys hashed from a pass phrase or generated
      * randomly may be used. For random keys, lengths of from 4 to 16 bytes are
      * recommended, depending on how secure you want this to be.
-     * </p>
-     * 
+     *
      * @param key
      *            used to initialize the cipher engine.
      */
-    private void initialize(byte[] key) {
+    private fun initialize(key: ByteArray) {
 
         // Start with cards all in order, one of each.
-        for (int i = 0; i < 256; i++) {
-            cards[i] = i;
+        for (i in 0 until 256) {
+            cards[i] = i
         }
 
         // Swap the card at each position with some other card.
-        int swaptemp;
-        int toswap = 0;
-        keypos = 0; // Start with first byte of user key.
-        rsum = 0;
-        for (int i = 255; i >= 0; i--) {
-            toswap = keyrand(i, key);
-            swaptemp = cards[i];
-            cards[i] = cards[toswap];
-            cards[toswap] = swaptemp;
+        var swaptemp: Int
+        var toswap = 0
+        keypos = 0 // Start with first byte of user key.
+        rsum = 0
+        for (i in 255 downTo 0) {
+            toswap = keyrand(i, key)
+            swaptemp = cards[i]
+            cards[i] = cards[toswap]
+            cards[toswap] = swaptemp
         }
 
         // Initialize the indices and data dependencies.
         // Indices are set to different values instead of all 0
         // to reduce what is known about the state of the cards
         // when the first byte is emitted.
-        rotor = cards[1];
-        ratchet = cards[3];
-        avalanche = cards[5];
-        lastPlain = cards[7];
-        lastCipher = cards[rsum];
+        rotor = cards[1]
+        ratchet = cards[3]
+        avalanche = cards[5]
+        lastPlain = cards[7]
+        lastCipher = cards[rsum]
 
         // ensure that these have no useful values to those that snoop
-        toswap = 0;
-        swaptemp = toswap;
-        rsum = swaptemp;
-        keypos = rsum;
+        toswap = 0
+        swaptemp = toswap
+        rsum = swaptemp
+        keypos = rsum
     }
 
     /**
      * Initialize non-keyed hash computation.
      */
-    private void hashInit() {
+    private fun hashInit() {
 
         // Initialize the indices and data dependencies.
-        rotor = 1;
-        ratchet = 3;
-        avalanche = 5;
-        lastPlain = 7;
-        lastCipher = 11;
+        rotor = 1
+        ratchet = 3
+        avalanche = 5
+        lastPlain = 7
+        lastCipher = 11
 
         // Start with cards all in inverse order.
 
-        int j = 255;
-        for (int i = 0; i < 256; i++) {
-            cards[i] = j--;
+        var j = 255
+        for (i in 0 until 256) {
+            cards[i] = j--
         }
     }
 
-    private int keyrand(int limit, byte[] key) {
-        int u; // Value from 0 to limit to return.
+    private fun keyrand(limit: Int, key: ByteArray): Int {
+        var u: Int // Value from 0 to limit to return.
 
         if (limit == 0) {
-            return 0; // Avoid divide by zero error.
+            return 0 // Avoid divide by zero error.
         }
 
-        int retryLimiter = 0; // No infinite loops allowed.
+        var retryLimiter = 0 // No infinite loops allowed.
 
         // Fill mask with enough bits to cover the desired range.
-        int mask = 1;
+        var mask = 1
         while (mask < limit) {
-            mask = (mask << 1) + 1;
+            mask = (mask shl 1) + 1
         }
 
         do {
@@ -813,29 +678,171 @@ public class Sapphire {
             // So -16 becomes 240
             // Also keep rsum in the range of 0-255
             // The C++ code relied upon overflow of an unsigned char
-            rsum = (cards[rsum] + (key[keypos++] & 0xFF)) & 0xFF;
+            rsum = (cards[rsum] + (key[keypos++].toInt() and 0xFF)) and 0xFF
 
-            if (keypos >= key.length) {
-                keypos = 0; // Recycle the user key.
-                rsum += key.length; // key "aaaa" != key "aaaaaaaa"
-                rsum &= 0xFF;
+            if (keypos >= key.size) {
+                keypos = 0 // Recycle the user key.
+                rsum += key.size // key "aaaa" != key "aaaaaaaa"
+                rsum = rsum and 0xFF
             }
 
-            u = mask & rsum;
+            u = mask and rsum
 
             if (++retryLimiter > 11) {
-                u %= limit; // Prevent very rare long loops.
+                u %= limit // Prevent very rare long loops.
             }
-        } while (u > limit);
-        return u;
+        } while (u > limit)
+        return u
     }
 
-    private int[] cards;
-    private int rotor;
-    private int ratchet;
-    private int avalanche;
-    private int lastPlain;
-    private int lastCipher;
-    private int keypos;
-    private int rsum;
+    companion object {
+        /**
+         * Character mapping table used by personalize() for key derivation.
+         * Ported from libsword's swcipher.cpp.
+         */
+        private val LATS = charArrayOf(
+            'b', 'c', 'e', 'a', 'f', 'g', 'i', 'j', 'k', 'l',
+            'h', 'm', 'p', 'q', 'B', 'r', 'H', 'o', 's', 't',
+            'T', 'u', 'w', 'x', 'y', 'A', 'd', 'C', 'D', 'z',
+            'E', 'F', 'I', 'J', 'K', 'G', 'L', 'N', 'O', '7',
+            'P', 'Q', 'M', 'R', 'S', 'U', 'V', 'W', 'X', 'Y',
+            '9', '0', '1', '2', 'Z', '3', '6', '4', 'n', '8',
+            'v', '5'
+        )
+
+        /**
+         * Derives the actual cipher key from a SWORD-style license key.
+         *
+         * License keys have the format "XXXX-XXXX-XXXX-XXXX-CCCC" where the last
+         * segment is a checksum. If the checksum validates, the key is transformed
+         * into the internal cipher key. If validation fails (e.g., for simple keys
+         * or already-transformed keys), the original key is returned unchanged.
+         *
+         * This provides backward compatibility: existing modules using simple keys
+         * continue to work, while new license-format keys are properly transformed.
+         *
+         * Ported from libsword's SWCipher::personalize() in swcipher.cpp.
+         *
+         * @param key the input key bytes
+         * @return the derived cipher key, or the original if not in license format
+         */
+        @JvmStatic
+        private fun personalize(key: ByteArray): ByteArray {
+            val buf = key.latin1String()
+
+            // Build character hash map
+            val charHash = IntArray(128)
+            for (i in 0 until 62) {
+                charHash[LATS[i].code] = i
+            }
+
+            // Split into segments by '-'
+            val rawSegs = arrayOfNulls<String>(5)
+            var segn = 0
+            var currentSeg = StringBuilder()
+            var k = 0
+            while (k < buf.length && segn < 5) {
+                if (buf[k] == '-') {
+                    rawSegs[segn++] = currentSeg.toString()
+                    currentSeg = StringBuilder()
+                } else {
+                    currentSeg.append(buf[k])
+                }
+                k++
+            }
+            if (segn < 5) {
+                rawSegs[segn] = currentSeg.toString()
+            }
+
+            // Fill empty segments (null -> "")
+            val segs = Array(5) { rawSegs[it] ?: "" }
+
+            val chkSum = segs[4]
+
+            // Ensure segs[4] has at least 4 characters for checksum storage
+            if (segs[4].length < 4) {
+                val sb = StringBuilder(segs[4])
+                while (sb.length < 4) {
+                    sb.append(' ')
+                }
+                segs[4] = sb.toString()
+            }
+
+            val segBuilders = Array(5) { StringBuilder(segs[it]) }
+
+            val result = StringBuilder()
+
+            for (i in 0 until 4) {
+                var csum = 0
+                val segLen = segs[i].length
+                val seg0Len = segs[0].length
+
+                if (seg0Len == 0) {
+                    // Can't process without first segment
+                    continue
+                }
+
+                var j = 0
+                while (j < segLen && j < seg0Len) {
+                    val c = segs[i][j]
+                    val c0 = segs[0][j % seg0Len]
+
+                    // Check if characters are in valid range
+                    if (c.code >= 128 || c0.code >= 128 || charHash[c.code] == 0 && c != 'b' || charHash[c0.code] == 0 && c0 != 'b') {
+                        // Character not in LATS, skip
+                        // Note: 'b' maps to 0, so we need special handling
+                        var cValid = false
+                        var c0Valid = false
+                        for (lat in LATS) {
+                            if (lat == c) cValid = true
+                            if (lat == c0) c0Valid = true
+                        }
+                        if (!cValid || !c0Valid) {
+                            j++
+                            continue
+                        }
+                    }
+
+                    val hash = charHash[c.code]
+                    var obfusHash = charHash[c0.code]
+
+                    // Decode mode (encode = false)
+                    obfusHash = hash + (if (i != 0) obfusHash else 0)
+                    obfusHash %= 62
+
+                    if (i != 0) {
+                        segBuilders[i][j] = LATS[obfusHash]
+                    }
+                    csum += hash
+                    j++
+                }
+
+                // Update checksum character
+                if (i < 4 && segBuilders[4].length > i) {
+                    segBuilders[4][i] = LATS[csum % 62]
+                }
+
+                // Build result (skip first segment when decoding)
+                if (i == 0) {
+                    // Don't add first segment to result when decoding
+                } else {
+                    if (result.length > 0) {
+                        result.append('-')
+                    }
+                    result.append(segBuilders[i].toString())
+                }
+            }
+
+            // Verify checksum - if it doesn't match, return original key
+            val computedChecksum = segBuilders[4].toString().substring(0, min(4, segBuilders[4].length))
+            val originalChecksum = if (chkSum.length >= 4) chkSum.substring(0, 4) else chkSum
+
+            if (computedChecksum != originalChecksum) {
+                // Checksum mismatch - return original key unchanged (backward compatibility)
+                return key
+            }
+
+            return result.toString().latin1Bytes()
+        }
+    }
 }
