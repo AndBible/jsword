@@ -74,7 +74,7 @@ val baselineJar = layout.projectDirectory.file("oracle/jsword-baseline.jar")
 // ParityProbe compiled against the baseline jar, for the oracle class loader.
 val compileOracleProbe by tasks.registering(JavaCompile::class) {
     source(layout.projectDirectory.dir("src/jvmTest/java/org/crosswire/ksword/parity"))
-    include("ParityProbe.java")
+    include("*Probe.java")
     classpath = files(baselineJar) + oracleThirdParty
     destinationDirectory.set(layout.buildDirectory.dir("oracleProbe/classes"))
     options.encoding = "UTF-8"

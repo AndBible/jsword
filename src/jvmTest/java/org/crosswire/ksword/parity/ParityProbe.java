@@ -67,6 +67,16 @@ public final class ParityProbe implements BiFunction<String, List<String>, Strin
                 return sb.toString();
             }
             default:
+                if (op.startsWith("corpus.") || op.startsWith("passage.") || op.startsWith("v11n.")
+                        || op.startsWith("conf.") || op.startsWith("ser.")) {
+                    try {
+                        return CorpusProbe.apply(op, args);
+                    } catch (RuntimeException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
                 throw new IllegalArgumentException("Unknown parity op: " + op);
         }
     }
