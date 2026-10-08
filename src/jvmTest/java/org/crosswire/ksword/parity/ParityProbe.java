@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import org.crosswire.common.crypt.Sapphire;
+import org.crosswire.common.diff.Diff;
+import org.crosswire.common.diff.Difference;
+import org.crosswire.common.diff.Patch;
 import org.crosswire.jsword.book.Books;
 
 /**
@@ -41,6 +44,27 @@ public final class ParityProbe implements BiFunction<String, List<String>, Strin
                 byte[] hash = new byte[Integer.parseInt(args.get(2))];
                 s.hashFinal(hash);
                 return hex(hash);
+            }
+            case "diff.compare": {
+                // args: source, target, checkLines ("true"/"false")
+                Diff diff = new Diff(args.get(0), args.get(1), Boolean.parseBoolean(args.get(2)));
+                StringBuilder sb = new StringBuilder();
+                for (Difference d : diff.compare()) {
+                    sb.append(d.getEditType().getSymbol()).append('|').append(d.getText()).append('\n');
+                }
+                return sb.toString();
+            }
+            case "patch.make":
+                return new Patch(args.get(0), args.get(1)).toText();
+            case "patch.roundTrip": {
+                // args: source, target, text to apply the patch to
+                Patch patch = new Patch().fromText(new Patch(args.get(0), args.get(1)).toText());
+                Patch.PatchResults results = patch.apply(args.get(2));
+                StringBuilder sb = new StringBuilder(results.getText()).append("\n#");
+                for (boolean r : results.getResults()) {
+                    sb.append(r ? '1' : '0');
+                }
+                return sb.toString();
             }
             default:
                 throw new IllegalArgumentException("Unknown parity op: " + op);
