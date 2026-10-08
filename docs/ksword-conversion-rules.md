@@ -96,5 +96,5 @@ Protected fields that subclasses read stay fields: `@JvmField protected var x`.
 ## 10. API parity gate (K1)
 `ApiParityTest` (in `:jsword:parityTest`) compares every public/protected member and the serialization
 members of each baseline class with the current code. Removed/changed = failure; additions only for
-`Companion` and enum `getEntries`, or via `oracle/api-allowlist.txt` with a reason. Read
+`Companion`, enum `getEntries` and `$`-mangled `internal` methods, or via `oracle/api-allowlist.txt` with a reason. Read
 `build/reports/ksword/api-generic.txt` (generic signature differences) at review.

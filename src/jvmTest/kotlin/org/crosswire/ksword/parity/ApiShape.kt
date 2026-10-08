@@ -1,10 +1,8 @@
 package org.crosswire.ksword.parity
 
 import java.io.Serializable
-import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
 import java.lang.reflect.Field
-import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
 /**
@@ -99,13 +97,49 @@ object ApiShape {
         }
     }
 
-    /** Generic signatures of the compared members; differences are reported, not failed (spec §4.1). */
+    /**
+     * Additions that are never a Java-API change (spec §4.1): the companion field, enum `getEntries`, and
+     * `internal` members, which Kotlin compiles to public members with a `$`-mangled name.
+     * [line] is an `of`-format line ("F ..." or "M ...").
+     */
+    fun isKotlinArtefact(c: Class<*>, line: String): Boolean =
+        (line.startsWith("F public static final Companion: ") && line.endsWith("\$Companion")) ||
+            (c.isEnum && line.startsWith("M public static getEntries(): kotlin.enums.EnumEntries")) ||
+            (line.startsWith("M ") && line.substringBefore('(').substringAfterLast(' ').contains('$'))
+
+    private fun typeParams(tp: Array<out java.lang.reflect.TypeVariable<*>>) =
+        if (tp.isEmpty()) "" else tp.joinToString(",", "<", "> ") { v -> v.name + " extends " + v.bounds.joinToString("&") { it.typeName } }
+
+    /**
+     * Generic signatures of the compared members; differences are reported, not failed (spec §4.1).
+     * Uses the same normalisation as [of]: no `synchronized`, no `final` on static methods, Kotlin
+     * artefacts (Companion, getEntries, `$`-mangled internals, marker interfaces) dropped.
+     */
     fun genericOf(c: Class<*>): Set<String> {
         val out = sortedSetOf<String>()
-        out += "C " + c.toGenericString() + " : " + c.genericSuperclass + " " + c.genericInterfaces.joinToString(",")
-        c.declaredFields.filter { !it.isSynthetic && visible(it.modifiers) }.forEach { out += "F " + it.toGenericString() }
-        c.declaredConstructors.filter { !it.isSynthetic && visible(it.modifiers) }.forEach { out += "K " + it.toGenericString() }
-        c.declaredMethods.filter { !it.isSynthetic && !it.isBridge && visible(it.modifiers) }.forEach { out += "M " + it.toGenericString() }
+        val supers = c.genericInterfaces.filter { !it.typeName.startsWith("kotlin.jvm.internal.markers.") }
+        out += "C " + c.toGenericString().replace(" final ", " ") + " : " + c.genericSuperclass + " " + supers.joinToString(",")
+        for (f in c.declaredFields) {
+            if (f.isSynthetic || !visible(f.modifiers)) continue
+            if (isKotlinArtefact(c, "F ${vis(f.modifiers)} static final ${f.name}: ${f.type.typeName}")) continue
+            out += "F " + f.toGenericString()
+        }
+        for (k in c.declaredConstructors) {
+            if (k.isSynthetic || !visible(k.modifiers)) continue
+            out += "K " + k.toGenericString()
+        }
+        for (m in c.declaredMethods) {
+            if (m.isSynthetic || m.isBridge || !visible(m.modifiers)) continue
+            if (isKotlinArtefact(c, "M ${vis(m.modifiers)} static ${m.name}(): ${m.returnType.typeName}")) continue
+            if (m.name.contains('$')) continue
+            val mm = m.modifiers
+            val static = Modifier.isStatic(mm)
+            val final = !static && !c.isEnum && Modifier.isFinal(mm)
+            val flags = listOfNotNull(vis(mm), "static".takeIf { static }, "final".takeIf { final },
+                "abstract".takeIf { Modifier.isAbstract(mm) }).joinToString(" ")
+            out += "M $flags ${typeParams(m.typeParameters)}${m.genericReturnType.typeName} ${m.name}" +
+                "(${m.genericParameterTypes.joinToString(",") { it.typeName }}) throws [${m.genericExceptionTypes.joinToString(",") { it.typeName }}]"
+        }
         return out
     }
 }

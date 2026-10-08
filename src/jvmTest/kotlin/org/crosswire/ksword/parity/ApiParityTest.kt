@@ -26,16 +26,6 @@ class ApiParityTest {
         }.toSet()
     }
 
-    /**
-     * Additions that are never a Java-API change (spec §4.1): the companion field, enum `getEntries`, and
-     * `internal` members, which Kotlin compiles to public members with a `$`-mangled name Java code cannot
-     * call by accident.
-     */
-    private fun isKotlinArtefact(c: Class<*>, line: String): Boolean =
-        (line.startsWith("F public static final Companion: ") && line.endsWith("\$Companion")) ||
-            (c.isEnum && line.startsWith("M public static getEntries(): kotlin.enums.EnumEntries")) ||
-            (line.startsWith("M ") && line.substringBefore('(').substringAfterLast(' ').contains('$'))
-
     private fun baselineClassNames(): List<String> {
         val jar = Oracle.classpath.single { it.name == "jsword-baseline.jar" }
         return JarFile(jar).use { jf ->
@@ -73,7 +63,7 @@ class ApiParityTest {
                 if (e in allow) used += e else problems += "$name - $line"
             }
             for (line in b - a) {
-                if (isKotlinArtefact(cur, line)) continue
+                if (ApiShape.isKotlinArtefact(cur, line)) continue
                 val e = Entry(name, '+', line)
                 if (e in allow) used += e else problems += "$name + $line"
             }
