@@ -17,20 +17,19 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.activate;
+package org.crosswire.common.activate
 
 /**
  * Enumeration of how memory is returned.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public enum Kill {
+enum class Kill {
     /** Try as hard as possible to conserve memory */
-    EVERYTHING  {
-        @Override
-        public void reduceMemoryUsage() {
-            Activator.deactivateAll();
+    EVERYTHING {
+        override fun reduceMemoryUsage() {
+            Activator.deactivateAll()
         }
     },
 
@@ -40,7 +39,7 @@ public enum Kill {
     /** Reduce memory usage, but only if we really need to */
     ONLY_IF_TIGHT;
 
-    public void reduceMemoryUsage() {
-        throw new IllegalArgumentException("Not implemented");
+    open fun reduceMemoryUsage() {
+        throw IllegalArgumentException("Not implemented")
     }
 }

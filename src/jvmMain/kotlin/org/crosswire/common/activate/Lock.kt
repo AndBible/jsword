@@ -17,23 +17,22 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.activate;
+package org.crosswire.common.activate
 
 /**
  * This class only exists to dissuade you from calling activate() directly on an
  * Activatable object.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class Lock {
-    /**
-     * You might be wanting to construct a Lock if you want to call
-     * Activatable.activate() directly, in which case you stand a chance of
-     * breaking the Activator, so let the activator call activate(), and just
-     * ask the Activator to do the job for you.
-     */
-    Lock() {
-        // no instantiation needed
-    }
+open class Lock
+/**
+ * You might be wanting to construct a Lock if you want to call
+ * Activatable.activate() directly, in which case you stand a chance of
+ * breaking the Activator, so let the activator call activate(), and just
+ * ask the Activator to do the job for you.
+ */
+internal constructor() { // was package-private; no Java caller outside the package
+    // no instantiation needed
 }

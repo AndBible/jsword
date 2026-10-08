@@ -17,100 +17,114 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.activate;
+package org.crosswire.common.activate
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Set;
+import java.util.Collections
+import java.util.IdentityHashMap
 
 /**
  * Manager for instances of Activatable.
- * 
+ *
  * Activator should be used to manage all activate()ions and deactivate()ions so
  * that it can keep a track of exactly what is active and what can be
  * deactivated is save memory.
- * 
+ *
+ * Package overview: code to allow classes to be started-up and then shutdown
+ * later to conserve resources.
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class Activator {
-    /**
-     * Prevent instantiation
-     */
-    private Activator() {
-        // singleton - no set-up needed
-    }
+class Activator
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    // singleton - no set-up needed
 
-    /**
-     * Check that a subject is activated and call activate() if not.
-     *
-     * <p>Synchronized so the contains-check and the activate()/add() form a
-     * single atomic operation. Otherwise a concurrent {@link #deactivate} could
-     * leave the {@code activated} set desynced from the subject's own state,
-     * causing a reactivation to be wrongly skipped (see JSword issue: NPE in
-     * SwordGenBook.getKey when a book is (de)activated on one thread while read
-     * on another).
-     *
-     * @param subject
-     *            The thing to activate
-     */
-    public static synchronized void activate(Activatable subject) {
-        if (subject != null && !activated.contains(subject)) {
-            subject.activate(lock);
-            activated.add(subject);
+    companion object {
+        /**
+         * Check that a subject is activated and call activate() if not.
+         *
+         * Synchronized so the contains-check and the activate()/add() form a
+         * single atomic operation. Otherwise a concurrent [deactivate] could
+         * leave the `activated` set desynced from the subject's own state,
+         * causing a reactivation to be wrongly skipped (see JSword issue: NPE in
+         * SwordGenBook.getKey when a book is (de)activated on one thread while read
+         * on another).
+         *
+         * @param subject
+         *            The thing to activate
+         */
+        @JvmStatic
+        fun activate(subject: Activatable?) {
+            synchronized(Activator::class.java) {
+                if (subject != null && !activated.contains(subject)) {
+                    subject.activate(lock)
+                    activated.add(subject)
+                }
+            }
         }
-    }
 
-    /**
-     * If we need to tighten things up a bit we can save memory with this
-     * 
-     * @param amount the amount by which to to reduce memory
-     */
-    public static void reduceMemoryUsage(Kill amount) {
-        amount.reduceMemoryUsage();
-    }
-
-    /**
-     * Deactivate an Activatable object. It is safe to activate() something and
-     * then forget to deactivate() it since we keep a track of activated objects
-     * and will automatically deactivate() when needed, so this method should
-     * only be used when we are sure that something will not be needed again.
-     * 
-     * @param subject
-     *            The thing to deactivate
-     */
-    public static synchronized void deactivate(Activatable subject) {
-        if (subject != null && activated.contains(subject)) {
-            subject.deactivate(lock);
-            activated.remove(subject);
+        /**
+         * If we need to tighten things up a bit we can save memory with this
+         *
+         * @param amount the amount by which to to reduce memory
+         */
+        @JvmStatic
+        fun reduceMemoryUsage(amount: Kill) {
+            amount.reduceMemoryUsage()
         }
-    }
 
-    public static synchronized void deactivateAll() {
-        // Deactivate directly (not via deactivate()) and clear afterwards so we
-        // don't remove entries while iterating the set.
-        for (Activatable item : activated) {
-            item.deactivate(lock);
+        /**
+         * Deactivate an Activatable object. It is safe to activate() something and
+         * then forget to deactivate() it since we keep a track of activated objects
+         * and will automatically deactivate() when needed, so this method should
+         * only be used when we are sure that something will not be needed again.
+         *
+         * @param subject
+         *            The thing to deactivate
+         */
+        @JvmStatic
+        fun deactivate(subject: Activatable?) {
+            synchronized(Activator::class.java) {
+                if (subject != null && activated.contains(subject)) {
+                    subject.deactivate(lock)
+                    activated.remove(subject)
+                }
+            }
         }
-        activated.clear();
+
+        @JvmStatic
+        fun deactivateAll() {
+            synchronized(Activator::class.java) {
+                // Deactivate directly (not via deactivate()) and clear afterwards so we
+                // don't remove entries while iterating the set.
+                for (item in activated) {
+                    item.deactivate(lock)
+                }
+                activated.clear()
+            }
+        }
+
+        /**
+         * The list of things that we have activated.
+         *
+         * Identity-based on purpose. Activation state lives in the instance
+         * (e.g. SwordGenBook's key map), so it must be tracked per instance, not
+         * per equal value. Book equality is by (category, name, initials), so a
+         * replacement instance for the same module compares equal to the one it
+         * replaced. With a value-based set, activating the replacement would be
+         * skipped as "already activated" and its key map would stay null, making
+         * every getKey() throw NoSuchKeyException and getGlobalKeyList() return an
+         * empty list until something forced a deactivate/activate cycle.
+         */
+        private var activated: MutableSet<Activatable> =
+            Collections.newSetFromMap(IdentityHashMap<Activatable, Boolean>())
+
+        /**
+         * The object we use to prevent others from
+         */
+        private var lock: Lock = Lock()
     }
-
-    /**
-     * The list of things that we have activated.
-     *
-     * <p>Identity-based on purpose. Activation state lives in the instance
-     * (e.g. SwordGenBook's key map), so it must be tracked per instance, not
-     * per equal value. Book equality is by (category, name, initials), so a
-     * replacement instance for the same module compares equal to the one it
-     * replaced. With a value-based set, activating the replacement would be
-     * skipped as "already activated" and its key map would stay null, making
-     * every getKey() throw NoSuchKeyException and getGlobalKeyList() return an
-     * empty list until something forced a deactivate/activate cycle.
-     */
-    private static Set<Activatable> activated = Collections.newSetFromMap(new IdentityHashMap<Activatable, Boolean>());
-
-    /**
-     * The object we use to prevent others from
-     */
-    private static Lock lock = new Lock();
 }

@@ -17,33 +17,33 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.activate;
+package org.crosswire.common.activate
 
 /**
  * A class can be Activatable if it needs a significant amount of memory on an
  * irregular basis, and so would benefit from being told when to wake-up and
  * when to conserver memory.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Activatable {
+interface Activatable {
     /**
      * Called to indicate that the Book should initialize itself, and consume
      * whatever system resources it needs to be able to respond to other
      * queries.
-     * 
+     *
      * @param lock
      *            An attempt to ensure that only the Activator calls this method
      */
-    void activate(Lock lock);
+    fun activate(lock: Lock?)
 
     /**
      * Called to indicate that the Book should release whatever system resources
      * it can to make way for other uses.
-     * 
+     *
      * @param lock
      *            An attempt to ensure that only the Activator calls this method
      */
-    void deactivate(Lock lock);
+    fun deactivate(lock: Lock?)
 }
