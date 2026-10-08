@@ -49,6 +49,23 @@ final class CorpusProbe {
     }
 
     static String apply(String op, List<String> args) throws Exception {
+        if (op.equals("passage.parseAllFi")) {
+            // Same as passage.parseAll, but with the Finnish locale so BibleNames_fi names resolve.
+            final java.util.Locale fi = new java.util.Locale("fi", "FI");
+            org.crosswire.jsword.internationalisation.LocaleProvider old =
+                org.crosswire.jsword.internationalisation.LocaleProviderManager.getLocaleProvider();
+            org.crosswire.jsword.internationalisation.LocaleProviderManager.setLocaleProvider(
+                new org.crosswire.jsword.internationalisation.LocaleProvider() {
+                    public java.util.Locale getUserLocale() {
+                        return fi;
+                    }
+                });
+            try {
+                return apply("passage.parseAll", args);
+            } finally {
+                org.crosswire.jsword.internationalisation.LocaleProviderManager.setLocaleProvider(old);
+            }
+        }
         switch (op) {
             case "corpus.modules": {
                 List<String> names = new ArrayList<>();
@@ -308,7 +325,7 @@ final class CorpusProbe {
     private static String osis(Book book, Key key) {
         try {
             Element frag = new BookData(book, key).getOsisFragment();
-            return new XMLOutputter(Format.getCompactFormat()).outputString(frag);
+            return new XMLOutputter(Format.getRawFormat()).outputString(frag);
         } catch (Exception e) {
             return fail(e);
         }

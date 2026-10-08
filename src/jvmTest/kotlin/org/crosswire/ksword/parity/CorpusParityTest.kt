@@ -69,6 +69,7 @@ class CorpusParityTest {
         assertTrue(refs.lines().size >= 2000, "refs.txt must have at least 2000 lines")
         for (v in versifications) {
             assertSameLines("parse $v", both("passage.parseAll", v, refs))
+            assertSameLines("parse(fi) $v", both("passage.parseAllFi", v, refs))
             assertSameLines("tally $v", both("passage.tally", v, refs))
             assertSameLines("mapKjv $v", both("v11n.mapKjv", v, refs))
         }
