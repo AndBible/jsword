@@ -17,26 +17,27 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
+
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Computes the difference between two texts to create a patch. Applies the
  * patch onto another text, allowing for errors.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class Match implements Locator {
-    public Match() {
-        this("", "", 0);
-    }
+open class Match : Locator {
+    constructor() : this("", "", 0)
 
     /**
      * Locate the best instance of 'pattern' in 'text' near 'loc'.
-     * 
+     *
      * @param text
      *            The text to search
      * @param pattern
@@ -44,65 +45,60 @@ public class Match implements Locator {
      * @param loc
      *            The location to search around
      */
-    public Match(String text, String pattern, int loc) {
-        this.text = text;
-        this.pattern = pattern;
-        this.loc = loc;
-        this.locator = new Bitap(text, pattern, loc);
+    constructor(text: String, pattern: String, loc: Int) {
+        this.text = text
+        this.pattern = pattern
+        this.loc = loc
+        this.locator = Bitap(text, pattern, loc)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.diff.Locator#maxPatternLength()
-     */
-    public int maxPatternLength() {
-        return locator.maxPatternLength();
+    override fun maxPatternLength(): Int {
+        return locator.maxPatternLength()
     }
 
     /**
      * Locate the best instance of 'pattern' in 'text' near 'loc'.
-     * 
+     *
      * @return Best match index or -1, if no match found
      */
-    public int locate() {
-        if (text.equals(pattern)) {
+    override fun locate(): Int {
+        if (text == pattern) {
             // Shortcut (potentially not guaranteed by the algorithm)
-            return 0;
+            return 0
         }
 
-        if (text.length() == 0) {
+        if (text.length == 0) {
             // Nothing to match.
-            return -1;
+            return -1
         }
 
-        loc = Math.max(0, Math.min(loc, text.length() - pattern.length()));
-        if (text.substring(loc, loc + pattern.length()).equals(pattern)) {
+        loc = max(0, min(loc, text.length - pattern.length))
+        if (text.substring(loc, loc + pattern.length) == pattern) {
             // Perfect match at the perfect spot! (Includes case of null
             // pattern)
-            return loc;
+            return loc
         }
 
-        return locator.locate();
+        return locator.locate()
     }
 
     /**
      * The text to search.
      */
-    private String text;
+    private val text: String
 
     /**
      * The pattern to find in the text.
      */
-    private String pattern;
+    private val pattern: String
 
     /**
      * The location in text to focus the search.
      */
-    private int loc;
+    private var loc: Int
 
     /**
      * The strategy for locating a best match.
      */
-    private Locator locator;
+    private val locator: Locator
 }

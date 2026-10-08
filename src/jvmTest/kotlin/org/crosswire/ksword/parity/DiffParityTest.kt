@@ -19,6 +19,7 @@ class DiffParityTest {
         "line one\nline two\nline three\n" to "line one\nline 2\nline three\n\n\n",   // trailing newlines
         "בְּרֵאשִׁית בָּרָא אֱלֹהִים" to "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת",                    // RTL, combining marks
         "emoji 😀 and 𠀀 rare CJK" to "emoji 😃 and 𠀁 rare CJK!",                          // surrogate pairs
+        "a" to "ab",                                                                         // insert into 1-char text: empty-pattern lastIndexOf
         "a".repeat(40) + "XYZ" + "b".repeat(40) to "a".repeat(40) + "XQZ" + "b".repeat(41), // > Bitap word length
     )
 

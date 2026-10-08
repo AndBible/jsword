@@ -1,4 +1,4 @@
-/*
+/**
  * Distribution License:
  * JSword is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License, version 2.1 or later
@@ -17,11 +17,26 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
+package org.crosswire.common.diff
+
 /**
- * An implementation of Diff that works within the line.
- * 
- * <p>Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
- * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a></p>
- * 
+ * Represents the location of the best match.
+ *
+ * @see gnu.lgpl.License The GNU Lesser General Public License for details.
+ * @author DM Smith
  */
-package org.crosswire.common.diff;
+interface Locator {
+    /**
+     * Locate the best match of a pattern in text near a supplied location.
+     *
+     * @return Best match index or -1, if no match found
+     */
+    fun locate(): Int
+
+    /**
+     * The maximum length a pattern can be.
+     *
+     * @return maximum pattern length.
+     */
+    fun maxPatternLength(): Int
+}
