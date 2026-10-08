@@ -11,6 +11,9 @@ version = "2.3-SNAPSHOT"
 kotlin {
     jvmToolchain(17)
 
+    // @JvmStatic/@JvmField etc. are optional expectations in common code; converted files need no file-level opt-in.
+    compilerOptions { optIn.add("kotlin.ExperimentalMultiplatform") }
+
     // JVM target: hosts the not-yet-converted Java (src/jvmMain/java) next to converted Kotlin.
     jvm {
         compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }

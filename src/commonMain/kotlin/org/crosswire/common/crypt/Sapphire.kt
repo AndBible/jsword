@@ -17,8 +17,6 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-@file:OptIn(ExperimentalMultiplatform::class) // kotlin.jvm.JvmStatic is an optional expectation in common code
-
 /*
  * Package org.crosswire.common.crypt (was package-info.java):
  *
