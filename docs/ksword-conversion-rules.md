@@ -9,8 +9,12 @@ A real bug found while converting is noted in the commit message and left as is.
 
 ## 2. Same FQN, same Java-visible API
 - Same package and class name; the `.java` file is `git mv`-ed to `.kt` in the matching `kotlin` directory
-  first, then edited, so history follows.
+  first, then edited, so history follows. Do the `git mv` in its OWN commit (the .kt file still holds the
+  Java text and may not compile) and edit the content in the next one; a mixed rename + heavy edit commit
+  loses `git log --follow` (this happened for diff/Commonality, DiffCleanup, Distance).
 - Static members → `companion object` with `@JvmStatic` (methods) and `@JvmField` / `const val` (fields).
+  A companion holding only PRIVATE statics is declared `private companion object` (no extra public JVM
+  members); public statics need a normal companion with `@JvmStatic`/`@JvmField`/`const`.
   A `private static` method that tests reach by reflection keeps `@JvmStatic` so it stays on the outer class.
 - Overloads → `@JvmOverloads` only where Java had exactly those overloads; otherwise write each overload.
 - Checked exceptions → `@Throws(...)` with the same exception list.
@@ -27,7 +31,9 @@ A real bug found while converting is noted in the commit message and left as is.
 A type is non-null only when the code proves it (assigned non-null on every path, never compared to null,
 never set from a nullable source). Parameters of public/protected methods are nullable unless every caller
 in jsword and `:app` passes non-null **and** the Java code dereferenced it unconditionally. A Kotlin
-non-null parameter turns a Java caller's `null` into an immediate exception.
+non-null parameter turns a Java caller's `null` into an immediate exception. Once an interface that Java
+classes implement is converted (e.g. `Activatable.activate(lock: Lock?)`), later Kotlin overriders must use
+the same nullability.
 
 ## 4. Known traps
 - Integer division and `char`/`int` arithmetic: keep the Java types (`Char.code`, `toChar()`), no implicit
@@ -40,7 +46,9 @@ non-null parameter turns a Java caller's `null` into an immediate exception.
   `synchronized` methods → `@Synchronized`.
 - `Cloneable`/`clone()`, `Serializable`, `readObject`/`writeObject`/`readResolve`, `transient` are kept.
 - `assert cond : msg` → `jswordAssert(cond) { msg }` (`org.crosswire.common.util.jswordAssert`, created
-  in K0 Task 7; enabled like Java `-ea` on the JVM, no-op on native).
+  in K0 Task 7; enabled like Java `-ea` on the JVM, no-op on native). It always evaluates `cond` (Java `assert` skips
+  evaluation when assertions are disabled), so a condition with side effects or real cost needs an explicit
+  guard. Kotlin's `assert` is governed by `-ea` for the `kotlin` package, not per Java package.
 - `String.split(regex)` / `Pattern.split` drop trailing empty strings and return `[input]` when nothing
   matches → `splitLikeJava(Regex(..))` (`org.crosswire.common.util`, created in K0 Task 7; not for
   zero-width patterns).
@@ -68,6 +76,9 @@ Keep comments and Javadoc as KDoc; keep the licence header.
 ## 7. Placement
 `commonMain` only if the converted file uses no JVM API (after the replacements in §4 that have common
 equivalents); otherwise `jvmMain`. When in doubt, `jvmMain` — commonization is phase 2.
+Converted commonMain files need no file-level `@file:OptIn(ExperimentalMultiplatform)`: the module opts in
+globally (`build.gradle.kts`: `compilerOptions { optIn.add("kotlin.ExperimentalMultiplatform") }`).
+`@JvmStatic`/`@JvmField` in commonMain need `import kotlin.jvm.JvmStatic` / `import kotlin.jvm.JvmField`.
 
 ## 8. Every batch
 `jvmTest` and `parityTest` green, `:app` full unit suite and assemble green, iOS compile green, a review.
