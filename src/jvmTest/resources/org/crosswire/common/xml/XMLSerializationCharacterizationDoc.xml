@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!DOCTYPE doc [
+<!ELEMENT doc (item*)>
+<!ELEMENT item (#PCDATA)>
+<!ATTLIST item id CDATA #REQUIRED>
+]>
+<doc><item id="1">one</item><item id="2">two</item></doc>
