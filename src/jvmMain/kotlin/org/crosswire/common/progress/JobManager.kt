@@ -111,7 +111,7 @@ private constructor() {
          * @param li the interested listener
          */
         @JvmStatic
-        fun addWorkListener(li: WorkListener) {
+        fun addWorkListener(li: WorkListener?) {
             listeners.add(li)
         }
 
@@ -121,7 +121,7 @@ private constructor() {
          * @param li the disinterested listener
          */
         @JvmStatic
-        fun removeWorkListener(li: WorkListener) {
+        fun removeWorkListener(li: WorkListener?) {
             listeners.remove(li)
         }
 
@@ -156,7 +156,7 @@ private constructor() {
             // We ought only to tell listeners about jobs that are in our
             // list of jobs so we need to fire before delete.
             for (worker in listeners) {
-                worker.workProgressed(ev)
+                worker!!.workProgressed(ev)
             }
 
             // Do we need to remove the job? Note that the section above will
@@ -171,7 +171,7 @@ private constructor() {
         /**
          * List of listeners using thread safe list
          */
-        private val listeners: MutableList<WorkListener> = CopyOnWriteArrayList()
+        private val listeners: MutableList<WorkListener?> = CopyOnWriteArrayList()
 
         /**
          * List of current jobs

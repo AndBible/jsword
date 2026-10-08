@@ -77,7 +77,7 @@ internal constructor(
     /**
      * People that want to know about "cancelable" changes
      */
-    private var listeners: MutableList<WorkListener> = ArrayList()
+    private var listeners: MutableList<WorkListener?> = ArrayList()
 
     /**
      * Does this job allow interruptions?
@@ -390,8 +390,8 @@ internal constructor(
      * @param li the interested listener
      */
     @Synchronized
-    fun addWorkListener(li: WorkListener) {
-        val temp: MutableList<WorkListener> = ArrayList()
+    fun addWorkListener(li: WorkListener?) {
+        val temp: MutableList<WorkListener?> = ArrayList()
         temp.addAll(listeners)
 
         if (!temp.contains(li)) {
@@ -406,9 +406,9 @@ internal constructor(
      * @param li the disinterested listener
      */
     @Synchronized
-    fun removeWorkListener(li: WorkListener) {
+    fun removeWorkListener(li: WorkListener?) {
         if (listeners.contains(li)) {
-            val temp: MutableList<WorkListener> = ArrayList()
+            val temp: MutableList<WorkListener?> = ArrayList()
             temp.addAll(listeners)
             temp.remove(li)
             listeners = temp
@@ -424,7 +424,7 @@ internal constructor(
         // we need to keep the synchronized section very small to avoid deadlock
         // certainly keep the event dispatch clear of the synchronized block or
         // there will be a deadlock
-        val temp: MutableList<WorkListener> = ArrayList()
+        val temp: MutableList<WorkListener?> = ArrayList()
         synchronized(this) {
             temp.addAll(listeners)
         }
@@ -433,7 +433,7 @@ internal constructor(
         // list of jobs so we need to fire before delete.
         val count = temp.size
         for (i in 0 until count) {
-            temp[i].workStateChanged(ev)
+            temp[i]!!.workStateChanged(ev)
         }
     }
 
