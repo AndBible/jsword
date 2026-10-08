@@ -693,7 +693,7 @@ open class Sapphire(aKey: ByteArray?) {
         return u
     }
 
-    companion object {
+    private companion object {
         /**
          * Character mapping table used by personalize() for key derivation.
          * Ported from libsword's swcipher.cpp.

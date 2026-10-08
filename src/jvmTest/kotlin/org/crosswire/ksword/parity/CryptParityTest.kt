@@ -12,7 +12,7 @@ class CryptParityTest {
         "",                             // empty key (hash mode)
         "simple",                       // passes through personalize() unchanged
         "ABCD-EFGH-IJKL-MNOP-QRST",     // license-shaped; wrong checksum → unchanged
-        "Ünïcödé-Ω-漢字",                // chars above U+00FF → '?' under ISO-8859-1
+        "Ünïcödé-Ω-漢字",                // chars above U+00FF become '?' in the probe's getBytes(ISO_8859_1), identically on both sides, before Sapphire sees them (exercises the probe's encoding path, not Sapphire's own latin1 helper)
         "test-VvUj-UeY2-Yg11-nKAK",     // valid license key: personalize() transform branch
     )
 

@@ -53,7 +53,7 @@ jobs:
         unzip -o -d $HOME/.sword ./testmods.zip
 
     - name: Build and test (JVM) and compile-check iOS
-      run: ./gradlew --console plain jvmTest compileKotlinIosArm64 compileKotlinIosSimulatorArm64
+      run: ./gradlew --console plain jvmTest parityTest compileKotlinIosArm64 compileKotlinIosSimulatorArm64
 
     - name: Before saving cache
       run: |

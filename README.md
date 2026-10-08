@@ -32,7 +32,7 @@ JSword powers several open-source projects, including [BibleDesktop](https://git
 
 ### Requirements
 
-- **Java 8**
+- **JDK 17**
 - **Gradle** (for building from source)
 
 ### Building from Source
@@ -40,8 +40,12 @@ JSword powers several open-source projects, including [BibleDesktop](https://git
 ```bash
 git clone https://github.com/crosswire/jsword.git
 cd jsword
-./gradlew build
+./gradlew jvmTest                                   # JVM unit tests
+./gradlew parityTest                                # parity tests
+./gradlew compileKotlinIosArm64 compileKotlinIosSimulatorArm64   # iOS compile check
 ```
+
+The build is a Kotlin Multiplatform Gradle build (JVM and iOS targets). The JVM artifact is published (`maven-publish`) as `jsword-jvm`, group `org.crosswire`, version `2.3-SNAPSHOT` per `build.gradle.kts`.
 
 ### Using JSword in Your Project
 
