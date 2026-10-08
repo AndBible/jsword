@@ -17,72 +17,62 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.File;
-import java.net.URI;
+import java.io.File
+import java.net.URI
 
 /**
  * Types of Operating Systems for which specialized behavior is needed.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum OSType {
+enum class OSType
+/**
+ * Simple ctor
+ *
+ * @param name the name of the OS
+ */
+(private val osName: String) {
     MAC("Mac") {
-        @Override
-        public URI getUserArea() {
-            return NetUtil.lengthenURI(getUserHome(), MAC_USER_DATA_AREA);
-        }
+        override val userArea: URI?
+            get() = NetUtil.lengthenURI(getUserHome(), MAC_USER_DATA_AREA)
 
-        @Override
-        public URI getUserAreaFolder(String hiddenFolderName, String visibleFolderName) {
-            return NetUtil.lengthenURI(getUserArea(), visibleFolderName);
+        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI? {
+            return NetUtil.lengthenURI(userArea!!, visibleFolderName!!)
         }
     },
 
     WIN32("Win") {
-        @Override
-        public URI getUserArea() {
-            if ("Windows 10".equalsIgnoreCase(System.getProperty("os.name"))) {
-                return NetUtil.lengthenURI(getUserHome(), WIN32_V10_USER_DATA_AREA);
+        override val userArea: URI?
+            get() {
+                if ("Windows 10".equals(System.getProperty("os.name"), ignoreCase = true)) {
+                    return NetUtil.lengthenURI(getUserHome(), WIN32_V10_USER_DATA_AREA)
+                }
+                return NetUtil.lengthenURI(getUserHome(), WIN32_USER_DATA_AREA)
             }
-            return NetUtil.lengthenURI(getUserHome(), WIN32_USER_DATA_AREA);
-        }
 
-        @Override
-        public URI getUserAreaFolder(String hiddenFolderName, String visibleFolderName) {
-            return NetUtil.lengthenURI(getUserArea(), visibleFolderName);
+        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI? {
+            return NetUtil.lengthenURI(userArea!!, visibleFolderName!!)
         }
     },
 
     DEFAULT("*nix") {
-        @Override
-        public URI getUserArea() {
-            return getUserHome();
-        }
+        override val userArea: URI?
+            get() = getUserHome()
 
-        @Override
-        public URI getUserAreaFolder(String hiddenFolderName, String visibleFolderName) {
-            return NetUtil.lengthenURI(getUserArea(), hiddenFolderName);
+        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI? {
+            return NetUtil.lengthenURI(userArea!!, hiddenFolderName!!)
         }
     };
-
-    /**
-     * Simple ctor
-     *
-     * @param name the name of the OS
-     */
-    OSType(String name) {
-        this.name = name;
-    }
 
     /**
      * Get the user area for this OSType.
      *
      * @return the user area
      */
-    public abstract URI getUserArea();
+    abstract val userArea: URI?
 
     /**
      * A folder in the user area. This osType will determine which to use in
@@ -95,66 +85,65 @@ public enum OSType {
      *
      * @return the user area folder
      */
-    public abstract URI getUserAreaFolder(String hiddenFolderName, String visibleFolderName);
-
-    /**
-     * @return the URI of the user home
-     */
-    public static URI getUserHome() {
-        return NetUtil.getURI(new File(System.getProperty("user.home")));
-    }
-
-    /**
-     * Get the machine's OSType.
-     *
-     * @return the machine's OSType
-     */
-    public static OSType getOSType() {
-        return osType;
-    }
-
-    /**
-     * Lookup method to convert from a String to an OSType
-     *
-     * @param name the name of an OSType
-     * @return the OSType or DEFAULT
-     */
-    public static OSType fromString(String name) {
-        for (OSType v : values()) {
-            if (name.startsWith(v.name)) {
-                return v;
-            }
-        }
-
-        return DEFAULT;
-    }
+    abstract fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI?
 
     /* (non-Javadoc)
      * @see java.lang.Enum#toString()
      */
-    @Override
-    public String toString() {
-        return name;
+    override fun toString(): String {
+        return osName
     }
 
-    /**
-     * The name of the type
-     */
-    private String name;
+    companion object {
+        /**
+         * @return the URI of the user home
+         */
+        @JvmStatic
+        fun getUserHome(): URI {
+            return NetUtil.getURI(File(System.getProperty("user.home")))
+        }
 
-    /**
-     * The Windows user settings parent directory
-     */
-    private static final String WIN32_USER_DATA_AREA = "Application Data";
-    private static final String WIN32_V10_USER_DATA_AREA = "AppData/Roaming";
+        /**
+         * Get the machine's OSType.
+         *
+         * @return the machine's OSType
+         */
+        @JvmStatic
+        fun getOSType(): OSType {
+            return osType
+        }
 
-    /**
-     * The Mac user settings parent directory
-     */
-    private static final String MAC_USER_DATA_AREA = "Library/Application Support";
+        /**
+         * Lookup method to convert from a String to an OSType
+         *
+         * @param name the name of an OSType
+         * @return the OSType or DEFAULT
+         */
+        @JvmStatic
+        fun fromString(name: String): OSType {
+            for (v in values()) {
+                if (name.startsWith(v.osName)) {
+                    return v
+                }
+            }
 
-    /**
-     * The machine's osType
-     */
-    private static OSType osType = fromString(System.getProperty("os.name"));
+            return DEFAULT
+        }
+
+        /**
+         * The Windows user settings parent directory
+         */
+        private const val WIN32_USER_DATA_AREA = "Application Data"
+        private const val WIN32_V10_USER_DATA_AREA = "AppData/Roaming"
+
+        /**
+         * The Mac user settings parent directory
+         */
+        private const val MAC_USER_DATA_AREA = "Library/Application Support"
+
+        /**
+         * The machine's osType
+         */
+        private var osType: OSType = fromString(System.getProperty("os.name"))
+    }
 }

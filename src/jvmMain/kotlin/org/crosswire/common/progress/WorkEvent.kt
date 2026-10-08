@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.progress;
+package org.crosswire.common.progress
 
-import java.util.EventObject;
+import java.util.EventObject
 
 /**
  * A WorkEvent happens whenever a task makes some progress in doing measurable
@@ -28,27 +28,25 @@ import java.util.EventObject;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class WorkEvent extends EventObject {
-    /**
-     * Initialize a WorkEvent
-     * 
-     * @param source the job that has made progress
-     */
-    public WorkEvent(Progress source) {
-        super(source);
-    }
-
+open class WorkEvent
+/**
+ * Initialize a WorkEvent
+ * 
+ * @param source the job that has made progress
+ */
+(source: Progress?) : EventObject(source) {
     /**
      * Accessor for the Job
      * 
      * @return the job that has made progress
      */
-    public Progress getJob() {
-        return (Progress) getSource();
-    }
+    open val job: Progress
+        get() = source as Progress
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3976736990807011378L;
+    companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3976736990807011378L
+    }
 }

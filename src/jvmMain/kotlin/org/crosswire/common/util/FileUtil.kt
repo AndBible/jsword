@@ -17,97 +17,96 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File
 
 /**
  * .
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class FileUtil {
-    /**
-     * Prevent instantiation
-     */
-    private FileUtil() {
-    }
-
-    /**
-     * Deletes a file or a directory and all of its contents
-     * 
-     * @param file
-     *            or directory to delete
-     * @return the list of files that could not be deleted
-     */
-    public static List<File> delete(File file) {
-        List<File> failures = new ArrayList<File>();
-        if (file.isDirectory()) {
-            deleteContents(file, failures);
-        }
-        if (!file.delete()) {
-            failures.add(file);
-        }
-        return failures;
-    }
-
-    /**
-     * Recursive delete files.
-     * 
-     * @param dirPath
-     *            directory of files to delete
-     * @param failures
-     *            the list of files that could not be deleted
-     */
-    private static void deleteContents(File dirPath, List<File> failures) {
-        String[] ls = dirPath.list();
-
-        for (int idx = 0; idx < ls.length; idx++) {
-            File file = new File(dirPath, ls[idx]);
-            if (file.isDirectory()) {
-                deleteContents(file, failures);
+class FileUtil
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Deletes a file or a directory and all of its contents
+         *
+         * @param file
+         *            or directory to delete
+         * @return the list of files that could not be deleted
+         */
+        @JvmStatic
+        fun delete(file: File): MutableList<File> {
+            val failures: MutableList<File> = ArrayList()
+            if (file.isDirectory) {
+                deleteContents(file, failures)
             }
             if (!file.delete()) {
-                failures.add(file);
+                failures.add(file)
+            }
+            return failures
+        }
+
+        /**
+         * Recursive delete files.
+         *
+         * @param dirPath
+         *            directory of files to delete
+         * @param failures
+         *            the list of files that could not be deleted
+         */
+        private fun deleteContents(dirPath: File, failures: MutableList<File>) {
+            val ls = dirPath.list()
+
+            for (idx in 0 until ls.size) {
+                val file = File(dirPath, ls[idx])
+                if (file.isDirectory) {
+                    deleteContents(file, failures)
+                }
+                if (!file.delete()) {
+                    failures.add(file)
+                }
             }
         }
+
+        /**
+         * Extension for java files
+         */
+        const val EXTENSION_JAVA: String = ".java"
+
+        /**
+         * Extension for properties files
+         */
+        const val EXTENSION_PROPERTIES: String = ".properties"
+
+        /**
+         * Extension for plug-in files
+         */
+        const val EXTENSION_PLUGIN: String = ".plugin"
+
+        /**
+         * Extension for XSLT files
+         */
+        const val EXTENSION_XSLT: String = ".xsl"
+
+        /**
+         * Extension for XML files
+         */
+        const val EXTENSION_XML: String = ".xml"
+
+        /**
+         * Modes for opening random access files
+         */
+        const val MODE_READ: String = "r"
+
+        /**
+         * Modes for opening random access files
+         */
+        const val MODE_WRITE: String = "rw"
     }
-
-    /**
-     * Extension for java files
-     */
-    public static final String EXTENSION_JAVA = ".java";
-
-    /**
-     * Extension for properties files
-     */
-    public static final String EXTENSION_PROPERTIES = ".properties";
-
-    /**
-     * Extension for plug-in files
-     */
-    public static final String EXTENSION_PLUGIN = ".plugin";
-
-    /**
-     * Extension for XSLT files
-     */
-    public static final String EXTENSION_XSLT = ".xsl";
-
-    /**
-     * Extension for XML files
-     */
-    public static final String EXTENSION_XML = ".xml";
-
-    /**
-     * Modes for opening random access files
-     */
-    public static final String MODE_READ = "r";
-
-    /**
-     * Modes for opening random access files
-     */
-    public static final String MODE_WRITE = "rw";
 }

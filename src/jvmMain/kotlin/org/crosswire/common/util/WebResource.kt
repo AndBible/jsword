@@ -17,23 +17,19 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.Date;
-import java.util.List;
-
-import org.crosswire.common.progress.Progress;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.install.DownloadCancelledException;
-import org.crosswire.jsword.book.install.DownloadException;
-
-import javax.net.ssl.HttpsURLConnection;
-
+import org.crosswire.common.progress.Progress
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.install.DownloadCancelledException
+import org.crosswire.jsword.book.install.DownloadException
+import java.io.IOException
+import java.io.InputStream
+import java.io.InterruptedIOException
+import java.io.OutputStream
+import java.net.URI
+import java.util.Date
+import javax.net.ssl.HttpsURLConnection
 
 /**
  * A WebResource is backed by an URL and potentially the proxy through which it
@@ -41,54 +37,48 @@ import javax.net.ssl.HttpsURLConnection;
  * resource. The requests are subject to a timeout, which can be set via the
  * constructor or previously by a call to set the default timeout. The initial
  * default timeout is 750 milliseconds.
- * 
- * 
+ *
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class WebResource {
+open class WebResource {
     /**
      * Construct a WebResource for the given URL, while timing out if too much
      * time has passed.
-     * 
+     *
      * @param theURI
      *            the Resource to get via HTTP
      */
-    public WebResource(URI theURI) {
-        this(theURI, null, null, timeout);
-    }
+    constructor(theURI: URI?) : this(theURI, null, null, timeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, while timing out if too much
      * time has passed.
-     * 
+     *
      * @param theURI
      *            the Resource to get via HTTP
      * @param theTimeout
      *            the length of time in milliseconds to allow a connection to
      *            respond before timing out
      */
-    public WebResource(URI theURI, int theTimeout) {
-        this(theURI, null, null, theTimeout);
-    }
+    constructor(theURI: URI?, theTimeout: Int) : this(theURI, null, null, theTimeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
      * proxy and default port, while timing out if too much time has passed.
-     * 
+     *
      * @param theURI
      *            the Resource to get via HTTP
      * @param theProxyHost
      *            the proxy host or null
      */
-    public WebResource(URI theURI, String theProxyHost) {
-        this(theURI, theProxyHost, null, timeout);
-    }
+    constructor(theURI: URI?, theProxyHost: String?) : this(theURI, theProxyHost, null, timeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
      * proxy and default port, while timing out if too much time has passed.
-     * 
+     *
      * @param theURI
      *            the Resource to get via HTTP
      * @param theProxyHost
@@ -97,14 +87,12 @@ public class WebResource {
      *            the length of time in milliseconds to allow a connection to
      *            respond before timing out
      */
-    public WebResource(URI theURI, String theProxyHost, int theTimeout) {
-        this(theURI, theProxyHost, null, theTimeout);
-    }
+    constructor(theURI: URI?, theProxyHost: String?, theTimeout: Int) : this(theURI, theProxyHost, null, theTimeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
      * proxy and port, while timing out if too much time has passed.
-     * 
+     *
      * @param theURI
      *            the Resource to get via HTTP
      * @param theProxyHost
@@ -112,14 +100,12 @@ public class WebResource {
      * @param theProxyPort
      *            the proxy port or null, where null means use the standard port
      */
-    public WebResource(URI theURI, String theProxyHost, Integer theProxyPort) {
-        this(theURI, theProxyHost, theProxyPort, timeout);
-    }
+    constructor(theURI: URI?, theProxyHost: String?, theProxyPort: Int?) : this(theURI, theProxyHost, theProxyPort, timeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
      * proxy and port, while timing out if too much time has passed.
-     * 
+     *
      * @param theURI
      *            the Resource to get via HTTP
      * @param theProxyHost
@@ -130,168 +116,178 @@ public class WebResource {
      *            the length of time in milliseconds to allow a connection to
      *            respond before timing out
      */
-    public WebResource(URI theURI, String theProxyHost, Integer theProxyPort, long theTimeout) {
-        uri = theURI;
-    }
-
-    public static void setHostnameWhitelist(List<String> hostnameWhitelist) {
-        WebResource.hostnameWhitelist = hostnameWhitelist;
+    constructor(theURI: URI?, theProxyHost: String?, theProxyPort: Int?, theTimeout: Long) {
+        uri = theURI
     }
 
     /**
      * When this WebResource is no longer needed it should be shutdown to return
      * underlying resources back to the OS.
      */
-    public void shutdown() {}
-
-    /**
-     * @return the timeout in milliseconds
-     */
-    public static int getTimeout() {
-        return timeout;
-    }
-
-    /**
-     * @param timeout
-     *            the timeout to set in milliseconds
-     */
-    public static void setTimeout(int timeout) {
-        WebResource.timeout = timeout;
-    }
+    open fun shutdown() {}
 
     /**
      * Determine the size of this WebResource.
      * <p>
      * Note that the http client may read the entire file to determine this.
      * </p>
-     * 
+     *
      * @return the size of the file
      */
-    public int getSize() {
-        try {
-            // Execute the method.
-            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)uri.toURL().openConnection();
-            httpsURLConnection.setRequestMethod("HEAD");
-            httpsURLConnection.setConnectTimeout(timeout);
-            httpsURLConnection.setReadTimeout(timeout);
+    open val size: Int
+        get() {
+            try {
+                // Execute the method.
+                val httpsURLConnection = uri!!.toURL().openConnection() as HttpsURLConnection
+                httpsURLConnection.requestMethod = "HEAD"
+                httpsURLConnection.connectTimeout = timeout
+                httpsURLConnection.readTimeout = timeout
 
-            if (httpsURLConnection.getResponseCode() == 200) {
-                return httpsURLConnection.getContentLength();
+                if (httpsURLConnection.responseCode == 200) {
+                    return httpsURLConnection.contentLength
+                }
+                val reason = httpsURLConnection.responseMessage
+                // TRANSLATOR: Common error condition: {0} is a placeholder for the
+                // URL of what could not be found.
+                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.path))
+            } catch (e: IOException) {
+                return 0
             }
-            String reason = httpsURLConnection.getResponseMessage();
-            // TRANSLATOR: Common error condition: {0} is a placeholder for the
-            // URL of what could not be found.
-            Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri.getPath()));
-        } catch (IOException e) {
-            return 0;
+            return 0
         }
-        return 0;
-    }
 
     /**
      * Determine the last modified date of this WebResource.
      * <p>
      * Note that the http client may read the entire file.
      * </p>
-     * 
+     *
      * @return the last mod date of the file
      */
-    public long getLastModified() {
-        try {
-            // Execute the method.
-            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)uri.toURL().openConnection();
-            httpsURLConnection.setRequestMethod("HEAD");
-            httpsURLConnection.setConnectTimeout(timeout);
-            httpsURLConnection.setReadTimeout(timeout);
-            if (httpsURLConnection.getResponseCode() == 200) {
-                return httpsURLConnection.getLastModified();
+    open val lastModified: Long
+        get() {
+            try {
+                // Execute the method.
+                val httpsURLConnection = uri!!.toURL().openConnection() as HttpsURLConnection
+                httpsURLConnection.requestMethod = "HEAD"
+                httpsURLConnection.connectTimeout = timeout
+                httpsURLConnection.readTimeout = timeout
+                if (httpsURLConnection.responseCode == 200) {
+                    return httpsURLConnection.lastModified
+                }
+                val reason = httpsURLConnection.responseMessage
+                // TRANSLATOR: Common error condition: {0} is a placeholder for the
+                // URL of what could not be found.
+                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.path))
+            } catch (e: IOException) {
+                return Date().time
             }
-            String reason = httpsURLConnection.getResponseMessage();
-            // TRANSLATOR: Common error condition: {0} is a placeholder for the
-            // URL of what could not be found.
-            Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri.getPath()));
-        } catch (IOException e) {
-            return new Date().getTime();
+            return Date().time
         }
-        return new Date().getTime();
-    }
 
     /**
      * Copy this WebResource to the destination and report progress.
-     * 
+     *
      * @param dest
      *            the URI of the destination, typically a file:///.
      * @param meter
      *            the job on which to report progress
      * @throws LucidException when an error is encountered
      */
-    public void copy(URI dest, Progress meter) throws LucidException {
-        InputStream in = null;
-        OutputStream out = null;
-        int statusCode = 0;
+    @Throws(LucidException::class)
+    open fun copy(dest: URI?, meter: Progress?) {
+        var `in`: InputStream? = null
+        var out: OutputStream? = null
+        var statusCode = 0
 
         try {
             // Execute the method.
-            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)uri.toURL().openConnection();
-            httpsURLConnection.setConnectTimeout(timeout);
-            httpsURLConnection.setReadTimeout(timeout);
+            val httpsURLConnection = uri!!.toURL().openConnection() as HttpsURLConnection
+            httpsURLConnection.connectTimeout = timeout
+            httpsURLConnection.readTimeout = timeout
             // Initialize the meter, if present
             if (meter != null) {
                 // Find out how big it is
-                int size = httpsURLConnection.getContentLength();
+                var size = httpsURLConnection.contentLength
                 // Sometimes the Content-Length is not given and we have to grab it via HEAD method
                 if (size == 0) {
-                    size = getSize();
+                    size = this.size
                 }
-                meter.setTotalWork(size);
+                meter.totalWork = size
             }
-            statusCode = httpsURLConnection.getResponseCode();
-            in = httpsURLConnection.getInputStream();
+            statusCode = httpsURLConnection.responseCode
+            `in` = httpsURLConnection.inputStream
 
             // Download the index file
-            out = NetUtil.getOutputStream(dest);
+            out = NetUtil.getOutputStream(dest!!)
 
-            byte[] buf = new byte[4096];
-            int count = in.read(buf);
+            val buf = ByteArray(4096)
+            var count = `in`.read(buf)
             while (-1 != count) {
                 if (meter != null) {
-                    meter.incrementWorkDone(count);
+                    meter.incrementWorkDone(count)
                 }
-                out.write(buf, 0, count);
-                count = in.read(buf);
+                out.write(buf, 0, count)
+                count = `in`.read(buf)
             }
-        } catch (InterruptedIOException e) {
-            throw new DownloadCancelledException(uri);
-        } catch (IOException e) {
+        } catch (e: InterruptedIOException) {
+            throw DownloadCancelledException(uri)
+        } catch (e: IOException) {
             // TRANSLATOR: Common error condition: {0} is a placeholder for the
             // URL of what could not be found.
-            if(statusCode != 0) {
-                throw new DownloadException(uri, statusCode);
+            if (statusCode != 0) {
+                throw DownloadException(uri, statusCode)
             }
-            throw new LucidException(JSMsg.gettext("Unable to find: {0}", uri.toString()), e);
+            throw LucidException(JSMsg.gettext("Unable to find: {0}", uri.toString()), e)
         } finally {
             // Close the streams
-            IOUtil.close(in);
-            IOUtil.close(out);
+            IOUtil.close(`in`)
+            IOUtil.close(out)
         }
     }
 
     /**
      * Copy this WebResource to the destination.
-     * 
+     *
      * @param dest the destination URI
      * @throws LucidException when an error is encountered
      */
-    public void copy(URI dest) throws LucidException {
-        copy(dest, null);
+    @Throws(LucidException::class)
+    open fun copy(dest: URI?) {
+        copy(dest, null)
     }
 
-    /**
-     * Define a 750 ms timeout to get a connection
-     */
-    private static int timeout = 750;
-
-    private URI uri;
+    private var uri: URI?
     //private CloseableHttpClient client;
-    private static List<String> hostnameWhitelist;
+
+    companion object {
+        @JvmStatic
+        fun setHostnameWhitelist(hostnameWhitelist: List<String>?) {
+            WebResource.hostnameWhitelist = hostnameWhitelist
+        }
+
+        /**
+         * @return the timeout in milliseconds
+         */
+        @JvmStatic
+        fun getTimeout(): Int {
+            return timeout
+        }
+
+        /**
+         * @param timeout
+         *            the timeout to set in milliseconds
+         */
+        @JvmStatic
+        fun setTimeout(timeout: Int) {
+            WebResource.timeout = timeout
+        }
+
+        /**
+         * Define a 750 ms timeout to get a connection
+         */
+        private var timeout = 750
+
+        private var hostnameWhitelist: List<String>? = null
+    }
 }

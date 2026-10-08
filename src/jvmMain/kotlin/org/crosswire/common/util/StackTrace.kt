@@ -17,197 +17,196 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.NoSuchElementException
 
 /**
  * Unscramble the current stack, and present the data from it to the user in
  * various forms. This code is slightly dodgy in that it makes use of the way
  * exceptions print their stack traces, however it is probably a safe enough
  * assumption for the moment.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class StackTrace {
+class StackTrace {
     /**
      * Generate a stack trace an model it
      */
-    public StackTrace() {
-        init(new Throwable(), 2);
+    constructor() {
+        init(Throwable(), 2)
     }
 
     /**
      * We already have an Exception that we'd like to model
-     * 
+     *
      * @param ex
      *            The Exception to model
      */
-    public StackTrace(Throwable ex) {
-        init(ex, 1);
+    constructor(ex: Throwable) {
+        init(ex, 1)
     }
 
     /**
      * Create a stack trace of the code at this point
-     * 
+     *
      * @param exception
      *            The Throwable containing the Stack Trace
      * @param discard
      *            The number of uppermost stack frames to ignore
      */
-    private void init(Throwable exception, int discard) {
-        StringWriter sout = new StringWriter();
-        exception.printStackTrace(new PrintWriter(sout));
-        String msg = new String(sout.getBuffer());
-        String[] calls = StringUtil.split(msg, "\n\r");
+    private fun init(exception: Throwable, discard: Int) {
+        val sout = StringWriter()
+        exception.printStackTrace(PrintWriter(sout))
+        val msg = String(sout.buffer)
+        val calls = StringUtil.split(msg, "\n\r")
 
-        int total = 0;
-        for (int i = 0; i < calls.length - discard; i++) {
-            String call = calls[i + discard];
+        var total = 0
+        for (i in 0 until calls.size - discard) {
+            val call = calls[i + discard]
 
             if (!(call.startsWith("Caused") || call.indexOf("...") >= 0)) {
-                total++;
+                total++
             }
         }
 
-        classNames = new String[total];
-        methodNames = new String[total];
-        fileNames = new String[total];
-        lineNumbers = new int[total];
+        classNames = arrayOfNulls(total)
+        methodNames = arrayOfNulls(total)
+        fileNames = arrayOfNulls(total)
+        lineNumbers = IntArray(total)
 
-        int j = 0;
-        for (int i = 0; i < calls.length - discard; i++) {
-            String call = calls[i + discard];
-            boolean oops = false;
+        var j = 0
+        for (i in 0 until calls.size - discard) {
+            val call = calls[i + discard]
+            var oops = false
             try {
                 if (!(call.startsWith("Caused") || call.indexOf("...") >= 0)) {
-                    int spcIndex = call.indexOf(' ');
-                    int lhsIndex = call.indexOf('(');
-                    int clnIndex = call.indexOf(':');
-                    int rhsIndex = call.indexOf(')');
+                    val spcIndex = call.indexOf(' ')
+                    val lhsIndex = call.indexOf('(')
+                    val clnIndex = call.indexOf(':')
+                    val rhsIndex = call.indexOf(')')
 
-                    String fullFn = call.substring(spcIndex + 1, lhsIndex).trim();
-                    int lastDot = fullFn.lastIndexOf('.');
+                    // trim like java.lang.String.trim(): everything up to U+0020
+                    val fullFn = call.substring(spcIndex + 1, lhsIndex).trim { it <= ' ' }
+                    val lastDot = fullFn.lastIndexOf('.')
 
-                    classNames[j] = fullFn.substring(0, lastDot).replace('/', '.');
-                    methodNames[j] = fullFn.substring(lastDot + 1);
+                    classNames[j] = fullFn.substring(0, lastDot).replace('/', '.')
+                    methodNames[j] = fullFn.substring(lastDot + 1)
 
                     if (clnIndex != -1 && lhsIndex < clnIndex) {
-                        fileNames[j] = call.substring(lhsIndex + 1, clnIndex);
-                        lineNumbers[j] = Integer.parseInt(call.substring(clnIndex + 1, rhsIndex));
+                        fileNames[j] = call.substring(lhsIndex + 1, clnIndex)
+                        lineNumbers[j] = Integer.parseInt(call.substring(clnIndex + 1, rhsIndex))
                     } else {
-                        fileNames[j] = call.substring(lhsIndex + 1, rhsIndex);
-                        lineNumbers[j] = 0;
+                        fileNames[j] = call.substring(lhsIndex + 1, rhsIndex)
+                        lineNumbers[j] = 0
                     }
-                    j++;
+                    j++
                 }
-            } catch (NumberFormatException ex) {
-                oops = true;
-            } catch (StringIndexOutOfBoundsException ex) {
+            } catch (ex: NumberFormatException) {
+                oops = true
+            } catch (ex: StringIndexOutOfBoundsException) {
                 // For whatever reason, Java 7 under Web Start is throwing this on
                 // call.substring(spcIndex + 1, lhsIndex) with a -56 being passed.
-                oops = true;
+                oops = true
             }
             if (oops) {
-                classNames[j] = "ParseError: ";
-                methodNames[j] = call;
-                fileNames[j] = "Error";
-                lineNumbers[j] = 0;
-                j++;
+                classNames[j] = "ParseError: "
+                methodNames[j] = call
+                fileNames[j] = "Error"
+                lineNumbers[j] = 0
+                j++
             }
         }
     }
 
     /**
      * How many stack elements are there?
-     * 
+     *
      * @return the number of stack elements
      */
-    public int countStackElements() {
-        return methodNames.length;
+    fun countStackElements(): Int {
+        return methodNames.size
     }
 
     /**
      * Get the name of a function
-     * 
+     *
      * @param level
      *            Number of calling function
      * @return the function name
      */
-    public String getFunctionName(int level) {
-        return methodNames[level];
+    fun getFunctionName(level: Int): String? {
+        return methodNames[level]
     }
 
     /**
      * Get the name of a function including class name
-     * 
+     *
      * @param level
      *            Number of calling function
      * @return the full function name
      */
-    public String getFullFunctionName(int level) {
-        return classNames[level] + '.' + methodNames[level] + "()";
+    fun getFullFunctionName(level: Int): String {
+        return classNames[level] + "." + methodNames[level] + "()"
     }
 
     /**
      * Get the name of a class
-     * 
+     *
      * @param level
      *            Number of calling function
      * @return the class name
      */
-    public String getClassName(int level) {
-        return classNames[level];
+    fun getClassName(level: Int): String? {
+        return classNames[level]
     }
 
     /**
      * Get the name of a file
-     * 
+     *
      * @param level
      *            Number of calling function
      * @return the file name
      */
-    public String getFileName(int level) {
-        return fileNames[level];
+    fun getFileName(level: Int): String? {
+        return fileNames[level]
     }
 
     /**
      * Get the line number within a file
-     * 
+     *
      * @param level
      *            Number of calling function
      * @return the line number
      */
-    public int getLineNumber(int level) {
-        return lineNumbers[level];
+    fun getLineNumber(level: Int): Int {
+        return lineNumbers[level]
     }
 
     /**
      * Get the count of classes
-     * 
+     *
      * @return the number of classes
      */
-    public int getClassCount() {
-        return classNames.length;
-    }
+    val classCount: Int
+        get() = classNames.size
 
     /**
      * Get the Class that owns the function
-     * 
+     *
      * @param level
      *            Number of calling function
      * @return the function owner
      */
-    public Class<?> getClass(int level) {
+    fun getClass(level: Int): Class<*>? {
         try {
-            return ClassUtil.forName(classNames[level]);
-        } catch (ClassNotFoundException ex) {
-            assert false : ex;
-            return null;
+            return ClassUtil.forName(classNames[level])
+        } catch (ex: ClassNotFoundException) {
+            jswordAssert(false) { ex }
+            return null
         }
     }
 
@@ -215,100 +214,104 @@ public final class StackTrace {
      * Base class for the real enumeration implementations below
      * @param <T> the type of the object in the stack
      */
-    public abstract class AbstractStackIterator<T> implements Iterator<T> {
+    abstract inner class AbstractStackIterator<T> : MutableIterator<T> {
         /* (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
-        public boolean hasNext() {
-            return level < getClassCount();
+        override fun hasNext(): Boolean {
+            return level < classCount
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
-        public void remove() {
-            throw new UnsupportedOperationException();
+        override fun remove() {
+            throw UnsupportedOperationException()
         }
 
         /**
          * @return the level.
          * @throws NoSuchElementException 
          */
-        public int getAndIncrementLevel() throws NoSuchElementException {
-            return level++;
+        @Throws(NoSuchElementException::class)
+        open fun getAndIncrementLevel(): Int {
+            return level++
         }
 
         /**
          * Are there more stack levels
          */
-        private int level;
+        private var level = 0
     }
 
     /**
      * To iterate over the class names
-     * 
+     *
      * @return an iterator of class names
      */
-    public Iterator<String> getClassNameElements() {
-        return new AbstractStackIterator<String>() {
-            public String next() throws NoSuchElementException {
+    fun getClassNameElements(): MutableIterator<String?> {
+        return object : AbstractStackIterator<String?>() {
+            @Throws(NoSuchElementException::class)
+            override fun next(): String? {
                 if (!hasNext()) {
-                    throw new NoSuchElementException();
+                    throw NoSuchElementException()
                 }
-                return getClassName(getAndIncrementLevel());
+                return getClassName(getAndIncrementLevel())
             }
-        };
+        }
     }
 
     /**
      * To iterate over the function names
-     * 
+     *
      * @return an iterator of function names
      */
-    public Iterator<String> getFunctionNameElements() {
-        return new AbstractStackIterator<String>() {
-            public String next() throws NoSuchElementException {
+    fun getFunctionNameElements(): MutableIterator<String?> {
+        return object : AbstractStackIterator<String?>() {
+            @Throws(NoSuchElementException::class)
+            override fun next(): String? {
                 if (!hasNext()) {
-                    throw new NoSuchElementException();
+                    throw NoSuchElementException()
                 }
-                return getFunctionName(getAndIncrementLevel());
+                return getFunctionName(getAndIncrementLevel())
             }
-        };
+        }
     }
 
     /**
      * To iterate over the full function names
-     * 
+     *
      * @return an iterator of full function names
      */
-    public Iterator<String> getFullFunctionNameElements() {
-        return new AbstractStackIterator<String>() {
-            public String next() throws NoSuchElementException {
+    fun getFullFunctionNameElements(): MutableIterator<String> {
+        return object : AbstractStackIterator<String>() {
+            @Throws(NoSuchElementException::class)
+            override fun next(): String {
                 if (!hasNext()) {
-                    throw new NoSuchElementException();
+                    throw NoSuchElementException()
                 }
-                return getFullFunctionName(getAndIncrementLevel());
+                return getFullFunctionName(getAndIncrementLevel())
             }
-        };
+        }
     }
 
     /**
      * Array containing the class names
      */
-    private String[] classNames;
+    private lateinit var classNames: Array<String?>
 
     /**
      * Array containing the method names
      */
-    private String[] methodNames;
+    private lateinit var methodNames: Array<String?>
 
     /**
      * Array containing the file names
      */
-    private String[] fileNames;
+    private lateinit var fileNames: Array<String?>
 
     /**
      * Array containing the line numbers
      */
-    private int[] lineNumbers;
+    private lateinit var lineNumbers: IntArray
 }

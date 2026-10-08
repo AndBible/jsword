@@ -17,48 +17,45 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.MissingResourceException;
-
-import org.crosswire.jsword.JSOtherMsg;
+import org.crosswire.jsword.JSOtherMsg
+import java.io.IOException
+import java.io.InputStream
+import java.net.URL
+import java.util.MissingResourceException
 
 /**
  * Better implementations of the getResource methods with less ambiguity and
  * that are less dependent on the specific class loader situation.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public final class ResourceUtil {
-    /**
-     * Prevent Instantiation
-     */
-    private ResourceUtil() {
-    }
-
+// An object, not a companion: CallContext.getCallingClass() counts stack frames, so the @JvmStatic methods
+// below must be the real static methods (a companion adds a delegating frame for Java callers).
+object ResourceUtil {
     /**
      * Generic resource URL fetcher. One way or the other we'll find it! Either
      * as a relative or an absolute reference.
-     * 
+     *
      * @param search
      *            The name of the resource (without a leading /) to find
      * @return The requested resource
      * @throws MissingResourceException
      *             if the resource can not be found
      */
-    public static URL getResource(String search) throws MissingResourceException {
-        return getResource(CallContext.getCallingClass(), search);
+    @JvmStatic
+    @Throws(MissingResourceException::class)
+    fun getResource(search: String?): URL {
+        return getResource(CallContext.getCallingClass(), search)
     }
 
     /**
      * Generic resource URL fetcher. One way or the other we'll find it! Either
      * as a relative or an absolute reference.
-     * 
+     *
      * @param <T> the type of the resource
      * @param clazz the basis to search for the resource first.
      * @param resourceName
@@ -67,19 +64,21 @@ public final class ResourceUtil {
      * @throws MissingResourceException
      *             if the resource can not be found
      */
-    public static <T> URL getResource(Class<T> clazz, String resourceName) throws MissingResourceException {
-        URL resource = CWClassLoader.instance(clazz).findResource(resourceName);
+    @JvmStatic
+    @Throws(MissingResourceException::class)
+    fun <T> getResource(clazz: Class<T>, resourceName: String?): URL {
+        val resource = CWClassLoader.instance(clazz).findResource(resourceName)
 
         if (resource == null) {
-            throw new MissingResourceException(JSOtherMsg.lookupText("Cannot find resource: {0}", resourceName), clazz.getName(), resourceName);
+            throw MissingResourceException(JSOtherMsg.lookupText("Cannot find resource: {0}", resourceName), clazz.name, resourceName)
         }
 
-        return resource;
+        return resource
     }
 
     /**
      * Generic resource URL fetcher
-     * 
+     *
      * @param search
      *            The name of the resource (without a leading /) to find
      * @return The requested resource
@@ -88,13 +87,15 @@ public final class ResourceUtil {
      * @throws MissingResourceException
      *             if the resource can not be found
      */
-    public static InputStream getResourceAsStream(String search) throws IOException, MissingResourceException {
-        return getResourceAsStream(CallContext.getCallingClass(), search);
+    @JvmStatic
+    @Throws(IOException::class, MissingResourceException::class)
+    fun getResourceAsStream(search: String?): InputStream {
+        return getResourceAsStream(CallContext.getCallingClass(), search)
     }
 
     /**
      * Generic resource URL fetcher
-     * 
+     *
      * @param <T> the type of the resource
      * @param clazz the basis to search for the resource first.
      * @param search
@@ -105,28 +106,32 @@ public final class ResourceUtil {
      * @throws MissingResourceException
      *             if the resource can not be found
      */
-    public static <T> InputStream getResourceAsStream(Class<T> clazz, String search) throws IOException, MissingResourceException {
-        return ResourceUtil.getResource(clazz, search).openStream();
+    @JvmStatic
+    @Throws(IOException::class, MissingResourceException::class)
+    fun <T> getResourceAsStream(clazz: Class<T>, search: String?): InputStream {
+        return ResourceUtil.getResource(clazz, search).openStream()
     }
 
     /**
      * Get and load a properties file from the writable area or if that fails
      * from the classpath (where a default ought to be stored)
-     * 
+     *
      * @param subject
      *            The name of the desired resource (without any extension)
      * @return The found and loaded properties file
      * @throws IOException
      *             if the resource can not be loaded
      */
-    public static PropertyMap getProperties(String subject) throws IOException {
-        return getProperties(CallContext.getCallingClass(), subject);
+    @JvmStatic
+    @Throws(IOException::class)
+    fun getProperties(subject: String?): PropertyMap {
+        return getProperties(CallContext.getCallingClass(), subject)
     }
 
     /**
      * Get and load a properties file from the writable area or if that fails
      * from the classpath (where a default ought to be stored)
-     * 
+     *
      * @param <T> the type of the resource
      * @param clazz
      *            The name of the desired resource
@@ -134,14 +139,16 @@ public final class ResourceUtil {
      * @throws IOException
      *             if the resource can not be loaded
      */
-    public static <T> PropertyMap getProperties(Class<T> clazz) throws IOException {
-        return getProperties(clazz, ClassUtil.getShortClassName(clazz));
+    @JvmStatic
+    @Throws(IOException::class)
+    fun <T> getProperties(clazz: Class<T>): PropertyMap {
+        return getProperties(clazz, ClassUtil.getShortClassName(clazz))
     }
 
     /**
      * Get and load a properties file from the writable area or if that fails
      * from the classpath (where a default ought to be stored)
-     * 
+     *
      * @param <T> the type of the resource
      * @param clazz
      *            The name of the desired resource
@@ -151,16 +158,17 @@ public final class ResourceUtil {
      * @throws IOException
      *             if the resource can not be loaded
      */
-    private static <T> PropertyMap getProperties(Class<T> clazz, String subject) throws IOException {
+    @Throws(IOException::class)
+    private fun <T> getProperties(clazz: Class<T>, subject: String?): PropertyMap {
         try {
-            String lookup = subject + FileUtil.EXTENSION_PROPERTIES;
-            InputStream in = getResourceAsStream(clazz, lookup);
+            val lookup = subject + FileUtil.EXTENSION_PROPERTIES
+            val `in` = getResourceAsStream(clazz, lookup)
 
-            PropertyMap prop = new PropertyMap();
-            prop.load(in);
-            return prop;
-        } catch (MissingResourceException e) {
-            return new PropertyMap();
+            val prop = PropertyMap()
+            prop.load(`in`)
+            return prop
+        } catch (e: MissingResourceException) {
+            return PropertyMap()
         }
     }
 }

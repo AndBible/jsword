@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.progress;
+package org.crosswire.common.progress
 
-import java.util.EventListener;
+import java.util.EventListener
 
 /**
  * Implement WorkListener and call myClassObj.addProgressListener() to receive
@@ -28,7 +28,7 @@ import java.util.EventListener;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface WorkListener extends EventListener {
+interface WorkListener : EventListener {
     /**
      * This method is called to indicate that some progress has been made. The
      * amount of progress is indicated by ev.getPercent()
@@ -36,7 +36,7 @@ public interface WorkListener extends EventListener {
      * @param ev
      *            Describes the progress
      */
-    void workProgressed(WorkEvent ev);
+    fun workProgressed(ev: WorkEvent)
 
     /**
      * This method is called to indicate that the work state has changed, perhaps finished.
@@ -44,5 +44,5 @@ public interface WorkListener extends EventListener {
      * @param ev
      *            Describes the progress
      */
-    void workStateChanged(WorkEvent ev);
+    fun workStateChanged(ev: WorkEvent)
 }

@@ -17,58 +17,56 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
-
+package org.crosswire.common.util
 
 /**
  * This singleton class provides a way for a method to determine which class
  * called it.
  * <p>
  * It has been tested to work in command line and WebStart environments.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class CallContext {
-    /**
-     * Prevent instantiation
-     */
-    private CallContext() {
-    }
-
+// An object, not a companion: getCallingClass() counts stack frames (CALL_CONTEXT_OFFSET), so the @JvmStatic
+// methods below must be the real static methods, with no delegating companion frame in between.
+object CallContext {
     /**
      * Singleton accessor
-     * 
+     *
      * @return this singleton
      */
-    public static CallContext instance() {
-        return resolver;
+    @JvmStatic
+    fun instance(): CallContext {
+        return this
     }
 
     /**
      * When called from a method it will return the class calling that method.
-     * 
+     *
      * @return the immediate calling class
      */
-    public static Class<?> getCallingClass() {
-        return getCallingClass(1); // add 1 for this method
+    @JvmStatic
+    fun getCallingClass(): Class<*> {
+        return getCallingClass(1) // add 1 for this method
     }
 
     /**
      * When called from a method it will return the i-th class calling that
      * method, up the call chain. If used with a -1 it will return the class
      * making the call -2 and -3 will return this class
-     * 
+     *
      * @param i the i-th coller
      * @return the desired calling class
      * @throws ArrayIndexOutOfBoundsException
      *             if the index is not valid
      */
-    public static Class<?> getCallingClass(int i) {
+    @JvmStatic
+    fun getCallingClass(i: Int): Class<*> {
         try {
-            return Class.forName(Thread.currentThread().getStackTrace()[CALL_CONTEXT_OFFSET + i].getClassName());
-        } catch (ClassNotFoundException e) {
-            return CallContext.class;
+            return Class.forName(Thread.currentThread().stackTrace[CALL_CONTEXT_OFFSET + i].className)
+        } catch (e: ClassNotFoundException) {
+            return CallContext::class.java
         }
     }
 
@@ -76,9 +74,7 @@ public final class CallContext {
     /**
      * Offset needed to represent the caller of the method that called this
      * method.
-     * 
+     *
      */
-    private static final int CALL_CONTEXT_OFFSET = 3;
-
-    private static CallContext resolver = new CallContext();
+    private const val CALL_CONTEXT_OFFSET = 3
 }
