@@ -97,6 +97,7 @@ val parityTest by tasks.registering(Test::class) {
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
     systemProperty("ksword.projectDir", layout.projectDirectory.asFile.absolutePath)
+    systemProperty("ksword.reportsDir", layout.buildDirectory.dir("reports/ksword").get().asFile.absolutePath)
     val oracleClasspath = files(baselineJar, compileOracleProbe.map { it.destinationDirectory }) + oracleThirdParty
     inputs.files(oracleClasspath)
     jvmArgumentProviders.add(CommandLineArgumentProvider {

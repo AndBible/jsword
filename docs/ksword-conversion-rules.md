@@ -82,3 +82,19 @@ globally (`build.gradle.kts`: `compilerOptions { optIn.add("kotlin.ExperimentalM
 
 ## 8. Every batch
 `jvmTest` and `parityTest` green, `:app` full unit suite and assemble green, iOS compile green, a review.
+
+## 9. Member form for Kotlin consumers (K1)
+Kotlin consumers (`:app`) read a Java getter either as a property (`book.initials`) or as a call
+(`book.getInitials()`); after conversion only one form compiles. Rule: if any Kotlin consumer
+**overrides** the getter (`override fun getX()`), it stays `fun getX()`; otherwise it becomes a property
+(`val`/`var`/`open val`) with the same JVM names. Consumer call sites that then fail to compile are
+rewritten to the surviving form — that is the only consumer edit allowed. A Kotlin class implementing a
+still-Java interface overrides its getters with `fun`; convert interfaces before their implementers.
+A Java interface a consumer implements with a lambda (SAM) becomes `fun interface`.
+Protected fields that subclasses read stay fields: `@JvmField protected var x`.
+
+## 10. API parity gate (K1)
+`ApiParityTest` (in `:jsword:parityTest`) compares every public/protected member and the serialization
+members of each baseline class with the current code. Removed/changed = failure; additions only for
+`Companion` and enum `getEntries`, or via `oracle/api-allowlist.txt` with a reason. Read
+`build/reports/ksword/api-generic.txt` (generic signature differences) at review.
