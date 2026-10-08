@@ -17,19 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-
-import org.crosswire.common.util.ClassUtil;
-import org.crosswire.common.util.StringUtil;
-import org.crosswire.jsword.JSOtherMsg;
-import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.util.MissingResourceException
+import java.util.ResourceBundle
+import org.crosswire.common.util.ClassUtil
+import org.crosswire.common.util.StringUtil
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSOtherMsg
+import org.jdom2.Element
+import org.slf4j.LoggerFactory
 
 /**
  * A helper for when we need to be a choice created dynamically.
@@ -38,131 +37,113 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public abstract class AbstractReflectedChoice implements Choice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#init(org.jdom2.Element)
+abstract class AbstractReflectedChoice : Choice {
+    /**
+     * Initialise the choice from its element of config.xml; see [Choice.init].
      */
-    public void init(Element option, ResourceBundle configResources) throws StartupException {
-        assert configResources != null;
-
-        key = option.getAttributeValue("key");
+    @Throws(StartupException::class)
+    override fun init(option: Element, configResources: ResourceBundle) {
+        keyField = option.getAttributeValue("key")
 
         // Hidden is an optional field so it is ok for the resource to be
         // missing.
         try {
-            String hiddenState = configResources.getString(key + ".hidden");
-            hidden = Boolean.valueOf(hiddenState).booleanValue();
-        } catch (MissingResourceException e) {
-            hidden = false;
+            val hiddenState = configResources.getString(key + ".hidden")
+            hidden = java.lang.Boolean.parseBoolean(hiddenState)
+        } catch (e: MissingResourceException) {
+            hidden = false
         }
 
         // Ignore is an optional field so it is ok for the resource to be
         // missing.
         try {
-            String ignoreState = configResources.getString(key + ".ignore");
-            ignored = Boolean.valueOf(ignoreState).booleanValue();
+            val ignoreState = configResources.getString(key + ".ignore")
+            ignored = java.lang.Boolean.parseBoolean(ignoreState)
             if (ignored) {
-                hidden = true;
-                return;
+                hidden = true
+                return
             }
-        } catch (MissingResourceException e) {
-            ignored = false;
+        } catch (e: MissingResourceException) {
+            ignored = false
         }
 
-        String helpText = configResources.getString(key + ".help");
-        assert helpText != null;
-        setHelpText(helpText);
+        val help = configResources.getString(key + ".help")
+        jswordAssert(help != null) { "" }
+        helpText = help
 
         // OPTIMIZE(dms): This is poorly done (by me!)
-        String[] pathParts = StringUtil.split(key, '.');
-        StringBuilder parentKey = new StringBuilder();
-        StringBuilder path = new StringBuilder();
-        for (int i = 0; i < pathParts.length; i++) {
+        val pathParts = StringUtil.split(key, '.')
+        val parentKey = StringBuilder()
+        val path = StringBuilder()
+        for (i in pathParts.indices) {
             if (i > 0) {
-                parentKey.append('.');
-                path.append('.');
+                parentKey.append('.')
+                path.append('.')
             }
-            parentKey.append(pathParts[i]);
-            String parent = configResources.getString(parentKey + ".name");
-            assert parent != null;
-            path.append(parent);
+            parentKey.append(pathParts[i])
+            val parent = configResources.getString(parentKey.toString() + ".name")
+            jswordAssert(parent != null) { "" }
+            path.append(parent)
         }
-        setFullPath(path.toString());
+        fullPath = path.toString()
 
-        external = Boolean.valueOf(option.getAttributeValue("external")).booleanValue();
+        external = java.lang.Boolean.parseBoolean(option.getAttributeValue("external"))
 
-        restart = Boolean.valueOf(option.getAttributeValue("restart")).booleanValue();
+        restart = java.lang.Boolean.parseBoolean(option.getAttributeValue("restart"))
 
-        type = option.getAttributeValue("type");
+        typeField = option.getAttributeValue("type")
 
         // The important 3 things saying what we update and how we describe
         // ourselves
-        Element introspector = option.getChild("introspect");
-        if (introspector == null) {
-            throw new StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "introspect"));
-        }
+        val introspector = option.getChild("introspect")
+                ?: throw StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "introspect"))
 
-        String clazzname = introspector.getAttributeValue("class");
-        if (clazzname == null) {
-            throw new StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "class"));
-        }
+        val clazzname = introspector.getAttributeValue("class")
+                ?: throw StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "class"))
 
-        propertyname = introspector.getAttributeValue("property");
-        if (propertyname == null) {
-            throw new StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "property"));
-        }
+        val property = introspector.getAttributeValue("property")
+                ?: throw StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "property"))
+        propertyname = property
 
         // log.debug("Looking up {}.set{}({} arg0)", clazzname, propertyname, getConvertionClass().getName());
 
+        val reflected: Class<*>
         try {
-            clazz = ClassUtil.forName(clazzname);
-        } catch (ClassNotFoundException ex) {
-            throw new StartupException(JSOtherMsg.lookupText("Specified class not found: {0}", clazzname), ex);
+            reflected = ClassUtil.forName(clazzname)
+        } catch (ex: ClassNotFoundException) {
+            throw StartupException(JSOtherMsg.lookupText("Specified class not found: {0}", clazzname), ex)
         }
+        clazz = reflected
 
         try {
-            setter = clazz.getMethod("set" + propertyname, getConversionClass());
-        } catch (NoSuchMethodException ex) {
-            throw new StartupException(JSOtherMsg.lookupText("Specified method not found {0}.set{1}({2} arg0)",
-                    clazz.getName(), propertyname, getConversionClass().getName()), ex
-            );
+            setter = reflected.getMethod("set" + property, conversionClass)
+        } catch (ex: NoSuchMethodException) {
+            throw StartupException(JSOtherMsg.lookupText("Specified method not found {0}.set{1}({2} arg0)",
+                    reflected.name, property, conversionClass.name), ex)
         }
 
         try {
             try {
-                getter = clazz.getMethod("is" + propertyname, new Class[0]);
-            } catch (NoSuchMethodException e) {
-                getter = clazz.getMethod("get" + propertyname, new Class[0]);
+                getter = reflected.getMethod("is" + property)
+            } catch (e: NoSuchMethodException) {
+                getter = reflected.getMethod("get" + property)
             }
-        } catch (NoSuchMethodException ex) {
-            throw new StartupException(JSOtherMsg.lookupText("Specified method not found {0}.get{1}()", clazz.getName(), propertyname), ex);
+        } catch (ex: NoSuchMethodException) {
+            throw StartupException(JSOtherMsg.lookupText("Specified method not found {0}.get{1}()", reflected.name, property), ex)
         }
 
-        if (getter.getReturnType() != getConversionClass()) {
-            log.debug("Not using {} from {} because the return type of the getter is not {}", propertyname, clazz.getName(), getConversionClass().getName());
-            throw new StartupException(JSOtherMsg.lookupText("Mismatch of return types, found: {0} required: {1}", getter.getReturnType(), getConversionClass()));
+        val returnType = getter!!.returnType
+        if (returnType !== conversionClass) {
+            log.debug("Not using {} from {} because the return type of the getter is not {}", property, reflected.name, conversionClass.name)
+            throw StartupException(JSOtherMsg.lookupText("Mismatch of return types, found: {0} required: {1}", returnType, conversionClass))
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getKey()
-     */
-    public String getKey() {
-        return key;
-    }
+    override val key: String?
+        get() = keyField
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getType()
-     */
-    public String getType() {
-        return type;
-    }
+    override val type: String?
+        get() = typeField
 
     /**
      * Convert from a reflection return value to a String for storage
@@ -170,199 +151,127 @@ public abstract class AbstractReflectedChoice implements Choice {
      * @param orig the object to be converted to a string
      * @return the marshaled representation of the object
      */
-    public abstract String convertToString(Object orig);
+    abstract fun convertToString(orig: Any?): String?
 
     /**
      * Convert from a stored string to an object to use with reflection
      * @param orig the marshaled representation of the object
      * @return the reconstituted object
      */
-    public abstract Object convertToObject(String orig);
+    abstract fun convertToObject(orig: String?): Any?
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getFullPath()
-     */
-    public String getFullPath() {
-        return fullPath;
+    override var fullPath: String? = null
+
+    override var helpText: String? = null
+
+    override val isSaveable: Boolean
+        get() = !external
+
+    override val isHidden: Boolean
+        get() = hidden
+
+    override val isIgnored: Boolean
+        get() = ignored
+
+    override fun requiresRestart(): Boolean {
+        return restart
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#setFullPath(java.lang.String)
-     */
-    public void setFullPath(String newFullPath) {
-        fullPath = newFullPath;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getHelpText()
-     */
-    public String getHelpText() {
-        return helptext;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#setHelpText(java.lang.String)
-     */
-    public void setHelpText(String helptext) {
-        this.helptext = helptext;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#isSaveable()
-     */
-    public boolean isSaveable() {
-        return !external;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#isHidden()
-     */
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#isIgnored()
-     */
-    public boolean isIgnored() {
-        return ignored;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#requiresRestart()
-     */
-    public boolean requiresRestart() {
-        return restart;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getString()
-     */
-    public String getString() {
-        try {
-            Object retval = getter.invoke(null, new Object[0]);
-            return convertToString(retval);
-        } catch (IllegalAccessException ex) {
-            log.error("Illegal access getting value from {}.{}", clazz.getName(), getter.getName(), ex);
-            return "";
-        } catch (InvocationTargetException ex) {
-            log.error("Failed to get value from {}.{}", clazz.getName(), getter.getName(), ex);
-            return "";
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#setString(java.lang.String)
-     */
-    public void setString(String value) throws ConfigException {
-        Exception ex = null;
-        try {
-            Object object = convertToObject(value);
-            if (object != null) {
-                setter.invoke(null, object);
+    override var string: String?
+        get() {
+            try {
+                val retval = getter!!.invoke(null)
+                return convertToString(retval)
+            } catch (ex: IllegalAccessException) {
+                log.error("Illegal access getting value from {}.{}", clazz!!.name, getter!!.name, ex)
+                return ""
+            } catch (ex: InvocationTargetException) {
+                log.error("Failed to get value from {}.{}", clazz!!.name, getter!!.name, ex)
+                return ""
             }
-        } catch (InvocationTargetException e) {
-            ex = e;
-        } catch (IllegalArgumentException e) {
-            ex = e;
-        } catch (IllegalAccessException e) {
-            ex = e;
-        } catch (NullPointerException e) {
-            ex = e;
         }
+        @Throws(ConfigException::class)
+        set(value) {
+            var ex: Exception? = null
+            try {
+                val obj = convertToObject(value)
+                if (obj != null) {
+                    setter!!.invoke(null, obj)
+                }
+            } catch (e: InvocationTargetException) {
+                ex = e
+            } catch (e: IllegalArgumentException) {
+                ex = e
+            } catch (e: IllegalAccessException) {
+                ex = e
+            } catch (e: NullPointerException) {
+                ex = e
+            }
 
-        if (ex != null) {
-            log.info("Exception while attempting to execute: {}", setter.toString());
+            if (ex != null) {
+                log.info("Exception while attempting to execute: {}", setter!!.toString())
 
-            // So we can't re-throw the original exception because it wasn't an
-            // Exception so we will have to re-throw the
-            // InvocationTargetException
-            throw new ConfigException(JSOtherMsg.lookupText("Failed to set option: {0}", setter), ex);
+                // So we can't re-throw the original exception because it wasn't an
+                // Exception so we will have to re-throw the
+                // InvocationTargetException
+                throw ConfigException(JSOtherMsg.lookupText("Failed to set option: {0}", setter), ex)
+            }
         }
-    }
 
     /**
      * The key of the option.
      */
-    private String key;
+    private var keyField: String? = null
 
     /**
      * The type that we reflect to
      */
-    private Class<? extends Object> clazz;
+    private var clazz: Class<*>? = null
 
     /**
      * The property that we call on the reflecting class
      */
-    private String propertyname;
+    private var propertyname: String? = null
 
     /**
      * The type (as specified in config.xml)
      */
-    private String type;
+    private var typeField: String? = null
 
     /**
      * The method to call to get the value
      */
-    private Method getter;
+    private var getter: Method? = null
 
     /**
      * The method to call to set the value
      */
-    private Method setter;
-
-    /**
-     * The help text (tooltip) for this item
-     */
-    private String helptext;
-
-    /**
-     * The full path of this item
-     */
-    private String fullPath;
+    private var setter: Method? = null
 
     /**
      * Whether this choice should be visible or hidden
      */
-    private boolean hidden;
+    private var hidden = false
 
     /**
      * Whether this choice should be ignored altogether.
      */
-    private boolean ignored;
+    private var ignored = false
 
     /**
      * Whether this choice is managed externally, via setXXX and getXXX.
      */
-    private boolean external;
+    private var external = false
 
     /**
      * Whether this choice is requires a restart to be seen.
      */
-    private boolean restart;
+    private var restart = false
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(AbstractReflectedChoice.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val log = LoggerFactory.getLogger(AbstractReflectedChoice::class.java)
+    }
 }

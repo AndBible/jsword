@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
 /**
  * A type of Choice that converts between strings and objects.
@@ -25,37 +25,15 @@ package org.crosswire.common.config;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class StringChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<String> getConversionClass() {
-        return String.class;
+open class StringChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<String>
+        get() = String::class.java
+
+    override fun convertToString(orig: Any?): String? {
+        return orig as String?
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        return (String) orig;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return orig;
+    override fun convertToObject(orig: String?): Any? {
+        return orig
     }
 }

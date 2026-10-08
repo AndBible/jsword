@@ -17,17 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.TreeMap;
-
-import org.crosswire.jsword.JSOtherMsg;
-import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ResourceBundle
+import java.util.TreeMap
+import org.crosswire.jsword.JSOtherMsg
+import org.jdom2.Element
+import org.slf4j.LoggerFactory
 
 /**
  * A class to convert between strings and objects of a type.
@@ -36,86 +32,53 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public class MappedOptionsChoice extends AbstractReflectedChoice implements MappedChoice<Object, Object> {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#init(org.jdom2.Element)
-     */
-    @Override
-    public void init(Element option, ResourceBundle configResources) throws StartupException {
-        assert configResources != null;
+open class MappedOptionsChoice : AbstractReflectedChoice(), MappedChoice<Any?, Any?> {
+    @Throws(StartupException::class)
+    override fun init(option: Element, configResources: ResourceBundle) {
+        super.init(option, configResources)
+        val mapElement = option.getChild("map")
+                ?: throw StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "map"))
 
-        super.init(option, configResources);
-        Element mapElement = option.getChild("map");
-        if (mapElement == null) {
-            throw new StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "map"));
-        }
-
-        String name = mapElement.getAttributeValue("name");
-        Object map = ChoiceFactory.getDataMap().get(name);
-        if (map instanceof Map<?, ?>) {
-            options = (Map<?, ?>) map;
+        val name = mapElement.getAttributeValue("name")
+        val map = ChoiceFactory.getDataMap().get(name)
+        if (map is Map<*, *>) {
+            options = map
         } else {
-            options = new TreeMap<Object, Object>();
+            options = TreeMap<Any?, Any?>()
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.MappedChoice#getOptions()
-     */
-    public Map<Object, Object> getOptions() {
-        return new TreeMap<Object, Object>(options);
+    @Suppress("UNCHECKED_CAST")
+    override fun getOptions(): Map<Any?, Any?> {
+        return TreeMap<Any?, Any?>(options as Map<Any?, Any?>)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<String> getConversionClass() {
-        return String.class;
+    override val conversionClass: Class<String>
+        get() = String::class.java
+
+    override fun convertToString(orig: Any?): String? {
+        return if (orig != null) orig.toString() else ""
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        return orig != null ? orig.toString() : "";
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        Iterator<?> iter = options.entrySet().iterator();
-        Map.Entry<?, ?> mapEntry = null;
+    override fun convertToObject(orig: String?): Any? {
+        val iter = options!!.entries.iterator()
+        var mapEntry: Map.Entry<*, *>? = null
         while (iter.hasNext()) {
-            mapEntry = (Map.Entry<?, ?>) iter.next();
-            if (mapEntry.getValue().toString().equals(orig) || mapEntry.getKey().toString().equals(orig)) {
-                return mapEntry.getKey().toString();
+            mapEntry = iter.next()
+            if (mapEntry.value!!.toString() == orig || mapEntry.key!!.toString() == orig) {
+                return mapEntry.key!!.toString()
             }
         }
-        log.warn(JSOtherMsg.lookupText("Ignoring invalid option: {0}", orig));
-        return "";
+        log.warn(JSOtherMsg.lookupText("Ignoring invalid option: {0}", orig))
+        return ""
     }
 
-    private Map<?, ?> options;
+    private var options: Map<*, *>? = null
 
-    /**
-     * The log stream
-     */
-    private static Logger log = LoggerFactory.getLogger(MappedOptionsChoice.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val log = LoggerFactory.getLogger(MappedOptionsChoice::class.java)
+    }
 }

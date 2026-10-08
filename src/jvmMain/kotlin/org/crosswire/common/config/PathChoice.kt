@@ -17,11 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.io.File;
-
-import org.crosswire.common.util.StringUtil;
+import java.io.File
+import org.crosswire.common.util.StringUtil
 
 /**
  * A class to convert between strings and objects of a type.
@@ -29,49 +28,28 @@ import org.crosswire.common.util.StringUtil;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class PathChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<File[]> getConversionClass() {
-        return File[].class;
-    }
+open class PathChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<Array<File>>
+        get() = Array<File>::class.java
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        File[] paths = (File[]) orig;
-        String[] names = new String[paths.length];
-        for (int i = 0; i < paths.length; i++) {
-            names[i] = paths[i].getAbsolutePath();
+    @Suppress("UNCHECKED_CAST")
+    override fun convertToString(orig: Any?): String? {
+        val paths = orig as Array<File>
+        val names = arrayOfNulls<String>(paths.size)
+        for (i in paths.indices) {
+            names[i] = paths[i].absolutePath
         }
 
-        return StringUtil.join(names, File.pathSeparator);
+        return StringUtil.join(names, File.pathSeparator)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        String[] names = StringUtil.split(orig, File.pathSeparator);
-        File[] paths = new File[names.length];
-        for (int i = 0; i < names.length; i++) {
-            paths[i] = new File(names[i]);
+    override fun convertToObject(orig: String?): Any? {
+        val names = StringUtil.split(orig, File.pathSeparator)
+        val paths = arrayOfNulls<File>(names.size)
+        for (i in names.indices) {
+            paths[i] = File(names[i])
         }
 
-        return paths;
+        return paths
     }
 }

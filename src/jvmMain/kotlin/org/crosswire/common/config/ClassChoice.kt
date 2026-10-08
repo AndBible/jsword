@@ -17,11 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import org.crosswire.common.util.ClassUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.ClassUtil
+import org.slf4j.LoggerFactory
 
 /**
  * A class to convert between strings and objects of a type.
@@ -29,51 +28,31 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ClassChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<?> getConversionClass() {
-        return Class.class;
-    }
+open class ClassChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<*>
+        get() = Class::class.java
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
+    override fun convertToString(orig: Any?): String? {
         if (orig == null) {
-            return null;
+            return null
         }
 
-        return ((Class<?>) orig).getName();
+        return (orig as Class<*>).name
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
+    override fun convertToObject(orig: String?): Any? {
         try {
-            return ClassUtil.forName(orig);
-        } catch (ClassNotFoundException ex) {
-            log.warn("Class not found: {}", orig, ex);
-            return null;
+            return ClassUtil.forName(orig)
+        } catch (ex: ClassNotFoundException) {
+            log.warn("Class not found: {}", orig, ex)
+            return null
         }
     }
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(ClassChoice.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val log = LoggerFactory.getLogger(ClassChoice::class.java)
+    }
 }

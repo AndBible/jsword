@@ -37,21 +37,20 @@
  * limitations under the License.
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import java.io.IOException;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.DTDHandler;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.ext.DeclHandler;
-import org.xml.sax.ext.LexicalHandler;
+import java.io.IOException
+import org.xml.sax.Attributes
+import org.xml.sax.ContentHandler
+import org.xml.sax.DTDHandler
+import org.xml.sax.EntityResolver
+import org.xml.sax.ErrorHandler
+import org.xml.sax.InputSource
+import org.xml.sax.Locator
+import org.xml.sax.SAXException
+import org.xml.sax.SAXParseException
+import org.xml.sax.ext.DeclHandler
+import org.xml.sax.ext.LexicalHandler
 
 /**
  * Checks a XML document for problems, reporting line and offset.
@@ -59,183 +58,120 @@ import org.xml.sax.ext.LexicalHandler;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class XMLHandlerAdapter implements EntityResolver, DTDHandler, ContentHandler, ErrorHandler, DeclHandler, LexicalHandler {
-    /**
-     * Default constructor.
-     */
-    public XMLHandlerAdapter() {
+open class XMLHandlerAdapter : EntityResolver, DTDHandler, ContentHandler, ErrorHandler, DeclHandler, LexicalHandler {
+    override fun setDocumentLocator(locator: Locator?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
-     */
-    public void setDocumentLocator(Locator locator) {
+    @Throws(SAXException::class)
+    override fun startDocument() {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#startDocument()
-     */
-    public void startDocument() throws SAXException {
+    @Throws(SAXException::class)
+    override fun processingInstruction(target: String?, data: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#processingInstruction(java.lang.String, java.lang.String)
-     */
-    public void processingInstruction(String target, String data) throws SAXException {
+    @Throws(SAXException::class)
+    override fun characters(ch: CharArray?, offset: Int, length: Int) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#characters(char[], int, int)
-     */
-    public void characters(char[] ch, int offset, int length) throws SAXException {
+    @Throws(SAXException::class)
+    override fun ignorableWhitespace(ch: CharArray?, offset: Int, length: Int) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
-     */
-    public void ignorableWhitespace(char[] ch, int offset, int length) throws SAXException {
+    @Throws(SAXException::class)
+    override fun endDocument() {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#endDocument()
-     */
-    public void endDocument() throws SAXException {
+    @Throws(SAXException::class)
+    override fun startPrefixMapping(prefix: String?, uri: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
-     */
-    public void startPrefixMapping(String prefix, String uri) throws SAXException {
+    @Throws(SAXException::class)
+    override fun startElement(uri: String?, localName: String?, qname: String?, attributes: Attributes?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
-     */
-    public void startElement(String uri, String localName, String qname, Attributes attributes) throws SAXException {
+    @Throws(SAXException::class)
+    override fun endElement(uri: String?, localName: String?, qname: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void endElement(String uri, String localName, String qname) throws SAXException {
+    @Throws(SAXException::class)
+    override fun endPrefixMapping(prefix: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
-     */
-    public void endPrefixMapping(String prefix) throws SAXException {
+    @Throws(SAXException::class)
+    override fun skippedEntity(name: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#skippedEntity(java.lang.String)
-     */
-    public void skippedEntity(String name) throws SAXException {
+    @Throws(SAXException::class)
+    override fun notationDecl(name: String?, publicId: String?, systemId: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.DTDHandler#notationDecl(java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void notationDecl(String name, String publicId, String systemId) throws SAXException {
+    @Throws(SAXException::class)
+    override fun unparsedEntityDecl(name: String?, publicId: String?, systemId: String?, notationName: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.DTDHandler#unparsedEntityDecl(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void unparsedEntityDecl(String name, String publicId, String systemId, String notationName) throws SAXException {
+    @Throws(SAXException::class)
+    override fun startDTD(name: String?, publicId: String?, systemId: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void startDTD(String name, String publicId, String systemId) throws SAXException {
+    @Throws(SAXException::class)
+    override fun startEntity(name: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
-     */
-    public void startEntity(String name) throws SAXException {
+    @Throws(SAXException::class)
+    override fun startCDATA() {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#startCDATA()
-     */
-    public void startCDATA() throws SAXException {
+    @Throws(SAXException::class)
+    override fun endCDATA() {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#endCDATA()
-     */
-    public void endCDATA() throws SAXException {
+    @Throws(SAXException::class)
+    override fun comment(ch: CharArray?, offset: Int, length: Int) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
-     */
-    public void comment(char[] ch, int offset, int length) throws SAXException {
+    @Throws(SAXException::class)
+    override fun endEntity(name: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
-     */
-    public void endEntity(String name) throws SAXException {
+    @Throws(SAXException::class)
+    override fun endDTD() {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.LexicalHandler#endDTD()
-     */
-    public void endDTD() throws SAXException {
+    @Throws(SAXException::class)
+    override fun elementDecl(name: String?, contentModel: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.DeclHandler#elementDecl(java.lang.String, java.lang.String)
-     */
-    public void elementDecl(String name, String contentModel) throws SAXException {
+    @Throws(SAXException::class)
+    override fun attributeDecl(elementName: String?, attributeName: String?, type: String?, valueDefault: String?, value: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.DeclHandler#attributeDecl(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void attributeDecl(String elementName, String attributeName, String type, String valueDefault, String value) throws SAXException {
+    @Throws(SAXException::class)
+    override fun internalEntityDecl(name: String?, text: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.DeclHandler#internalEntityDecl(java.lang.String, java.lang.String)
-     */
-    public void internalEntityDecl(String name, String text) throws SAXException {
+    @Throws(SAXException::class)
+    override fun externalEntityDecl(name: String?, publicId: String?, systemId: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ext.DeclHandler#externalEntityDecl(java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void externalEntityDecl(String name, String publicId, String systemId) throws SAXException {
+    @Throws(SAXException::class, IOException::class)
+    override fun resolveEntity(publicId: String?, systemId: String?): InputSource? {
+        return null
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.EntityResolver#resolveEntity(java.lang.String, java.lang.String)
-     */
-    public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-        return null;
+    @Throws(SAXException::class)
+    override fun warning(ex: SAXParseException?) {
+        printError("Warning", ex!!)
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
-     */
-    public void warning(SAXParseException ex) throws SAXException {
-        printError("Warning", ex);
+    @Throws(SAXException::class)
+    override fun error(ex: SAXParseException?) {
+        printError("Error", ex!!)
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ErrorHandler#error(org.xml.sax.SAXParseException)
-     */
-    public void error(SAXParseException ex) throws SAXException {
-        printError("Error", ex);
-    }
-
-    /* (non-Javadoc)
-     * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
-     */
-    public void fatalError(SAXParseException ex) throws SAXException {
-        printError("Fatal Error", ex);
+    @Throws(SAXException::class)
+    override fun fatalError(ex: SAXParseException?) {
+        printError("Fatal Error", ex!!)
     }
 
     /**
@@ -244,26 +180,26 @@ public class XMLHandlerAdapter implements EntityResolver, DTDHandler, ContentHan
      * @param type the type of the message
      * @param ex the exception of the error
      */
-    private void printError(String type, SAXParseException ex) {
-        System.err.print("[");
-        System.err.print(type);
-        System.err.print("] ");
-        String systemId = ex.getSystemId();
+    private fun printError(type: String, ex: SAXParseException) {
+        System.err.print("[")
+        System.err.print(type)
+        System.err.print("] ")
+        var systemId = ex.systemId
         if (systemId != null) {
-            int index = systemId.lastIndexOf('/');
+            val index = systemId.lastIndexOf('/')
             if (index != -1) {
-                systemId = systemId.substring(index + 1);
+                systemId = systemId.substring(index + 1)
             }
-            System.err.print(systemId);
+            System.err.print(systemId)
         }
-        System.err.print(':');
-        System.err.print(ex.getLineNumber());
-        System.err.print(':');
-        System.err.print(ex.getColumnNumber());
-        System.err.print(": ");
-        System.err.print(ex.getMessage());
-        System.err.println();
-        System.err.flush();
+        System.err.print(':')
+        System.err.print(ex.lineNumber)
+        System.err.print(':')
+        System.err.print(ex.columnNumber)
+        System.err.print(": ")
+        System.err.print(ex.message)
+        System.err.println()
+        System.err.flush()
 
     }
 }

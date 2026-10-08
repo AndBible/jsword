@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import org.crosswire.common.util.Convert;
+import org.crosswire.common.util.Convert
 
 /**
  * A class to convert between strings and objects of a type.
@@ -27,37 +27,15 @@ import org.crosswire.common.util.Convert;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class BooleanChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<Boolean> getConversionClass() {
-        return Boolean.TYPE;
+open class BooleanChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<Boolean>
+        get() = java.lang.Boolean.TYPE
+
+    override fun convertToString(orig: Any?): String? {
+        return Convert.boolean2String(orig as Boolean)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        return Convert.boolean2String(((Boolean) orig).booleanValue());
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return Boolean.valueOf(Convert.string2Boolean(orig));
+    override fun convertToObject(orig: String?): Any? {
+        return Convert.string2Boolean(orig)
     }
 }

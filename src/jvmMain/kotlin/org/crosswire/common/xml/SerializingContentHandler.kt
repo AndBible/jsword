@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
+import org.xml.sax.Attributes
+import org.xml.sax.ContentHandler
+import org.xml.sax.Locator
 
 /**
  * Class to convert a SAX stream into a simple String.
@@ -29,148 +29,102 @@ import org.xml.sax.Locator;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class SerializingContentHandler implements ContentHandler {
-    /**
-     * Default ctor that does not insert newlines.
-     */
-    public SerializingContentHandler() {
-        this(false);
+open class SerializingContentHandler
+/**
+ * Default ctor that conditionally inserts newlines; without the argument it
+ * does not insert newlines.
+ * 
+ * @param newlines whether newlines are desired
+ */
+@JvmOverloads
+constructor(newlines: Boolean = false) : ContentHandler {
+    private var newlines: Boolean = newlines
+    private var buffer: StringBuilder = StringBuilder()
+
+    override fun toString(): String {
+        return buffer.toString()
     }
 
-    /**
-     * Default ctor that conditionally inserts newlines.
-     * 
-     * @param newlines whether newlines are desired
-     */
-    public SerializingContentHandler(boolean newlines) {
-        this.newlines = newlines;
-        this.buffer = new StringBuilder();
+    override fun setDocumentLocator(locator: Locator?) {
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return buffer.toString();
-    }
-
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
-     */
-    public void setDocumentLocator(Locator locator) {
-    }
-
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#startDocument()
-     */
-    public void startDocument() {
+    override fun startDocument() {
         // buffer.append("<?xml version=\"1.0\"?>");
 
         if (newlines) {
-            buffer.append('\n');
+            buffer.append('\n')
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#endDocument()
-     */
-    public void endDocument() {
+    override fun endDocument() {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
-     */
-    public void startPrefixMapping(String prefix, String uri) {
+    override fun startPrefixMapping(prefix: String?, uri: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
-     */
-    public void endPrefixMapping(String prefix) {
+    override fun endPrefixMapping(prefix: String?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
-     */
-    public void startElement(String uri, String localname, String qname, Attributes attrs) {
-        buffer.append('<');
+    override fun startElement(uri: String?, localname: String?, qname: String?, attrs: Attributes) {
+        buffer.append('<')
         if (qname != null) {
-            buffer.append(qname);
+            buffer.append(qname)
         } else {
-            buffer.append(localname);
+            buffer.append(localname)
         }
 
-        for (int i = 0; i < attrs.getLength(); i++) {
-            buffer.append(' ');
-            buffer.append(XMLUtil.getAttributeName(attrs, i));
-            buffer.append("=\"");
-            buffer.append(attrs.getValue(i));
-            buffer.append('\"');
+        for (i in 0 until attrs.length) {
+            buffer.append(' ')
+            buffer.append(XMLUtil.getAttributeName(attrs, i))
+            buffer.append("=\"")
+            buffer.append(attrs.getValue(i))
+            buffer.append('\"')
         }
 
-        buffer.append('>');
+        buffer.append('>')
 
         if (newlines) {
-            buffer.append('\n');
+            buffer.append('\n')
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
-     */
-    public void endElement(String uri, String localname, String qname) {
-        buffer.append("</");
+    override fun endElement(uri: String?, localname: String?, qname: String?) {
+        buffer.append("</")
         if (qname != null) {
-            buffer.append(qname);
+            buffer.append(qname)
         } else {
-            buffer.append(localname);
+            buffer.append(localname)
         }
 
-        buffer.append('>');
+        buffer.append('>')
 
         if (newlines) {
-            buffer.append('\n');
+            buffer.append('\n')
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#characters(char[], int, int)
-     */
-    public void characters(char[] chars, int start, int length) {
-        String s = new String(chars, start, length);
-        buffer.append(s);
+    override fun characters(chars: CharArray, start: Int, length: Int) {
+        val s = String(chars, start, length)
+        buffer.append(s)
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
-     */
-    public void ignorableWhitespace(char[] chars, int start, int length) {
-        String s = new String(chars, start, length);
-        buffer.append(s);
+    override fun ignorableWhitespace(chars: CharArray, start: Int, length: Int) {
+        val s = String(chars, start, length)
+        buffer.append(s)
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#processingInstruction(java.lang.String, java.lang.String)
-     */
-    public void processingInstruction(String target, String data) {
-        buffer.append("<!");
-        buffer.append(target);
-        buffer.append(' ');
-        buffer.append(data);
-        buffer.append("!>");
+    override fun processingInstruction(target: String?, data: String?) {
+        buffer.append("<!")
+        buffer.append(target)
+        buffer.append(' ')
+        buffer.append(data)
+        buffer.append("!>")
 
         if (newlines) {
-            buffer.append('\n');
+            buffer.append('\n')
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.ContentHandler#skippedEntity(java.lang.String)
-     */
-    public void skippedEntity(String name) {
+    override fun skippedEntity(name: String?) {
     }
-
-    private boolean newlines;
-    private StringBuilder buffer;
 }

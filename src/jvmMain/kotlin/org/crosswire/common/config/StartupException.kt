@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import org.crosswire.common.util.LucidException;
+import org.crosswire.common.util.LucidException
 
 /**
  * Something in the startup config files failed to start properly.
@@ -27,24 +27,22 @@ import org.crosswire.common.util.LucidException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class StartupException extends LucidException {
+open class StartupException : LucidException {
     /**
      * @param msg what happened
      */
-    public StartupException(String msg) {
-        super(msg);
-    }
+    constructor(msg: String?) : super(msg)
 
     /**
      * @param msg what happened
      * @param cause what caused the problem
      */
-    public StartupException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+    constructor(msg: String?, cause: Throwable?) : super(msg, cause)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3616451198199345203L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3616451198199345203L
+    }
 }

@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.io.File;
+import java.io.File
 
 /**
  * A class to convert between files and objects of a type.
@@ -27,41 +27,19 @@ import java.io.File;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class FileChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<File> getConversionClass() {
-        return File.class;
-    }
+open class FileChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<File>
+        get() = File::class.java
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
+    override fun convertToString(orig: Any?): String? {
         if (orig == null) {
-            return "";
+            return ""
         }
 
-        return ((File) orig).getAbsolutePath();
+        return (orig as File).absolutePath
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return new File(orig);
+    override fun convertToObject(orig: String?): Any? {
+        return File(orig!!)
     }
 }

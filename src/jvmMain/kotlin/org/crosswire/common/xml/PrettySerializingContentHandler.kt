@@ -17,15 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.Locator;
+import java.io.IOException
+import java.io.StringWriter
+import java.io.Writer
+import org.xml.sax.Attributes
+import org.xml.sax.ContentHandler
+import org.xml.sax.Locator
 
 /**
  * This class provides for the formatted serialization of a SAX stream to a
@@ -34,139 +33,78 @@ import org.xml.sax.Locator;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class PrettySerializingContentHandler implements ContentHandler {
-    /**
-     * A formatting serializer that does not add whitespace to the document.
-     * This uses a StringWriter and the toString method will return its content.
-     */
-    public PrettySerializingContentHandler() {
-        this(FormatType.AS_IS);
+open class PrettySerializingContentHandler
+/**
+ * A formatting serializer that adds whitespace to the document according to
+ * the specified <code>FormatType</code>. As the document is serialized it
+ * is written to the provided <code>Writer</code>. Without a writer it uses a
+ * StringWriter and the toString method will return its content; without a
+ * format it does not add whitespace to the document.
+ * 
+ * @param theFormat
+ *            the formatting to use
+ * @param theWriter
+ *            the writer to use
+ */
+@JvmOverloads
+constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null) : ContentHandler {
+    private var formatting: FormatType = theFormat
+
+    private var writer: Writer = theWriter ?: StringWriter()
+
+    override fun toString(): String {
+        return writer.toString()
     }
 
-    /**
-     * A formatting serializer that adds whitespace to the document according to
-     * the specified <code>FormatType</code>. This uses a StringWriter and the
-     * toString method will return its content.
-     * 
-     * @param theFormat
-     *            the formatting to use
-     */
-    public PrettySerializingContentHandler(FormatType theFormat) {
-        this(theFormat, null);
+    override fun setDocumentLocator(locator: Locator?) {
     }
 
-    /**
-     * A formatting serializer that adds whitespace to the document according to
-     * the specified <code>FormatType</code>. As the document is serialized it
-     * is written to the provided <code>Writer</code>.
-     * 
-     * @param theFormat
-     *            the formatting to use
-     * @param theWriter
-     *            the writer to use
-     */
-    public PrettySerializingContentHandler(FormatType theFormat, Writer theWriter) {
-        formatting = theFormat;
-        writer = theWriter == null ? new StringWriter() : theWriter;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return writer.toString();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
-     */
-    public void setDocumentLocator(Locator locator) {
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#startDocument()
-     */
-    public void startDocument() {
+    override fun startDocument() {
         // write("<?xml version=\"1.0\"?>");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#endDocument()
-     */
-    public void endDocument() {
+    override fun endDocument() {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String,
-     * java.lang.String)
-     */
-    public void startPrefixMapping(String prefix, String uri) {
+    override fun startPrefixMapping(prefix: String?, uri: String?) {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
-     */
-    public void endPrefixMapping(String prefix) {
+    override fun endPrefixMapping(prefix: String?) {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#startElement(java.lang.String,
-     * java.lang.String, java.lang.String, org.xml.sax.Attributes)
-     */
-    public void startElement(String uri, String localname, String qname, Attributes attrs) {
+    override fun startElement(uri: String?, localname: String?, qname: String?, attrs: Attributes) {
         if (depth > 0) {
-            handlePending();
+            handlePending()
         }
 
-        write(getTagStart());
-        write(decorateTagName(localname));
+        write(getTagStart())
+        write(decorateTagName(localname))
 
-        for (int i = 0; i < attrs.getLength(); i++) {
-            write(' ');
-            write(decorateAttributeName(XMLUtil.getAttributeName(attrs, i)));
-            write("='");
-            write(decorateAttributeValue(XMLUtil.escape(attrs.getValue(i))));
-            write('\'');
+        for (i in 0 until attrs.length) {
+            write(' ')
+            write(decorateAttributeName(XMLUtil.getAttributeName(attrs, i)))
+            write("='")
+            write(decorateAttributeValue(XMLUtil.escape(attrs.getValue(i))))
+            write('\'')
         }
 
-        pendingEndTag = true;
-        depth++;
+        pendingEndTag = true
+        depth++
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#endElement(java.lang.String,
-     * java.lang.String, java.lang.String)
-     */
-    public void endElement(String uri, String localname, String qname) {
-        depth--;
+    override fun endElement(uri: String?, localname: String?, qname: String?) {
+        depth--
         // Java cannot display empty tags <tag/> so most of the following is
         // commented out
         if (pendingEndTag) {
-            if (formatting.isAnalytic() && depth > 0) {
-                emitWhitespace(depth - 1);
+            if (formatting.isAnalytic && depth > 0) {
+                emitWhitespace(depth - 1)
             }
             //
             // // Hack alert JTextPane cannot handle <br/>
             //            if (localname.equalsIgnoreCase("br"))
             // {
-            write(getTagEnd());
+            write(getTagEnd())
             // }
             // else
             // {
@@ -175,193 +113,169 @@ public class PrettySerializingContentHandler implements ContentHandler {
         }
         // else
         // {
-        if (formatting.isClassic()) {
-            emitWhitespace(depth);
+        if (formatting.isClassic) {
+            emitWhitespace(depth)
         }
 
-        write(getEndTagStart());
+        write(getEndTagStart())
 
-        write(decorateTagName(localname));
+        write(decorateTagName(localname))
 
-        if (formatting.isAnalytic()) {
-            emitWhitespace(depth);
+        if (formatting.isAnalytic) {
+            emitWhitespace(depth)
         }
 
-        write(getTagEnd());
+        write(getTagEnd())
         // }
-        pendingEndTag = false;
-        lookingForChars = false;
+        pendingEndTag = false
+        lookingForChars = false
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#characters(char[], int, int)
-     */
-    public void characters(char[] chars, int start, int length) {
+    override fun characters(chars: CharArray, start: Int, length: Int) {
         if (!lookingForChars) {
-            handlePending();
+            handlePending()
         }
 
-        String s = new String(chars, start, length);
-        write(decorateCharacters(s));
-        lookingForChars = true;
+        val s = String(chars, start, length)
+        write(decorateCharacters(s))
+        lookingForChars = true
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
-     */
-    public void ignorableWhitespace(char[] chars, int start, int length) {
-        characters(chars, start, length);
+    override fun ignorableWhitespace(chars: CharArray, start: Int, length: Int) {
+        characters(chars, start, length)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#processingInstruction(java.lang.String,
-     * java.lang.String)
-     */
-    public void processingInstruction(String target, String data) {
-        handlePending();
+    override fun processingInstruction(target: String?, data: String?) {
+        handlePending()
 
-        write(getPIStart());
-        write(target);
-        write(' ');
-        write(decorateCharacters(data));
-        write(getPIEnd());
+        write(getPIStart())
+        write(target)
+        write(' ')
+        write(decorateCharacters(data))
+        write(getPIEnd())
 
-        if (formatting.isMultiline()) {
-            write(getNewline());
+        if (formatting.isMultiline) {
+            write(getNewline())
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#skippedEntity(java.lang.String)
-     */
-    public void skippedEntity(String name) {
+    override fun skippedEntity(name: String?) {
     }
 
-    protected String getTagStart() {
-        return "<";
+    protected open fun getTagStart(): String {
+        return "<"
     }
 
-    protected String getTagEnd() {
-        return ">";
+    protected open fun getTagEnd(): String {
+        return ">"
     }
 
-    protected String getEmptyTagEnd() {
-        return "/>";
+    protected open fun getEmptyTagEnd(): String {
+        return "/>"
     }
 
-    protected String getEndTagStart() {
-        return "</";
+    protected open fun getEndTagStart(): String {
+        return "</"
     }
 
-    protected String getPIStart() {
-        return "<!";
+    protected open fun getPIStart(): String {
+        return "<!"
     }
 
-    protected String getPIEnd() {
-        return "!>";
+    protected open fun getPIEnd(): String {
+        return "!>"
     }
 
-    protected String getNewline() {
-        return "\n";
+    protected open fun getNewline(): String {
+        return "\n"
     }
 
-    protected String decorateTagName(String tagName) {
-        return tagName;
+    protected open fun decorateTagName(tagName: String?): String? {
+        return tagName
     }
 
-    protected String decorateAttributeName(String attrName) {
-        return attrName;
+    protected open fun decorateAttributeName(attrName: String?): String? {
+        return attrName
     }
 
-    protected String decorateAttributeValue(String attrValue) {
-        return attrValue;
+    protected open fun decorateAttributeValue(attrValue: String?): String? {
+        return attrValue
     }
 
-    protected String decorateCharacters(String characters) {
-        return characters;
+    protected open fun decorateCharacters(characters: String?): String? {
+        return characters
     }
 
-    protected String decorateIndent(int indentLevel) {
-        return new String(indentation, 0, indentLevel).intern();
+    protected open fun decorateIndent(indentLevel: Int): String {
+        return String(indentation, 0, indentLevel).intern()
     }
 
-    protected void write(String obj) {
+    protected open fun write(obj: String?) {
         try {
-            writer.write(obj);
-        } catch (IOException e) {
-            e.printStackTrace(System.err);
+            writer.write(obj)
+        } catch (e: IOException) {
+            e.printStackTrace(System.err)
         }
     }
 
-    protected void write(char obj) {
+    protected open fun write(obj: Char) {
         try {
-            writer.write(obj);
-        } catch (IOException e) {
-            e.printStackTrace(System.err);
+            writer.write(obj.code)
+        } catch (e: IOException) {
+            e.printStackTrace(System.err)
         }
     }
 
-    private void handlePending() {
+    private fun handlePending() {
         if (pendingEndTag) {
-            pendingEndTag = false;
+            pendingEndTag = false
 
-            if (formatting.isAnalytic()) {
-                emitWhitespace(depth);
+            if (formatting.isAnalytic) {
+                emitWhitespace(depth)
             }
 
-            write(getTagEnd());
+            write(getTagEnd())
 
         }
-        if (formatting.isClassic()) {
-            emitWhitespace(depth);
+        if (formatting.isClassic) {
+            emitWhitespace(depth)
         }
-        lookingForChars = false;
+        lookingForChars = false
     }
 
-    private void emitWhitespace(int indentLevel) {
-        write(getNewline());
-        if (formatting.isIndented()) {
-            write(decorateIndent(indentLevel));
+    private fun emitWhitespace(indentLevel: Int) {
+        write(getNewline())
+        if (formatting.isIndented) {
+            write(decorateIndent(indentLevel))
         }
     }
-
-    /**
-     * This allows for rapid output of whitespace.
-     */
-    private static char[] indentation = {
-            '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t',
-            '\t', '\t', '\t', '\t', '\t', '\t',
-    };
 
     /**
      * The depth is incremented on each startElement and decremented on each
      * endElement. This is used to output the indentation.
      */
-    private int depth;
+    private var depth = 0
 
     /**
      * It is possible that characters(...) will be called for adjacent pieces of
      * text. Often this is due to entities in the text. This will allow for
      * these to be joined back together.
      */
-    private boolean lookingForChars;
+    private var lookingForChars = false
 
     /**
      * One of the difficulties in SAX parsing is that it does not retain state.
      * Even for an empty tag, it calls startElement and endElement. This allows
      * for making empty elements to have the empty tag notation: &lt;tag/&gt;.
      */
-    private boolean pendingEndTag;
+    private var pendingEndTag = false
 
-    private FormatType formatting;
-
-    private Writer writer;
+    private companion object {
+        /**
+         * This allows for rapid output of whitespace.
+         */
+        private val indentation = charArrayOf(
+                '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t', '\t',
+                '\t', '\t', '\t', '\t', '\t', '\t')
+    }
 }

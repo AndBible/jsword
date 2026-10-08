@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import java.io.Writer;
+import java.io.Writer
 
 /**
  * This class provides for the formatted and syntax highlighted serialization of
@@ -28,207 +28,97 @@ import java.io.Writer;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class HTMLSerializingContentHandler extends PrettySerializingContentHandler {
-    /**
-     * A formatting serializer that does not add whitespace to the document.
-     * This uses a StringWriter and the toString method will return its content.
-     */
-    public HTMLSerializingContentHandler() {
-        super();
+open class HTMLSerializingContentHandler
+/**
+ * A formatting serializer that adds whitespace to the document according to
+ * the specified <code>FormatType</code>. As the document is serialized it
+ * is written to the provided <code>Writer</code>. Without a writer it uses a
+ * StringWriter and the toString method will return its content; without a
+ * format it does not add whitespace to the document.
+ * 
+ * @param theFormat
+ *            the formatting to use
+ * @param theWriter
+ *            the writer to use
+ */
+@JvmOverloads
+constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null) : PrettySerializingContentHandler(theFormat, theWriter) {
+    override fun decorateTagName(tagName: String?): String? {
+        val buf = StringBuilder(50)
+        buf.append("<font class='tag'>")
+        buf.append(super.decorateTagName(tagName))
+        buf.append("</font>")
+        return buf.toString()
     }
 
-    /**
-     * A formatting serializer that adds whitespace to the document according to
-     * the specified <code>FormatType</code>. This uses a StringWriter and the
-     * toString method will return its content.
-     * 
-     * @param theFormat
-     *            the formatting to use
-     */
-    public HTMLSerializingContentHandler(FormatType theFormat) {
-        super(theFormat);
+    override fun decorateAttributeName(attrName: String?): String? {
+        val buf = StringBuilder(50)
+        buf.append("<font class='attr'>")
+        buf.append(super.decorateAttributeName(attrName))
+        buf.append("</font>")
+        return buf.toString()
     }
 
-    /**
-     * A formatting serializer that adds whitespace to the document according to
-     * the specified <code>FormatType</code>. As the document is serialized it
-     * is written to the provided <code>Writer</code>.
-     * 
-     * @param theFormat
-     *            the formatting to use
-     * @param theWriter
-     *            the writer to use
-     */
-    public HTMLSerializingContentHandler(FormatType theFormat, Writer theWriter) {
-        super(theFormat, theWriter);
+    override fun decorateAttributeValue(attrValue: String?): String? {
+        val buf = StringBuilder(50)
+        buf.append("<font class='value'>")
+        buf.append(super.decorateAttributeValue(attrValue))
+        buf.append("</font>")
+        return buf.toString()
     }
 
-    @Override
-    protected String decorateTagName(String tagName) {
-        StringBuilder buf = new StringBuilder(50);
-        buf.append("<font class='tag'>");
-        buf.append(super.decorateTagName(tagName));
-        buf.append("</font>");
-        return buf.toString();
+    override fun decorateCharacters(characters: String?): String? {
+        val buf = StringBuilder(50)
+        buf.append("<font class='text'>")
+        buf.append(XMLUtil.escape(super.decorateCharacters(characters))!!.replace("\n", "<br>"))
+        buf.append("</font>")
+        return buf.toString()
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.crosswire.common.xml.PrettySerializingContentHandler#
-     * decorateAttributeName(java.lang.String)
-     */
-    @Override
-    protected String decorateAttributeName(String attrName) {
-        StringBuilder buf = new StringBuilder(50);
-        buf.append("<font class='attr'>");
-        buf.append(super.decorateAttributeName(attrName));
-        buf.append("</font>");
-        return buf.toString();
+    override fun decorateIndent(indentLevel: Int): String {
+        val buf = StringBuilder(100)
+        buf.append("<font class='indent'>")
+        buf.append(super.decorateIndent(indentLevel).replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;"))
+        buf.append("</font>")
+        return buf.toString()
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @seeorg.crosswire.common.xml.PrettySerializingContentHandler#
-     * decorateAttributeValue(java.lang.String)
-     */
-    @Override
-    protected String decorateAttributeValue(String attrValue) {
-        StringBuilder buf = new StringBuilder(50);
-        buf.append("<font class='value'>");
-        buf.append(super.decorateAttributeValue(attrValue));
-        buf.append("</font>");
-        return buf.toString();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#decorateCharacters
-     * (java.lang.String)
-     */
-    @Override
-    protected String decorateCharacters(String characters) {
-        StringBuilder buf = new StringBuilder(50);
-        buf.append("<font class='text'>");
-        buf.append(XMLUtil.escape(super.decorateCharacters(characters)).replaceAll("\n", "<br>"));
-        buf.append("</font>");
-        return buf.toString();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#decorateIndent
-     * (int)
-     */
-    @Override
-    protected String decorateIndent(int indentLevel) {
-        StringBuilder buf = new StringBuilder(100);
-        buf.append("<font class='indent'>");
-        buf.append(super.decorateIndent(indentLevel).replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;"));
-        buf.append("</font>");
-        return buf.toString();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#startDocument()
-     */
-    @Override
-    public void startDocument() {
+    override fun startDocument() {
         // Note: we should be using SPAN here but Sun's Java does not support
         // styling it.
         // Also, it introduces whitespace between the span and the text.
-        write("<html><head><style type='text/css'>\nFONT.tag    { font-family:courier new, monospaced; color:#666699; font-weight:bold; }\nFONT.attr   { font-family:courier new, monospaced; color:#669966; font-weight:bold; }\nFONT.value  { font-family:courier new, monospaced; color:#669966; font-style:italic; }\nFONT.indent { }\nFONT.text   { font-family:courier new, monospaced; background:#FFFF99; }\n</style></head><body>\n");
+        write("<html><head><style type='text/css'>\nFONT.tag    { font-family:courier new, monospaced; color:#666699; font-weight:bold; }\nFONT.attr   { font-family:courier new, monospaced; color:#669966; font-weight:bold; }\nFONT.value  { font-family:courier new, monospaced; color:#669966; font-style:italic; }\nFONT.indent { }\nFONT.text   { font-family:courier new, monospaced; background:#FFFF99; }\n</style></head><body>\n")
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.xml.sax.ContentHandler#endDocument()
-     */
-    @Override
-    public void endDocument() {
-        write("</body></head>");
+    override fun endDocument() {
+        write("</body></head>")
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#getEmptyTagEnd()
-     */
-    @Override
-    protected String getEmptyTagEnd() {
-        return XMLUtil.escape(super.getEmptyTagEnd());
+    override fun getEmptyTagEnd(): String {
+        return XMLUtil.escape(super.getEmptyTagEnd())!!
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#getEndTagStart()
-     */
-    @Override
-    protected String getEndTagStart() {
-        return XMLUtil.escape(super.getEndTagStart());
+    override fun getEndTagStart(): String {
+        return XMLUtil.escape(super.getEndTagStart())!!
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.xml.PrettySerializingContentHandler#getPIEnd()
-     */
-    @Override
-    protected String getPIEnd() {
-        return XMLUtil.escape(super.getPIEnd());
+    override fun getPIEnd(): String {
+        return XMLUtil.escape(super.getPIEnd())!!
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#getPIStart()
-     */
-    @Override
-    protected String getPIStart() {
-        return XMLUtil.escape(super.getPIStart());
+    override fun getPIStart(): String {
+        return XMLUtil.escape(super.getPIStart())!!
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.xml.PrettySerializingContentHandler#getTagEnd()
-     */
-    @Override
-    protected String getTagEnd() {
-        return XMLUtil.escape(super.getTagEnd());
+    override fun getTagEnd(): String {
+        return XMLUtil.escape(super.getTagEnd())!!
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#getTagStart()
-     */
-    @Override
-    protected String getTagStart() {
-        return XMLUtil.escape(super.getTagStart());
+    override fun getTagStart(): String {
+        return XMLUtil.escape(super.getTagStart())!!
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.xml.PrettySerializingContentHandler#getNewline()
-     */
-    @Override
-    protected String getNewline() {
-        return "<br>";
+    override fun getNewline(): String {
+        return "<br>"
     }
 }

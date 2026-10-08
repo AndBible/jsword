@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.util.EventListener;
+import java.util.EventListener
 
 /**
  * ConfigListener.
@@ -27,18 +27,18 @@ import java.util.EventListener;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface ConfigListener extends EventListener {
+interface ConfigListener : EventListener {
     /**
      * Called whenever Config.add() is called
      * 
      * @param ev the event
      */
-    void choiceAdded(ConfigEvent ev);
+    fun choiceAdded(ev: ConfigEvent?)
 
     /**
      * Called whenever Config.remove() is called
      * 
      * @param ev the event
      */
-    void choiceRemoved(ConfigEvent ev);
+    fun choiceRemoved(ev: ConfigEvent?)
 }

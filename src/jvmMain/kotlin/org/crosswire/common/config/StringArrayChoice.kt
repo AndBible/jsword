@@ -17,12 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.util.ResourceBundle;
-
-import org.crosswire.common.util.StringUtil;
-import org.jdom2.Element;
+import java.util.ResourceBundle
+import org.crosswire.common.util.StringUtil
+import org.jdom2.Element
 
 /**
  * A class to convert between strings and objects of a type.
@@ -30,50 +29,24 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class StringArrayChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#init(org.jdom2.Element)
-     */
-    @Override
-    public void init(Element option, ResourceBundle configResources) throws StartupException {
-        super.init(option, configResources);
-        separator = option.getAttributeValue("separator");
+open class StringArrayChoice : AbstractReflectedChoice() {
+    @Throws(StartupException::class)
+    override fun init(option: Element, configResources: ResourceBundle) {
+        super.init(option, configResources)
+        separator = option.getAttributeValue("separator")
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<String[]> getConversionClass() {
-        return String[].class;
+    override val conversionClass: Class<Array<String>>
+        get() = Array<String>::class.java
+
+    @Suppress("UNCHECKED_CAST")
+    override fun convertToString(orig: Any?): String? {
+        return StringUtil.join(orig as Array<String>, separator)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        return StringUtil.join((String[]) orig, separator);
+    override fun convertToObject(orig: String?): Any? {
+        return StringUtil.split(orig, separator)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return StringUtil.split(orig, separator);
-    }
-
-    private String separator = " ";
+    private var separator: String? = " "
 }

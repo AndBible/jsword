@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
 /**
  * The PrettySerializingContentHandler uses a FormatType to control its output.
@@ -25,41 +25,36 @@ package org.crosswire.common.xml;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum FormatType {
-    AS_IS           (false, false, false),
-    ANALYSIS        (true,  false, false),
-    CLASSIC         (true,  false, true),
-    ANALYSIS_INDENT (true,  true,  false),
-    CLASSIC_INDENT  (true,  true,  true);
+enum class FormatType
+/**
+ * Simple ctor
+ */
+(displayNewlines: Boolean, doIndenting: Boolean, classicLines: Boolean) {
+    AS_IS(false, false, false),
 
-    /**
-     * Simple ctor
-     */
-    FormatType(boolean displayNewlines, boolean doIndenting, boolean classicLines) {
-        multiline = displayNewlines;
-        // the following are true only if we add newlines.
-        indented = doIndenting && multiline;
-        classic = classicLines && multiline;
-        analytic = !classicLines && multiline;
-    }
+    ANALYSIS(true, false, false),
+
+    CLASSIC(true, false, true),
+
+    ANALYSIS_INDENT(true, true, false),
+
+    CLASSIC_INDENT(true, true, true);
 
     /**
      * Whether newlines are introduced into the document.
      * 
      * @return true if newlines are added to the document
      */
-    public boolean isMultiline() {
-        return multiline;
-    }
+    val isMultiline: Boolean
+        get() = multiline
 
     /**
      * Whether indents are introduced into the document.
      * 
      * @return true if indents are added to the document
      */
-    public boolean isIndented() {
-        return indented;
-    }
+    val isIndented: Boolean
+        get() = indented
 
     /**
      * Whether added whitespace is inside tags. Note, this does not change the
@@ -67,9 +62,8 @@ public enum FormatType {
      * 
      * @return true if whitespace is added inside tags of document
      */
-    public boolean isAnalytic() {
-        return analytic;
-    }
+    val isAnalytic: Boolean
+        get() = analytic
 
     /**
      * Whether added whitespace is between tags. Note, this does change the
@@ -77,12 +71,19 @@ public enum FormatType {
      * 
      * @return true if whitespace is added inside tags of document
      */
-    public boolean isClassic() {
-        return classic;
-    }
+    val isClassic: Boolean
+        get() = classic
 
-    private boolean indented;
-    private boolean multiline;
-    private boolean analytic;
-    private boolean classic;
+    private var indented: Boolean
+    private var multiline: Boolean
+    private var analytic: Boolean
+    private var classic: Boolean
+
+    init {
+        multiline = displayNewlines
+        // the following are true only if we add newlines.
+        indented = doIndenting && multiline
+        classic = classicLines && multiline
+        analytic = !classicLines && multiline
+    }
 }

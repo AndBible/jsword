@@ -17,11 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.util.ResourceBundle;
-
-import org.jdom2.Element;
+import java.util.ResourceBundle
+import org.jdom2.Element
 
 /**
  * Choice is the fundamental building block of the config system.
@@ -37,7 +36,7 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Choice {
+interface Choice {
     /**
      * String value to associate with the name (key)
      * 
@@ -45,36 +44,30 @@ public interface Choice {
      * @param configResources the resource bundle to load
      * @throws StartupException if startup is not possible
      */
-    void init(Element option, ResourceBundle configResources) throws StartupException;
+    @Throws(StartupException::class)
+    fun init(option: Element, configResources: ResourceBundle)
 
     /**
      * The key of the option.
      * 
      * @return String The key string as supplied in config.xml
      */
-    String getKey();
+    val key: String?
 
     /**
-     * The full path of the option.
+     * The full path of the option; set it to the path string as supplied in
+     * config.properties.
      * 
      * @return String The path string as supplied in config.properties
      */
-    String getFullPath();
-
-    /**
-     * Sets the full path of the option.
-     * 
-     * @param fullPath
-     *            The path string as supplied in config.properties
-     */
-    void setFullPath(String fullPath);
+    var fullPath: String?
 
     /**
      * The type by which UIs can pick an appropriate editor
      * 
      * @return String The type string as supplied in config.xml
      */
-    String getType();
+    val type: String?
 
     /**
      * The class that this Choice works on. Used to decide how to display the
@@ -82,40 +75,25 @@ public interface Choice {
      * 
      * @return The Class that this Choice works using.
      */
-    Class<? extends Object> getConversionClass();
+    val conversionClass: Class<*>
 
     /**
-     * String value to associate with the name (key)
-     * 
-     * @return value of this Choice
-     */
-    String getString();
-
-    /**
-     * String value to associate with this Field. This method can throw any
+     * String value to associate with the name (key). Setting it can throw any
      * Exception since almost anything could go wrong at this point. The Config
      * dialog ought to cope with any errors.
      * 
-     * @param value
-     *            The new value for this Choice
-     * @throws ConfigException if there is a problem with the configuration
+     * @return value of this Choice
+     * @throws ConfigException (when set) if there is a problem with the configuration
      */
-    void setString(String value) throws ConfigException;
+    @set:Throws(ConfigException::class)
+    var string: String?
 
     /**
-     * Gets a brief description of what is going on
+     * A brief description of what is going on; set it to some help text.
      * 
      * @return Some help text
      */
-    String getHelpText();
-
-    /**
-     * Sets a brief description of what is going on
-     * 
-     * @param helptext
-     *            Some help text
-     */
-    void setHelpText(String helptext);
+    var helpText: String?
 
     /**
      * Is this Choice OK to write out to a file, or should we use settings in
@@ -124,21 +102,21 @@ public interface Choice {
      * 
      * @return True if it is safe to store the value in a config file.
      */
-    boolean isSaveable();
+    val isSaveable: Boolean
 
     /**
      * Whether this should be visible in a Config Editor.
      * 
      * @return hidden or visible
      */
-    boolean isHidden();
+    val isHidden: Boolean
 
     /**
      * Whether this should be ignored altogether in a Config Editor.
      * 
      * @return hidden or visible
      */
-    boolean isIgnored();
+    val isIgnored: Boolean
 
     /**
      * Do we need to restart the program in order for this change to have
@@ -146,5 +124,5 @@ public interface Choice {
      * 
      * @return True if a restart is required
      */
-    boolean requiresRestart();
+    fun requiresRestart(): Boolean
 }

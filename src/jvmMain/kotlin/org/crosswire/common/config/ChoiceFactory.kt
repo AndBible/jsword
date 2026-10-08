@@ -17,16 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
-
-import org.crosswire.common.util.ClassUtil;
-import org.crosswire.common.util.PluginUtil;
-import org.crosswire.common.util.ReflectionUtil;
-import org.jdom2.Element;
+import java.util.ResourceBundle
+import org.crosswire.common.util.ClassUtil
+import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.ReflectionUtil
+import org.jdom2.Element
 
 /**
  * Factory for the well known Choices.
@@ -34,67 +31,63 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class ChoiceFactory {
-    /**
-     * Prevent instantiation
-     */
-    private ChoiceFactory() {
-    }
+class ChoiceFactory
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Get a ChoiceFactory by element.
+         * 
+         * @param option
+         *            The element to check
+         * @param configResources the resource bundle holding the option
+         * @return One of the ChoiceTypes.
+         * @throws StartupException if startup is not possible
+         * @throws ReflectiveOperationException 
+         *               if this {@code data} represents an abstract class,
+         *               an interface, an array class, a primitive type, or void;
+         *               or if the class has no reachable nullary constructor;
+         *               or if the instantiation fails for some other reason.
+         */
+        @JvmStatic
+        @Suppress("UNCHECKED_CAST")
+        @Throws(StartupException::class, ReflectiveOperationException::class)
+        fun getChoice(option: Element, configResources: ResourceBundle): Choice {
+            val clazz: Class<Choice>?
 
-    /**
-     * Get a ChoiceFactory by element.
-     * 
-     * @param option
-     *            The element to check
-     * @param configResources the resource bundle holding the option
-     * @return One of the ChoiceTypes.
-     * @throws StartupException if startup is not possible
-     * @throws ReflectiveOperationException 
-     *               if this {@code data} represents an abstract class,
-     *               an interface, an array class, a primitive type, or void;
-     *               or if the class has no reachable nullary constructor;
-     *               or if the instantiation fails for some other reason.
-     */
-    public static Choice getChoice(Element option, ResourceBundle configResources) throws StartupException, ReflectiveOperationException
-    {
-        Class<Choice> clazz = null;
+            val type = option.getAttributeValue("type")
+            if ("custom" == type) {
+                val clazzstr = option.getAttributeValue("class")
+                clazz = ClassUtil.forName(clazzstr) as Class<Choice>
+            } else {
+                clazz = if (type == null) null else map.get(type)
+            }
 
-        String type = option.getAttributeValue("type");
-        if ("custom".equals(type)) {
-            String clazzstr = option.getAttributeValue("class");
-            clazz = (Class<Choice>) ClassUtil.forName(clazzstr);
-        } else {
-            clazz = map.get(type);
+            val choice = ReflectionUtil.construct(clazz)
+            choice.init(option, configResources)
+            return choice
         }
 
-        Choice choice = ReflectionUtil.construct(clazz);
-        choice.init(option, configResources);
-        return choice;
-    }
+        /**
+         * Method getDataMap.
+         * 
+         * @return the map data
+         */
+        @JvmStatic
+        fun getDataMap(): MutableMap<String, Any?> {
+            return datamap
+        }
 
-    /**
-     * Method getDataMap.
-     * 
-     * @return the map data
-     */
-    public static Map<String, Object> getDataMap() {
-        return datamap;
-    }
+        /**
+         * Storage of various registered objects
+         */
+        private val datamap: MutableMap<String, Any?> = HashMap()
 
-    /**
-     * Storage of various registered objects
-     */
-    private static Map<String, Object> datamap = new HashMap<String, Object>();
-
-    /**
-     * Store of the known ChoiceTypes
-     */
-    private static Map<String, Class<Choice>> map;
-
-    /**
-     * Setup the map of Choices
-     */
-    static {
-        map = PluginUtil.getImplementorsMap(Choice.class);
+        /**
+         * Store of the known ChoiceTypes
+         */
+        private val map: MutableMap<String, Class<Choice>> = PluginUtil.getImplementorsMap(Choice::class.java)
     }
 }

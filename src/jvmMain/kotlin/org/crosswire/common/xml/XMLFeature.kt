@@ -17,8 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
+import org.crosswire.common.util.jswordAssert
 
 /**
  * Wraps an XML Feature. The "known" set of XML Features is found in
@@ -27,65 +28,59 @@ package org.crosswire.common.xml;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum XMLFeature {
-    /** Namespaces feature id */
+enum class XMLFeature
+/**
+ * Construct a feature for xml, setting the initial state
+ * 
+ * @param control the identifier for an XML feature
+ * @param initialState whether that feature defaults to on or off
+ */
+(control: String, initialState: Boolean) {
+    /** Namespaces feature id  */
     NAMESPACES("http://xml.org/sax/features/namespaces"),
 
-    /** Namespace prefixes feature id */
+    /** Namespace prefixes feature id  */
     NAMESPACE_PREFIX("http://xml.org/sax/features/namespace-prefixes"),
 
-    /** Validation feature id */
+    /** Validation feature id  */
     VALIDATION("http://xml.org/sax/features/validation"),
 
-    /** Schema validation feature id */
+    /** Schema validation feature id  */
     SCHEMA_VALIDATION("http://apache.org/xml/features/validation/schema"),
 
-    /** Schema full checking feature id */
+    /** Schema full checking feature id  */
     SCHEMA_FULL_CHECKING("http://apache.org/xml/features/validation/schema-full-checking"),
 
-    /** Validate schema annotations feature id */
+    /** Validate schema annotations feature id  */
     VALIDATE_ANNOTATIONS("http://apache.org/xml/features/validate-annotations"),
 
-    /** Dynamic validation feature id */
+    /** Dynamic validation feature id  */
     DYNAMIC_VALIDATION("http://apache.org/xml/features/validation/dynamic"),
 
-    /** Load external DTD feature id */
+    /** Load external DTD feature id  */
     LOAD_EXTERNAL_DTD("http://apache.org/xml/features/nonvalidating/load-external-dtd"),
 
-    /** XInclude feature id */
+    /** XInclude feature id  */
     XINCLUDE("http://apache.org/xml/features/xinclude"),
 
-    /** XInclude fixup base URIs feature id */
+    /** XInclude fixup base URIs feature id  */
     XINCLUDE_FIXUP_BASE_URIS("http://apache.org/xml/features/xinclude/fixup-base-uris", true),
 
-    /** XInclude fixup language feature id */
+    /** XInclude fixup language feature id  */
     XINCLUDE_FIXUP_LANGUAGE("http://apache.org/xml/features/xinclude/fixup-language", true);
-
-    /**
-     * Construct a feature for xml, setting the initial state
-     * 
-     * @param control the identifier for an XML feature
-     * @param initialState whether that feature defaults to on or off
-     */
-    XMLFeature(String control, boolean initialState) {
-        this.control = control;
-        this.state = initialState;
-    }
 
     /**
      * Construct a feature for xml, setting the initial state set to false.
      * 
      * @param control the identifier for an XML feature that is initially off
      */
-    XMLFeature(String control) {
-        this(control, false);
-    }
+    constructor(control: String) : this(control, false)
 
     /**
      * @return the control associated with this feature
      */
-    public String getControl() {
-        return control;
+    fun getControl(): String {
+        return control
     }
 
     /**
@@ -93,36 +88,39 @@ public enum XMLFeature {
      * 
      * @return the state of the feature
      */
-    public boolean getState() {
-        return state;
+    fun getState(): Boolean {
+        return state
     }
 
-    /**
-     * Lookup method to convert from a String
-     * 
-     * @param name the name of the control feature
-     * @return the XML Feature
-     */
-    public static XMLFeature fromString(String name) {
-        for (XMLFeature o : XMLFeature.values()) {
-            if (o.control.equalsIgnoreCase(name)) {
-                return o;
+    override fun toString(): String {
+        return (if (state) "on  " else "off ") + control
+    }
+
+    private var control: String
+    private var state: Boolean
+
+    init {
+        this.control = control
+        this.state = initialState
+    }
+
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         * 
+         * @param name the name of the control feature
+         * @return the XML Feature
+         */
+        @JvmStatic
+        fun fromString(name: String?): XMLFeature? {
+            for (o in entries) {
+                if (o.control.equals(name, ignoreCase = true)) {
+                    return o
+                }
             }
+            // cannot get here
+            jswordAssert(false) { "" }
+            return null
         }
-        // cannot get here
-        assert false;
-        return null;
     }
-
-    /* (non-Javadoc)
-     * @see java.lang.Enum#toString()
-     */
-    @Override
-    public String toString() {
-        return (state ? "on  " : "off ") + control;
-    }
-
-    private String control;
-    private boolean state;
-
 }

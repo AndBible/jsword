@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import org.crosswire.common.util.LucidException;
+import org.crosswire.common.util.LucidException
 
 /**
  * Something went wrong while setting config options.
@@ -27,24 +27,22 @@ import org.crosswire.common.util.LucidException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ConfigException extends LucidException {
+open class ConfigException : LucidException {
     /**
      * @param msg what happened
      */
-    public ConfigException(String msg) {
-        super(msg);
-    }
+    constructor(msg: String?) : super(msg)
 
     /**
      * @param msg what happened
      * @param cause what caused it to happen
      */
-    public ConfigException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+    constructor(msg: String?, cause: Throwable?) : super(msg, cause)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3258135764670689593L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3258135764670689593L
+    }
 }

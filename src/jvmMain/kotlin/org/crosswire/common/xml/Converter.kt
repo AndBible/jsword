@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerException
 
 /**
  * A generic method of converting one SAX stream into another. This can be a
@@ -28,7 +28,7 @@ import javax.xml.transform.TransformerException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Converter {
+interface Converter {
     /**
      * Convert one SAX stream into another.
      * 
@@ -38,5 +38,6 @@ public interface Converter {
      * @throws TransformerException
      *             If the transformation can't be completed
      */
-    SAXEventProvider convert(SAXEventProvider provider) throws TransformerException;
+    @Throws(TransformerException::class)
+    fun convert(provider: SAXEventProvider?): SAXEventProvider?
 }

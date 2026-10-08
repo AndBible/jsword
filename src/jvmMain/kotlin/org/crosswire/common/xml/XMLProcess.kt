@@ -17,16 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.crosswire.common.util.ReflectionUtil;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
+import java.io.IOException
+import javax.xml.parsers.ParserConfigurationException
+import javax.xml.parsers.SAXParserFactory
+import org.crosswire.common.util.ReflectionUtil
+import org.xml.sax.SAXException
+import org.xml.sax.XMLReader
 
 /**
  * Runs an xml parser on an xml file using an xml handler. The default behavior
@@ -35,218 +33,227 @@ import org.xml.sax.XMLReader;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class XMLProcess {
-
-    public XMLProcess() {
-        features = new XMLFeatureSet();
-    }
-
+open class XMLProcess {
     /**
      * @return Returns the features.
      */
-    public XMLFeatureSet getFeatures() {
-        return features;
-    }
+    open val features: XMLFeatureSet = XMLFeatureSet()
 
-    /**
-     * Process an xml file according to the arguments.
-     * 
-     * @param argv the command-line arguments
-     */
-    public static void main(String[] argv) {
-        XMLProcess checker = new XMLProcess();
-
-        // is there anything to do?
-        if (argv.length == 0) {
-            checker.usage();
-            System.exit(1);
-        }
-
-        // variables
-        String arg = null;
-
+    private fun initialize(argv: Array<String>) {
         // process arguments
-        for (int i = 0; i < argv.length; i++) {
-            arg = argv[i];
-            if (arg.charAt(0) == '-') {
-                String option = arg.substring(1);
-                if ("h".equals(option)) {
-                    checker.usage();
-                    System.exit(0);
+        var i = 0
+        while (i < argv.size) {
+            val arg = argv[i]
+            if (arg[0] == '-') {
+                val option = arg.substring(1)
+                if ("p" == option) {
+                    // get parser name
+                    if (++i == argv.size) {
+                        System.err.println("error: Missing argument to -p option.")
+                    }
+                    parserName = argv[i]
+
+                    createParser()
+                    i++
+                    continue
+                }
+                if ("a" == option) {
+                    // get parser name
+                    if (++i == argv.size) {
+                        System.err.println("error: Missing argument to -a option.")
+                    }
+                    adapterName = argv[i]
+
+                    createAdapter()
+                    i++
+                    continue
                 }
             }
+            i++
         }
 
-        checker.initialize(argv);
-        checker.parse(arg);
-
+        features.setFeatureStates(argv)
     }
 
-    private void initialize(String[] argv) {
-        // process arguments
-        int i = 0;
-        for (i = 0; i < argv.length; i++) {
-            String arg = argv[i];
-            if (arg.charAt(0) == '-') {
-                String option = arg.substring(1);
-                if ("p".equals(option)) {
-                    // get parser name
-                    if (++i == argv.length) {
-                        System.err.println("error: Missing argument to -p option.");
-                    }
-                    parserName = argv[i];
-
-                    createParser();
-                    continue;
-                }
-                if ("a".equals(option)) {
-                    // get parser name
-                    if (++i == argv.length) {
-                        System.err.println("error: Missing argument to -a option.");
-                    }
-                    adapterName = argv[i];
-
-                    createAdapter();
-                    continue;
-                }
-            }
-        }
-
-        features.setFeatureStates(argv);
-    }
-
-    private void bind() {
-        createParser();
-        createAdapter();
+    private fun bind() {
+        createParser()
+        createAdapter()
 
         // Now that we have a parser and a handler
         // make the parser use them.
-        setHandlers();
-        features.setFeatures(parser);
+        setHandlers()
+        features.setFeatures(parser!!)
 
     }
 
-    private void createParser() {
+    private fun createParser() {
         if (parser != null) {
-            return;
+            return
         }
 
         try {
-            parser = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+            parser = SAXParserFactory.newInstance().newSAXParser().xmlReader
 //            parser = XMLReaderFactory.createXMLReader(parserName);
-        } catch (SAXException e) {
-            System.err.println("error: Unable to instantiate parser");
-        } catch (ParserConfigurationException e) {
-            System.err.println("error: Unable to instantiate parser");
+        } catch (e: SAXException) {
+            System.err.println("error: Unable to instantiate parser")
+        } catch (e: ParserConfigurationException) {
+            System.err.println("error: Unable to instantiate parser")
         }
 
     }
 
-    private void createAdapter() {
+    private fun createAdapter() {
         if (adapter != null) {
-            return;
+            return
         }
 
         try {
-            adapter = (XMLHandlerAdapter) ReflectionUtil.construct(adapterName);
-        } catch (ReflectiveOperationException e) {
-            System.err.println("error: Unable to instantiate XMLHandlerAdpater (" + adapterName + ")");
+            adapter = ReflectionUtil.construct<XMLHandlerAdapter>(adapterName)
+        } catch (e: ReflectiveOperationException) {
+            System.err.println("error: Unable to instantiate XMLHandlerAdpater ($adapterName)")
         }
 
     }
 
-    private void setHandlers() {
-        parser.setDTDHandler(adapter);
-        parser.setErrorHandler(adapter);
-        parser.setContentHandler(adapter);
+    private fun setHandlers() {
+        parser!!.setDTDHandler(adapter)
+        parser!!.setErrorHandler(adapter)
+        parser!!.setContentHandler(adapter)
 
         try {
-            parser.setProperty(DECLARATION_HANDLER_PROPERTY_ID, adapter);
-        } catch (SAXException e) {
-            e.printStackTrace(System.err);
+            parser!!.setProperty(DECLARATION_HANDLER_PROPERTY_ID, adapter)
+        } catch (e: SAXException) {
+            e.printStackTrace(System.err)
         }
 
         try {
-            parser.setProperty(LEXICAL_HANDLER_PROPERTY_ID, adapter);
-        } catch (SAXException e) {
-            e.printStackTrace(System.err);
+            parser!!.setProperty(LEXICAL_HANDLER_PROPERTY_ID, adapter)
+        } catch (e: SAXException) {
+            e.printStackTrace(System.err)
         }
     }
 
-    public void parse(String xmlFile) {
-        bind();
+    /**
+     * Parse an xml file.
+     * 
+     * @param xmlFile the file to parse
+     */
+    open fun parse(xmlFile: String?) {
+        bind()
         // parse file
         try {
-            System.out.println("Parsing with the following:");
-            printActual();
-            parser.parse(xmlFile);
-            System.out.println("Done: no problems found.");
-        } catch (SAXException e) {
-            System.err.println("error: Parse error occurred - " + e.getMessage());
-            Exception nested = e.getException();
+            System.out.println("Parsing with the following:")
+            printActual()
+            parser!!.parse(xmlFile)
+            System.out.println("Done: no problems found.")
+        } catch (e: SAXException) {
+            System.err.println("error: Parse error occurred - " + e.message)
+            val nested = e.exception
             if (nested != null) {
-                nested.printStackTrace(System.err);
+                nested.printStackTrace(System.err)
             } else {
-                e.printStackTrace(System.err);
+                e.printStackTrace(System.err)
             }
-        } catch (IOException e) {
-            e.printStackTrace(System.err);
+        } catch (e: IOException) {
+            e.printStackTrace(System.err)
         }
     }
 
-    /** Prints the usage. */
-    private void usage() {
-        System.err.println("usage: java org.crosswire.common.xml.XMLProcess (options) uri");
-        System.err.println();
+    private fun usage() {
+        System.err.println("usage: java org.crosswire.common.xml.XMLProcess (options) uri")
+        System.err.println()
 
-        System.err.println("options:");
-        printUsage();
-        System.err.println("  -h          This help screen.");
-        System.err.println();
+        System.err.println("options:")
+        printUsage()
+        System.err.println("  -h          This help screen.")
+        System.err.println()
 
-        System.err.println("defaults:");
-        printDefaults();
+        System.err.println("defaults:")
+        printDefaults()
     }
 
-    public void printUsage() {
-        System.err.println("  -p name     Select parser by name.");
-        System.err.println("  -a name     Select XMLHandlerAdapter by name.");
-        features.printUsage();
+    /** Prints the usage.  */
+    open fun printUsage() {
+        System.err.println("  -p name     Select parser by name.")
+        System.err.println("  -a name     Select XMLHandlerAdapter by name.")
+        features.printUsage()
     }
-
-    public void printDefaults() {
-        System.err.println("Parser:     " + DEFAULT_PARSER_NAME);
-        System.err.println("Handler:    " + DEFAULT_HANDLER_NAME);
-        System.err.println(new XMLFeatureSet().toString());
-    }
-
-    public void printActual() {
-        System.err.println("Parser:     " + parserName);
-        System.err.println("Handler:    " + adapterName);
-        System.err.println(new XMLFeatureSet().toString());
-    }
-
-    // property ids
 
     /**
-     * Lexical handler property id
+     * Prints the default settings.
      */
-    private static final String LEXICAL_HANDLER_PROPERTY_ID = "http://xml.org/sax/properties/lexical-handler";
+    open fun printDefaults() {
+        System.err.println("Parser:     " + DEFAULT_PARSER_NAME)
+        System.err.println("Handler:    " + DEFAULT_HANDLER_NAME)
+        System.err.println(XMLFeatureSet().toString())
+    }
 
     /**
-     * Declaration handler property id
+     * Prints the settings in effect.
      */
-    private static final String DECLARATION_HANDLER_PROPERTY_ID = "http://xml.org/sax/properties/declaration-handler";
+    open fun printActual() {
+        System.err.println("Parser:     " + parserName)
+        System.err.println("Handler:    " + adapterName)
+        System.err.println(XMLFeatureSet().toString())
+    }
 
-    // default settings
+    private var parserName: String = DEFAULT_PARSER_NAME
+    private var parser: XMLReader? = null
+    private var adapterName: String = DEFAULT_HANDLER_NAME
+    private var adapter: XMLHandlerAdapter? = null
 
-    /** Default parser name. */
-    private static final String DEFAULT_PARSER_NAME = "org.apache.xerces.parsers.SAXParser";
-    private static final String DEFAULT_HANDLER_NAME = "org.crosswire.common.xml.XMLHandlerAdapter";
+    companion object {
+        /**
+         * Process an xml file according to the arguments.
+         * 
+         * @param argv the command-line arguments
+         */
+        @JvmStatic
+        fun main(argv: Array<String>) {
+            val checker = XMLProcess()
 
-    private String parserName = DEFAULT_PARSER_NAME;
-    private XMLReader parser;
-    private String adapterName = DEFAULT_HANDLER_NAME;
-    private XMLHandlerAdapter adapter;
-    private XMLFeatureSet features;
+            // is there anything to do?
+            if (argv.size == 0) {
+                checker.usage()
+                System.exit(1)
+            }
+
+            // variables
+            var arg: String? = null
+
+            // process arguments
+            for (i in argv.indices) {
+                arg = argv[i]
+                if (arg[0] == '-') {
+                    val option = arg.substring(1)
+                    if ("h" == option) {
+                        checker.usage()
+                        System.exit(0)
+                    }
+                }
+            }
+
+            checker.initialize(argv)
+            checker.parse(arg)
+
+        }
+
+        // property ids
+
+        /**
+         * Lexical handler property id
+         */
+        private const val LEXICAL_HANDLER_PROPERTY_ID = "http://xml.org/sax/properties/lexical-handler"
+
+        /**
+         * Declaration handler property id
+         */
+        private const val DECLARATION_HANDLER_PROPERTY_ID = "http://xml.org/sax/properties/declaration-handler"
+
+        // default settings
+
+        /** Default parser name.  */
+        private const val DEFAULT_PARSER_NAME = "org.apache.xerces.parsers.SAXParser"
+        private const val DEFAULT_HANDLER_NAME = "org.crosswire.common.xml.XMLHandlerAdapter"
+    }
 }

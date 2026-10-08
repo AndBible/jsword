@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
 /**
  * A class to convert between strings and objects of a type.
@@ -25,39 +25,17 @@ package org.crosswire.common.config;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class FontChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<String> getConversionClass() {
-        return String.class;
-    }
+open class FontChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<String>
+        get() = String::class.java
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
+    override fun convertToString(orig: Any?): String? {
         // This is a string representation of the font in the
         // form:name.style.size
-        return (String) orig;
+        return orig as String?
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return orig;
+    override fun convertToObject(orig: String?): Any? {
+        return orig
     }
 }

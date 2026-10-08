@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
 /**
  * A class to convert between strings and objects of a type.
@@ -25,5 +25,4 @@ package org.crosswire.common.config;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DirectoryChoice extends FileChoice {
-}
+open class DirectoryChoice : FileChoice()

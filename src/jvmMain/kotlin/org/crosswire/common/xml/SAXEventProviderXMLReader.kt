@@ -17,15 +17,15 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.DTDHandler;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
+import org.xml.sax.ContentHandler
+import org.xml.sax.DTDHandler
+import org.xml.sax.EntityResolver
+import org.xml.sax.ErrorHandler
+import org.xml.sax.InputSource
+import org.xml.sax.SAXException
+import org.xml.sax.XMLReader
 
 /**
  * A helper to aid people working with a SAXEventProvider.
@@ -33,131 +33,75 @@ import org.xml.sax.XMLReader;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
+open class SAXEventProviderXMLReader
 /**
- *
- *
- * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author DM Smith
+ * Constructor SAXEventProviderXMLReader.
+ * 
+ * @param docIn the document provided as SAX events
  */
-/**
- *
- *
- * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author DM Smith
- */
-public class SAXEventProviderXMLReader implements XMLReader {
-    /**
-     * Constructor SAXEventProviderXMLReader.
-     * 
-     * @param docIn the document provided as SAX events
-     */
-    public SAXEventProviderXMLReader(SAXEventProvider docIn) {
-        this.docIn = docIn;
+(private var docIn: SAXEventProvider?) : XMLReader {
+    override fun getFeature(arg0: String?): Boolean {
+        return false
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#getFeature(java.lang.String)
-     */
-    public boolean getFeature(String arg0) {
-        return false;
+    override fun setFeature(arg0: String?, arg1: Boolean) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#setFeature(java.lang.String, boolean)
-     */
-    public void setFeature(String arg0, boolean arg1) {
+    override fun getProperty(arg0: String?): Any? {
+        return null
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#getProperty(java.lang.String)
-     */
-    public Object getProperty(String arg0) {
-        return null;
+    override fun setProperty(arg0: String?, arg1: Any?) {
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#setProperty(java.lang.String, java.lang.Object)
-     */
-    public void setProperty(String arg0, Object arg1) {
+    override fun setEntityResolver(entities: EntityResolver?) {
+        this.entities = entities
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#setEntityResolver(org.xml.sax.EntityResolver)
-     */
-    public void setEntityResolver(EntityResolver entities) {
-        this.entities = entities;
+    override fun getEntityResolver(): EntityResolver? {
+        return entities
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#getEntityResolver()
-     */
-    public EntityResolver getEntityResolver() {
-        return entities;
+    override fun setDTDHandler(dtds: DTDHandler?) {
+        this.dtds = dtds
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#setDTDHandler(org.xml.sax.DTDHandler)
-     */
-    public void setDTDHandler(DTDHandler dtds) {
-        this.dtds = dtds;
+    override fun getDTDHandler(): DTDHandler? {
+        return dtds
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#getDTDHandler()
-     */
-    public DTDHandler getDTDHandler() {
-        return dtds;
+    override fun setContentHandler(content: ContentHandler?) {
+        this.content = content
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#setContentHandler(org.xml.sax.ContentHandler)
-     */
-    public void setContentHandler(ContentHandler content) {
-        this.content = content;
+    override fun getContentHandler(): ContentHandler? {
+        return content
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#getContentHandler()
-     */
-    public ContentHandler getContentHandler() {
-        return content;
+    override fun setErrorHandler(errors: ErrorHandler?) {
+        this.errors = errors
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
-     */
-    public void setErrorHandler(ErrorHandler errors) {
-        this.errors = errors;
+    override fun getErrorHandler(): ErrorHandler? {
+        return errors
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#getErrorHandler()
-     */
-    public ErrorHandler getErrorHandler() {
-        return errors;
-    }
-
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
-     */
-    public void parse(InputSource is) throws SAXException {
-        if (!(is instanceof SAXEventProviderInputSource)) {
-            throw new SAXException("SAXEventProviderInputSource required");
+    @Throws(SAXException::class)
+    override fun parse(`is`: InputSource?) {
+        if (`is` !is SAXEventProviderInputSource) {
+            throw SAXException("SAXEventProviderInputSource required")
         }
 
-        docIn.provideSAXEvents(getContentHandler());
+        docIn!!.provideSAXEvents(getContentHandler())
     }
 
-    /* (non-Javadoc)
-     * @see org.xml.sax.XMLReader#parse(java.lang.String)
-     */
-    public void parse(String arg0) throws SAXException {
-        throw new SAXException("SAXEventProviderInputSource required");
+    @Throws(SAXException::class)
+    override fun parse(arg0: String?) {
+        throw SAXException("SAXEventProviderInputSource required")
     }
 
-    private SAXEventProvider docIn;
-    private ErrorHandler errors;
-    private ContentHandler content;
-    private DTDHandler dtds;
-    private EntityResolver entities;
+    private var errors: ErrorHandler? = null
+    private var content: ContentHandler? = null
+    private var dtds: DTDHandler? = null
+    private var entities: EntityResolver? = null
 }

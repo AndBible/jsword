@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
 /**
  * MultipleChoice is simply a Choice where there are a number of alternative
@@ -26,12 +26,12 @@ package org.crosswire.common.config;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface MultipleChoice extends Choice {
+interface MultipleChoice : Choice {
     /**
      * The available alternative values to be presented as options to the user
      * where the user interface allows presentation of alternatives.
      * 
      * @return A string array of alternatives.
      */
-    String[] getOptions();
+    fun getOptions(): Array<String>
 }

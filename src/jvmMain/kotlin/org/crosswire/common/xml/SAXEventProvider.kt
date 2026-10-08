@@ -17,10 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
+import org.xml.sax.ContentHandler
+import org.xml.sax.SAXException
 
 /**
  * A simple way of giving someone a place from which to get SAX events.
@@ -28,7 +28,7 @@ import org.xml.sax.SAXException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface SAXEventProvider {
+interface SAXEventProvider {
     /**
      * When SAX events are required the user of this interface can call this
      * method.
@@ -37,5 +37,6 @@ public interface SAXEventProvider {
      *            The place to send SAX events.
      * @throws SAXException when a SAX encounters a problem
      */
-    void provideSAXEvents(ContentHandler handler) throws SAXException;
+    @Throws(SAXException::class)
+    fun provideSAXEvents(handler: ContentHandler?)
 }

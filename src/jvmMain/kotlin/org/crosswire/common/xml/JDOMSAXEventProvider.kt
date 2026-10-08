@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import org.jdom2.Document;
-import org.jdom2.JDOMException;
-import org.jdom2.output.SAXOutputter;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
+import org.jdom2.Document
+import org.jdom2.JDOMException
+import org.jdom2.output.SAXOutputter
+import org.xml.sax.ContentHandler
+import org.xml.sax.SAXException
 
 /**
  * A SAXEventProvider that provides SAX events from a JDOM Document.
@@ -31,30 +31,25 @@ import org.xml.sax.SAXException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class JDOMSAXEventProvider implements SAXEventProvider {
-    /**
-     * Simple constructor
-     * 
-     * @param doc the document
-     */
-    public JDOMSAXEventProvider(Document doc) {
-        this.doc = doc;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.common.xml.SAXEventProvider#provideSAXEvents(org.xml.sax.ContentHandler)
-     */
-    public void provideSAXEvents(ContentHandler handler) throws SAXException {
-        try {
-            SAXOutputter output = new SAXOutputter(handler);
-            output.output(doc);
-        } catch (JDOMException ex) {
-            throw new SAXException(ex);
-        }
-    }
-
+open class JDOMSAXEventProvider
+/**
+ * Simple constructor
+ * 
+ * @param doc the document
+ */
+(
     /**
      * The document to work from
      */
-    private Document doc;
+    private var doc: Document?
+) : SAXEventProvider {
+    @Throws(SAXException::class)
+    override fun provideSAXEvents(handler: ContentHandler?) {
+        try {
+            val output = SAXOutputter(handler)
+            output.output(doc)
+        } catch (ex: JDOMException) {
+            throw SAXException(ex)
+        }
+    }
 }

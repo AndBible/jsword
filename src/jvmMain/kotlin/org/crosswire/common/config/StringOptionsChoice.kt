@@ -17,12 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.util.ResourceBundle;
-
-import org.crosswire.jsword.JSOtherMsg;
-import org.jdom2.Element;
+import java.util.ResourceBundle
+import org.crosswire.jsword.JSOtherMsg
+import org.jdom2.Element
 
 /**
  * A class to convert between strings and objects of a type.
@@ -30,70 +29,35 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class StringOptionsChoice extends AbstractReflectedChoice implements MultipleChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#init(org.jdom2.Element)
-     */
-    @Override
-    public void init(Element option, ResourceBundle configResources) throws StartupException {
-        super.init(option, configResources);
-        Element map = option.getChild("map");
-        if (map == null) {
-            throw new StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "map"));
-        }
+open class StringOptionsChoice : AbstractReflectedChoice(), MultipleChoice {
+    @Suppress("UNCHECKED_CAST")
+    @Throws(StartupException::class)
+    override fun init(option: Element, configResources: ResourceBundle) {
+        super.init(option, configResources)
+        val map = option.getChild("map")
+                ?: throw StartupException(JSOtherMsg.lookupText("Missing {0} element in config.xml", "map"))
 
-        String name = map.getAttributeValue("name");
-        array = (String[]) ChoiceFactory.getDataMap().get(name);
+        val name = map.getAttributeValue("name")
+        array = ChoiceFactory.getDataMap().get(name) as Array<String>?
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.MultipleChoice#getOptions()
-     */
-    public String[] getOptions() {
-        String[] copy = new String[array.length];
-        System.arraycopy(array, 0, copy, 0, array.length);
-        return copy;
+    @Suppress("UNCHECKED_CAST")
+    override fun getOptions(): Array<String> {
+        val copy = arrayOfNulls<String>(array!!.size)
+        System.arraycopy(array!!, 0, copy, 0, array!!.size)
+        return copy as Array<String>
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<String> getConversionClass() {
-        return String.class;
+    override val conversionClass: Class<String>
+        get() = String::class.java
+
+    override fun convertToString(orig: Any?): String? {
+        return orig as String?
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        return (String) orig;
+    override fun convertToObject(orig: String?): Any? {
+        return orig
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return orig;
-    }
-
-    /**
-     * The options that we are presenting the user with
-     */
-    private String[] array;
+    private var array: Array<String>? = null
 }

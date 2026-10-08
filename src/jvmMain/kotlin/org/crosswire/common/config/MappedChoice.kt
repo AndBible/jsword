@@ -17,9 +17,7 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.config;
-
-import java.util.Map;
+package org.crosswire.common.config
 
 /**
  * MappedChoice is simply a Choice where there are a number of alternative
@@ -30,11 +28,11 @@ import java.util.Map;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface MappedChoice<K, V> extends Choice {
+interface MappedChoice<K, V> : Choice {
     /**
      * The available alternative values to be presented as options to the user
      * where the user interface allows presentation of alternatives.
      * @return A string array of alternatives.
      */
-    Map<K, V> getOptions();
+    fun getOptions(): Map<K, V>
 }

@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import org.crosswire.common.util.Convert;
+import org.crosswire.common.util.Convert
 
 /**
  * A class to convert between strings and objects of a type.
@@ -27,37 +27,15 @@ import org.crosswire.common.util.Convert;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class NumberChoice extends AbstractReflectedChoice {
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.common.config.Choice#getConvertionClass()
-     */
-    public Class<Integer> getConversionClass() {
-        return Integer.TYPE;
+open class NumberChoice : AbstractReflectedChoice() {
+    override val conversionClass: Class<Int>
+        get() = Integer.TYPE
+
+    override fun convertToString(orig: Any?): String? {
+        return Convert.int2String(orig as Int)
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToString(java
-     * .lang.Object)
-     */
-    @Override
-    public String convertToString(Object orig) {
-        return Convert.int2String(((Integer) orig).intValue());
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.crosswire.common.config.AbstractReflectedChoice#convertToObject(java
-     * .lang.String)
-     */
-    @Override
-    public Object convertToObject(String orig) {
-        return Integer.valueOf(Convert.string2Int(orig));
+    override fun convertToObject(orig: String?): Any? {
+        return Integer.valueOf(Convert.string2Int(orig))
     }
 }

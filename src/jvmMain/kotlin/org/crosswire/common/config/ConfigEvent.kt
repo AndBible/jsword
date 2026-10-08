@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.config;
+package org.crosswire.common.config
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.EventObject;
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.util.EventObject
 
 /**
  * An event indicating that an exception has happened.
@@ -29,29 +29,32 @@ import java.util.EventObject;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ConfigEvent extends EventObject {
-    /**
-     * Constructs an ConfigEvent object.
-     * 
-     * @param source
-     *            The event originator, or log stream
-     * @param key the key for the config item
-     * @param model the config item
-     */
-    public ConfigEvent(Object source, String key, Choice model) {
-        super(source);
+open class ConfigEvent
+/**
+ * Constructs an ConfigEvent object.
+ * 
+ * @param source
+ *            The event originator, or log stream
+ * @param key the key for the config item
+ * @param model the config item
+ */
+(source: Any?, key: String?, model: Choice?) : EventObject(source) {
+    // The getters stay functions: the private fields have to stay non-final as in the serialized form.
+    private var key: String? = key
 
-        this.key = key;
-        this.model = model;
-    }
+    /**
+     * The config item, not serialized.
+     */
+    @Transient
+    private var model: Choice? = model
 
     /**
      * Returns the key.
      * 
      * @return the key
      */
-    public String getKey() {
-        return key;
+    open fun getKey(): String? {
+        return key
     }
 
     /**
@@ -59,8 +62,8 @@ public class ConfigEvent extends EventObject {
      * 
      * @return the choice
      */
-    public Choice getChoice() {
-        return model;
+    open fun getChoice(): Choice? {
+        return model
     }
 
     /**
@@ -68,8 +71,8 @@ public class ConfigEvent extends EventObject {
      * 
      * @return the choice
      */
-    public Choice getPath() {
-        return model;
+    open fun getPath(): Choice? {
+        return model
     }
 
     /**
@@ -80,24 +83,17 @@ public class ConfigEvent extends EventObject {
      * @throws  ClassNotFoundException if the class of a serialized object
      *          could not be found.
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
         // Broken but we don't serialize events
-        model = null;
-        is.defaultReadObject();
+        model = null
+        `is`.defaultReadObject()
     }
 
-    /**
-     * The name of the choice
-     */
-    private String key;
-
-    /**
-     * The Choice
-     */
-    private transient Choice model;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3257006561900376375L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3257006561900376375L
+    }
 }

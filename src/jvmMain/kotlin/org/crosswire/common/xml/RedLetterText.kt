@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
 /**
  * RedLetterText remembers when text should be red. Red Letter Text is used to
@@ -27,31 +27,28 @@ package org.crosswire.common.xml;
  * @author DM Smith
  * 
  */
-public class RedLetterText {
-    private int rlt;
-
-    /**
-     * Construct a RedLetterText.
-     */
-    public RedLetterText() {
-        rlt = 0;
-    }
+open class RedLetterText
+/**
+ * Construct a RedLetterText.
+ */
+{
+    private var rlt = 0
 
     /**
      * Call when Red Letter Text is entered
      * 
      */
-    public void enter() {
-        rlt++;
+    open fun enter() {
+        rlt++
     }
 
     /**
      * Call when Red Letter Text is left
      * 
      */
-    public void leave() {
+    open fun leave() {
         if (rlt > 0) {
-            rlt--;
+            rlt--
         }
     }
 
@@ -60,7 +57,6 @@ public class RedLetterText {
      * 
      * @return true if in RLT, false otherwise
      */
-    public boolean isRLT() {
-        return rlt > 0;
-    }
+    open val isRLT: Boolean
+        get() = rlt > 0
 }
