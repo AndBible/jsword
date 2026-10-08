@@ -17,16 +17,11 @@
  * © CrossWire Bible Society, 2008 - 2016
  *
  */
-package org.crosswire.jsword.bridge;
+package org.crosswire.jsword.index;
 
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.BookException;
 import org.crosswire.jsword.book.Books;
-import org.crosswire.jsword.index.IndexManager;
-import org.crosswire.jsword.index.IndexManagerFactory;
-import org.crosswire.jsword.index.IndexStatus;
-import org.crosswire.jsword.index.IndexStatusEvent;
-import org.crosswire.jsword.index.IndexStatusListener;
 
 /**
  * BookIndexer allows one to check the status of an index, build an index or
