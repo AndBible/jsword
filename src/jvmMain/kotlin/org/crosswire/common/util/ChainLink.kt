@@ -16,217 +16,195 @@
  *
  * © CrossWire Bible Society, 2015 - 2016
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.Comparator;
+import java.util.Comparator
 
 /**
  * ChainLink allows for a doubly linked list embedded within objects.
  * This is meant for small lists.
  *
- * @param <E> the class to be chained
+ * @param E the class to be chained
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class ChainLink<E> {
+class ChainLink<E>
+/**
+ * Create a ChainLink containing an item.
+ *
+ * @param item this ChainLink's item
+ */
+(
+    item: E
+) {
     /**
      * Create an empty ChainLink.
-     * It is necessary to call {@code setItem()} for this to be useful.
+     * It is necessary to call `setItem()` for this to be useful.
      */
-    public ChainLink() {
-        this(null);
-    }
+    @Suppress("UNCHECKED_CAST")
+    constructor() : this(null as E)
 
     /**
-     * Create a ChainLink containing an item.
-     * 
-     * @param item this ChainLink's item
+     * The item of this ChainLink.
+     * Set the item for this ChainLink / Get the item from this ChainLink.
      */
-    public ChainLink(E item) {
-        this.item = item;
-        this.head = true;
-        this.right = this;
-        this.left = this;
-    }
-
-    /**
-     * Set the item for this ChainLink.
-     * 
-     * @param item this ChainLink's item
-     */
-    public void setItem(E item) {
-        this.item = item;
-    }
-
-    /**
-     * Get the item from this ChainLink.
-     * 
-     * @return the item
-     */
-    public E getItem() {
-        return item;
-    }
+    var item: E = item
 
     /**
      * One node is marked as the head of the chain.
-     * 
+     *
      * @return whether this node is the head of the chain.
      */
-    public boolean isHead() {
-        return head;
-    }
+    var isHead: Boolean = true
+        private set
 
     /**
      * Get the node to the left of this node.
      * The left node of the head is the tail.
-     * 
+     *
      * @return the node to the left
      */
-    public ChainLink<E> getLeft() {
-        return left;
-    }
+    var left: ChainLink<E> = this
+        private set
 
     /**
      * Get the node to the right of this node.
      * The right node of the tail is the head.
-     * 
+     *
      * @return the node to the right
      */
-    public ChainLink<E> getRight() {
-        return right;
-    }
+    var right: ChainLink<E> = this
+        private set
 
     /**
      * Remove this ChainLink from the chain.
      * If the head is removed, then the node that was to the right is now the head.
      */
-    public void remove() {
+    fun remove() {
         // First ensure that
         // this node is removed from its current list
         // and that that list is still whole
-        this.right.head = this.head;
-        this.right.left = this.left;
-        this.left.right = this.right;
-        this.head = true;
-        this.right = this;
-        this.left = this;
+        this.right.isHead = this.isHead
+        this.right.left = this.left
+        this.left.right = this.right
+
+        this.isHead = true
+        this.right = this
+        this.left = this
     }
 
     /**
      * Add this node before the given node.
      * If the given node was the head, then this node is now the head.
-     * 
+     *
      * @param node A location in the chain for insertion.
      */
-    public void addBefore(ChainLink<E> node) {
-        this.head = node.head; // This is head, iff node was
-        this.right = node;
-        this.left = node.left;
-        node.head = false; // node cannot now be head
-        node.left.right = this;
-        node.left = this;
+    fun addBefore(node: ChainLink<E>) {
+        this.isHead = node.isHead // This is head, iff node was
+        this.right = node
+        this.left = node.left
+
+        node.isHead = false // node cannot now be head
+        node.left.right = this
+        node.left = this
     }
 
     /**
      * Add this node after the given node.
      * If the given node was the head, it still is.
-     * 
+     *
      * @param node A location in the chain for insertion.
      */
-    public void addAfter(ChainLink<E> node) {
-        this.head = false; // this can never be head
-        this.left = node;
-        this.right = node.right;
-        node.right.left = this;
-        node.right = this;
+    fun addAfter(node: ChainLink<E>) {
+        this.isHead = false // this can never be head
+        this.left = node
+        this.right = node.right
+
+        node.right.left = this
+        node.right = this
     }
 
     /**
      * Find the head of the chain.
      * Note, this is most efficient if this node is the head.
-     * 
+     *
      * @return the head of the chain.
      */
-    public ChainLink<E> findHead() {
-        ChainLink<E> node = this;
-        while (!node.head) {
-            node = node.left;
-            if (this == node) {
+    fun findHead(): ChainLink<E> {
+        var node: ChainLink<E> = this
+        while (!node.isHead) {
+            node = node.left
+            if (this === node) {
                 // We made it all away round and nothing was marked head.
-                node.head = true;
+                node.isHead = true
             }
         }
-        return node;
+        return node
     }
 
     /**
      * Find the tail of the chain.
      * Note, this is most efficient if this node is the head.
-     * 
+     *
      * @return the tail of the chain.
      */
-    public ChainLink<E> findTail() {
-        return findHead().left;
+    fun findTail(): ChainLink<E> {
+        return findHead().left
     }
 
     /**
      * Add this node as the head of the chain.
      * Note, this is most efficient if anyNode is the head of the chain.
-     * 
+     *
      * @param anyNode any node in the chain
      */
-    public void addFirst(ChainLink<E> anyNode) {
-        ChainLink<E> node = anyNode.findHead();
-        addBefore(node);
+    fun addFirst(anyNode: ChainLink<E>) {
+        val node = anyNode.findHead()
+        addBefore(node)
     }
 
     /**
      * Add this node as the tail of the chain.
      * Note, this is most efficient if anyNode is the head of the chain.
-     * 
+     *
      * @param anyNode any node in the chain
      */
-    public void addLast(ChainLink<E> anyNode) {
-        ChainLink<E> node = anyNode.findHead();
-        addAfter(node.left);
+    fun addLast(anyNode: ChainLink<E>) {
+        val node = anyNode.findHead()
+        addAfter(node.left)
     }
 
     /**
      * Locate the node or the closest node in the chain using the comparator.
      * This assumes that the collection is ordered on some characteristic that
      * comparator assumes.
-     * 
+     *
      * @param element The node to look for
      * @param comparator The comparator that understands the ordering of the list
      * @return The node or the closest node.
      */
-    public ChainLink<E> locate(E element, Comparator<E> comparator) {
+    fun locate(element: E, comparator: Comparator<E>): ChainLink<E> {
         // this node might be anywhere in the list.
         // compare it to this one
-        ChainLink<E> node = this;
-        int cmp = comparator.compare(element, node.item);
+        var node: ChainLink<E> = this
+        var cmp = comparator.compare(element, node.item)
         if (cmp < 0) {
-            while (cmp < 0 && !node.head) {
-                node = node.left;
-                cmp = comparator.compare(element, node.item);
-                if (node == this) {
-                    node.head = true;
+            while (cmp < 0 && !node.isHead) {
+                node = node.left
+                cmp = comparator.compare(element, node.item)
+                if (node === this) {
+                    node.isHead = true
                 }
             }
-            return node;
+            return node
         } else if (cmp > 0) {
             do {
-                node = node.right;
-                cmp = comparator.compare(element, node.item);
-            } while (cmp > 0 && !node.head && node != this);
-            return node;
+                node = node.right
+                cmp = comparator.compare(element, node.item)
+            } while (cmp > 0 && !node.isHead && node !== this)
+            return node
         }
-        return node;
+        return node
     }
-
-    private E item;
-    private boolean head;
-    private ChainLink<E> left;
-    private ChainLink<E> right;
 }

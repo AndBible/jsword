@@ -2,3 +2,5 @@
 #   <class FQN> <+|-> <canonical ApiShape line> # <reason>
 # "+" approves an addition, "-" approves a removed/changed line (exceptional; reviewer must agree).
 org.crosswire.common.activate.Lock + K public () throws [] # Java ctor was package-private; Kotlin has no package visibility, internal compiles to public. Lock is only a token type.
+org.crosswire.common.util.ReporterEvent - F private-or-package message: java.lang.String # Kotlin `open val message` has a final backing field (same name and type, so the serialized form is unchanged); a `var` with a private setter is not allowed on an open property.
+org.crosswire.common.util.ReporterEvent + F private-or-package final message: java.lang.String # Same field as above, now final.

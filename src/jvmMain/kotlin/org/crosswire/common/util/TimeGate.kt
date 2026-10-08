@@ -17,54 +17,52 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
 /**
  * A TimeGate when entered will cause the gate to be closed for a specified
  * period of time.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class TimeGate {
-    /**
-     * Build a TimeGate that will allow entry no more often than count
-     * milliseconds
-     * 
-     * @param count
-     *            the length of time to keep the gate shut after opening it.
-     */
-    public TimeGate(int count) {
-        closeTime = count;
-    }
-
+open class TimeGate
+/**
+ * Build a TimeGate that will allow entry no more often than count
+ * milliseconds
+ *
+ * @param count
+ *            the length of time to keep the gate shut after opening it.
+ */
+(count: Int) {
     /**
      * Determine whether entry through the gate is allowed. Opening the gate
      * will close it until the TimeGate's interval has passed.
-     * 
+     *
      * @return true if one may enter.
      */
-    public synchronized boolean open() {
+    @Synchronized
+    open fun open(): Boolean {
         // check to see if the gate has been closed long enough.
         // If so, then open it and note the time that it was opened.
-        long now = System.currentTimeMillis();
+        val now = System.currentTimeMillis()
         if (now - then > closeTime) {
-            then = now;
-            return true;
+            then = now
+            return true
         }
 
         // Otherwise the gate was opened not that long ago and
         // is still closed.
-        return false;
+        return false
     }
 
     /**
      * The interval during which the gate is closed.
      */
-    private int closeTime;
+    private val closeTime: Int = count
 
     /**
      * The time in milliseconds that the gate last closed.
      */
-    private long then;
+    private var then: Long = 0
 }

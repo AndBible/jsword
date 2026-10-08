@@ -17,21 +17,21 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
 /**
  * An URIFilter that accepts all names.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DefaultURIFilter implements URIFilter {
+open class DefaultURIFilter : URIFilter {
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.common.util.URIFilter#accept(java.lang.String)
      */
-    public boolean accept(String name) {
-        return true;
+    override fun accept(name: String?): Boolean {
+        return true
     }
 }

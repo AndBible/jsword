@@ -17,7 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package gnu.lgpl;
+/**
+ * This package contains GNU Lesser General Public License information only.
+ */
+package gnu.lgpl
 
 /**
  * This software is covered by the GNU Lesser General Public License.
@@ -531,38 +534,36 @@ package gnu.lgpl;
  * @author Joe Walker
  * @author DM Smith
  */
-public class License {
-    /**
-     * Build a License object from which can be obtained the warranty and its
-     * details.
-     * 
-     * @param appName the name of the program being licensed
-     */
-    public License(String appName) {
-        name = appName;
-    }
-
+open class License
+/**
+ * Build a License object from which can be obtained the warranty and its
+ * details.
+ *
+ * @param appName the name of the program being licensed
+ */
+(appName: String?) {
     /**
      * Get the Warranty.
-     * 
+     *
      * @return the warranty for this program
      */
-    public String getWarranty() {
-        return LGPLMsg.lookupText("License.warranty", name);
-    }
+    open val warranty: String
+        get() {
+            return LGPLMsg.lookupText("License.warranty", name)
+        }
 
     /**
      * Get the license distribution terms.
-     * 
+     *
      * @return the details of this program's distribution license
      */
-    public String getDetails() {
-        return LGPLMsg.lookupText("License.details", name);
-    }
+    open val details: String
+        get() {
+            return LGPLMsg.lookupText("License.details", name)
+        }
 
     /**
      * The name of the program being licensed.
      */
-    private String name;
-
+    private val name: String? = appName
 }

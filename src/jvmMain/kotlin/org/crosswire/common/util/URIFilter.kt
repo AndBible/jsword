@@ -17,23 +17,23 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
 /**
  * This is the URI equivalent of FilenameFilter in the java.io package.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @see java.io.FilenameFilter
  */
-public interface URIFilter {
+interface URIFilter {
     /**
      * Tests if a specified file should be included in a file list.
-     * 
+     *
      * @param name
      *            the name of the file.
-     * @return <code>true</code> if and only if the name should be included in
-     *         the file list; <code>false</code> otherwise.
+     * @return `true` if and only if the name should be included in
+     *         the file list; `false` otherwise.
      */
-    boolean accept(String name);
+    fun accept(name: String?): Boolean
 }

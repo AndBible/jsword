@@ -17,7 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package gnu.gpl;
+/**
+ * This package contains GNU General Public License information only.
+ */
+package gnu.gpl
 
 /**
  * This software is covered by the GNU General Public License.
@@ -369,44 +372,42 @@ package gnu.gpl;
  * @author Joe Walker
  * @author DM Smith
  */
-public class License {
-    /**
-     * Build a License object from which can be obtained the warranty and its
-     * details.
-     * 
-     * @param appName the name of the program being licensed
-     */
-    public License(String appName) {
-        name = appName;
-    }
-
+open class License
+/**
+ * Build a License object from which can be obtained the warranty and its
+ * details.
+ *
+ * @param appName the name of the program being licensed
+ */
+(appName: String?) {
     /**
      * Get the Warranty.
-     * 
+     *
      * @return the warranty for this program
      */
-    public String getWarranty() {
+    open val warranty: String
+        get() {
         /* TRANSLATOR: This is short-hand for the actual GPL warranty.
          * See the English for this to see what needs to be translated.
          */
-        return GPLMsg.gettext("License.warranty", name);
-    }
+            return GPLMsg.gettext("License.warranty", name)
+        }
 
     /**
      * Get the license distribution terms.
-     * 
+     *
      * @return the details of this program's distribution license
      */
-    public String getDetails() {
+    open val details: String
+        get() {
         /* TRANSLATOR: This is short-hand for the actual GPL license.
          * See the English for this to see what needs to be translated.
          */
-        return GPLMsg.gettext("License.details", name);
-    }
+            return GPLMsg.gettext("License.details", name)
+        }
 
     /**
      * The name of the program being licensed.
      */
-    private String name;
-
+    private val name: String? = appName
 }

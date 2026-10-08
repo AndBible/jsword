@@ -17,17 +17,16 @@
  * © CrossWire Bible Society, 2011 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * Version is an immutable representation of dotted "number" consisting of 1 to 4 parts.
- * 
- * <p>
+ *
  * Here is the grammar for version strings:
- * </p>
+ *
  * <pre>
  * version ::= major('.'minor('.'micro('.'nano)?)?)?
  * major ::= [0-9]+
@@ -35,38 +34,33 @@ import java.util.regex.Pattern;
  * micro ::= [0-9]+
  * nano  ::= [0-9]+
  * </pre>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class Version implements Comparable<Version> {
-    public static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)(?:.(\\d+))?(?:.(\\d+))?(?:.(\\d+))?$");
-
+open class Version : Comparable<Version> {
     /**
      * Created a version identifier from the specified string.
-     * 
+     *
      * @param version String representation of the version identifier.
-     * @throws IllegalArgumentException If <code>version</code> is improperly
+     * @throws IllegalArgumentException If `version` is improperly
      *         formatted.
      */
-    public Version(String version) {
+    constructor(version: String?) {
         if (version == null) {
-            throw new IllegalArgumentException("Null version not allowed.");
+            throw IllegalArgumentException("Null version not allowed.")
         }
-        this.original = version;
-        this.parts = new int[] { -1, -1, -1, -1 };
-        Matcher matcher = VERSION_PATTERN.matcher(this.original);
+        this.original = version
+        this.parts = intArrayOf(-1, -1, -1, -1)
+        val matcher: Matcher = VERSION_PATTERN.matcher(this.original)
         if (matcher.matches()) {
-            int count = matcher.groupCount();
-            for (int i = 1; i <= count; i++) {
-                String part = matcher.group(i);
-                if (part == null) {
-                    break;
-                }
-                parts[i - 1] = Integer.parseInt(part);
+            val count = matcher.groupCount()
+            for (i in 1..count) {
+                val part: String = matcher.group(i) ?: break
+                parts[i - 1] = part.toInt()
             }
         } else {
-            throw new IllegalArgumentException("invalid: " + version);
+            throw IllegalArgumentException("invalid: $version")
         }
     }
 
@@ -75,77 +69,73 @@ public class Version implements Comparable<Version> {
      *
      * @return The original string representation of this version identifier.
      */
-    @Override
-    public String toString() {
-        return original;
+    override fun toString(): String {
+        return original
     }
 
-    @Override
-    public int hashCode() {
-        return original.hashCode();
+    override fun hashCode(): Int {
+        return original.hashCode()
     }
 
     /**
-     * Compares this <code>Version</code> object to another object.
-     * 
-     * <p>
+     * Compares this `Version` object to another object.
+     *
      * A version is considered to be equal to another version if all the
-     * parts are equal.</p>
-     * 
-     * @param object The <code>Version</code> object to be compared.
+     * parts are equal.
+     *
+     * @param object The `Version` object to be compared.
      * @return true if the two objects are equal.
      */
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof Version)) {
-            return false;
+    override fun equals(other: Any?): Boolean {
+        if (other !is Version) {
+            return false
         }
 
-        Version that = (Version) object;
-        if (that == this) {
-            return true;
+        val that: Version = other
+        if (that === this) {
+            return true
         }
 
-        for (int i = 0; i < parts.length; i++) {
+        for (i in parts.indices) {
             if (parts[i] != that.parts[i]) {
-                return false;
+                return false
             }
         }
-
-        return true;
+        return true
     }
 
     /**
-     * Compares this <code>Version</code> object to another object.
-     * 
-     * <p>
+     * Compares this `Version` object to another object.
+     *
      * The comparison considers each of the parts (major, minor, micro, nano) in turn,
      * comparing like with like. At any point the comparison is not equal, a result is
      * known.
-     * </p>
-     * 
-     * @param object The <code>Version</code> object to be compared.
+     *
+     * @param other The `Version` object to be compared.
      * @return A negative integer, zero, or a positive integer if this object is
      *         less than, equal to, or greater than the specified
-     *         <code>Version</code> object.
-     * @throws ClassCastException If the specified object is not a <code>Version</code>.
+     *         `Version` object.
+     * @throws ClassCastException If the specified object is not a `Version`.
      */
-    public int compareTo(Version object) {
-        if (object == this) {
-            return 0;
+    override fun compareTo(other: Version): Int {
+        if (other === this) {
+            return 0
         }
 
-        for (int i = 0; i < parts.length; i++) {
-            int result = parts[i] - object.parts[i];
+        for (i in parts.indices) {
+            val result = parts[i] - other.parts[i]
             if (result != 0) {
-                return result;
+                return result
             }
         }
-
-        return 0;
+        return 0
     }
 
-    private final String         original;
-    private final int[]          parts;
+    private val original: String
+    private val parts: IntArray
 
+    companion object {
+        @JvmField
+        val VERSION_PATTERN: Pattern = Pattern.compile("^(\\d+)(?:.(\\d+))?(?:.(\\d+))?(?:.(\\d+))?$")
+    }
 }

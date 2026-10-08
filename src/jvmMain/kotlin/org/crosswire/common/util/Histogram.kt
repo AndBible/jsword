@@ -17,82 +17,73 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
-
-import java.util.HashMap;
-import java.util.Map;
+package org.crosswire.common.util
 
 /**
  * A simple implementation of a histogram. It would be nice to enhance it to
  * order on frequency.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class Histogram {
+open class Histogram {
     /**
      * Create an empty histogram
      */
-    public Histogram() {
-        hist = new HashMap<String, Counter>();
+    constructor() {
+        hist = HashMap<String?, Counter>()
     }
 
     /**
      * Note that this key has been seen one time more than before.
-     * 
+     *
      * @param key the key to increment
      */
-    public void increment(String key) {
-        Counter counter = hist.get(key);
+    open fun increment(key: String?) {
+        var counter = hist[key]
         if (counter == null) {
-            counter = new Counter();
-            hist.put(key, counter);
+            counter = Counter()
+            hist[key] = counter
         }
-        counter.increment();
+        counter.increment()
     }
 
-    public void clear() {
-        hist.clear();
+    open fun clear() {
+        hist.clear()
     }
 
     /**
      * The format of the histogram is an unordered list of string and the counts
      * of the number of times it has been seen.
-     * 
+     *
      * @return the resultant histogram
      * @see java.lang.Object#toString()
      */
-    @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        for (Map.Entry<String, Counter> entry : hist.entrySet()) {
-            buf.append(entry.getKey());
-            buf.append('\t');
-            buf.append(entry.getValue().toString());
-            buf.append('\n');
+    override fun toString(): String {
+        val buf = StringBuilder()
+        for ((key, value) in hist) {
+            buf.append(key)
+            buf.append('\t')
+            buf.append(value.toString())
+            buf.append('\n')
         }
-        return buf.toString();
+        return buf.toString()
     }
 
     /**
      * Trivial mutable counting integer class.
      */
-    private static class Counter {
-        Counter() {
+    private class Counter {
+        fun increment() {
+            counter++
         }
 
-        public void increment() {
-            counter++;
+        override fun toString(): String {
+            return counter.toString()
         }
 
-        @Override
-        public String toString() {
-            return Integer.toString(counter);
-        }
-
-        private int counter;
+        private var counter = 0
     }
 
-    private Map<String, Counter> hist;
-
+    private val hist: MutableMap<String?, Counter>
 }

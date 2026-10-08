@@ -17,52 +17,45 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
-
+package org.crosswire.common.util
 
 /**
  * EventExceptions are generally used for passing problems through the event
  * system which does not allow checked exceptions through.
- * 
- * <p>
+ *
  * So LucidRuntimeException is a LucidException in all but inheritance -
  * LucidException inherits from Exception and so is checked, where EventEception
  * inherits from RuntimeException and so is not checked. In general you would
  * create a subclass of LucidException before you used it, however
  * EventExceptions would be used directly.
- * </p>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @see LucidException
  */
-public class LucidRuntimeException extends RuntimeException {
-
+open class LucidRuntimeException : RuntimeException {
     /**
      * All LucidRuntimeException are constructed with references to resources in
      * an i18n properties file.
-     * 
+     *
      * @param msg
      *            The resource id to read
      */
-    public LucidRuntimeException(String msg) {
-        super(msg);
-    }
+    constructor(msg: String?) : super(msg)
 
     /**
      * All LucidRuntimeException are constructed with references to resources in
      * an i18n properties file.
-     * 
+     *
      * @param msg   The resource id to read
      * @param cause The cause of the exception
      */
-    public LucidRuntimeException(String msg, Throwable cause) {
-        super(msg, cause);
+    constructor(msg: String?, cause: Throwable?) : super(msg, cause)
+
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3906091143962965817L
     }
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3906091143962965817L;
-
 }

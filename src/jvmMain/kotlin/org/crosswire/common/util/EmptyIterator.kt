@@ -17,46 +17,37 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.NoSuchElementException
 
 /**
- * An <code>EmptyIterator</code> is an <code>Iterator</code> that iterates over
+ * An `EmptyIterator` is an `Iterator` that iterates over
  * nothing.
- * 
- * @param <E> The type of the element that this empty iterator will never return.
+ *
+ * @param E The type of the element that this empty iterator will never return.
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class EmptyIterator<E> implements Iterator<E> {
-
-    /**
-     * Construct an <code>EmptyIterator</code>.
-     */
-    public EmptyIterator() {
-    }
-
+open class EmptyIterator<E> : MutableIterator<E> {
     /* (non-Javadoc)
      * @see java.util.Iterator#remove()
      */
-    public void remove() {
-        throw new UnsupportedOperationException();
+    override fun remove() {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#hasNext()
      */
-    public boolean hasNext() {
-        return false;
+    override fun hasNext(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#next()
      */
-    public E next() {
-        throw new NoSuchElementException();
+    override fun next(): E {
+        throw NoSuchElementException()
     }
-
 }

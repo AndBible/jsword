@@ -17,24 +17,28 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.common.icu;
+/**
+ * Utilities that require icu4j via reflection.
+ * That is, if the icu4j jar is not on the classpath,
+ * the utilities in this package provide standard java
+ * behavior.
+ */
+package org.crosswire.common.icu
 
-import java.io.Serializable;
-import java.util.Locale;
+import java.io.Serializable
 
-import org.crosswire.jsword.internationalisation.LocaleProviderManager;
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
 
 /**
  * NumberShaper changes numbers from one number system to another. That is, the
  * numbers 0-9 have different representations in some locales. This means that
  * they have different code points. For example, Eastern Arabic numbers are from
- * \u06f0 - \u06f9.
- * <p>
+ * ۰ - ۹.
+ *
  * Internally, numbers will be represented with 0-9, but externally they should
  * show as a user wishes. Further user input may, optionally, use the external
  * form.
- * </p>
- * <p>
+ *
  * This shaper has special behavior for Arabic numbers that are in the form
  * "12:34" as this is taken as chapter:verse. Normally, a ':' is treated as a
  * numeric separator, this results in "12:34", but for verses it should be
@@ -42,83 +46,78 @@ import org.crosswire.jsword.internationalisation.LocaleProviderManager;
  * the script is right-to-left) and the ':' as a numeric separator does not
  * change that. So to get around this we mark the ':' as a right-to-left
  * character.
- * </p>
- * <p>
+ *
  * See also: com.ibm.icu.text.ArabicShaping
- * </p>
- * 
+ *
  * @see java.awt.font.NumericShaper
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class NumberShaper implements Serializable {
-    /**
-     * Create a shaper that is appropriate for the user's locale.
-     */
-    public NumberShaper() {
-        this.nineShape = '\u0000';
-    }
-
+open class NumberShaper
+/**
+ * Create a shaper that is appropriate for the user's locale.
+ */
+() : Serializable {
     /**
      * Determine whether shaping is possible.
-     * 
+     *
      * @return whether shaping back to 0-9 is possible.
      */
-    public boolean canShape() {
+    open fun canShape(): Boolean {
         // return arabicShaper != null || numericShaper != null || getNine() !=
         // '9';
-        return getNine() != '9';
+        return getNine() != '9'
     }
 
     /**
      * Replace 0-9 in the input with representations appropriate for the script.
-     * 
+     *
      * @param input
      *            the text to be transformed
      * @return the transformed text
      */
-    public String shape(String input) {
+    open fun shape(input: String?): String? {
         if (input == null) {
-            return input;
+            return input
         }
 
-        char[] src = input.toCharArray();
-        boolean[] transformed = new boolean[1];
-        transformed[0] = false;
-        char[] dest = shaped(src, transformed);
+        val src = input.toCharArray()
+        val transformed = BooleanArray(1)
+        transformed[0] = false
+        val dest = shaped(src, transformed)
         if (transformed[0]) {
-            return new String(dest);
+            return String(dest)
         }
 
-        return input;
+        return input
     }
 
     /**
      * Determine whether shaping back to 0-9 is possible.
-     * 
+     *
      * @return whether shaping back to 0-9 is possible.
      */
-    public boolean canUnshape() {
-        return getNine() != '9';
+    open fun canUnshape(): Boolean {
+        return getNine() != '9'
     }
 
     /**
      * Replace script representations of numbers with 0-9.
-     * 
+     *
      * @param input
      *            the text to be transformed
      * @return the transformed text
      */
-    public String unshape(String input) {
-        char[] src = input.toCharArray();
-        boolean[] transformed = new boolean[1];
-        transformed[0] = false;
-        char[] dest = unshaped(src, transformed);
+    open fun unshape(input: String): String {
+        val src = input.toCharArray()
+        val transformed = BooleanArray(1)
+        transformed[0] = false
+        val dest = unshaped(src, transformed)
         if (transformed[0]) {
-            return new String(dest);
+            return String(dest)
         }
 
-        return input;
+        return input
     }
 
     /**
@@ -130,14 +129,14 @@ public class NumberShaper implements Serializable {
      *            was a transformation
      * @return the unshaped text
      */
-    private char[] unshaped(char[] src, boolean[] transformed) {
-        int nine = getNine();
-        if (nine == '9') {
-            return src;
+    private fun unshaped(src: CharArray, transformed: BooleanArray): CharArray {
+        val nine = getNine().code
+        if (nine == '9'.code) {
+            return src
         }
 
-        int zero = nine - 9;
-        return transform(src, zero, nine, '9' - nine, transformed);
+        val zero = nine - 9
+        return transform(src, zero, nine, '9'.code - nine, transformed)
     }
 
     /**
@@ -148,19 +147,19 @@ public class NumberShaper implements Serializable {
      *            was a transformation
      * @return the shaped string
      */
-    private char[] shaped(char[] src, boolean[] transformed) {
-        char nine = getNine();
+    private fun shaped(src: CharArray, transformed: BooleanArray): CharArray {
+        val nine = getNine()
         if (nine == '9') {
-            return src;
+            return src
         }
 
-        return transform(src, '0', '9', nine - '9', transformed);
+        return transform(src, '0'.code, '9'.code, nine.code - '9'.code, transformed)
     }
 
     /**
      * Transform either to or from 0-9 and the script representation, returning
      * the result and true when at least one character is transformed.
-     * 
+     *
      * @param src
      *            the text to transform
      * @param zero
@@ -175,8 +174,8 @@ public class NumberShaper implements Serializable {
      *            was a transformation
      * @return the shaped string
      */
-    private char[] transform(char[] src, int zero, int nine, int offset, boolean[] transformed) {
-        char[] text = src;
+    private fun transform(src: CharArray, zero: Int, nine: Int, offset: Int, transformed: BooleanArray): CharArray {
+        val text = src
 
         // offset > 0 when we are going from 0-9
         // FIXME(DMS): C:V should be shown as V:C in Farsi.
@@ -262,44 +261,45 @@ public class NumberShaper implements Serializable {
             }
         }
 */
-        int len = src.length;
-        for (int i = 0; i < len; i++) {
-            char c = text[i];
-            if (c >= zero && c <= nine) {
-                text[i] = (char) (c + offset);
-                transformed[0] = true;
+        val len = src.size
+        for (i in 0 until len) {
+            val c = text[i]
+            if (c.code >= zero && c.code <= nine) {
+                text[i] = (c.code + offset).toChar()
+                transformed[0] = true
             }
         }
 
-        return text;
+        return text
     }
 
     /**
      * Establish nine for the script. There are scripts that don't have zeroes.
-     * 
+     *
      * @return the representation for 9 in the script
      */
-    private char getNine() {
+    private fun getNine(): Char {
         if (nineShape == '\u0000') {
-            nineShape = '9';
-            Locale locale = LocaleProviderManager.getLocale();
-            if ("fa".equals(locale.getLanguage())) {
-                nineShape = '\u06f9';
-            } else if ("ar".equals(locale.getLanguage())) {
-                nineShape = '\u0669';
+            nineShape = '9'
+            val locale = LocaleProviderManager.getLocale()
+            if ("fa" == locale.language) {
+                nineShape = '۹'
+            } else if ("ar" == locale.language) {
+                nineShape = '٩'
             }
         }
-        return nineShape;
+        return nineShape
     }
-
 
     /**
      * Nine for this shaper.
      */
-    private char nineShape;
+    private var nineShape: Char = '\u0000'
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -8408052851113601251L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -8408052851113601251L
+    }
 }

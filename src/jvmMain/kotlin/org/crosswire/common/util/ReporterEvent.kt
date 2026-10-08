@@ -17,102 +17,79 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.EventObject;
+import java.util.EventObject
 
-import org.crosswire.common.icu.NumberShaper;
+import org.crosswire.common.icu.NumberShaper
 
 /**
  * An event indicating that some bit of data needs capturing.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ReporterEvent extends EventObject {
+open class ReporterEvent private constructor(source: Any?, private var ex: Throwable?, message: String?) : EventObject(source) {
     /**
      * Constructs an CaptureEvent object.
-     * 
+     *
      * @param source
-     *            The event originator (typically <code>this</code>)
+     *            The event originator (typically `this`)
      * @param ex
      *            An exception
      */
-    public ReporterEvent(Object source, Throwable ex) {
-        super(source);
-
-        this.ex = ex;
-        this.message = null;
-    }
+    constructor(source: Any?, ex: Throwable?) : this(source, ex, null)
 
     /**
      * Constructs an CaptureEvent object.
-     * 
+     *
      * @param source
-     *            The event originator (typically <code>this</code>)
+     *            The event originator (typically `this`)
      * @param message
      *            An message to log
      */
-    public ReporterEvent(Object source, String message) {
-        super(source);
-
-        this.ex = null;
-        this.message = new NumberShaper().shape(message);
-    }
+    constructor(source: Any?, message: String?) : this(source, null, NumberShaper().shape(message))
 
     /**
      * Returns a string specifying the source of the message.
-     * 
+     *
      * @return The Source as a String
      */
-    public String getSourceName() {
-        Object src = getSource();
-
-        Class<?> clazz;
-        if (src instanceof Class<?>) {
-            clazz = (Class<?>) src;
-        } else {
-            clazz = src.getClass();
+    open val sourceName: String
+        get() {
+            val src = getSource()
+            val clazz: Class<*> = if (src is Class<*>) {
+                src
+            } else {
+                src.javaClass
+            }
+            val full = clazz.name
+            val lastDot = full.lastIndexOf('.')
+            if (lastDot == -1) {
+                return full
+            }
+            return full.substring(lastDot + 1)
         }
-
-        String full = clazz.getName();
-        int lastDot = full.lastIndexOf('.');
-        if (lastDot == -1) {
-            return full;
-        }
-        return full.substring(lastDot + 1);
-    }
 
     /**
      * Returns the exception.
-     * 
+     *
      * @return the Exception
      */
-    public Throwable getException() {
-        return ex;
-    }
+    open val exception: Throwable?
+        get() = ex
 
     /**
      * Returns the message.
-     * 
+     *
      * @return the message
      */
-    public String getMessage() {
-        return message;
+    open val message: String? = message
+
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 4121978048640988213L
     }
-
-    /**
-     * The thing that went wrong
-     */
-    private Throwable ex;
-
-    /**
-     * The message that is being passed around
-     */
-    private String message;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 4121978048640988213L;
 }

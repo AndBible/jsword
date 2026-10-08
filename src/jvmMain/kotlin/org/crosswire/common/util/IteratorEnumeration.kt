@@ -17,49 +17,45 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.Enumeration
+import java.util.NoSuchElementException
 
 /**
  * Convert an Iterator into a Enumeration.
- * <p>
+ *
  * The only real difference between the 2 is the naming and that Enumeration
  * does not have the delete method.
- * </p>
- * 
- * @param <E> The type of the elements returned by this iterator
+ *
+ * @param E The type of the elements returned by this iterator
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class IteratorEnumeration<E> implements Enumeration<E> {
+class IteratorEnumeration<E>
+/**
+ * Create an Enumeration that proxies to an Iterator.
+ *
+ * @param it the iterator to wrap.
+ */
+(
     /**
-     * Create an Enumeration that proxies to an Iterator.
-     * 
-     * @param it the iterator to wrap.
+     * The Iterator that we are proxying to
      */
-    public IteratorEnumeration(Iterator<E> it) {
-        this.it = it;
-    }
-
+    private val it: Iterator<E>
+) : Enumeration<E> {
     /* (non-Javadoc)
      * @see java.util.Enumeration#hasMoreElements()
      */
-    public boolean hasMoreElements() {
-        return it.hasNext();
+    override fun hasMoreElements(): Boolean {
+        return it.hasNext()
     }
 
     /* (non-Javadoc)
      * @see java.util.Enumeration#nextElement()
      */
-    public E nextElement() throws NoSuchElementException {
-        return it.next();
+    @Throws(NoSuchElementException::class)
+    override fun nextElement(): E {
+        return it.next()
     }
-
-    /**
-     * The Iterator that we are proxying to
-     */
-    private Iterator<E> it;
 }

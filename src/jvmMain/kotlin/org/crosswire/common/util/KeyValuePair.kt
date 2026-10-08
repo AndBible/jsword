@@ -17,36 +17,24 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
 /**
  * Encapsulates the key and value together.
  * @author Chris Burrell
  */
-public class KeyValuePair {
-    private String key;
-    private String value;
-
-    /**
-     * @param key the key
-     * @param value the value
-     */
-   public KeyValuePair(String key, String value) {
-       this.key = key;
-       this.value = value;
-   }
-
+open class KeyValuePair
+/**
+ * @param key the key
+ * @param value the value
+ */
+(
     /**
      * @return the key
      */
-    public String getKey() {
-        return key;
-    }
-
+    open val key: String?,
     /**
      * @return the value
      */
-    public String getValue() {
-        return value;
-    }
-}
+    open val value: String?
+)

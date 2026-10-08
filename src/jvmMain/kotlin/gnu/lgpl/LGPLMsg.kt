@@ -17,28 +17,31 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package gnu.lgpl;
+package gnu.lgpl
 
-import org.crosswire.common.util.MsgBase;
+import org.crosswire.common.util.MsgBase
 
 /**
  * Compile safe Msg resource settings.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-final class LGPLMsg extends MsgBase {
-    /**
-     * Get the internationalized text, but return key if key is unknown.
-     * The text requires one or more parameters to be passed.
-     * 
-     * @param key the formatted key to internationalize
-     * @param params the parameters to format
-     * @return the formatted, internationalized text
-     */
-    public static String lookupText(String key, Object... params) {
-        return msg.lookup(key, params);
-    }
+internal class LGPLMsg : MsgBase() {
+    companion object {
+        /**
+         * Get the internationalized text, but return key if key is unknown.
+         * The text requires one or more parameters to be passed.
+         *
+         * @param key the formatted key to internationalize
+         * @param params the parameters to format
+         * @return the formatted, internationalized text
+         */
+        @JvmStatic
+        fun lookupText(key: String, vararg params: Any?): String {
+            return msg.lookup(key, *params)
+        }
 
-    private static MsgBase msg = new LGPLMsg();
+        private val msg: MsgBase = LGPLMsg()
+    }
 }

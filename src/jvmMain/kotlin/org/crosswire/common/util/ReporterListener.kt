@@ -17,30 +17,30 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.EventListener;
+import java.util.EventListener
 
 /**
  * ReporterListener informs users of problems and messages.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface ReporterListener extends EventListener {
+interface ReporterListener : EventListener {
     /**
      * Called whenever Reporter.informUser() is passed an Exception
-     * 
+     *
      * @param ev
      *            The event describing the Exception
      */
-    void reportException(ReporterEvent ev);
+    fun reportException(ev: ReporterEvent)
 
     /**
      * Called whenever Reporter.informUser() is passed a message
-     * 
+     *
      * @param ev
      *            The event describing the message
      */
-    void reportMessage(ReporterEvent ev);
+    fun reportMessage(ev: ReporterEvent)
 }

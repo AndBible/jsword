@@ -17,28 +17,31 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword;
+package org.crosswire.jsword
 
-import org.crosswire.common.util.MsgBase;
+import org.crosswire.common.util.MsgBase
 
 /**
  * Compile safe Msg resource settings.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class JSOtherMsg extends MsgBase {
-    /**
-     * Get the internationalized text, but return key if key is unknown.
-     * The text requires one or more parameters to be passed.
-     * 
-     * @param key the formatted key to internationalize
-     * @param params the parameters to use in creating the message
-     * @return the formatted, internationalized text
-     */
-    public static String lookupText(String key, Object... params) {
-        return msg.lookup(key, params);
-    }
+class JSOtherMsg : MsgBase() {
+    companion object {
+        /**
+         * Get the internationalized text, but return key if key is unknown.
+         * The text requires one or more parameters to be passed.
+         *
+         * @param key the formatted key to internationalize
+         * @param params the parameters to use in creating the message
+         * @return the formatted, internationalized text
+         */
+        @JvmStatic
+        fun lookupText(key: String, vararg params: Any?): String {
+            return msg.lookup(key, *params)
+        }
 
-    private static MsgBase msg = new JSOtherMsg();
+        private val msg: MsgBase = JSOtherMsg()
+    }
 }

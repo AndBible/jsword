@@ -16,160 +16,146 @@
  *
  * © CrossWire Bible Society, 2015 - 2016
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.AbstractCollection;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.AbstractCollection
+import java.util.ArrayList
+import java.util.Comparator
+import java.util.TreeSet
 
 /**
  * Defines a List that maintains the uniqueness of elements
  *
- * @param <E> The type of the element in this ListSet.
+ * @param E The type of the element in this ListSet.
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class ListSet<E> extends AbstractCollection<E> implements Set<E> {
-
+@Suppress("UNCHECKED_CAST")
+open class ListSet<E> : AbstractCollection<E>, MutableSet<E> {
     /**
      * Constructs a new, empty list set.
      */
-    public ListSet() {
-        this(null);
-    }
+    constructor() : this(null)
 
     /**
      * Constructs a new, empty list set, sorted according to the specified
-     * comparator.  All elements inserted into the set must be <i>mutually
-     * comparable</i> by the specified comparator: {@code comparator.compare(e1,
-     * e2)} must not throw a {@code ClassCastException} for any elements
-     * {@code e1} and {@code e2} in the set.  If the user attempts to add
+     * comparator.  All elements inserted into the set must be *mutually
+     * comparable* by the specified comparator: `comparator.compare(e1,
+     * e2)` must not throw a `ClassCastException` for any elements
+     * `e1` and `e2` in the set.  If the user attempts to add
      * an element to the set that violates this constraint, the
-     * {@code add} call will throw a {@code ClassCastException}.
+     * `add` call will throw a `ClassCastException`.
      *
      * @param comparator the comparator that will be used to order this set.
-     *        If {@code null}, the {@linkplain Comparable natural
-     *        ordering} of the elements will be used.
+     *        If `null`, the natural
+     *        ordering of the elements will be used.
      */
-    public ListSet(Comparator<? super E> comparator) {
-        super();
-        list = new ArrayList();
-        set  = new TreeSet(comparator);
+    constructor(comparator: Comparator<in E>?) : super() {
+        list = ArrayList()
+        set = TreeSet(comparator)
     }
 
-    @Override
-    public boolean contains(Object o) {
-        return set.contains(o);
+    override fun contains(element: E): Boolean {
+        return set.contains(element)
     }
 
-    @Override
-    public boolean add(E e) {
-        boolean added = set.add(e);
+    override fun add(element: E): Boolean {
+        val added = set.add(element)
         if (added) {
-            list.add(e);
+            list.add(element)
         }
-        return added;
+        return added
     }
 
-    @Override
-    public boolean remove(Object o) {
-        boolean removed = set.remove(o);
+    override fun remove(element: E): Boolean {
+        val removed = set.remove(element)
         if (removed) {
-            list.remove(o);
+            list.remove(element)
         }
-        return removed;
+        return removed
     }
 
-    public E remove(int index) {
-        E t = list.get(index);
-        remove(t);
-        return t;
+    open fun remove(index: Int): E {
+        val t = list[index]
+        remove(t)
+        return t
     }
 
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        return set.containsAll(c);
+    override fun containsAll(elements: Collection<E>): Boolean {
+        return set.containsAll(elements)
     }
 
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        boolean removed = false;
-        Iterator<E> it = this.iterator();
+    override fun retainAll(elements: Collection<E>): Boolean {
+        var removed = false
+        val it = this.iterator()
         while (it.hasNext()) {
-            E next = it.next();
-            if (!c.contains(next)) {
-                it.remove();
-                removed = true;
+            val next = it.next()
+            if (!elements.contains(next)) {
+                it.remove()
+                removed = true
             }
         }
-        return removed;
+        return removed
     }
 
-    @Override
-    public int size() {
-        return list.size();
+    override val size: Int
+        @Suppress("INAPPLICABLE_JVM_NAME")
+        @JvmName("size")
+        get() = list.size
+
+    override fun isEmpty(): Boolean {
+        return list.isEmpty()
     }
 
-    @Override
-    public boolean isEmpty() {
-        return list.isEmpty();
+    override fun clear() {
+        set.clear()
+        list.clear()
     }
 
-    @Override
-    public void clear() {
-        set.clear();
-        list.clear();
+    open fun get(index: Int): E {
+        return list[index]
     }
 
-    public E get(int index) {
-        return list.get(index);
+    open fun get(index: Int, defaultValue: E): E {
+        val value = list[index]
+        return if (value != null) value else defaultValue
     }
 
-    public E get(int index, E defaultValue) {
-        E value = list.get(index);
-        return value != null ? value : defaultValue;
-    }
-
-    @Override
-    public Iterator<E> iterator() {
+    override fun iterator(): MutableIterator<E> {
         // Need to properly implement remove
-        return new Iterator<E>() {
-            public boolean hasNext() {
-                return itr.hasNext();
+        return object : MutableIterator<E> {
+            override fun hasNext(): Boolean {
+                return itr.hasNext()
             }
 
-            public E next() {
-                E next = itr.next();
-                current = next;
-                return next;
+            override fun next(): E {
+                val next = itr.next()
+                current = next
+                return next
             }
 
-            public void remove() {
-                itr.remove();
-                set.remove(current);
-                current = null;
+            override fun remove() {
+                itr.remove()
+                set.remove(current as E)
+                current = null
             }
 
-            private Iterator<E> itr = list.iterator();
-            private E current;
-        };
+            private val itr: MutableIterator<E> = list.iterator()
+            private var current: E? = null
+        }
     }
 
-    @Override
-    public Object[] toArray() {
-        return list.toArray();
+    override fun toArray(): Array<Any?> {
+        return (list as java.util.Collection<E>).toArray()
     }
 
-    @Override
-    public <T> T[] toArray(T[] a) {
-        return list.toArray(a);
+    override fun <T> toArray(a: Array<T>): Array<T> {
+        return (list as java.util.Collection<E>).toArray(a)
     }
 
-    protected List<E> list;
-    protected Set<E> set;
+    @JvmField
+    protected var list: MutableList<E>
+
+    @JvmField
+    protected var set: MutableSet<E>
 }
