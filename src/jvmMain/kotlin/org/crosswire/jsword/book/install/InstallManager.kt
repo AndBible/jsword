@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.book.install
 
+import org.crosswire.common.util.CWClassLoader
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.FileUtil
 import org.crosswire.common.util.NetUtil
@@ -65,9 +66,7 @@ class InstallManager {
      */
     init {
         try {
-            val sitemap: PropertyMap = preloadedSitemap ?: PropertyMap().apply {
-                putAll(PropertiesParser.parse(KswordResources.bytes("InstallManager.plugin")!!, PropertiesCharset.LATIN1))
-            }
+            val sitemap: PropertyMap = preloadedSitemap ?: loadSitemap()
             @Suppress("UNCHECKED_CAST")
             factories = PluginRegistry.entries(InstallerFactory::class).associateTo(LinkedHashMap()) { it.name to (it.implClass.java as Class<InstallerFactory>) }
             var i = 0
@@ -95,6 +94,20 @@ class InstallManager {
             }
         } catch (ex: IOException) {
             Reporter.informUser(this, ex)
+        }
+    }
+
+    /**
+     * The user's saved site list (`<FQN>.plugin`, written by [save] into a JSword home directory) overrides
+     * the embedded default, as it did when the default was a classpath resource.
+     */
+    private fun loadSitemap(): PropertyMap {
+        val saved = CWClassLoader.findHomeResource(javaClass.name + FileUtil.EXTENSION_PLUGIN)
+        if (saved != null) {
+            return NetUtil.loadProperties(saved)
+        }
+        return PropertyMap().apply {
+            putAll(PropertiesParser.parse(KswordResources.bytes("InstallManager.plugin")!!, PropertiesCharset.LATIN1))
         }
     }
 
