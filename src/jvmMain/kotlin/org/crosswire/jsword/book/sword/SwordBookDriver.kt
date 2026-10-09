@@ -36,8 +36,8 @@ import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.basic.AbstractBookDriver
 import org.crosswire.jsword.index.IndexManagerFactory
 import org.crosswire.jsword.index.IndexStatus
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * This represents all of the Sword Books (aka modules).
@@ -259,6 +259,6 @@ open class SwordBookDriver
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(SwordBookDriver::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(SwordBookDriver::class)
     }
 }

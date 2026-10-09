@@ -26,8 +26,8 @@ import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.jsword.passage.DefaultKeyList
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.TreeKey
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.util.ArrayList
 
@@ -231,6 +231,6 @@ open class GenBookBackend
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(GenBookBackend::class.java)
+        private val log: Logger = LoggerFactory.getLogger(GenBookBackend::class)
     }
 }

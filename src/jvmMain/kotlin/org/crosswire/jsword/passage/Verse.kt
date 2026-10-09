@@ -28,7 +28,7 @@ import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.BibleNames
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
@@ -660,7 +660,7 @@ class Verse : VerseKey<Verse>, Cloneable {
          */
         private var shaper = NumberShaper()
 
-        private val log = LoggerFactory.getLogger(Verse::class.java)
+        private val log = LoggerFactory.getLogger(Verse::class)
 
         /**
          * To make serialization work across new versions

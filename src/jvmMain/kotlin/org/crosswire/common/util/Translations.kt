@@ -22,7 +22,6 @@ package org.crosswire.common.util
 import java.io.IOException
 import java.util.Locale
 import org.crosswire.common.config.ChoiceFactory
-import org.slf4j.LoggerFactory
 
 /**
  * Translations provides a list of locales that BibleDesktop has been translated
@@ -287,6 +286,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log: org.slf4j.Logger = LoggerFactory.getLogger(Translations::class.java)
+        private val log: Logger = LoggerFactory.getLogger(Translations::class)
     }
 }

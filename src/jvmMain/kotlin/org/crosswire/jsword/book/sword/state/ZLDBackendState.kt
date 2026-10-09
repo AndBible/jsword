@@ -26,8 +26,8 @@ import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
@@ -167,6 +167,6 @@ open class ZLDBackendState : RawLDBackendState {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(ZLDBackendState::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(ZLDBackendState::class)
     }
 }

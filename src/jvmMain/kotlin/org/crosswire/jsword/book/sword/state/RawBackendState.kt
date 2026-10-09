@@ -30,8 +30,8 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordConstants
 import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.jsword.versification.Testament
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
@@ -217,6 +217,6 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(RawBackendState::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawBackendState::class)
     }
 }

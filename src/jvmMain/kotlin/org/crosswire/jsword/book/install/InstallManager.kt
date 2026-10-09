@@ -27,8 +27,8 @@ import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.ReflectionUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.common.util.jswordAssert
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 import java.io.IOException
 import java.util.Collections
@@ -326,6 +326,6 @@ class InstallManager {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(InstallManager::class.java)
+        private val log: Logger = LoggerFactory.getLogger(InstallManager::class)
     }
 }

@@ -19,8 +19,8 @@
  */
 package org.crosswire.jsword.book
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * Defines a single default book.
@@ -177,6 +177,6 @@ open class DefaultBook(bookList: BookList, bookFilter: BookFilter) {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(DefaultBook::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(DefaultBook::class)
     }
 }

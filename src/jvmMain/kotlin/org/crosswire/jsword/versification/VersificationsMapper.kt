@@ -31,8 +31,8 @@ import org.crosswire.jsword.passage.Verse
 import org.crosswire.jsword.passage.VerseKey
 import org.crosswire.jsword.versification.system.SystemKJVA
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * VersificationMapper maps a Verse or a Passage in one Versification (v11n)
@@ -239,7 +239,7 @@ private constructor() {
         private var instance: VersificationsMapper? = null
         private val KJV: Versification = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)!!
         private val MAPPERS: MutableMap<Versification?, VersificationToKJVMapper?> = HashMap()
-        private val LOGGER: Logger = LoggerFactory.getLogger(VersificationsMapper::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(VersificationsMapper::class)
 
         /**
          * @return a singleton instance of the mapper -

@@ -37,8 +37,8 @@ import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * This is a base class to help with some of the common implementation details
@@ -1363,7 +1363,7 @@ abstract class AbstractPassage : Passage, Cloneable {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(AbstractPassage::class.java)
+        private val log: Logger = LoggerFactory.getLogger(AbstractPassage::class)
 
         /**
          * Serialization type constant for a BitWise layout

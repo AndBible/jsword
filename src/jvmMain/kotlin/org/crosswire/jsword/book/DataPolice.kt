@@ -20,8 +20,8 @@
 package org.crosswire.jsword.book
 
 import org.crosswire.jsword.passage.Key
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * When we can't convert some source data then the user doesn't really care and
@@ -92,6 +92,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(DataPolice::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(DataPolice::class)
     }
 }

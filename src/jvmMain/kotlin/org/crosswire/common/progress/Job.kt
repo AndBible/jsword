@@ -25,8 +25,8 @@ package org.crosswire.common.progress
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.PropertyMap
 import org.crosswire.jsword.JSMsg
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.net.URI
 import java.util.ArrayList
@@ -548,6 +548,6 @@ internal constructor(
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(Job::class.java)
+        private val log: Logger = LoggerFactory.getLogger(Job::class)
     }
 }

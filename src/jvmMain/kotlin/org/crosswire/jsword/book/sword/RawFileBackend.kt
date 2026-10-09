@@ -28,8 +28,8 @@ import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.versification.Testament
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -425,6 +425,6 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
     }
 
     private companion object {
-        private val log: Logger = LoggerFactory.getLogger(RawFileBackend::class.java)
+        private val log: Logger = LoggerFactory.getLogger(RawFileBackend::class)
     }
 }

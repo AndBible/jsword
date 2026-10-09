@@ -33,8 +33,6 @@ import java.io.Writer
 import java.util.ArrayList
 import java.util.Collections
 import java.util.TreeMap
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * A utility class for loading an INI style, Multimap configuration file.
@@ -629,6 +627,6 @@ internal constructor() {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(Ini::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(Ini::class)
     }
 }

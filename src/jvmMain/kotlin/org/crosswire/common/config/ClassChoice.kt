@@ -20,7 +20,7 @@
 package org.crosswire.common.config
 
 import org.crosswire.common.util.ClassUtil
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A class to convert between strings and objects of a type.
@@ -53,6 +53,6 @@ open class ClassChoice : AbstractReflectedChoice() {
         /**
          * The log stream
          */
-        private val log = LoggerFactory.getLogger(ClassChoice::class.java)
+        private val log = LoggerFactory.getLogger(ClassChoice::class)
     }
 }

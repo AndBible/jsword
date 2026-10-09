@@ -28,7 +28,7 @@ import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
 import org.jdom2.Element
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A helper for when we need to be a choice created dynamically.
@@ -272,6 +272,6 @@ abstract class AbstractReflectedChoice : Choice {
         /**
          * The log stream
          */
-        private val log = LoggerFactory.getLogger(AbstractReflectedChoice::class.java)
+        private val log = LoggerFactory.getLogger(AbstractReflectedChoice::class)
     }
 }

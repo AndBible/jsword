@@ -27,8 +27,8 @@ import org.crosswire.common.util.CollectionUtil
 import org.crosswire.common.util.PluginUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSOtherMsg
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * The Books class (along with Book) is the central point of contact between the
@@ -269,7 +269,7 @@ private constructor() : AbstractBookList() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(Books::class.java)
+        private val log: Logger = LoggerFactory.getLogger(Books::class)
 
         /**
          * The singleton instance.

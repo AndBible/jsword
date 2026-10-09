@@ -27,7 +27,6 @@ import java.util.ResourceBundle
 
 import org.crosswire.common.icu.NumberShaper
 import org.crosswire.jsword.internationalisation.LocaleProviderManager
-import org.slf4j.LoggerFactory
 
 /**
  * A base class for implementing type safe internationalization (i18n) that is
@@ -149,6 +148,6 @@ protected constructor() {
         /**
          * The log stream
          */
-        private val log = LoggerFactory.getLogger(MsgBase::class.java)
+        private val log = LoggerFactory.getLogger(MsgBase::class)
     }
 }

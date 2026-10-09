@@ -27,8 +27,8 @@ import java.util.Date
 import org.crosswire.common.util.ClassUtil
 import org.crosswire.common.util.ReflectionUtil
 import org.crosswire.common.util.jswordAssert
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * DateFormat provides a wrapper of some of DateFormat and SimpleDateFormat
@@ -145,7 +145,7 @@ private constructor() {
          */
         const val DEFAULT: Int = MEDIUM
 
-        private val LOGGER: Logger = LoggerFactory.getLogger(DateFormatter::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(DateFormatter::class)
         private const val DEFAULT_SIMPLE_DATE_FORMAT_CLASS = "com.ibm.icu.text.SimpleDateFormat"
         private const val DEFAULT_DATE_FORMAT_CLASS = "com.ibm.icu.text.DateFormat"
 

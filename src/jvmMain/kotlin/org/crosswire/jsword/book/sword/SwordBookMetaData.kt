@@ -53,8 +53,8 @@ import org.crosswire.jsword.book.filter.SourceFilterFactory
 import org.crosswire.jsword.versification.system.Versifications
 import org.jdom2.Document
 import org.jdom2.Element
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A utility class for loading and representing Sword book configs.
@@ -1272,6 +1272,6 @@ class SwordBookMetaData : AbstractBookMetaData {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(SwordBookMetaData::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(SwordBookMetaData::class)
     }
 }

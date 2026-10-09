@@ -25,8 +25,8 @@ package org.crosswire.jsword.book.sword.state
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.BlockType
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.util.HashMap
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -253,7 +253,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     companion object {
         @Volatile
         private var manager: OpenFileStateManager? = null
-        private val LOGGER: Logger = LoggerFactory.getLogger(OpenFileStateManager::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(OpenFileStateManager::class)
 
         /**
          * Allow the caller to initialize with their own settings. Should the OpenFileStateManager already be initialized

@@ -19,8 +19,6 @@
  */
 package org.crosswire.common.util
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.util.zip.ZipFile
@@ -220,6 +218,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(ClassUtil::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(ClassUtil::class)
     }
 }

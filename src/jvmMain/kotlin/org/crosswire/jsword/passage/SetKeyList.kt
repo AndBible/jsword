@@ -19,8 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A Key that uses a Set of Keys as it's store of data.
@@ -233,6 +233,6 @@ open class SetKeyList : AbstractKeyList {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(SetKeyList::class.java)
+        private val log: Logger = LoggerFactory.getLogger(SetKeyList::class)
     }
 }

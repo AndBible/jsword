@@ -42,8 +42,8 @@ import org.crosswire.jsword.passage.VerseKey
 import org.crosswire.jsword.passage.VerseRange
 import org.crosswire.jsword.versification.system.SystemKJVA
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A Versification mapper allows you to a map a given verse to the KJV versification,
@@ -671,6 +671,6 @@ open class VersificationToKJVMapper {
 
     private companion object {
         private val KJV = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)!!
-        private val LOGGER: Logger = LoggerFactory.getLogger(VersificationToKJVMapper::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(VersificationToKJVMapper::class)
     }
 }

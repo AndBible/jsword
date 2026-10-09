@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.util
 
-import org.slf4j.LoggerFactory
 
 /**
  * Conversions between various types and Strings.
@@ -178,6 +177,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log = LoggerFactory.getLogger(Convert::class.java)
+        private val log = LoggerFactory.getLogger(Convert::class)
     }
 }

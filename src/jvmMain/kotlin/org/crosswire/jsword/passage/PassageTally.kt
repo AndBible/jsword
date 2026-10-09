@@ -29,8 +29,8 @@ import java.util.TreeSet
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.versification.Versification
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * Similar to a Passage, but that stores a ranking for each of the Verses that
@@ -1135,7 +1135,7 @@ open class PassageTally : AbstractPassage {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(PassageTally::class.java)
+        private val log: Logger = LoggerFactory.getLogger(PassageTally::class)
 
         /**
          * Serialization ID

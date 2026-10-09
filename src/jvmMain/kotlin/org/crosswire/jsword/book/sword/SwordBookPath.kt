@@ -33,8 +33,8 @@ import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.StringUtil
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.Books
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * This represents all of the Sword Books (aka modules).
@@ -461,6 +461,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(SwordBookPath::class.java)
+        private val log: Logger = LoggerFactory.getLogger(SwordBookPath::class)
     }
 }

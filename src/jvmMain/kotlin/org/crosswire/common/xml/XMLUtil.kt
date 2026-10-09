@@ -32,7 +32,7 @@ import org.jdom2.Document
 import org.jdom2.JDOMException
 import org.jdom2.input.SAXBuilder
 import org.jdom2.input.sax.XMLReaders
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.LoggerFactory
 import org.xml.sax.Attributes
 import org.xml.sax.ContentHandler
 import org.xml.sax.SAXException
@@ -544,5 +544,5 @@ object XMLUtil {
     /**
      * The log stream
      */
-    private val log = LoggerFactory.getLogger(XMLUtil::class.java)
+    private val log = LoggerFactory.getLogger(XMLUtil::class)
 }

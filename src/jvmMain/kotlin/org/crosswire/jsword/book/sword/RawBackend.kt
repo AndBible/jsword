@@ -31,8 +31,8 @@ import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.passage.RocketPassage
 import org.crosswire.jsword.versification.Testament
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.io.RandomAccessFile
 
@@ -327,6 +327,6 @@ open class RawBackend<T : RawBackendState>
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(RawBackend::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawBackend::class)
     }
 }

@@ -42,8 +42,8 @@ import org.crosswire.jsword.versification.VersificationsMapper
 import org.crosswire.jsword.versification.system.Versifications
 import org.jdom2.Content
 import org.jdom2.Element
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.util.HashSet
 import java.util.LinkedHashSet
 
@@ -342,6 +342,6 @@ abstract class AbstractPassageBook
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(AbstractPassageBook::class.java)
+        private val log: Logger = LoggerFactory.getLogger(AbstractPassageBook::class)
     }
 }

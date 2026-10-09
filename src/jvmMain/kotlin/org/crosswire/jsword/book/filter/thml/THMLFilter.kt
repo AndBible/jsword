@@ -38,8 +38,8 @@ import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
 import org.jdom2.Content
 import org.jdom2.Element
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import org.xml.sax.SAXParseException
@@ -185,6 +185,6 @@ open class THMLFilter : SourceFilter, Cloneable {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(THMLFilter::class.java)
+        private val log: Logger = LoggerFactory.getLogger(THMLFilter::class)
     }
 }

@@ -33,8 +33,8 @@ import org.crosswire.jsword.passage.RocketPassage
 import org.crosswire.jsword.versification.Testament
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.system.Versifications
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.io.RandomAccessFile
 
@@ -535,6 +535,6 @@ open class ZVerseBackend
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(ZVerseBackend::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(ZVerseBackend::class)
     }
 }

@@ -33,8 +33,8 @@ import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.passage.RestrictionType
 import org.crosswire.jsword.passage.Verse
 import org.jdom2.Content
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
@@ -322,6 +322,6 @@ abstract class AbstractBackend<T : OpenFileState> : StatefulFileBackedBackend<T>
     private var bmd: SwordBookMetaData? = null
 
     private companion object {
-        private val LOGGER: Logger = LoggerFactory.getLogger(AbstractBackend::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(AbstractBackend::class)
     }
 }

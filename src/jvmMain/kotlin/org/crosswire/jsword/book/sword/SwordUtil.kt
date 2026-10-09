@@ -23,8 +23,8 @@ import org.crosswire.common.util.NetUtil
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookMetaData
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.io.UnsupportedEncodingException
@@ -431,6 +431,6 @@ class SwordUtil private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(SwordUtil::class.java)
+        private val log: Logger = LoggerFactory.getLogger(SwordUtil::class)
     }
 }

@@ -23,8 +23,8 @@ import org.crosswire.common.util.IOUtil
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -173,6 +173,6 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(RawFileBackendState::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawFileBackendState::class)
     }
 }

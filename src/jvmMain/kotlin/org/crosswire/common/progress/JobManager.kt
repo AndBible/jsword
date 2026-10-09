@@ -19,8 +19,8 @@
  */
 package org.crosswire.common.progress
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
@@ -181,6 +181,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(JobManager::class.java)
+        private val log: Logger = LoggerFactory.getLogger(JobManager::class)
     }
 }

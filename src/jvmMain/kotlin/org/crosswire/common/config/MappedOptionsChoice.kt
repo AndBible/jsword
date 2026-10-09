@@ -23,7 +23,7 @@ import java.util.ResourceBundle
 import java.util.TreeMap
 import org.crosswire.jsword.JSOtherMsg
 import org.jdom2.Element
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A class to convert between strings and objects of a type.
@@ -79,6 +79,6 @@ open class MappedOptionsChoice : AbstractReflectedChoice(), MappedChoice<Any?, A
         /**
          * The log stream
          */
-        private val log = LoggerFactory.getLogger(MappedOptionsChoice::class.java)
+        private val log = LoggerFactory.getLogger(MappedOptionsChoice::class)
     }
 }

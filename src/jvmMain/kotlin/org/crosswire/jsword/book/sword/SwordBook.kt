@@ -39,8 +39,8 @@ import org.crosswire.jsword.passage.VerseKey
 import org.jdom2.Attribute
 import org.jdom2.Content
 import org.jdom2.Element
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * SwordBook is a base class for all verse based Sword type books.
@@ -325,6 +325,6 @@ open class SwordBook
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(SwordBook::class.java)
+        private val log: Logger = LoggerFactory.getLogger(SwordBook::class)
     }
 }

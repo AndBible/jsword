@@ -45,8 +45,8 @@ import org.crosswire.jsword.book.filter.gbf.GBFTags.TextTag
 import org.crosswire.jsword.book.filter.gbf.GBFTags.TitleStartTag
 import org.crosswire.jsword.book.filter.gbf.GBFTags.UnderlineStartTag
 import org.crosswire.jsword.passage.Key
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * This class is a convenience to get GBF Tags.
@@ -384,6 +384,6 @@ class GBFTagBuilders private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(GBFTagBuilders::class.java)
+        private val log: Logger = LoggerFactory.getLogger(GBFTagBuilders::class)
     }
 }

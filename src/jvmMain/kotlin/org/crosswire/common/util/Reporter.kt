@@ -22,8 +22,6 @@ package org.crosswire.common.util
 import java.util.concurrent.CopyOnWriteArrayList
 
 import org.crosswire.jsword.JSMsg
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * This package looks after Exceptions and messages as they happen. It would be
@@ -75,7 +73,7 @@ private constructor() {
         @JvmStatic
         fun informUser(source: Any?, prob: Throwable) {
             val cat: Class<*> = if (source != null) source.javaClass else Reporter::class.java
-            val templog = LoggerFactory.getLogger(cat)
+            val templog = LoggerFactory.getLogger(cat.kotlin)
 
             templog.warn(prob.message, prob)
 
@@ -96,7 +94,7 @@ private constructor() {
         @JvmStatic
         fun informUser(source: Any?, prob: LucidException) {
             val cat: Class<*> = if (source != null) source.javaClass else Reporter::class.java
-            val templog = LoggerFactory.getLogger(cat)
+            val templog = LoggerFactory.getLogger(cat.kotlin)
 
             templog.warn(prob.message, prob)
 
@@ -117,7 +115,7 @@ private constructor() {
         @JvmStatic
         fun informUser(source: Any?, prob: LucidRuntimeException) {
             val cat: Class<*> = if (source != null) source.javaClass else Reporter::class.java
-            val templog = LoggerFactory.getLogger(cat)
+            val templog = LoggerFactory.getLogger(cat.kotlin)
 
             templog.warn(prob.message, prob)
 
@@ -219,7 +217,7 @@ private constructor() {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(Reporter::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(Reporter::class)
     }
 
     /**

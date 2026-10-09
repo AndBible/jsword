@@ -19,8 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A Key that knows where the data is in the real file.
@@ -228,7 +228,7 @@ open class TreeKey : AbstractKeyList {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(TreeKey::class.java)
+        private val log: Logger = LoggerFactory.getLogger(TreeKey::class)
 
         /**
          * Serialization ID

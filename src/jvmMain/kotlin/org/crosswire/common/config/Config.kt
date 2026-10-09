@@ -136,7 +136,7 @@ import org.crosswire.common.util.Reporter
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
 import org.jdom2.Document
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * Config is the core part of the configuration system; it is simply a
@@ -627,6 +627,6 @@ open class Config
         /**
          * The log stream
          */
-        private val LOGGER = LoggerFactory.getLogger(Config::class.java)
+        private val LOGGER = LoggerFactory.getLogger(Config::class)
     }
 }

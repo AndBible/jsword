@@ -23,8 +23,8 @@ import org.crosswire.common.util.PluginUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.index.IndexManagerFactory
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 import java.io.IOException
 
@@ -73,6 +73,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(SearcherFactory::class.java)
+        private val log: Logger = LoggerFactory.getLogger(SearcherFactory::class)
     }
 }

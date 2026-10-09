@@ -32,8 +32,8 @@ import org.crosswire.jsword.versification.Versification
 import org.jdom2.Content
 import org.jdom2.Element
 import org.jdom2.Text
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 import java.util.regex.Pattern
 
@@ -561,7 +561,7 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(OSISUtil::class.java)
+        private val log: Logger = LoggerFactory.getLogger(OSISUtil::class)
 
         private val factory: OSISFactory = OSISFactory()
 

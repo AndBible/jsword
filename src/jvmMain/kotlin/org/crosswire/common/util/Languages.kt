@@ -26,8 +26,6 @@ import java.util.Locale
 import java.util.MissingResourceException
 import java.util.ResourceBundle
 import org.crosswire.jsword.internationalisation.LocaleProviderManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * A utility class that converts bcp-47 codes as supported by {@link Language} to their
@@ -198,5 +196,5 @@ object Languages {
      */
     // was protected static (package access in Java): Kotlin has no protected members in an object, so public
     @JvmField
-    val log: Logger = LoggerFactory.getLogger(Languages::class.java)
+    val log: Logger = LoggerFactory.getLogger(Languages::class)
 }

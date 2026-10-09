@@ -21,8 +21,6 @@ package org.crosswire.common.util
 
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -985,6 +983,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val LOGGER: Logger = LoggerFactory.getLogger(NetUtil::class.java)
+        private val LOGGER: Logger = LoggerFactory.getLogger(NetUtil::class)
     }
 }

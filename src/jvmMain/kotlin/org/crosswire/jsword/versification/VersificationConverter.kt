@@ -8,8 +8,8 @@ import org.crosswire.jsword.passage.RangedPassage
 import org.crosswire.jsword.passage.RestrictionType
 import org.crosswire.jsword.passage.Verse
 import org.crosswire.jsword.passage.VerseRange
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /** Manage conversion of verses to a specific versification
  *
@@ -99,6 +99,6 @@ open class VersificationConverter {
     }
 
     private companion object {
-        private val log: Logger = LoggerFactory.getLogger(VersificationConverter::class.java)
+        private val log: Logger = LoggerFactory.getLogger(VersificationConverter::class)
     }
 }

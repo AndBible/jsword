@@ -63,8 +63,8 @@ import org.crosswire.jsword.book.sword.SwordBookDriver
 import org.crosswire.jsword.book.sword.SwordBookMetaData
 import org.crosswire.jsword.book.sword.SwordBookPath
 import org.crosswire.jsword.book.sword.SwordConstants
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * The AbstractSwordInstaller provides for the common implementation of derived classes.
@@ -768,7 +768,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
          * The log stream
          */
         @JvmField
-        protected val log: Logger = LoggerFactory.getLogger(AbstractSwordInstaller::class.java)
+        protected val log: Logger = LoggerFactory.getLogger(AbstractSwordInstaller::class)
 
         /**
          * What are we using as a temp filename?

@@ -19,8 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A default implementation of Key.
@@ -196,6 +196,6 @@ open class DefaultKeyList : AbstractKeyList {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(DefaultKeyList::class.java)
+        private val log: Logger = LoggerFactory.getLogger(DefaultKeyList::class)
     }
 }

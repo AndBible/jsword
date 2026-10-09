@@ -52,8 +52,8 @@ import org.crosswire.jsword.passage.RestrictionType
 import org.crosswire.jsword.passage.SetKeyList
 import org.crosswire.jsword.versification.system.Versifications
 import org.jdom2.Content
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 
 /**
  * A Dictionary that displays daily Readings.
@@ -267,6 +267,6 @@ open class ReadingsBook
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(ReadingsBook::class.java)
+        private val log: Logger = LoggerFactory.getLogger(ReadingsBook::class)
     }
 }

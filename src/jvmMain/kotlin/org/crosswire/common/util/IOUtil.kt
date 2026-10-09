@@ -21,8 +21,6 @@ package org.crosswire.common.util
 
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.crosswire.jsword.JSMsg
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -202,6 +200,6 @@ private constructor() {
         /**
          * The log stream
          */
-        private val log: Logger = LoggerFactory.getLogger(IOUtil::class.java)
+        private val log: Logger = LoggerFactory.getLogger(IOUtil::class)
     }
 }
