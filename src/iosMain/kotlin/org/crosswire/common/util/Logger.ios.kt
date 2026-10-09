@@ -1,6 +1,7 @@
 package org.crosswire.common.util
 
 import platform.Foundation.NSLog
+import platform.Foundation.NSString
 import kotlin.reflect.KClass
 
 internal actual fun loggerName(type: KClass<*>): String = type.qualifiedName ?: type.simpleName ?: "ksword"
@@ -27,6 +28,8 @@ private class NSLogLogger(override val name: String) : Logger {
             append(level.name).append(' ').append(name).append(" - ").append(r.message)
             r.throwable?.let { append('\n').append(it.stackTraceToString()) }
         }
-        NSLog("%@", text)
+        // NSLog is variadic: a Kotlin String passed for %@ is not an Objective-C object there and crashes the
+        // process (SIGSEGV); `as NSString` passes a real NSString (%s would garble non-ASCII text).
+        NSLog("%@", text as NSString)
     }
 }
