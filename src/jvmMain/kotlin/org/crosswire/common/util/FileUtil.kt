@@ -20,6 +20,7 @@
 package org.crosswire.common.util
 
 import java.io.File
+import okio.Path.Companion.toOkioPath
 
 /**
  * .
@@ -42,36 +43,7 @@ private constructor() {
          */
         @JvmStatic
         fun delete(file: File): MutableList<File> {
-            val failures: MutableList<File> = ArrayList()
-            if (file.isDirectory) {
-                deleteContents(file, failures)
-            }
-            if (!file.delete()) {
-                failures.add(file)
-            }
-            return failures
-        }
-
-        /**
-         * Recursive delete files.
-         *
-         * @param dirPath
-         *            directory of files to delete
-         * @param failures
-         *            the list of files that could not be deleted
-         */
-        private fun deleteContents(dirPath: File, failures: MutableList<File>) {
-            val ls = dirPath.list()
-
-            for (idx in 0 until ls.size) {
-                val file = File(dirPath, ls[idx])
-                if (file.isDirectory) {
-                    deleteContents(file, failures)
-                }
-                if (!file.delete()) {
-                    failures.add(file)
-                }
-            }
+            return KFiles.deleteRecursively(file.toOkioPath()).map { it.toFile() }.toMutableList()
         }
 
         /**

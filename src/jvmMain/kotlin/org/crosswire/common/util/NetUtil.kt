@@ -19,6 +19,7 @@
  */
 package org.crosswire.common.util
 
+import okio.Path.Companion.toPath
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
 import java.io.File
@@ -164,18 +165,24 @@ private constructor() {
         fun makeDirectory(orig: URI) {
             checkFileURI(orig)
 
-            val file = File(orig.path)
+            val path = orig.path.toPath()
 
             // If it is a file, except
-            if (file.isFile) {
+            if (KFiles.isFile(path)) {
                 // TRANSLATOR: Error condition: A directory was expected, but a file was found. {0} is a placeholder for the file.
                 throw MalformedURLException(JSMsg.gettext("The URL {0} is a file.", orig))
             }
 
             // Is it already a directory ?
-            if (!file.isDirectory) {
+            if (!KFiles.isDirectory(path)) {
                 // Create the directory and make sure it worked.
-                if (!file.mkdirs()) {
+                val created = try {
+                    KFiles.createDirectories(path)
+                    true
+                } catch (e: IOException) {
+                    false
+                }
+                if (!created) {
                     // TRANSLATOR: Error condition: A directory could not be created. {0} is a placeholder for the directory
                     throw MalformedURLException(JSMsg.gettext("The URL {0} could not be created as a directory.", orig))
                 }
@@ -197,21 +204,20 @@ private constructor() {
         fun makeFile(orig: URI) {
             checkFileURI(orig)
 
-            val file = File(orig.path)
+            val path = orig.path.toPath()
 
             // If it is a file, except
-            if (file.isDirectory) {
+            if (KFiles.isDirectory(path)) {
                 // TRANSLATOR: Error condition: A file was expected, but a directory was found. {0} is a placeholder for the directory.
                 throw MalformedURLException(JSMsg.gettext("The URL {0} is a directory.", orig))
             }
 
             // Is it already a directory ?
-            if (!file.isFile) {
-                val fout = FileOutputStream(file)
-                fout.close()
+            if (!KFiles.isFile(path)) {
+                KFiles.createEmptyFile(path)
 
                 // Did that work?
-                if (!file.isFile) {
+                if (!KFiles.isFile(path)) {
                     // TRANSLATOR: Error condition: A file could not be created. {0} is a placeholder for the file
                     throw MalformedURLException(JSMsg.gettext("The URL {0} could not be created as a file.", orig))
                 }
@@ -228,7 +234,7 @@ private constructor() {
         @JvmStatic
         fun isFile(uri: URI): Boolean {
             if (uri.scheme.equals(PROTOCOL_FILE)) {
-                return File(uri.path).isFile
+                return KFiles.isFile(uri.path.toPath())
             }
 
             try {
@@ -255,7 +261,7 @@ private constructor() {
                 return false
             }
 
-            return File(orig.path).isDirectory
+            return KFiles.isDirectory(orig.path.toPath())
         }
 
         /**
@@ -310,9 +316,7 @@ private constructor() {
             checkFileURI(oldUri)
             checkFileURI(newUri)
 
-            val oldFile = File(oldUri.path)
-            val newFile = File(newUri.path)
-            return oldFile.renameTo(newFile)
+            return KFiles.move(oldUri.path.toPath(), newUri.path.toPath())
         }
 
         /**
@@ -329,7 +333,7 @@ private constructor() {
         fun delete(orig: URI): Boolean {
             checkFileURI(orig)
 
-            return File(orig.path).delete()
+            return KFiles.delete(orig.path.toPath())
         }
 
         /**
@@ -596,13 +600,13 @@ private constructor() {
         @JvmStatic
         @Throws(MalformedURLException::class)
         fun listByFile(uri: URI, filter: URIFilter?): Array<String>? {
-            val fdir = File(uri.path)
-            if (!fdir.isDirectory) {
+            val dir = uri.path.toPath()
+            if (!KFiles.isDirectory(dir)) {
                 // TRANSLATOR: Error condition: A directory was expected, but a file was found. {0} is a placeholder for the file.
                 throw MalformedURLException(JSMsg.gettext("The URL {0} is not a directory", uri.toString()))
             }
 
-            return fdir.list(URIFilterFilenameFilter(filter))
+            return KFiles.list(dir).filter { filter!!.accept(it) }.toTypedArray()
         }
 
         /**
@@ -720,6 +724,14 @@ private constructor() {
 
         @JvmStatic
         fun getSize(uri: URI, proxyHost: String?, proxyPort: Int?): Int {
+            if (uri.scheme.equals(PROTOCOL_FILE)) {
+                val path = uri.path.toPath()
+                // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
+                if (KFiles.isFile(path)) {
+                    return KFiles.size(path).toInt()
+                }
+            }
+
             try {
                 if (uri.scheme.equals(PROTOCOL_HTTP)) {
                     val resource = WebResource(uri, proxyHost, proxyPort)
@@ -770,6 +782,14 @@ private constructor() {
          */
         @JvmStatic
         fun getLastModified(uri: URI, proxyHost: String?, proxyPort: Int?): Long {
+            if (uri.scheme.equals(PROTOCOL_FILE)) {
+                val path = uri.path.toPath()
+                // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
+                if (KFiles.isFile(path)) {
+                    return KFiles.lastModifiedMillis(path)
+                }
+            }
+
             try {
                 if (uri.scheme.equals(PROTOCOL_HTTP)) {
                     val resource = WebResource(uri, proxyHost, proxyPort)
