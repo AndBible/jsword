@@ -7,7 +7,12 @@ import okio.Path
 
 /**
  * Positional reads from a file with the semantics of `SwordUtil.readRAF`: a zero or negative size or an offset at or
- * beyond the end yields an empty array, a read past the end is shortened. Problems are logged like `SwordUtil` does.
+ * beyond the end yields an empty array, a read past the end is shortened. Problems are logged like `SwordUtil` does,
+ * under the `SwordUtil` logger name so existing log configuration keeps applying.
+ *
+ * Difference from `SwordUtil.readRAF`: that method seeks first, so a negative offset throws `IOException` there even
+ * when the size is 0; here a size of 0 returns an empty array before the offset is looked at, and a negative offset
+ * with a positive size fails in the underlying [FileHandle] read.
  */
 class RandomAccessSource(private val handle: FileHandle) : Closeable {
     fun size(): Long = handle.size()
@@ -42,7 +47,7 @@ class RandomAccessSource(private val handle: FileHandle) : Closeable {
     override fun close() = handle.close()
 
     companion object {
-        private val log = LoggerFactory.getLogger(RandomAccessSource::class)
+        private val log = LoggerFactory.getLogger("org.crosswire.jsword.book.sword.SwordUtil")
 
         fun open(path: Path, fs: FileSystem = FileSystem.SYSTEM): RandomAccessSource =
             RandomAccessSource(fs.openReadOnly(path))

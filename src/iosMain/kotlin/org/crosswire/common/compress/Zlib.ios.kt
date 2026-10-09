@@ -31,7 +31,10 @@ actual object Zlib {
                         when (rc) {
                             Z_STREAM_END -> return@usePinned
                             Z_OK -> if (strm.avail_in == 0u && produced == 0) throw okio.EOFException("Unexpected end of ZLIB input stream")
-                            Z_BUF_ERROR -> if (strm.avail_in == 0u) throw okio.EOFException("Unexpected end of ZLIB input stream")
+                            // No progress was possible: with input left that cannot recover, so fail instead of spinning.
+                            Z_BUF_ERROR ->
+                                if (strm.avail_in == 0u) throw okio.EOFException("Unexpected end of ZLIB input stream")
+                                else throw okio.IOException("zlib made no progress with ${strm.avail_in} input bytes left")
                             else -> throw okio.IOException(strm.msg?.toKString() ?: "zlib error $rc")
                         }
                     }
@@ -44,7 +47,8 @@ actual object Zlib {
     }
 
     actual fun deflate(input: ByteArray): ByteArray {
-        val bound = 64 + input.size + input.size / 1000 + 12
+        // zlib's own worst-case bound (declared in zlib.h, so it is part of the platform.zlib cinterop).
+        val bound = compressBound(input.size.convert()).toInt()
         val dest = ByteArray(bound)
         val written = memScoped {
             val destLen = alloc<ULongVar>().apply { value = bound.convert() }
