@@ -25,7 +25,7 @@ package org.crosswire.jsword.book
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface BookFilter {
+fun interface BookFilter {
     /**
      * Does this given book pass the tests implemented by this filter
      *

@@ -376,7 +376,7 @@ interface Book : Activatable, Comparable<Book> {
      *
      * @return the read-only properties for this book.
      */
-    val propertyKeys: Set<String>
+    val propertyKeys: Set<String>?
 
     /**
      * Retrieve a single property for this book.

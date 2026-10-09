@@ -41,7 +41,7 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
         get() {
             val results: MutableSet<String> = TreeSet()
             for (book in this) {
-                results.addAll(book.propertyKeys)
+                results.addAll(book.propertyKeys!!)
             }
             return results
         }

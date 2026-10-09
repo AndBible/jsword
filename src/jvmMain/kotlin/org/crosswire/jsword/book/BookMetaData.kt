@@ -250,7 +250,7 @@ interface BookMetaData : Comparable<BookMetaData> {
      *
      * @return the read-only properties for this book
      */
-    val propertyKeys: Set<String>
+    val propertyKeys: Set<String>?
 
     /**
      * Get the property or null.
