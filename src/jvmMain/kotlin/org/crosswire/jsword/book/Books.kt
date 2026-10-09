@@ -24,7 +24,7 @@ import java.util.TreeSet
 
 import org.crosswire.common.activate.Activator
 import org.crosswire.common.util.CollectionUtil
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.common.util.Logger
@@ -238,27 +238,13 @@ private constructor() : AbstractBookList() {
      * Registers all the drivers known to the program.
      */
     private fun autoRegister() {
-        // This will classload them all and they will register themselves.
-        val types = PluginUtil.getImplementors(BookDriver::class.java)
+        val entries = PluginRegistry.entries(BookDriver::class)
 
-        log.debug("begin auto-registering {} drivers:", Integer.toString(types.size))
+        log.debug("begin auto-registering {} drivers:", Integer.toString(entries.size))
 
-        for (i in types.indices) {
-            // job.setProgress(Msg.JOB_DRIVER.toString() +
-            // ClassUtils.getShortClassName(types[i]));
-
+        for (entry in entries) {
             try {
-                val driverInstance = types[i].getMethod("instance")
-                val driver = driverInstance.invoke(null) as BookDriver // types[i].newInstance();
-                registerDriver(driver)
-            } catch (e: NoSuchMethodException) {
-                Reporter.informUser(Books::class.java, e)
-            } catch (e: IllegalArgumentException) {
-                Reporter.informUser(Books::class.java, e)
-            } catch (e: IllegalAccessException) {
-                Reporter.informUser(Books::class.java, e)
-            } catch (e: InvocationTargetException) {
-                Reporter.informUser(Books::class.java, e)
+                registerDriver(entry.create())
             } catch (e: BookException) {
                 Reporter.informUser(Books::class.java, e)
             }

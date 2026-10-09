@@ -19,7 +19,7 @@
  */
 package org.crosswire.jsword.index.search
 
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.index.IndexManagerFactory
@@ -54,7 +54,7 @@ private constructor() {
                 val imanager = IndexManagerFactory.getIndexManager()
                 val index = imanager.getIndex(book)
 
-                val parser = PluginUtil.getImplementation(Searcher::class.java)
+                val parser = PluginRegistry.default(Searcher::class)!!.create()
                 parser.init(index)
 
                 return parser

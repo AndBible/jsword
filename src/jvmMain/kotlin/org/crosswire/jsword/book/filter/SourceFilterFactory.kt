@@ -19,8 +19,7 @@
  */
 package org.crosswire.jsword.book.filter
 
-import org.crosswire.common.util.PluginUtil
-import org.crosswire.common.util.ReflectionUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -98,23 +97,23 @@ private constructor() {
          * file.
          */
         init {
-            val map: MutableMap<String, Class<SourceFilter>> = PluginUtil.getImplementorsMap(SourceFilter::class.java)
+            val entries = PluginRegistry.entries(SourceFilter::class)
 
             // the default value
             try {
-                val cdeft = map.remove("default")
-                deft = cdeft!!.getDeclaredConstructor().newInstance()
-            } catch (e: ReflectiveOperationException) {
+                deft = PluginRegistry.default(SourceFilter::class)!!.create()
+            } catch (e: Exception) {
                 log.error("Failed to get default filter, will attempt to use first", e)
             }
 
             // the lookup table
             var instance: SourceFilter? = null
-            for (entry in map.entries) {
+            for (entry in entries) {
+                if (entry.name == PluginRegistry.DEFAULT) continue
                 try {
-                    instance = ReflectionUtil.construct<SourceFilter>(entry.value)
-                    addFilter(entry.key, instance)
-                } catch (e: ReflectiveOperationException) {
+                    instance = entry.create()
+                    addFilter(entry.name, instance)
+                } catch (e: Exception) {
                     log.error("Failed to add filter", e)
                 }
             }

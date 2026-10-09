@@ -19,11 +19,10 @@
  */
 package org.crosswire.jsword.book
 
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
-import java.io.IOException
 
 /**
  * A Factory class for Bookmarks.
@@ -62,10 +61,8 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginUtil.getImplementation(Bookmark::class.java)
-            } catch (e: IOException) {
-                LOGGER.error("createBookmark failed", e)
-            } catch (e: ReflectiveOperationException) {
+                instance = PluginRegistry.default(Bookmark::class)!!.create()
+            } catch (e: Exception) {
                 LOGGER.error("createBookmark failed", e)
             }
         }

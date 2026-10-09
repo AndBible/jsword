@@ -19,11 +19,10 @@
  */
 package org.crosswire.jsword.index.query
 
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
-import java.io.IOException
 
 /**
  * A Factory class for QueryBuilder.
@@ -62,10 +61,8 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginUtil.getImplementation(QueryBuilder::class.java)
-            } catch (e: IOException) {
-                log.error("create QueryBuilder failed", e)
-            } catch (e: ReflectiveOperationException) {
+                instance = PluginRegistry.default(QueryBuilder::class)!!.create()
+            } catch (e: Exception) {
                 log.error("create QueryBuilder failed", e)
             }
         }

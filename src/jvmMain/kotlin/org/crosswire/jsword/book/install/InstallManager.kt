@@ -22,6 +22,7 @@ package org.crosswire.jsword.book.install
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.FileUtil
 import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.PluginUtil
 import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.ReflectionUtil
@@ -63,7 +64,8 @@ class InstallManager {
     init {
         try {
             val sitemap: PropertyMap = preloadedSitemap ?: PluginUtil.getPlugin(javaClass)
-            factories = PluginUtil.getImplementorsMap(InstallerFactory::class.java)
+            @Suppress("UNCHECKED_CAST")
+            factories = PluginRegistry.entries(InstallerFactory::class).associateTo(LinkedHashMap()) { it.name to (it.implClass.java as Class<InstallerFactory>) }
             var i = 0
             var def = sitemap.get(PREFIX + ++i)
             while (def != null) {

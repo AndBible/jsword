@@ -21,12 +21,13 @@ package org.crosswire.common.util
 
 import org.crosswire.jsword.JSOtherMsg
 import java.io.IOException
+import kotlin.reflect.KClass
 import java.net.MalformedURLException
 import java.util.MissingResourceException
 
 /**
- * A plugin maps one or more implementations to an interface or abstract class
- * via a properties file whose suffix is "plugin". When there is more than one
+ * Compatibility shim over [PluginRegistry] (class mappings) plus the `.plugin` data
+ * file reader ([getPlugin]). A plugin maps one or more implementations to an interface or abstract class. When there is more than one
  * implementation, one is marked as a default.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
@@ -52,29 +53,9 @@ private constructor() {
         @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun <T> getImplementors(clazz: Class<T>): Array<Class<T>> {
-            try {
-                val matches: MutableList<Class<T>> = ArrayList()
-                val props = getPlugin(clazz)
-                for (key in props.keys) {
-                    val name = props[key]
-                    try {
-                        val impl = ClassUtil.forName(name) as Class<T>
-                        if (clazz.isAssignableFrom(impl)) {
-                            matches.add(impl)
-                        } else {
-                            log.warn("Class {} does not implement {}. Ignoring.", impl.name, clazz.name)
-                        }
-                    } catch (ex: ClassNotFoundException) {
-                        log.warn("Failed to add class to list: {}", clazz.name, ex)
-                    }
-                }
-
-                log.debug("Found {} implementors of {}", Integer.toString(matches.size), clazz.name)
-                return matches.toTypedArray()
-            } catch (ex: IOException) {
-                log.error("Failed to get any classes.", ex)
-                return arrayOfNulls<Class<*>>(0) as Array<Class<T>>
-            }
+            val matches = PluginRegistry.entries(kclass(clazz)).map { it.implClass.java as Class<T> }
+            log.debug("Found {} implementors of {}", Integer.toString(matches.size), clazz.name)
+            return matches.toTypedArray()
         }
 
         /**
@@ -94,29 +75,11 @@ private constructor() {
         @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun <T> getImplementorsMap(clazz: Class<T>): MutableMap<String, Class<T>> {
-            val matches: MutableMap<String, Class<T>> = HashMap()
-
-            try {
-                val props = getPlugin(clazz)
-                for (key in props.keys) {
-                    try {
-                        val value = props[key]
-                        val impl = ClassUtil.forName(value) as Class<T>
-                        if (clazz.isAssignableFrom(impl)) {
-                            matches[key] = impl
-                        } else {
-                            log.warn("Class {} does not implement {}. Ignoring.", impl.name, clazz.name)
-                        }
-                    } catch (ex: ClassNotFoundException) {
-                        log.warn("Failed to add class to list: {}", clazz.name, ex)
-                    }
-                }
-
-                log.debug("Found {} implementors of {}", Integer.toString(matches.size), clazz.name)
-            } catch (ex: IOException) {
-                log.error("Failed to get any classes.", ex)
+            val matches: MutableMap<String, Class<T>> = LinkedHashMap()
+            for (entry in PluginRegistry.entries(kclass(clazz))) {
+                matches[entry.name] = entry.implClass.java as Class<T>
             }
-
+            log.debug("Found {} implementors of {}", Integer.toString(matches.size), clazz.name)
             return matches
         }
 
@@ -144,15 +107,9 @@ private constructor() {
         @Throws(IOException::class, ClassNotFoundException::class, ClassCastException::class)
         @Suppress("UNCHECKED_CAST")
         fun <T> getImplementor(clazz: Class<T>): Class<T> {
-            val props = getPlugin(clazz)
-            val name = props[DEFAULT]
-
-            val impl = ClassUtil.forName(name) as Class<T>
-            if (!clazz.isAssignableFrom(impl)) {
-                throw ClassCastException(JSOtherMsg.lookupText("Class {0} does not implement {1}.", impl.name, clazz.name))
-            }
-
-            return impl
+            val entry = PluginRegistry.default(kclass(clazz))
+                ?: throw ClassNotFoundException(clazz.name)
+            return entry.implClass.java as Class<T>
         }
 
         /**
@@ -178,7 +135,10 @@ private constructor() {
         @JvmStatic
         @Throws(MalformedURLException::class, IOException::class, ReflectiveOperationException::class)
         fun <T> getImplementation(clazz: Class<T>): T {
-            return ReflectionUtil.construct(getImplementor(clazz))
+            val entry = PluginRegistry.default(kclass(clazz))
+                ?: throw ClassNotFoundException(clazz.name)
+            @Suppress("UNCHECKED_CAST")
+            return entry.create() as T
         }
 
         /**
@@ -215,10 +175,8 @@ private constructor() {
          */
         const val EXTENSION_PLUGIN: String = ".plugin"
 
-        /**
-         * The string for default implementations
-         */
-        private const val DEFAULT = "default"
+        @Suppress("UNCHECKED_CAST")
+        private fun <T> kclass(clazz: Class<T>): KClass<Any> = (clazz as Class<Any>).kotlin
 
         /**
          * The log stream

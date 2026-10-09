@@ -19,11 +19,10 @@
  */
 package org.crosswire.jsword.index
 
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
-import java.io.IOException
 
 /**
  * A Factory class for IndexManagers.
@@ -62,10 +61,8 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginUtil.getImplementation(IndexManager::class.java)
-            } catch (e: IOException) {
-                log.error("createIndexManager failed", e)
-            } catch (e: ReflectiveOperationException) {
+                instance = PluginRegistry.default(IndexManager::class)!!.create()
+            } catch (e: Exception) {
                 log.error("createIndexManager failed", e)
             }
         }

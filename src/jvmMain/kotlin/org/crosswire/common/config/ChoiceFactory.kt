@@ -21,7 +21,7 @@ package org.crosswire.common.config
 
 import java.util.ResourceBundle
 import org.crosswire.common.util.ClassUtil
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.ReflectionUtil
 import org.jdom2.Element
 
@@ -88,6 +88,7 @@ private constructor() {
         /**
          * Store of the known ChoiceTypes
          */
-        private val map: MutableMap<String, Class<Choice>> = PluginUtil.getImplementorsMap(Choice::class.java)
+        @Suppress("UNCHECKED_CAST")
+        private val map: MutableMap<String, Class<Choice>> = PluginRegistry.entries(Choice::class).associateTo(LinkedHashMap()) { it.name to (it.implClass.java as Class<Choice>) }
     }
 }
