@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import java.io.IOException;
+import org.crosswire.common.util.PluginUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.crosswire.common.util.PluginUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
 
 /**
  * A Factory class for QueryBuilder.
@@ -31,42 +31,43 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class QueryBuilderFactory {
-    /**
-     * Prevent instantiation
-     */
-    private QueryBuilderFactory() {
-    }
+class QueryBuilderFactory
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Create a new QueryBuilder.
+         * 
+         * @return the singleton query builder
+         */
+        @JvmStatic
+        fun getQueryBuilder(): QueryBuilder {
+            return instance!!
+        }
 
-    /**
-     * Create a new QueryBuilder.
-     * 
-     * @return the singleton query builder
-     */
-    public static QueryBuilder getQueryBuilder() {
-        return instance;
-    }
+        /**
+         * The singleton
+         */
+        private var instance: QueryBuilder? = null
 
-    /**
-     * The singleton
-     */
-    private static QueryBuilder instance;
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(QueryBuilderFactory::class.java)
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(QueryBuilderFactory.class);
-
-    /**
-     * Setup the instance
-     */
-    static {
-        try {
-            instance = PluginUtil.getImplementation(QueryBuilder.class);
-        } catch (IOException e) {
-            log.error("create QueryBuilder failed", e);
-        } catch (ReflectiveOperationException e) {
-            log.error("create QueryBuilder failed", e);
+        /**
+         * Setup the instance
+         */
+        init {
+            try {
+                instance = PluginUtil.getImplementation(QueryBuilder::class.java)
+            } catch (e: IOException) {
+                log.error("create QueryBuilder failed", e)
+            } catch (e: ReflectiveOperationException) {
+                log.error("create QueryBuilder failed", e)
+            }
         }
     }
 }

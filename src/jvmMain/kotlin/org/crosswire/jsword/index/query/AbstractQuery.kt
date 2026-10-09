@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
 /**
  * A base query is the smallest unit of search that the index can perform.
@@ -25,23 +25,15 @@ package org.crosswire.jsword.index.query;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractQuery implements Query {
-
-    /**
-     * Construct a query from a string.
-     * 
-     * @param theQuery
-     */
-    public AbstractQuery(String theQuery) {
-        query = theQuery;
-    }
-
+abstract class AbstractQuery
+/**
+ * Construct a query from a string.
+ * 
+ * @param theQuery
+ */
+(theQuery: String?) : Query {
     /**
      * @return the query
      */
-    public String getQuery() {
-        return query;
-    }
-
-    private String query;
+    open val query: String? = theQuery
 }

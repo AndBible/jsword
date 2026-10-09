@@ -16,7 +16,7 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
 /**
  * A binary query has a left query and right query.
@@ -24,32 +24,21 @@ package org.crosswire.jsword.index.query;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractBinaryQuery implements BinaryQuery {
-    /**
-     * Create a query consisting of two queries.
-     * 
-     * @param theLeftQuery
-     * @param theRightQuery
-     */
-    public AbstractBinaryQuery(Query theLeftQuery, Query theRightQuery) {
-        leftQuery = theLeftQuery;
-        rightQuery = theRightQuery;
-    }
-
+abstract class AbstractBinaryQuery
+/**
+ * Create a query consisting of two queries.
+ * 
+ * @param theLeftQuery
+ * @param theRightQuery
+ */
+(theLeftQuery: Query?, theRightQuery: Query?) : BinaryQuery {
     /**
      * @return Returns the leftQuery.
      */
-    public Query getLeftQuery() {
-        return leftQuery;
-    }
+    override val leftQuery: Query? = theLeftQuery
 
     /**
      * @return Returns the rightQuery.
      */
-    public Query getRightQuery() {
-        return rightQuery;
-    }
-
-    private Query leftQuery;
-    private Query rightQuery;
+    override val rightQuery: Query? = theRightQuery
 }

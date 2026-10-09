@@ -16,12 +16,12 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.RestrictionType;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.RestrictionType
 
 /**
  * A blur query specifies how much to blur the results of the right query before
@@ -30,20 +30,16 @@ import org.crosswire.jsword.passage.RestrictionType;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class BlurQuery extends AbstractBinaryQuery {
-    /**
-     * Create a query that specifies how much to blur the results of the right
-     * query before ANDing it to the left.
-     * 
-     * @param theLeftQuery
-     * @param theRightQuery
-     * @param theFactor the amount of blurring
-     */
-    public BlurQuery(Query theLeftQuery, Query theRightQuery, int theFactor) {
-        super(theLeftQuery, theRightQuery);
-        factor = theFactor;
-    }
-
+open class BlurQuery
+/**
+ * Create a query that specifies how much to blur the results of the right
+ * query before ANDing it to the left.
+ * 
+ * @param theLeftQuery
+ * @param theRightQuery
+ * @param theFactor the amount of blurring
+ */
+(theLeftQuery: Query?, theRightQuery: Query?, theFactor: Int) : AbstractBinaryQuery(theLeftQuery, theRightQuery) {
     /*
      * (non-Javadoc)
      * 
@@ -51,32 +47,29 @@ public class BlurQuery extends AbstractBinaryQuery {
      * org.crosswire.jsword.index.search.parse.Query#find(org.crosswire.jsword
      * .index.search.Index)
      */
-    public Key find(Index index) throws BookException {
-        Key left = getLeftQuery().find(index);
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        val left = leftQuery!!.find(index)
 
         if (left.isEmpty()) {
-            return left;
+            return left
         }
 
-        Key right = getRightQuery().find(index);
+        val right = rightQuery!!.find(index)
 
         if (right.isEmpty()) {
-            return right;
+            return right
         }
 
-        right.blur(factor, RestrictionType.getDefaultBlurRestriction());
+        right.blur(factor, RestrictionType.getDefaultBlurRestriction())
 
-        left.retainAll(right);
+        left.retainAll(right)
 
-        return left;
+        return left
     }
 
     /**
      * @return the blur factor
      */
-    public int getFactor() {
-        return factor;
-    }
-
-    private int factor;
+    open val factor: Int = theFactor
 }

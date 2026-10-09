@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
 /**
  * A QueryDecorator allows for the decoration of strings in a way that is
@@ -26,18 +26,18 @@ package org.crosswire.jsword.index.query;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface QueryDecorator {
-    String decoratePhrase(String queryWords);
+interface QueryDecorator {
+    fun decoratePhrase(queryWords: String?): String
 
-    String decorateAllWords(String queryWords);
+    fun decorateAllWords(queryWords: String?): String
 
-    String decorateAnyWords(String queryWords);
+    fun decorateAnyWords(queryWords: String?): String
 
-    String decorateNotWords(String queryWords);
+    fun decorateNotWords(queryWords: String?): String
 
-    String decorateStartWords(String queryWords);
+    fun decorateStartWords(queryWords: String?): String
 
-    String decorateSpellWords(String queryWords);
+    fun decorateSpellWords(queryWords: String?): String
 
-    String decorateRange(String queryWords);
+    fun decorateRange(queryWords: String?): String
 }

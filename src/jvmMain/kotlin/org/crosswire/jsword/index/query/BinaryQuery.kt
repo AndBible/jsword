@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
 /**
  * A BinaryQuery consists of a Left and a Right Query
@@ -25,16 +25,14 @@ package org.crosswire.jsword.index.query;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface BinaryQuery extends Query {
-
+interface BinaryQuery : Query {
     /**
      * @return Returns the leftQuery.
      */
-    Query getLeftQuery();
+    val leftQuery: Query?
 
     /**
      * @return Returns the rightQuery.
      */
-    Query getRightQuery();
-
+    val rightQuery: Query?
 }

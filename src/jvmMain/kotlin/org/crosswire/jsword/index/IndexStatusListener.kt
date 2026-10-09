@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
-import java.util.EventListener;
+import java.util.EventListener
 
 /**
  * IndexStatusListeners are able to be notified about changes to the IndexStatus
@@ -28,12 +28,12 @@ import java.util.EventListener;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface IndexStatusListener extends EventListener {
+interface IndexStatusListener : EventListener {
     /**
      * Called whenever the IndexStatus of a book has changed.
      * 
      * @param ev
      *            A description of the change
      */
-    void statusChanged(IndexStatusEvent ev);
+    fun statusChanged(ev: IndexStatusEvent?)
 }

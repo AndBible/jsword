@@ -16,11 +16,11 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
 
 /**
  * A base query is the smallest unit of search that the index can perform.
@@ -28,17 +28,13 @@ import org.crosswire.jsword.passage.Key;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class BaseQuery extends AbstractQuery {
-
-    /**
-     * Construct a query from a string.
-     * 
-     * @param theQuery
-     */
-    public BaseQuery(String theQuery) {
-        super(theQuery);
-    }
-
+open class BaseQuery
+/**
+ * Construct a query from a string.
+ * 
+ * @param theQuery
+ */
+(theQuery: String?) : AbstractQuery(theQuery) {
     /*
      * (non-Javadoc)
      * 
@@ -46,7 +42,8 @@ public class BaseQuery extends AbstractQuery {
      * org.crosswire.jsword.index.search.parse.Query#find(org.crosswire.jsword
      * .index.search.Index)
      */
-    public Key find(Index index) throws BookException {
-        return index.find(getQuery());
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        return index!!.find(query)
     }
 }

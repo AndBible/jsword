@@ -16,7 +16,7 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.search;
+package org.crosswire.jsword.index.search
 
 /**
  * A default implementation of a SearchRequest.
@@ -24,61 +24,52 @@ package org.crosswire.jsword.index.search;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DefaultSearchRequest implements SearchRequest {
-    /**
-     * Create a DefaultSearchRequest for the provided request and the provided
-     * modifiers.
-     * 
-     * @param theRequest
-     *            what is being searched
-     * @param theModifier
-     *            how the search is to be modified
-     */
-    public DefaultSearchRequest(String theRequest, SearchModifier theModifier) {
-        request = theRequest;
-        modifier = theModifier;
-    }
-
+open class DefaultSearchRequest
+/**
+ * Create a DefaultSearchRequest for the provided request and the provided
+ * modifiers.
+ * 
+ * @param theRequest
+ *            what is being searched
+ * @param theModifier
+ *            how the search is to be modified
+ */
+(theRequest: String?, theModifier: SearchModifier?) : SearchRequest {
     /**
      * Create a DefaultSearchRequest for the provided request.
      * 
      * @param theRequest
      *            what is being searched
      */
-    public DefaultSearchRequest(String theRequest) {
-        this(theRequest, null);
-    }
+    constructor(theRequest: String?) : this(theRequest, null)
 
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.index.search.SearchRequest#isRanked()
      */
-    public SearchModifier getSearchModifier() {
-        return modifier;
-    }
+    /**
+     * How the search is to be modified
+     */
+    private val modifier: SearchModifier? = theModifier
+
+    override val searchModifier: SearchModifier?
+        get() = modifier
 
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.index.search.SearchRequest#getRequest()
      */
-    public String getRequest() {
-        return request;
-    }
-
     /**
      * The actual search request
      */
-    private String request;
+    override val request: String? = theRequest
 
-    /**
-     * How the search is to be modified
-     */
-    private SearchModifier modifier;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -5973134101547369187L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -5973134101547369187L
+    }
 }

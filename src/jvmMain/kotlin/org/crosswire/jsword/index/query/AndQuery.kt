@@ -16,12 +16,12 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.PassageTally;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.PassageTally
 
 /**
  * An AND query specifies that a result needs to be in both the left and the
@@ -30,18 +30,14 @@ import org.crosswire.jsword.passage.PassageTally;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class AndQuery extends AbstractBinaryQuery {
-
-    /**
-     * Create a query where the result is the intersection of two queries.
-     * 
-     * @param theLeftQuery
-     * @param theRightQuery
-     */
-    public AndQuery(Query theLeftQuery, Query theRightQuery) {
-        super(theLeftQuery, theRightQuery);
-    }
-
+open class AndQuery
+/**
+ * Create a query where the result is the intersection of two queries.
+ * 
+ * @param theLeftQuery
+ * @param theRightQuery
+ */
+(theLeftQuery: Query?, theRightQuery: Query?) : AbstractBinaryQuery(theLeftQuery, theRightQuery) {
     /*
      * (non-Javadoc)
      * 
@@ -49,26 +45,27 @@ public class AndQuery extends AbstractBinaryQuery {
      * org.crosswire.jsword.index.search.parse.Query#find(org.crosswire.jsword
      * .index.search.Index)
      */
-    public Key find(Index index) throws BookException {
-        Key left = getLeftQuery().find(index);
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        val left = leftQuery!!.find(index)
 
         if (left.isEmpty()) {
-            return left;
+            return left
         }
 
-        Key right = getRightQuery().find(index);
+        val right = rightQuery!!.find(index)
 
         if (right.isEmpty()) {
-            return right;
+            return right
         }
 
         // If ranking was requested then prioritize it.
-        if (right instanceof PassageTally) {
-            right.retainAll(left);
-            return right;
+        if (right is PassageTally) {
+            right.retainAll(left)
+            return right
         }
 
-        left.retainAll(right);
-        return left;
+        left.retainAll(right)
+        return left
     }
 }

@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2008 - 2016
  *
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.Books;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.Books
 
 /**
  * BookIndexer allows one to check the status of an index, build an index or
@@ -30,69 +30,67 @@ import org.crosswire.jsword.book.Books;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class BookIndexer {
+open class BookIndexer(book: Book?) {
+    @JvmField
+    protected var book: Book? = book
 
-    public BookIndexer(Book book) {
-        this.book = book;
-        done = true; // not busy
-        indexManager = IndexManagerFactory.getIndexManager();
-        isl = new StatusListener(this);
-    }
+    @JvmField
+    protected var indexManager: IndexManager = IndexManagerFactory.getIndexManager()
+    private val isl: IndexStatusListener = StatusListener(this)
+    private var done = true // not busy
 
-    public boolean isIndexed() {
-        // If we are busy then the index is being created
-        // or it is being deleted. So for all practical purposes
-        // it is not indexed.
-        return done && indexManager.isIndexed(book);
-    }
+    open val isIndexed: Boolean
+        get() =
+            // If we are busy then the index is being created
+            // or it is being deleted. So for all practical purposes
+            // it is not indexed.
+            done && indexManager.isIndexed(book)
 
-    public void deleteIndex() throws BookException {
+    @Throws(BookException::class)
+    open fun deleteIndex() {
         if (done) {
-            done = false;
-            book.addIndexStatusListener(isl);
-            indexManager.deleteIndex(book);
+            done = false
+            book!!.addIndexStatusListener(isl)
+            indexManager.deleteIndex(book)
             while (!done) {
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+                    Thread.sleep(100)
+                } catch (e: InterruptedException) {
                     // This is allowed
                 }
             }
-            book.removeIndexStatusListener(isl);
+            book!!.removeIndexStatusListener(isl)
         }
     }
 
-    public void createIndex() throws BookException {
+    @Throws(BookException::class)
+    open fun createIndex() {
         if (done) {
-            done = false;
-            book.addIndexStatusListener(isl);
-            if (isIndexed()) {
-                deleteIndex();
+            done = false
+            book!!.addIndexStatusListener(isl)
+            if (isIndexed) {
+                deleteIndex()
             }
-            Thread work = new Thread(new Runnable() {
-                public void run() {
-                    indexManager.scheduleIndexCreation(book);
+            val work = Thread(object : Runnable {
+                override fun run() {
+                    indexManager.scheduleIndexCreation(book)
                 }
-            });
-            work.start();
+            })
+            work.start()
             while (!done) {
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
+                    Thread.sleep(100)
+                } catch (e: InterruptedException) {
                     // This is allowed
                 }
             }
-            book.removeIndexStatusListener(isl);
+            book!!.removeIndexStatusListener(isl)
         }
     }
 
-    protected void setDone(boolean state) {
-        done = state;
+    protected open fun setDone(state: Boolean) {
+        done = state
     }
-
-
-
-
 
     /* //todo static function: Demo of how clients can reindex, after a upgrade on a user computer. If reindexAll successful, update Installed.Index.DefaultVersion prop on the client computer
 
@@ -119,81 +117,72 @@ public class BookIndexer {
     }
     */
 
-
-
-    protected Book book;
-    protected IndexManager indexManager;
-    private IndexStatusListener isl;
-    private boolean done;
-
     /**
      * Listen for the end of indexing.
      */
-    public static final class StatusListener implements IndexStatusListener {
-        public StatusListener(BookIndexer indexer) {
-            this.indexer = indexer;
-        }
-
-        public void statusChanged(IndexStatusEvent ev) {
-            IndexStatus newStatus = ev.getIndexStatus();
-            if (IndexStatus.DONE.equals(newStatus) || IndexStatus.UNDONE.equals(newStatus) || IndexStatus.INVALID.equals(newStatus)) {
-                indexer.setDone(true);
+    class StatusListener(private var indexer: BookIndexer) : IndexStatusListener {
+        override fun statusChanged(ev: IndexStatusEvent?) {
+            val newStatus = ev!!.indexStatus
+            if (IndexStatus.DONE == newStatus || IndexStatus.UNDONE == newStatus || IndexStatus.INVALID == newStatus) {
+                indexer.setDone(true)
             }
-        }
-
-        private BookIndexer indexer;
-    }
-
-    /**
-     * Call with &lt;operation&gt; book. Where operation can be one of:
-     * <ul>
-     * <li>check - returns "TRUE" or "FALSE" indicating whether the index exists
-     * or not</li>
-     * <li>create - (re)create the index</li>
-     * <li>delete - delete the index if it exists</li>
-     * </ul>
-     * And book is the initials of a book, e.g. KJV.
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            usage();
-            return;
-        }
-
-        System.err.println("BookIndexer " + args[0] + " " + args[1]);
-
-        String operation = args[0];
-        Book b = Books.installed().getBook(args[1]);
-        if (b == null) {
-            System.err.println("Book not found");
-            return;
-        }
-
-        BookIndexer indexer = new BookIndexer(b);
-        if ("create".equalsIgnoreCase(operation)) {
-            try {
-                indexer.createIndex();
-            } catch (BookException e) {
-                System.err.println("Unable to re-index book.");
-                e.printStackTrace();
-            }
-        } else if ("delete".equalsIgnoreCase(operation)) {
-            try {
-                indexer.deleteIndex();
-            } catch (BookException e) {
-                System.err.println("Unable to delete index for book.");
-                e.printStackTrace();
-            }
-        } else if ("check".equalsIgnoreCase(operation)) {
-            System.err.println(indexer.isIndexed());
-        } else {
-            usage();
         }
     }
 
-    public static void usage() {
-        System.err.println("Usage: BookIndexer operation book");
+    companion object {
+        /**
+         * Call with &lt;operation&gt; book. Where operation can be one of:
+         * <ul>
+         * <li>check - returns "TRUE" or "FALSE" indicating whether the index exists
+         * or not</li>
+         * <li>create - (re)create the index</li>
+         * <li>delete - delete the index if it exists</li>
+         * </ul>
+         * And book is the initials of a book, e.g. KJV.
+         * 
+         * @param args
+         */
+        @JvmStatic
+        fun main(args: Array<String>) {
+            if (args.size != 2) {
+                usage()
+                return
+            }
+
+            System.err.println("BookIndexer " + args[0] + " " + args[1])
+
+            val operation = args[0]
+            val b = Books.installed().getBook(args[1])
+            if (b == null) {
+                System.err.println("Book not found")
+                return
+            }
+
+            val indexer = BookIndexer(b)
+            if ("create".equals(operation, ignoreCase = true)) {
+                try {
+                    indexer.createIndex()
+                } catch (e: BookException) {
+                    System.err.println("Unable to re-index book.")
+                    e.printStackTrace()
+                }
+            } else if ("delete".equals(operation, ignoreCase = true)) {
+                try {
+                    indexer.deleteIndex()
+                } catch (e: BookException) {
+                    System.err.println("Unable to delete index for book.")
+                    e.printStackTrace()
+                }
+            } else if ("check".equals(operation, ignoreCase = true)) {
+                System.err.println(indexer.isIndexed)
+            } else {
+                usage()
+            }
+        }
+
+        @JvmStatic
+        fun usage() {
+            System.err.println("Usage: BookIndexer operation book")
+        }
     }
 }

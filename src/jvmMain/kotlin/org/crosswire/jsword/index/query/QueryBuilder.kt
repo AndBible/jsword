@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
 /**
  * A QueryBuilder builds a Query from a String.
@@ -25,7 +25,7 @@ package org.crosswire.jsword.index.query;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface QueryBuilder {
+interface QueryBuilder {
     /**
      * Construct a query from a string.
      * 
@@ -33,5 +33,5 @@ public interface QueryBuilder {
      *            The text to convert
      * @return a query.
      */
-    Query parse(String aQuery);
+    fun parse(aQuery: String?): Query
 }

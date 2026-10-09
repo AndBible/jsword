@@ -17,18 +17,16 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.search;
+package org.crosswire.jsword.index.search
 
-import java.io.IOException;
+import org.crosswire.common.util.PluginUtil
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.IndexManagerFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.crosswire.common.util.PluginUtil;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.index.IndexManager;
-import org.crosswire.jsword.index.IndexManagerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
 
 /**
  * Factory method for creating a new Searcher.
@@ -36,43 +34,45 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class SearcherFactory {
-    /**
-     * Prevent instantiation
-     */
-    private SearcherFactory() {
-    }
+class SearcherFactory
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Create a new Searcher.
+         * 
+         * @param book the book
+         * @return the searcher
+         * @throws InstantiationException 
+         */
+        @JvmStatic
+        @Throws(InstantiationException::class)
+        fun createSearcher(book: Book?): Searcher {
+            try {
+                val imanager = IndexManagerFactory.getIndexManager()
+                val index = imanager.getIndex(book)
 
-    /**
-     * Create a new Searcher.
-     * 
-     * @param book the book
-     * @return the searcher
-     * @throws InstantiationException 
-     */
-    public static Searcher createSearcher(Book book) throws InstantiationException {
-        try {
-            IndexManager imanager = IndexManagerFactory.getIndexManager();
-            Index index = imanager.getIndex(book);
+                val parser = PluginUtil.getImplementation(Searcher::class.java)
+                parser.init(index)
 
-            Searcher parser = PluginUtil.getImplementation(Searcher.class);
-            parser.init(index);
-
-            return parser;
-        } catch (IOException e) {
-            log.error("createSearcher failed", e);
-            throw new InstantiationException();
-        } catch (BookException e) {
-            log.error("createSearcher failed", e);
-            throw new InstantiationException();
-        } catch (ReflectiveOperationException e) {
-            log.error("createSearcher failed", e);
-            throw new InstantiationException();
+                return parser
+            } catch (e: IOException) {
+                log.error("createSearcher failed", e)
+                throw InstantiationException()
+            } catch (e: BookException) {
+                log.error("createSearcher failed", e)
+                throw InstantiationException()
+            } catch (e: ReflectiveOperationException) {
+                log.error("createSearcher failed", e)
+                throw InstantiationException()
+            }
         }
-    }
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(SearcherFactory.class);
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(SearcherFactory::class.java)
+    }
 }

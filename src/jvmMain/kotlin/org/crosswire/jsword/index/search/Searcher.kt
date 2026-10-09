@@ -17,12 +17,25 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.search;
+/**
+<p>
+  This package helps implementors of the various Book interfaces implement
+  search.
+</p>
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.index.query.Query;
-import org.crosswire.jsword.passage.Key;
+<p>
+  Search can be split into 2 sections, the actual indexing, and the parsing
+  of queries. The Index and Parser interfaces represent these sections. Some
+  implementations of the Searcher interface (like ser) will use this
+  splitting, whilst Lucene uses it's own code.
+</p>
+*/
+package org.crosswire.jsword.index.search
+
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.index.query.Query
+import org.crosswire.jsword.passage.Key
 
 /**
  * The central interface to all searching.
@@ -30,14 +43,14 @@ import org.crosswire.jsword.passage.Key;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Searcher {
+interface Searcher {
     /**
      * Setup the index that this parser can use to do word level searches
      * 
      * @param index
      *            The Index to query for words
      */
-    void init(Index index);
+    fun init(index: Index?)
 
     /**
      * Take a search request and decipher it into a Passage.
@@ -47,7 +60,8 @@ public interface Searcher {
      * @return The matching verses
      * @throws BookException 
      */
-    Key search(SearchRequest request) throws BookException;
+    @Throws(BookException::class)
+    fun search(request: SearchRequest?): Key
 
     /**
      * Take a search request and decipher it into a Passage.
@@ -57,5 +71,6 @@ public interface Searcher {
      * @return The matching verses
      * @throws BookException 
      */
-    Key search(Query request) throws BookException;
+    @Throws(BookException::class)
+    fun search(request: Query?): Key
 }

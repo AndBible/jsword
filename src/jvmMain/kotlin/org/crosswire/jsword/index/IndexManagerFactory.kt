@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
-import java.io.IOException;
+import org.crosswire.common.util.PluginUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.crosswire.common.util.PluginUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
 
 /**
  * A Factory class for IndexManagers.
@@ -31,42 +31,43 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class IndexManagerFactory {
-    /**
-     * Prevent instantiation
-     */
-    private IndexManagerFactory() {
-    }
+class IndexManagerFactory
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Create a new IndexManager.
+         * 
+         * @return the singleton index manager
+         */
+        @JvmStatic
+        fun getIndexManager(): IndexManager {
+            return instance!!
+        }
 
-    /**
-     * Create a new IndexManager.
-     * 
-     * @return the singleton index manager
-     */
-    public static IndexManager getIndexManager() {
-        return instance;
-    }
+        /**
+         * The singleton
+         */
+        private var instance: IndexManager? = null
 
-    /**
-     * The singleton
-     */
-    private static IndexManager instance;
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(IndexManagerFactory::class.java)
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(IndexManagerFactory.class);
-
-    /**
-     * Setup the instance
-     */
-    static {
-        try {
-            instance = PluginUtil.getImplementation(IndexManager.class);
-        } catch (IOException e) {
-            log.error("createIndexManager failed", e);
-        } catch (ReflectiveOperationException e) {
-            log.error("createIndexManager failed", e);
+        /**
+         * Setup the instance
+         */
+        init {
+            try {
+                instance = PluginUtil.getImplementation(IndexManager::class.java)
+            } catch (e: IOException) {
+                log.error("createIndexManager failed", e)
+            } catch (e: ReflectiveOperationException) {
+                log.error("createIndexManager failed", e)
+            }
         }
     }
 }

@@ -16,13 +16,13 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.NoSuchKeyException;
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.NoSuchKeyException
 
 /**
  * A range query specifies how a range should be included in the search. It
@@ -31,17 +31,13 @@ import org.crosswire.jsword.passage.NoSuchKeyException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class RangeQuery extends AbstractQuery {
-
-    /**
-     * Construct a query from the range specification.
-     * 
-     * @param theRange
-     */
-    public RangeQuery(String theRange) {
-        super(theRange);
-    }
-
+open class RangeQuery
+/**
+ * Construct a query from the range specification.
+ * 
+ * @param theRange
+ */
+(theRange: String?) : AbstractQuery(theRange) {
     /*
      * (non-Javadoc)
      * 
@@ -49,13 +45,14 @@ public class RangeQuery extends AbstractQuery {
      * org.crosswire.jsword.index.search.parse.Query#find(org.crosswire.jsword
      * .index.search.Index)
      */
-    public Key find(Index index) throws BookException {
-        String range = getQuery();
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        val range = query
         try {
-            return index.getKey(range);
-        } catch (NoSuchKeyException e) {
+            return index!!.getKey(range)
+        } catch (e: NoSuchKeyException) {
             // TRANSLATOR: User error condition: The passage range could not be understood. {0} is a placeholder for the passage.
-            throw new BookException(JSMsg.gettext("Syntax Error: Invalid passage \"{0}\"", range), e);
+            throw BookException(JSMsg.gettext("Syntax Error: Invalid passage \"{0}\"", range), e)
         }
     }
 }

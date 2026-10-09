@@ -16,7 +16,7 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.search;
+package org.crosswire.jsword.index.search
 
 /**
  * The DefaultSearchModifier provides a simple implementation of a
@@ -25,46 +25,40 @@ package org.crosswire.jsword.index.search;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-
-public class DefaultSearchModifier implements SearchModifier {
-
+open class DefaultSearchModifier
+/**
+ * A default SearchModifier that returns all hits and does not rank the
+ * results.
+ */
+() : SearchModifier {
     /**
-     * A default SearchModifier that returns all hits and does not rank the
-     * results.
+     * The indicator of whether the request should be ranked.
      */
-    public DefaultSearchModifier() {
-        ranked = false;
-        maxResults = Integer.MAX_VALUE;
-    }
+    private var ranked: Boolean = false
 
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.index.search.SearchModifier#isRanked()
      */
-    public boolean isRanked() {
-        return ranked;
-    }
-
     /**
      * Set whether or not the search should be ranked.
      * 
      * @param newRanked
      *            true if the search should be ranked
      */
-    public void setRanked(boolean newRanked) {
-        ranked = newRanked;
-    }
+    // backed by a field named "ranked" to keep the serialized form
+    override var isRanked: Boolean
+        get() = ranked
+        set(newRanked) {
+            ranked = newRanked
+        }
 
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.index.search.SearchModifier#getMaxResults()
      */
-    public int getMaxResults() {
-        return maxResults;
-    }
-
     /**
      * The maximum number of results to provide. A value of Integer.MAX_VALUE,
      * the default, means get all results.
@@ -72,22 +66,12 @@ public class DefaultSearchModifier implements SearchModifier {
      * @param newMaxResults
      *            the maxResults to set
      */
-    public void setMaxResults(int newMaxResults) {
-        maxResults = newMaxResults;
+    override var maxResults: Int = Integer.MAX_VALUE
+
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 0L
     }
-
-    /**
-     * The indicator of whether the request should be ranked.
-     */
-    private boolean ranked;
-
-    /**
-     * The indicator of whether the request should be ranked.
-     */
-    private int maxResults;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 0L;
 }

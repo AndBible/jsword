@@ -17,10 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.search;
+package org.crosswire.jsword.index.search
 
-import org.crosswire.jsword.index.query.QueryDecorator;
-import org.crosswire.jsword.index.query.QueryDecoratorFactory;
+import org.crosswire.jsword.index.query.QueryDecorator
+import org.crosswire.jsword.index.query.QueryDecoratorFactory
 
 /**
  * An Enumeration of the possible types of Searches.
@@ -28,34 +28,41 @@ import org.crosswire.jsword.index.query.QueryDecoratorFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum SearchType {
+enum class SearchType
+/**
+ * @param name
+ *            The name of the BookCategory
+ */
+(
+    /**
+     * The name of the BookCategory
+     */
+    private val displayName: String
+) {
     /**
      * Find the words in the specified order.
      */
-    PHRASE ("Phrase") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decoratePhrase(queryWords);
+    PHRASE("Phrase") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decoratePhrase(queryWords)
         }
     },
 
     /**
      * Find all the words regardless of position.
      */
-    ALL_WORDS ("All") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decorateAllWords(queryWords);
+    ALL_WORDS("All") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decorateAllWords(queryWords)
         }
-   },
+    },
 
     /**
      * Find any of these words
      */
-    ANY_WORDS ("Any") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decorateAnyWords(queryWords);
+    ANY_WORDS("Any") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decorateAnyWords(queryWords)
         }
     },
 
@@ -63,86 +70,72 @@ public enum SearchType {
      * Find verses not containing these words. Note this may require being added
      * after words being sought.
      */
-    NOT_WORDS ("Not") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decorateNotWords(queryWords);
+    NOT_WORDS("Not") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decorateNotWords(queryWords)
         }
     },
 
     /**
      * Find verses with words that start with the these beginnings.
      */
-    START_WORDS ("Start") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decorateStartWords(queryWords);
+    START_WORDS("Start") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decorateStartWords(queryWords)
         }
     },
 
     /**
      * Find verses with words spelled something like
      */
-    SPELL_WORDS ("Spell") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decorateSpellWords(queryWords);
+    SPELL_WORDS("Spell") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decorateSpellWords(queryWords)
         }
     },
 
     /**
      * Find verses in this range
      */
-    RANGE ("Range") {
-        @Override
-        public String decorate(String queryWords) {
-            return SEARCH_SYNTAX.decorateRange(queryWords);
+    RANGE("Range") {
+        override fun decorate(queryWords: String?): String {
+            return SEARCH_SYNTAX.decorateRange(queryWords)
         }
     };
-
-    /**
-     * @param name
-     *            The name of the BookCategory
-     */
-    SearchType(String name) {
-        this.name = name;
-    }
 
     /**
      * Decorate a string with the given type of decoration.
      * @param queryWords 
      * @return the decorated query
      */
-    public abstract String decorate(String queryWords);
-
-    /**
-     * Lookup method to convert from a String
-     * 
-     * @param name 
-     * @return the matching search type
-     */
-    public static SearchType fromString(String name) {
-        for (SearchType v : values()) {
-            if (v.name.equalsIgnoreCase(name)) {
-                return v;
-            }
-        }
-
-        throw new ClassCastException("Not a valid search type");
-    }
+    abstract fun decorate(queryWords: String?): String
 
     /* (non-Javadoc)
      * @see java.lang.Enum#toString()
      */
-    @Override
-    public String toString() {
-        return name;
+    override fun toString(): String {
+        return displayName
     }
 
-    /**
-     * The name of the BookCategory
-     */
-    private String name;
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         * 
+         * @param name 
+         * @return the matching search type
+         */
+        @JvmStatic
+        fun fromString(name: String?): SearchType {
+            for (v in entries) {
+                if (v.displayName.equals(name, ignoreCase = true)) {
+                    return v
+                }
+            }
 
-    protected static final QueryDecorator SEARCH_SYNTAX = QueryDecoratorFactory.getSearchSyntax();
+            throw ClassCastException("Not a valid search type")
+        }
+
+        @JvmField
+        protected val SEARCH_SYNTAX: QueryDecorator = QueryDecoratorFactory.getSearchSyntax()
+    }
 }

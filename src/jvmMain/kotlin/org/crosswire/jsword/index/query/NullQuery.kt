@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
 
 /**
  * A null query searches for nothing and returns an empty Key.
@@ -29,13 +29,11 @@ import org.crosswire.jsword.passage.Key;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class NullQuery implements Query {
-    /**
-     * Create a NullQuery.
-     */
-    public NullQuery() {
-    }
-
+open class NullQuery
+/**
+ * Create a NullQuery.
+ */
+: Query {
     /*
      * (non-Javadoc)
      * 
@@ -43,8 +41,8 @@ public class NullQuery implements Query {
      * org.crosswire.jsword.index.query.Query#find(org.crosswire.jsword.index
      * .search.Index)
      */
-    public Key find(Index index) throws BookException {
-        return index.find(null);
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        return index!!.find(null)
     }
-
 }

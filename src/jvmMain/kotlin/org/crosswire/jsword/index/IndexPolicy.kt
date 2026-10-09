@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
 /**
  * An IndexPolicy allows for controlling the overall behavior
@@ -28,14 +28,14 @@ package org.crosswire.jsword.index;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface IndexPolicy {
+interface IndexPolicy {
     /**
      * Indicates whether Strong's Numbers should be included in the index.
      * Adapter default: true;
      * 
      * @return true if Strong's Numbers should be indexed
      */
-    boolean isStrongsIndexed();
+    val isStrongsIndexed: Boolean
 
     /**
      * Indicates whether Strong's Numbers should be included in the index.
@@ -43,7 +43,7 @@ public interface IndexPolicy {
      * 
      * @return true if Strong's Numbers should be indexed
      */
-    boolean isMorphIndexed();
+    val isMorphIndexed: Boolean
 
     /**
      * Indicates whether Strong's Numbers should be included in the index.
@@ -51,7 +51,7 @@ public interface IndexPolicy {
      * 
      * @return true if Notes should be indexed
      */
-    boolean isNoteIndexed();
+    val isNoteIndexed: Boolean
 
     /**
      * Indicates whether Titles and Introductions should be included in the index.
@@ -59,7 +59,7 @@ public interface IndexPolicy {
      * 
      * @return true if Titles and Introductions should be indexed
      */
-    boolean isTitleIndexed();
+    val isTitleIndexed: Boolean
 
     /**
      * Indicates whether Cross References should be included in the index.
@@ -67,7 +67,7 @@ public interface IndexPolicy {
      * 
      * @return true if Cross References should be indexed
      */
-    boolean isXrefIndexed();
+    val isXrefIndexed: Boolean
 
     /**
      * The maximum size of the RAM Buffer in megabytes that
@@ -76,7 +76,8 @@ public interface IndexPolicy {
      * 
      * @return the size of the RAM Buffer.
      */
-    int getRAMBufferSize();
+    // kept as a function: :app's AndroidIndexPolicy overrides getRAMBufferSize()
+    fun getRAMBufferSize(): Int
 
     /**
      * Indicates whether one Book can be indexed at a time.
@@ -85,5 +86,6 @@ public interface IndexPolicy {
      * 
      * @return whether there can only be one Book indexed at a time.
      */
-    boolean isSerial();
+    // kept as a function: :app's AndroidIndexPolicy overrides isSerial()
+    fun isSerial(): Boolean
 }

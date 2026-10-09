@@ -17,8 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
+import org.crosswire.common.util.jswordAssert
 
 /**
  * An Enumeration of the possible states of an index.
@@ -27,7 +28,17 @@ package org.crosswire.jsword.index;
  * @author Joe Walker
  * @author DM Smith
  */
-public enum IndexStatus {
+enum class IndexStatus
+/**
+ * @param name
+ *            The name of the BookCategory
+ */
+(
+    /**
+     * The name of the IndexStatus
+     */
+    private val displayName: String
+) {
     /**
      * There is a complete and ready to use search index
      */
@@ -53,39 +64,27 @@ public enum IndexStatus {
      */
     INVALID("Invalid");
 
-    /**
-     * @param name
-     *            The name of the BookCategory
-     */
-    IndexStatus(String name) {
-        this.name = name;
+    override fun toString(): String {
+        return displayName
     }
 
-    /**
-     * Lookup method to convert from a String
-     * 
-     * @param name 
-     * @return the matching index status
-     */
-    public static IndexStatus fromString(String name) {
-        for (IndexStatus o : IndexStatus.values()) {
-            if (o.name.equalsIgnoreCase(name)) {
-                return o;
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         * 
+         * @param name 
+         * @return the matching index status
+         */
+        @JvmStatic
+        fun fromString(name: String?): IndexStatus? {
+            for (o in entries) {
+                if (o.displayName.equals(name, ignoreCase = true)) {
+                    return o
+                }
             }
+            // cannot get here
+            jswordAssert(false) { "cannot get here" }
+            return null
         }
-        // cannot get here
-        assert false;
-        return null;
     }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    /**
-     * The name of the IndexStatus
-     */
-    private String name;
-
 }

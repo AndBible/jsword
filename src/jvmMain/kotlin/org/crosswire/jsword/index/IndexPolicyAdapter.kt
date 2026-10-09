@@ -16,68 +16,61 @@
  *
  * © CrossWire Bible Society, 2013 - 2016
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
 /**
  * The IndexPolicyAdapter provides for application resilience against
  * change to IndexPolicy. It defines a reasonable set of defaults for
  * a desktop application, but may not be appropriate for memory limited
  * devices, such as phones, tablets, pdas. The defaults are documented
- * in {@link IndexPolicy}.
+ * in [IndexPolicy].
  * 
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class IndexPolicyAdapter implements IndexPolicy {
-
+open class IndexPolicyAdapter : IndexPolicy {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#isStrongsIndexed()
      */
-    public boolean isStrongsIndexed() {
-        return true;
-    }
+    override val isStrongsIndexed: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#isMorphIndexed()
      */
-    public boolean isMorphIndexed() {
-        return true;
-    }
+    override val isMorphIndexed: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#isNoteIndexed()
      */
-    public boolean isNoteIndexed() {
-        return true;
-    }
+    override val isNoteIndexed: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#isTitleIndexed()
      */
-    public boolean isTitleIndexed() {
-        return true;
-    }
+    override val isTitleIndexed: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#isXrefIndexed()
      */
-    public boolean isXrefIndexed() {
-        return true;
-    }
+    override val isXrefIndexed: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#getRAMBufferSize()
      */
-    public int getRAMBufferSize() {
-        return 16;
+    override fun getRAMBufferSize(): Int {
+        return 16
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.IndexPolicy#isSerial()
      */
-    public boolean isSerial() {
-        return false;
+    override fun isSerial(): Boolean {
+        return false
     }
-
 }

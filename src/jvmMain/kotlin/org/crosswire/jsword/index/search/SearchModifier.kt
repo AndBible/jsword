@@ -17,9 +17,22 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.search;
+/**
+<p>
+  This package helps implementors of the various Book interfaces implement
+  search.
+</p>
 
-import java.io.Serializable;
+<p>
+  Search can be split into 2 sections, the actual indexing, and the parsing
+  of queries. The Index and Parser interfaces represent these sections. Some
+  implementations of the Searcher interface (like ser) will use this
+  splitting, whilst Lucene uses it's own code.
+</p>
+*/
+package org.crosswire.jsword.index.search
+
+import java.io.Serializable
 
 /**
  * A SearchModifier consists of the kinds of changes that can be done to a
@@ -28,15 +41,15 @@ import java.io.Serializable;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface SearchModifier extends Serializable {
+interface SearchModifier : Serializable {
     /**
      * @return true if the results of the search request should be ranked
      */
-    boolean isRanked();
+    val isRanked: Boolean
 
     /**
      * @return the maximum number of results, with Integer.MAX_VALUE meaning
      *         all.
      */
-    int getMaxResults();
+    val maxResults: Int
 }

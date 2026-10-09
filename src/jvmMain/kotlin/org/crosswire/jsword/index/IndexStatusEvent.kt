@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
-import java.util.EventObject;
+import java.util.EventObject
 
 /**
  * An IndexStatusEvent is fired whenever the IndexStatus of a book has changed.
@@ -27,35 +27,24 @@ import java.util.EventObject;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class IndexStatusEvent extends EventObject {
-    /**
-     * Basic constructor
-     * 
-     * @param source the source for the event
-     * @param status
-     *            The new status of the book.
-     */
-    public IndexStatusEvent(Object source, IndexStatus status) {
-        super(source);
-
-        indexStatus = status;
-    }
-
+open class IndexStatusEvent
+/**
+ * Basic constructor
+ * 
+ * @param source the source for the event
+ * @param status
+ *            The new status of the book.
+ */
+(source: Any?, status: IndexStatus?) : EventObject(source) {
     /**
      * @return Returns the indexStatus.
      */
-    public IndexStatus getIndexStatus() {
-        return indexStatus;
+    open val indexStatus: IndexStatus? = status
+
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3834876879554819894L
     }
-
-    /**
-     * The indexStatus of the book.
-     */
-    private IndexStatus indexStatus;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3834876879554819894L;
-
 }

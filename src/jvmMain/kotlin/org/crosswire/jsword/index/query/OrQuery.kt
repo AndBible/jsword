@@ -16,12 +16,12 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.PassageTally;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.PassageTally
 
 /**
  * An OR query specifies that a result is the union of the left and the right
@@ -30,39 +30,36 @@ import org.crosswire.jsword.passage.PassageTally;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class OrQuery extends AbstractBinaryQuery {
-
-    /**
-     * @param theLeftQuery 
-     * @param theRightQuery 
-     */
-    public OrQuery(Query theLeftQuery, Query theRightQuery) {
-        super(theLeftQuery, theRightQuery);
-    }
-
+open class OrQuery
+/**
+ * @param theLeftQuery 
+ * @param theRightQuery 
+ */
+(theLeftQuery: Query?, theRightQuery: Query?) : AbstractBinaryQuery(theLeftQuery, theRightQuery) {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.index.query.Query#find(org.crosswire.jsword.index.Index)
      */
-    public Key find(Index index) throws BookException {
-        Key left = getLeftQuery().find(index);
-        Key right = getRightQuery().find(index);
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        val left = leftQuery!!.find(index)
+        val right = rightQuery!!.find(index)
 
         if (left.isEmpty()) {
-            return right;
+            return right
         }
 
         if (right.isEmpty()) {
-            return left;
+            return left
         }
 
         // If ranking was requested then prioritize it.
-        if (right instanceof PassageTally) {
-            right.addAll(left);
-            return right;
+        if (right is PassageTally) {
+            right.addAll(left)
+            return right
         }
 
-        left.addAll(right);
+        left.addAll(right)
 
-        return left;
+        return left
     }
 }

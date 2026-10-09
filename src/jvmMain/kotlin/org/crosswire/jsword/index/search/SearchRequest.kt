@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index.search;
+package org.crosswire.jsword.index.search
 
-import java.io.Serializable;
+import java.io.Serializable
 
 /**
  * A SearchRequest consists of a string and modifiers for the search.
@@ -27,14 +27,14 @@ import java.io.Serializable;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface SearchRequest extends Serializable {
+interface SearchRequest : Serializable {
     /**
      * @return the modifications to this SearchRequest
      */
-    SearchModifier getSearchModifier();
+    val searchModifier: SearchModifier?
 
     /**
      * @return the request that is being operated upon
      */
-    String getRequest();
+    val request: String?
 }

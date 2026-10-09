@@ -16,9 +16,9 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index;
+package org.crosswire.jsword.index
 
-import org.crosswire.jsword.index.search.SearchModifier;
+import org.crosswire.jsword.index.search.SearchModifier
 
 /**
  * A simple implementation of an Index that provides the set/get for
@@ -27,9 +27,7 @@ import org.crosswire.jsword.index.search.SearchModifier;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-
-public abstract class AbstractIndex implements Index {
-
+abstract class AbstractIndex : Index {
     /*
      * (non-Javadoc)
      * 
@@ -37,21 +35,13 @@ public abstract class AbstractIndex implements Index {
      * org.crosswire.jsword.index.search.Index#setSearchModifier(org.crosswire
      * .jsword.index.search.SearchModifier)
      */
-    public void setSearchModifier(SearchModifier theModifier) {
-        modifier = theModifier;
-    }
-
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.index.search.Index#getSearchModifier()
      */
-    public SearchModifier getSearchModifier() {
-        return modifier;
-    }
-
     /**
      * How the search is to be modified.
      */
-    private SearchModifier modifier;
+    override var searchModifier: SearchModifier? = null
 }

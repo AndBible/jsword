@@ -16,11 +16,11 @@
  *
  * © CrossWire Bible Society, 2005 - 2016
  */
-package org.crosswire.jsword.index.query;
+package org.crosswire.jsword.index.query
 
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.index.Index;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.passage.Key
 
 /**
  * An "And Not" query specifies that a result needs to be in the left but not in
@@ -29,19 +29,15 @@ import org.crosswire.jsword.passage.Key;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class AndNotQuery extends AbstractBinaryQuery {
-
-    /**
-     * Create a query where the right query result is subtracted from the left
-     * query result.
-     * 
-     * @param theLeftQuery
-     * @param theRightQuery
-     */
-    public AndNotQuery(Query theLeftQuery, Query theRightQuery) {
-        super(theLeftQuery, theRightQuery);
-    }
-
+open class AndNotQuery
+/**
+ * Create a query where the right query result is subtracted from the left
+ * query result.
+ * 
+ * @param theLeftQuery
+ * @param theRightQuery
+ */
+(theLeftQuery: Query?, theRightQuery: Query?) : AbstractBinaryQuery(theLeftQuery, theRightQuery) {
     /*
      * (non-Javadoc)
      * 
@@ -49,22 +45,22 @@ public class AndNotQuery extends AbstractBinaryQuery {
      * org.crosswire.jsword.index.search.parse.Query#find(org.crosswire.jsword
      * .index.search.Index)
      */
-    public Key find(Index index) throws BookException {
-        Key left = getLeftQuery().find(index);
+    @Throws(BookException::class)
+    override fun find(index: Index?): Key {
+        val left = leftQuery!!.find(index)
 
         if (left.isEmpty()) {
-            return left;
+            return left
         }
 
-        Key right = getRightQuery().find(index);
+        val right = rightQuery!!.find(index)
 
         if (right.isEmpty()) {
-            return left;
+            return left
         }
 
-        left.removeAll(right);
+        left.removeAll(right)
 
-        return left;
+        return left
     }
-
 }

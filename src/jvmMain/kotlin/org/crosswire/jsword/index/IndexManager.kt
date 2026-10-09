@@ -17,12 +17,15 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.index;
+/**
+ * Abstraction of an Index.
+ */
+package org.crosswire.jsword.index
 
-import java.net.URI;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookException
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookException;
+import java.net.URI
 
 /**
  * Manages the life-cycle of an Index.
@@ -30,14 +33,14 @@ import org.crosswire.jsword.book.BookException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface IndexManager {
+interface IndexManager {
     /**
      * Detects if index data has been stored and is valid for this Bible.
      * 
      * @param book the book
      * @return true if the book has a usable index
      */
-    boolean isIndexed(Book book);
+    fun isIndexed(book: Book?): Boolean
 
     /**
      * Create a new Searcher.
@@ -46,13 +49,14 @@ public interface IndexManager {
      * @return an index that can be searched.
      * @throws BookException 
      */
-    Index getIndex(Book book) throws BookException;
+    @Throws(BookException::class)
+    fun getIndex(book: Book?): Index
 
     /**
      * Detect or checking whether this book needs reindexing.
      * It is safe methods, you can always call it whether the book
      * is already indexed or not.
-     * This check for <br>
+     * This check for <br></br>
      * <pre>
      * - isIndexed(Book book)
      * - Is index valid, eg index version changed incompatibly (due to internal structure change or search engine update)
@@ -62,7 +66,7 @@ public interface IndexManager {
      * @param book the Book
      * @return true if no index present or current index is of incompatible/older version
      */
-    boolean needsReindexing(Book book);
+    fun needsReindexing(book: Book?): Boolean
 
     /**
      * Read from the given source version to generate ourselves. On completion
@@ -70,7 +74,7 @@ public interface IndexManager {
      * 
      * @param book The book that should be indexed
      */
-    void scheduleIndexCreation(Book book);
+    fun scheduleIndexCreation(book: Book?)
 
     /**
      * We have downloaded a search index to a zip file. It should be installed
@@ -82,7 +86,8 @@ public interface IndexManager {
      *            The URI of a zip file to install
      * @throws BookException 
      */
-    void installDownloadedIndex(Book book, URI tempDest) throws BookException;
+    @Throws(BookException::class)
+    fun installDownloadedIndex(book: Book?, tempDest: URI?)
 
     /**
      * Tidy up after yourself and remove all the files that make up any indexes
@@ -91,25 +96,18 @@ public interface IndexManager {
      * @param book the book who's index should be deleted.
      * @throws BookException 
      */
-    void deleteIndex(Book book) throws BookException;
+    @Throws(BookException::class)
+    fun deleteIndex(book: Book?)
 
     /**
      * Close all indexes associated with this Index Manager
      */
-    void closeAllIndexes();
+    fun closeAllIndexes()
 
     /**
-     * Obtain the current IndexPolicy. Defaults to IndexPolicyAdapter.
-     * 
-     * @return the current IndexPolicy
+     * The current IndexPolicy. Defaults to IndexPolicyAdapter.
+     * Setting to null will cause the IndexPolicyAdapter to be used
+     * (the policy to use when creating indexes).
      */
-    IndexPolicy getIndexPolicy();
-
-    /**
-     * Set the desired IndexPolicy. Setting to null will cause the
-     * IndexPolicyAdapter to be used.
-     * 
-     * @param policy the IndexPolicy to use when creating indexes.
-     */
-    void setIndexPolicy(IndexPolicy policy);
+    var indexPolicy: IndexPolicy?
 }
