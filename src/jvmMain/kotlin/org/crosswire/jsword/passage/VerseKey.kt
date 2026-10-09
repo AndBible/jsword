@@ -35,6 +35,8 @@ interface VerseKey<T : VerseKey<T>> : Key {
      *
      * @return this VerseKey Versification.
      */
+    // Non-null by declaration. It can be null at runtime exactly as in Java: RangedPassage(null)/DistinctPassage(null),
+    // readObject with an unknown versification, and a deserialized VerseRange (transient v11n never restored).
     val versification: Versification
 
     /**

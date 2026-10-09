@@ -25,7 +25,11 @@ package org.crosswire.jsword.passage
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-class PassageUtil private constructor() {
+class PassageUtil
+/**
+ * Prevent instantiation
+ */
+private constructor() {
     companion object {
         /**
          * Do we remember the original string used to configure us?

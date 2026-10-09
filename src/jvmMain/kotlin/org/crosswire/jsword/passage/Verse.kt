@@ -290,7 +290,7 @@ class Verse : VerseKey<Verse>, Cloneable {
 
         // The real tests
         return this.ordinal == that.ordinal
-                && this.v11n == that.v11n
+                && this.v11n.equals(that.v11n)
                 && bothNullOrEqual(this.subIdentifier, that.subIdentifier)
     }
 
@@ -327,7 +327,7 @@ class Verse : VerseKey<Verse>, Cloneable {
      * @see org.crosswire.jsword.passage.Passage#reversify(org.crosswire.jsword.versification.Versification)
      */
     override fun reversify(newVersification: Versification?): Verse? {
-        if (v11n == newVersification) {
+        if (v11n.equals(newVersification)) {
             return this
         }
 
@@ -373,6 +373,10 @@ class Verse : VerseKey<Verse>, Cloneable {
     /**
      * Return the sub identifier if any
      * @return The optional OSIS sub identifier
+     *
+     * The OSIS Sub-identifier if present.
+     * This should be a string that allows for the likes of:
+     * a.xy.asdf.qr
      */
     var subIdentifier: String? = null
         private set
@@ -381,6 +385,8 @@ class Verse : VerseKey<Verse>, Cloneable {
      * Return the ordinal value of the verse in its versification.
      *
      * @return The verse number
+     *
+     * The ordinal value for this verse within its versification.
      */
     var ordinal: Int = 0
         private set

@@ -124,7 +124,7 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
      * @see org.crosswire.jsword.passage.VerseKey#reversify(org.crosswire.jsword.versification.Versification)
      */
     override fun reversify(newVersification: Versification?): VerseRange? {
-        if (v11n == newVersification) {
+        if (v11n.equals(newVersification)) {
             return this
         }
         val newStart = start.reversify(newVersification)
@@ -388,7 +388,7 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
             return false
         }
         val vr: VerseRange = other
-        return verseCount == vr.verseCount && start == vr.start && v11n == vr.v11n
+        return verseCount == vr.verseCount && start == vr.start && v11n.equals(vr.v11n)
     }
 
     override fun hashCode(): Int {
