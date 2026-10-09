@@ -8,7 +8,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
-            implementation("io.github.pdvrieze.xmlutil:core:1.0.2")
+            implementation("io.github.pdvrieze.xmlutil:core:0.91.3")
         }
         jvmTest.dependencies {
             implementation(project(":jsword"))
