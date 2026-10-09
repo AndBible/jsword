@@ -125,6 +125,9 @@ tasks.named<Test>("jvmTest") {
     useJUnit()
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
+    // The main resources output, for NoEmbeddedResourceOnMainClasspathTest (jvmTest's own resources hide regressions).
+    systemProperty("ksword.mainResourcesDir", layout.buildDirectory.dir("processedResources/jvm/main").get().asFile.absolutePath)
+    dependsOn("jvmProcessResources")
     exclude("org/crosswire/ksword/parity/**")
 }
 
