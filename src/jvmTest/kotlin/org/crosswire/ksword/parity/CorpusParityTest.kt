@@ -93,6 +93,26 @@ class CorpusParityTest {
     }
 
     @Test
+    fun driverScanSurvivesHeaderlessConf() {
+        val root = java.nio.file.Files.createTempDirectory("ksword-scan").toFile()
+        try {
+            File(root, "modules/texts/rawtext/goodb16/").mkdirs()
+            File(root, "modules/texts/rawtext/badb16/").mkdirs()
+            val mods = File(root, "mods.d").also { it.mkdirs() }
+            // A BOM-prefixed first line hides the [Initials] header: the metadata has no name at all.
+            File(mods, "a-headerless.conf").writeText("\uFEFFDescription=No header\nDataPath=./modules/texts/rawtext/badb16/\nLang=en\n", Charsets.UTF_8)
+            File(mods, "b-good.conf").writeText(
+                "[GoodB16]\nDescription=Good\nDataPath=./modules/texts/rawtext/goodb16/\nModDrv=RawText\nLang=en\nEncoding=UTF-8\nVersification=KJV\n",
+                Charsets.UTF_8)
+            val (a, b) = both("corpus.driver.scan", root.path)
+            assertEquals("found=[GoodB16]", a.trim(), "baseline must keep scanning past the header-less conf")
+            assertSameLines("driver scan", a to b)
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
     fun serializationBothDirections() {
         val kinds = listOf("Rocket", "Bitwise", "Distinct", "Ranged", "Tally", "Verse", "VerseRange")
         val refs = listOf("Gen 1:1-5; Exo 2", "Mat 5-7, 10:1; Rev 22", "Ps 119", "Jude 3")

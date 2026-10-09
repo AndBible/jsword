@@ -46,11 +46,11 @@ abstract class BookType
      */
     private val name: String,
     /**
-     * What category is this book
+     * The category of this book
      */
     open val bookCategory: BookCategory,
     /**
-     * What category is this book
+     * Get the way this type of Book organizes it's keys.
      */
     open val keyType: KeyType
 ) {

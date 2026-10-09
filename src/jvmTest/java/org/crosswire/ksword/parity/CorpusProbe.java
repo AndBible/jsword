@@ -228,6 +228,30 @@ final class CorpusProbe {
                 }
                 return sb.toString();
             }
+            case "corpus.driver.scan": {
+                // args: dir (a bookDir holding mods.d). Runs the SwordBookDriver discovery scan with that dir as the
+                // download dir and lists the books found under it; a header-less conf must not abort the scan.
+                File dir = new File(args.get(0));
+                StringBuilder sb = new StringBuilder();
+                File previous = org.crosswire.jsword.book.sword.SwordBookPath.getSwordDownloadDir();
+                try {
+                    org.crosswire.jsword.book.sword.SwordBookPath.setDownloadDir(dir);
+                    org.crosswire.jsword.book.Book[] found = new org.crosswire.jsword.book.sword.SwordBookDriver().getBooks();
+                    java.util.TreeSet<String> names = new java.util.TreeSet<String>();
+                    for (org.crosswire.jsword.book.Book b : found) {
+                        URI loc = b.getBookMetaData().getLocation();
+                        if (loc != null && loc.getPath().startsWith(dir.toURI().getPath())) {
+                            names.add(b.getInitials());
+                        }
+                    }
+                    sb.append("found=").append(names).append('\n');
+                } catch (Exception e) {
+                    sb.append(fail(e));
+                } finally {
+                    org.crosswire.jsword.book.sword.SwordBookPath.setDownloadDir(previous);
+                }
+                return sb.toString();
+            }
             case "ser.write": {
                 // args: kind (Rocket|Bitwise|Distinct|Ranged|Tally|Verse|VerseRange), v11n, ref
                 Versification v11n = Versifications.instance().getVersification(args.get(1));

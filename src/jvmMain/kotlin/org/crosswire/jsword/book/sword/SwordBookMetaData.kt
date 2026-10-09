@@ -259,6 +259,8 @@ class SwordBookMetaData : AbstractBookMetaData {
         }
 
     /**
+     * The BookType for this Book
+     *
      * @return the book type
      */
     var bookType: BookType? = null
@@ -274,6 +276,9 @@ class SwordBookMetaData : AbstractBookMetaData {
         }
 
     /**
+     * If the module's config is tied to a file remember it so that it can be
+     * updated.
+     *
      * To maintain backwards compatibility, this always returns the Sword conf
      * file Get the conf file for this SwordMetaData.
      *
@@ -891,10 +896,10 @@ class SwordBookMetaData : AbstractBookMetaData {
     companion object {
         // These plus a few from BookMetaData are the only ones defined by SWORD
         // These ones from BookMetaData are:
-        // BookMetaData.KEY_VERSIFICATION
-        // BookMetaData.KEY_FONT
-        // BookMetaData.KEY_LANG
-        // BookMetaData.KEY_CATEGORY
+        // KEY_VERSIFICATION
+        // KEY_FONT
+        // KEY_LANG
+        // KEY_CATEGORY
         // Two others are for JSword and are defined in BookMetaData:
         // KEY_SCOPE
         // KEY_BOOKLIST

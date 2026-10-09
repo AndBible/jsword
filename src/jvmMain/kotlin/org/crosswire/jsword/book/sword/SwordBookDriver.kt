@@ -103,7 +103,7 @@ open class SwordBookDriver
                 // skip any book that is not supported.
                 if (!sbmd.isSupported) {
                     LOGGER.error("The book's configuration files is not supported. -> Initials [{}], Driver=[{}], Versification=[{}], Book type=[{}], Book category=[{}]",
-                            sbmd.initials, sbmd.driver, sbmd.getProperty(BookMetaData.KEY_VERSIFICATION), sbmd.bookType, sbmd.bookCategory)
+                            sbmd.internalName, sbmd.driver, sbmd.getProperty(BookMetaData.KEY_VERSIFICATION), sbmd.bookType, sbmd.bookCategory)
                     continue
                 }
 
@@ -241,7 +241,7 @@ open class SwordBookDriver
             // skip any book that is not supported.
             if (!bmd.isSupported) {
                 LOGGER.error("The book's configuration files is not supported. -> Initials [{}], Driver=[{}], Versification=[{}], Book type=[{}], Book category=[{}]",
-                        bmd.initials, bmd.driver, bmd.getProperty(BookMetaData.KEY_VERSIFICATION), bmd.bookType, bmd.bookCategory)
+                        bmd.internalName, bmd.driver, bmd.getProperty(BookMetaData.KEY_VERSIFICATION), bmd.bookType, bmd.bookCategory)
                 return
             }
 

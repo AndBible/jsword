@@ -75,8 +75,123 @@ class ConfigEntryTable
         buf.append('[')
         buf.append(initials)
         buf.append("]\n")
+/*
+        toConf(buf, BASIC_INFO);
+        toConf(buf, SYSTEM_INFO);
+        toConf(buf, HIDDEN);
+        toConf(buf, FEATURE_INFO);
+        toConf(buf, LANG_INFO);
+        toConf(buf, COPYRIGHT_INFO);
+        toConf(buf, extra);
+*/
         return buf.toString()
     }
 
-    // The commented-out Java members (report(), toConf(...), RTF_PATTERN) of the original are omitted.
+/*    
+    protected void report() {
+        Iterator<String> kIter = config.keySet().iterator();
+        while (kIter.hasNext()) {
+            String key = kIter.next();
+            Iterator<String> vIter = config.getValues(key).iterator();
+            while (vIter.hasNext()) {
+                String value = vIter.next();
+
+                // Only CIPHER_KEYS that are empty are not ignored
+                if (value.length() == 0 && !SwordBookMetaData.KEY_CIPHER_KEY.equalsIgnoreCase(key)) {
+                    log.warn("Ignoring empty entry in [{}]{}=", initials, key);
+                    continue;
+                }
+
+                // Create a configEntry so that the name is normalized.
+                ConfigEntry configEntry = new ConfigEntry(initials, key);
+                ConfigEntryType type = configEntry.getType();
+                ConfigEntry e = null; // table.get(type);
+
+                if (e == null) {
+                    if (type == null) {
+                        log.warn("Extra entry in [{}]{}", initials, configEntry.getName());
+//                        extra.put(key, configEntry);
+                    } else if (type.isSynthetic()) {
+                        log.warn("Ignoring unexpected entry in [{}]{}", initials, configEntry.getName());
+                    } else {
+//                        table.put(type, configEntry);
+                    }
+                } else {
+                    configEntry = e;
+                }
+                // History is a special case it is of the form History_x.x
+                // The config entry is History without the x.x.
+                // We want to put x.x at the beginning of the string
+                if (ConfigEntryType.HISTORY.equals(type)) {
+                    int pos = key.indexOf('_');
+                    value = key.substring(pos + 1) + ' ' + value;
+                }
+
+                configEntry.addValue(value);
+
+                // Filter known types of entries
+                if (type != null) {
+                    value = type.filter(value);
+
+                    // Report on fields that shouldn't have RTF but do
+                    if (!type.allowsRTF() && RTF_PATTERN.matcher(value).find()) {
+                        log.info("Unexpected RTF for [{}]{} = {}", initials, key, value);
+                    }
+
+                    if (type.mayRepeat()) {
+                        if (!type.isAllowed(value)) {
+                            log.info("Unknown config value for [{}]{} = {}", initials, key, value);
+                        }
+                    } else {
+                        if (value != null) {
+                            log.info("Ignoring unexpected additional entry for [{}]{} = {}", initials, key, value);
+                        } else {
+                            if (!type.isAllowed(value)) {
+                                log.info("Unknown config value for [{}]{} = {}", initials, key, value);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+ */
+
+    /**
+     * Build an ordered map so that it displays in a consistent order.
+     */
+    /*
+    private void toConf(StringBuilder buf, ConfigEntryType[] category) {
+        for (int i = 0; i < category.length; i++) {
+
+            String entry = table.get(category[i]);
+
+            if (entry != null && !category[i].isSynthetic()) {
+                String text = entry.toConf();
+                if (text != null && text.length() > 0) {
+                    buf.append(entry.toConf());
+                }
+            }
+        }
+    }
+*/
+    /**
+     * Build an ordered map so that it displays in a consistent order.
+     */
+/*
+    private void toConf(StringBuilder buf, Map<String, ConfigEntry> map) {
+        for (Map.Entry<String, ConfigEntry> mapEntry : map.entrySet()) {
+            ConfigEntry entry = mapEntry.getValue();
+            String text = entry.toConf();
+            if (text != null && text.length() > 0) {
+                buf.append(text);
+            }
+        }
+    }
+*/
+
+    /**
+     * A pattern of allowable RTF in a SWORD conf. These are: \pard, \pae, \par, \qc \b, \i and embedded Unicode
+     */
+    // private static final Pattern RTF_PATTERN = Pattern.compile("\\\\pard|\\\\pa[er]|\\\\qc|\\\\[bi]|\\\\u-?[0-9]{4,6}+");
 }
