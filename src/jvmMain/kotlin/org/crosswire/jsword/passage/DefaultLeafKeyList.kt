@@ -72,7 +72,7 @@ open class DefaultLeafKeyList : Key, Cloneable {
      * @see org.crosswire.jsword.passage.Key#getName()
      */
     override fun getName(): String {
-        return name!!
+        return name ?: ""
     }
 
     /* (non-Javadoc)
@@ -93,7 +93,7 @@ open class DefaultLeafKeyList : Key, Cloneable {
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
     override fun getOsisRef(): String {
-        return osisName!!
+        return osisName ?: ""
     }
 
     /* (non-Javadoc)
