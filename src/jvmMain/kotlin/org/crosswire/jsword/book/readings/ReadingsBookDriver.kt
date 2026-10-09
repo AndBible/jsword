@@ -80,7 +80,8 @@ open class ReadingsBookDriver : AbstractBookDriver() {
      */
     open fun getInstalledReadingsSets(): Array<String> {
         val text = KswordResources.text("readings.txt") ?: return arrayOf<String>()
-        return IndexFiles.parse(text) { ReadingsFilter().accept(it) }.toTypedArray()
+        val filter = ReadingsFilter()
+        return IndexFiles.parse(text) { filter.accept(it) }.toTypedArray()
     }
 
     /**

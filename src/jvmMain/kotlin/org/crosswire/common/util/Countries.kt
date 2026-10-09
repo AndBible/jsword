@@ -91,7 +91,7 @@ object Countries {
      */
     private fun getLocalisedCountries(): KBundle {
         return ResourceBundles.get("iso3166", KswordLocale.current())
-            ?: throw MissingResourceException("Can't find bundle for base name iso3166", "iso3166", "")
+            ?: throw MissingResourceException("Can't find bundle for base name iso3166, locale ${KswordLocale.current()}", "iso3166", "")
     }
 
     const val DEFAULT_COUNTRY_CODE: String = "US"

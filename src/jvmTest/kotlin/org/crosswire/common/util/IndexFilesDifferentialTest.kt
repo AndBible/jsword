@@ -37,4 +37,18 @@ class IndexFilesDifferentialTest {
         assertEquals(viaFilter, IndexFiles.parse(text, accept))
         assertEquals(listOf("bb", "ccc"), viaFilter)
     }
+
+    @Test fun loneCarriageReturnIsALineSeparator() {
+        val text = "a\rb # c\r\r d \rlast"
+        assertEquals(viaNetUtil(text), IndexFiles.parse(text))
+        assertEquals(listOf("a", "b", "d", "last"), IndexFiles.parse(text))
+    }
+
+    @Test fun nullFilterAcceptsEverything() {
+        val text = "a\nbb\n# c\nccc\n"
+        assertEquals(viaNetUtil(text), IndexFiles.parse(text, null))
+        assertEquals(listOf("a", "bb", "ccc"), IndexFiles.parse(text, null))
+        // a filter that accepts everything is equivalent to no filter
+        assertEquals(IndexFiles.parse(text, null), IndexFiles.parse(text) { true })
+    }
 }

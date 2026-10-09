@@ -106,9 +106,10 @@ class InstallManager {
         if (saved != null) {
             return NetUtil.loadProperties(saved)
         }
-        return PropertyMap().apply {
-            putAll(PropertiesParser.parse(KswordResources.bytes("InstallManager.plugin")!!, PropertiesCharset.LATIN1))
-        }
+        // Intentionally dropped: the old lookup also honoured a short-name override `<home>/InstallManager.plugin`.
+        // Only `<home>/<FQN>.plugin`, which save() writes, is honoured now.
+        val embedded = KswordResources.bytes("InstallManager.plugin") ?: return PropertyMap()
+        return PropertyMap().apply { putAll(PropertiesParser.parse(embedded, PropertiesCharset.LATIN1)) }
     }
 
     /**
