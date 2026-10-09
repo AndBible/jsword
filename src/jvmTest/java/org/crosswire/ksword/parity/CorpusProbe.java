@@ -300,7 +300,7 @@ final class CorpusProbe {
                 return sb.toString();
             }
             case "corpus.filter": {
-                // args: filter ("gbf", "osis" or "plaintext"), initials, inputs separated by U+0001. Serialized
+                // args: filter ("gbf", "osis", "thml" or "plaintext"), initials, inputs separated by U+0001. Serialized
                 // OSIS (raw format) of each filter run, or the exception; line breaks of input and output are escaped.
                 StringBuilder sb = new StringBuilder();
                 try {
@@ -313,6 +313,9 @@ final class CorpusProbe {
                             break;
                         case "osis":
                             filter = new org.crosswire.jsword.book.filter.osis.OSISFilter();
+                            break;
+                        case "thml":
+                            filter = new org.crosswire.jsword.book.filter.thml.THMLFilter();
                             break;
                         default:
                             filter = new org.crosswire.jsword.book.filter.plaintext.PlainTextFilter();

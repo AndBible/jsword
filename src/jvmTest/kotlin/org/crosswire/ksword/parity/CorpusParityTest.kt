@@ -170,6 +170,57 @@ class CorpusParityTest {
     }
 
     @Test
+    fun thmlFilter() {
+        // ThML modules are not among the corpus modules, so the filter is driven with synthetic ThML: every tag of the
+        // handler's table (known, aliased, skipped, ignored, unknown, upper case), nesting, sync tags, malformed input
+        // that goes through the cleanup chain, and non-ASCII text.
+        val inputs = listOf(
+            "plain", "", "a & b", "Tom &amp; Jerry", "caf&eacute;", "&nbsp;&copy;", "&#233;&#x20AC;", "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7",
+            "<a href=\"sword://StrongsRealGreek/01909\">1909</a>", "<a href=\"http://x.org/y\">link</a>", "<a name=\"n1\">anchor</a>", "<a>bare</a>",
+            "<abbr title=\"t\">ab</abbr>", "<acronym>ac</acronym>", "<address>ad</address>", "<applet>skip<b>me</b></applet>x", "<area>y", "<b>bold</b>",
+            "<base>z", "<basefont>z", "<bdo>x</bdo>", "<big>big</big>", "<blockquote>q</blockquote>", "<body>b</body>", "a<br/>b", "a<br>b</br>",
+            "<button>b</button>c", "<caption>cap</caption>", "<center>c</center>", "<cite>c</cite>", "<code>c</code>", "<col>x", "<colgroup>x</colgroup>y",
+            "<dd>d</dd>", "<del>d</del>", "<dfn>d</dfn>", "<div>d</div>", "<dl><dt>t</dt><dd>d</dd></dl>", "<em>e</em>", "<fieldset>f</fieldset>",
+            "<font color=\"red\">f</font>", "<font size=\"+1\" face=\"x\">f</font>", "<form>f</form>g", "<frame>f", "<frameset>f</frameset>",
+            "<h1>h1</h1>", "<h2>h2</h2>", "<h3>h3</h3>", "<h4>h4</h4>", "<h5>h5</h5>", "<h6>h6</h6>", "<head>skip</head>x", "a<hr/>b", "<html>h</html>",
+            "<i>it</i>", "<iframe>x</iframe>y", "<img src=\"a.png\" alt=\"x\"/>", "<img/>", "<input>i", "<ins>i</ins>", "<kbd>k</kbd>", "<label>l</label>",
+            "<legend>l</legend>", "<ul><li>a</li><li>b</li></ul>", "<ol><li>a</li><li>b</li></ol>", "<ol type=\"a\"><li>x</li></ol>", "<link>x", "<map>m</map>",
+            "<meta>x", "<noscript>n</noscript>", "<object>o</object>", "<optgroup>x</optgroup>", "<option>x</option>", "<p>para</p>", "<p>a</p><p>b</p>",
+            "<param>p", "<pre>pre</pre>", "<q>quote</q>", "<s>strike</s>", "<samp>s</samp>", "<script>var x</script>y", "<select>s</select>t",
+            "<small>small</small>", "<span>sp</span>", "<strong>st</strong>", "<style>s</style>t", "<sub>sub</sub>", "<sup>sup</sup>",
+            "<table><tr><td>a</td><th>b</th></tr><tr><td>c</td></tr></table>", "<tbody><tr><td>x</td></tr></tbody>", "<tfoot>f</tfoot>", "<thead>h</thead>",
+            "<textarea>t</textarea>u", "<title>t</title>v", "<tt>tt</tt>", "<u>u</u>",
+            "<var>v</var>", "<added>a</added>", "<attr>a</attr>", "<argument>a</argument>", "<citation>c</citation>", "<date>d</date>", "<deleted>d</deleted>",
+            "<def>d</def>", "<div1>d1</div1>", "<div2>d2</div2>", "<div3>d3</div3>", "<div4>d4</div4>", "<div5>d5</div5>", "<div6>d6</div6>",
+            "<foreign lang=\"el\">\u03B1</foreign>", "<index>i</index>", "<insertIndex>i</insertIndex>", "<glossary>g</glossary>", "<note>n</note>",
+            "<note place=\"foot\">n</note>", "<name>nm</name>", "<pb n=\"3\"/>", "<scripCom>s</scripCom>", "<scripContext>s</scripContext>",
+            "<scripRef passage=\"Gen 1:1\">Gen 1:1</scripRef>", "<scripRef passage=\"Joh 3:16\" version=\"KJV\">J</scripRef>", "<scripRef>bare</scripRef>",
+            "<scripture>s</scripture>", "<term>t</term>", "<unclear>u</unclear>", "<verse id=\"1\">v</verse>", "<verse>v</verse>",
+            "<sync type=\"Strongs\" value=\"G3056\"/>", "word<sync type=\"Strongs\" value=\"G3056\"/>", "word<sync type=\"Strongs\" value=\"G3056\"/><sync type=\"Strongs\" value=\"G1\"/>",
+            "word<sync type=\"morph\" value=\"V-PAI\"/>", "word<sync type=\"morph\" value=\"N-NSF\"/><sync type=\"morph\" value=\"x\"/>",
+            "word<sync type=\"lemma\" value=\"logos\"/>", "word<sync type=\"lemma\" value=\"a\"/><sync type=\"lemma\" value=\"b\"/>",
+            "word<sync type=\"Strongs\" value=\"G1\"/><sync type=\"morph\" value=\"V\"/><sync type=\"lemma\" value=\"l\"/>",
+            "<sync type=\"Dict\" value=\"abc\"/>", "a<sync type=\"Dict\" value=\"abc\"/>b", "<sync type=\"Strongs\" value=\"G1\"/>", "<sync type=\"morph\" value=\"x\"/>",
+            "<sync type=\"lemma\" value=\"x\"/>", "w<sync type=\"other\" value=\"x\"/>", "w<sync/>", "<b>w</b><sync type=\"Strongs\" value=\"G9\"/>",
+            "<i>a</i><sync type=\"morph\" value=\"M\"/>", "a<sync type=\"Strongs\" value=\"G1\"/>b<sync type=\"Strongs\" value=\"G2\"/>c",
+            "<B>upper</B>", "<DIV>upper</DIV>", "<Foo>unknown</Foo>", "<foo>unknown</foo>", "<foo>a</foo><foo>b</foo>", "<x-y z=\"1\">w</x-y>", "<FOO>u</FOO>",
+            "<b><i>nested</i> and <u>more</u></b>", "<p><b>a<i>b<u>c</u></i></b></p>", "<div><p>a</p><ul><li>x<ol><li>y</li></ol></li></ul></div>",
+            "<scripRef passage=\"Gen 1:1\"><b>x</b></scripRef>", "<note><p>n</p></note>", "<applet><b>a</b><applet>b</applet></applet>c",
+            "a  b", "a\nb", "a\r\nb", "  lead and trail  ", "<p>a</p>\n<p>b</p>", "x<br/>\ny",
+            "<b>unclosed", "<b>a</i>", "</b>", "a</b>b", "<b", "<b>x</b", "<", ">", "<>", "a<b", "a>b", "<<b>>", "<b a=1>x</b>", "<b a=\"1>x</b>", "<b a='1'>x</b>",
+            "<br>", "<br><br>", "<hr>", "<img src=a>", "<p>a<p>b", "<li>a<li>b", "<td>a<td>b", "<a href=x>y", "<a href=\"x\">y</b>",
+            "a&b", "a &lt; b", "&bogus;", "&#xZZ;", "&#99999999;", "<b>&amp;</b>", "x&", "&;", "<![CDATA[x<y]]>", "<!-- c -->x", "<?pi x?>y", "a\u0000b", "a\u0001b",
+            "<b>\ud83d\ude00</b>", "\ud83d\ude00<br>", "<w>x</w>", "<seg>x</seg>", "<verse osisID=\"Gen.1.1\"/>text"
+        )
+        val result = both("corpus.filter", "thml", "KJV", inputs.joinToString("\u0001"))
+        // Not vacuous: the oracle really converts (references, strong's words, dictionary divs)
+        for (needle in listOf("osisRef=\"sword://StrongsRealGreek/01909\">1909</reference>", "lemma=\"strong:G3056 strong:G1\"", "dict://abc", "<hi type=\"bold\">bold</hi>")) {
+            assertTrue(result.first.contains(needle), "oracle output lacks $needle")
+        }
+        assertSameLines("thml", result)
+    }
+
+    @Test
     fun plainTextFilter() {
         val inputs = listOf(
             "line1\nline2", "", "a", "a\n", "\n", "\n\n", "a\n\nb", "a\r\nb\r\nc", "\r\n", "  a \n\tb  ", "a & b < c", "<b>x</b>",
