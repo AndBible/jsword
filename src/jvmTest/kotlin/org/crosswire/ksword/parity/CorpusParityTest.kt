@@ -103,4 +103,48 @@ class CorpusParityTest {
             assertEquals(Current.call("ser.read", fromCurrent), Oracle.call("ser.read", fromCurrent), "$k $r current→oracle")
         }
     }
+
+    @Test
+    fun rtfToOsis() {
+        val snippets = listOf(
+            "plain text", "", "a\\par b", "a\\par b\\par c", "a\\pard b", "x\\qc centered\\pard after",
+            "\\qc one\\par two\\pard three", "\\i italic\\i0 plain", "\\b bold\\b0 plain", "\\i\\b both\\b0\\i0 done",
+            "\\i nested \\b deep\\b0 back\\i0 out", "\\u233?cole", "\\u-1234?x", "\\u65?B", "\\u-1?", "\\u0?z", "\\u8364 euro",
+            "a\\ b", "a\\\nb", "a\\{b\\}c", "trailing\\", "\\", "\\unknown word", "\\fs20 sized", "{\\b grouped} text",
+            "{\\i {\\b nested} groups}", "\\i0 closes nothing", "\\b0\\b0", "\\par", "\\pard", "\\qc", "\\i", "\\b",
+            "\\u", "\\ux", "\\u12", "a\\parb", "a\\pard", "\\pard\\pard", "\\qcx", "\\i0", "\\b word\\par next\\b0",
+            "caf\\u233? \\i au lait\\i0\\par"
+        )
+        assertSameLines("rtf", both("corpus.osis.rtf", snippets.joinToString("\u0001")))
+    }
+
+    @Test
+    fun diffToOsis() {
+        val pairs = listOf(
+            "same" to "same", "the quick fox" to "the slow fox", "" to "added", "removed" to "", "abc" to "xyz",
+            "In the beginning God created" to "In the beginning the LORD created", "a b c d" to "a x c y"
+        )
+        assertSameLines("diff", both("corpus.osis.diff", pairs.joinToString("\u0001") { it.first + "\u0002" + it.second }))
+    }
+
+    @Test
+    fun multiBookData() {
+        val pairs = listOf("KJV" to "ESV2011", "KJV" to "Geneva", "ESV2011" to "TurNTB", "KJV" to "NASB")
+        val refs = listOf("Gen 1:1", "Joh 3:16", "Ps 23", "Rom 8:1-4", "Gen 1:1; Exo 3:2", "Jude 1:3")
+        for ((a, b) in pairs) for (r in refs) for (cmp in listOf("true", "false")) {
+            val (x, y) = both("corpus.bookdata.compare", a, b, r, cmp)
+            assertEquals(x, y, "bookdata.compare $a $b $r compare=$cmp")
+        }
+    }
+
+    @Test
+    fun osisFrameworkAndVerse() {
+        for (m in Oracle.call("corpus.modules").lines().filter { it.isNotBlank() }) assertSameLines("framework $m", both("corpus.osis.framework", m))
+        for (v in listOf("KJV", "Synodal", "Catholic")) assertSameLines("verse $v", both("corpus.osis.verse", v))
+    }
+
+    @Test
+    fun defaultBook() {
+        assertSameLines("defaultbook", both("corpus.defaultbook"))
+    }
 }

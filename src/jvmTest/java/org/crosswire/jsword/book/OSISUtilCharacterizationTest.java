@@ -34,7 +34,7 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
 public class OSISUtilCharacterizationTest {
-    private static final String DEJA = "déjà";
+    private static final String DEJA = "d\u00e9j\u00e0";
 
     private static Element element(Element parent, Element child) {
         parent.addContent(child);
@@ -162,8 +162,8 @@ public class OSISUtilCharacterizationTest {
         OSISUtil.OSISFactory f = OSISUtil.factory();
         Element div = f.createDiv();
         withText(element(div, f.createTitle()), "H1");
-        withText(element(div, f.createTitle()), "H2é");
-        Assert.assertEquals("H1 H2é", OSISUtil.getHeadings(div));
+        withText(element(div, f.createTitle()), "H2\u00e9");
+        Assert.assertEquals("H1 H2\u00e9", OSISUtil.getHeadings(div));
     }
 
     @Test

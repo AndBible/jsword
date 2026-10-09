@@ -261,6 +261,111 @@ final class CorpusProbe {
                     return fail(e);
                 }
             }
+            case "corpus.osis.rtf": {
+                // args: RTF snippets separated by U+0001. Serialized OSIS (raw format) or the exception.
+                StringBuilder sb = new StringBuilder();
+                for (String rtf : args.get(0).split("\u0001", -1)) {
+                    sb.append(rtf).append(" => ");
+                    try {
+                        sb.append(rawContent(org.crosswire.jsword.book.OSISUtil.rtfToOsis(rtf)));
+                    } catch (Exception e) {
+                        sb.append(fail(e));
+                    }
+                    sb.append('\n');
+                }
+                return sb.toString();
+            }
+            case "corpus.osis.diff": {
+                // args: pairs "source U+0002 target" separated by U+0001. diffToOsis of the cleaned-up diff.
+                StringBuilder sb = new StringBuilder();
+                for (String pair : args.get(0).split("\u0001", -1)) {
+                    String[] st = pair.split("\u0002", -1);
+                    sb.append(pair.replace('\u0002', '|')).append(" => ");
+                    try {
+                        List<org.crosswire.common.diff.Difference> diffs = new org.crosswire.common.diff.Diff(st[0], st[1], false).compare();
+                        org.crosswire.common.diff.DiffCleanup.cleanupSemantic(diffs);
+                        sb.append(rawContent(org.crosswire.jsword.book.OSISUtil.diffToOsis(diffs)));
+                    } catch (Exception e) {
+                        sb.append(fail(e));
+                    }
+                    sb.append('\n');
+                }
+                return sb.toString();
+            }
+            case "corpus.bookdata.compare": {
+                // args: initials1, initials2, ref, compare ("true"/"false"). OSIS fragment of a multi-book BookData.
+                try {
+                    Book b1 = book(args.get(0));
+                    Book b2 = book(args.get(1));
+                    Key key = PassageKeyFactory.instance().getKey(v11nOf(b1), args.get(2));
+                    BookData data = new BookData(new Book[] {b1, b2}, key, Boolean.parseBoolean(args.get(3)));
+                    return new XMLOutputter(Format.getRawFormat()).outputString(data.getOsisFragment());
+                } catch (Exception e) {
+                    return fail(e);
+                }
+            }
+            case "corpus.osis.framework": {
+                // args: initials. createOsisFramework of the book's metadata, and the whole BookData.getOsis().
+                try {
+                    Book b = book(args.get(0));
+                    XMLOutputter out = new XMLOutputter(Format.getRawFormat());
+                    Key key = PassageKeyFactory.instance().getKey(v11nOf(b), "Gen 1:1");
+                    return out.outputString(org.crosswire.jsword.book.OSISUtil.createOsisFramework(b.getBookMetaData()))
+                        + "\n" + out.outputString(new BookData(b, key).getOsis());
+                } catch (Exception e) {
+                    return fail(e);
+                }
+            }
+            case "corpus.osis.verse": {
+                // args: v11n name. getVerse from several hand-built elements.
+                Versification v11n = Versifications.instance().getVersification(args.get(0));
+                org.crosswire.jsword.book.OSISUtil.OSISFactory f = org.crosswire.jsword.book.OSISUtil.factory();
+                StringBuilder sb = new StringBuilder();
+                String[] ids = {"Gen.1.1", "Rev.22.21", "Gen.1.2", "Foo.1.1", "", "Gen.99.99"};
+                for (String id : ids) {
+                    // verse itself, a hi inside the verse, and a verse-less tree
+                    Element verse = f.createVerse();
+                    verse.setAttribute("osisID", id);
+                    Element hi = f.createHI();
+                    verse.addContent(hi);
+                    Element lone = f.createDiv();
+                    Element[] probes = {verse, hi, lone};
+                    for (Element e : probes) {
+                        sb.append(id).append(' ').append(e.getName()).append(" => ");
+                        try {
+                            Verse v = org.crosswire.jsword.book.OSISUtil.getVerse(v11n, e);
+                            sb.append(v == null ? "<null>" : v.getOsisID());
+                        } catch (Exception ex) {
+                            sb.append(fail(ex));
+                        }
+                        sb.append('\n');
+                    }
+                }
+                return sb.toString();
+            }
+            case "corpus.defaultbook": {
+                StringBuilder sb = new StringBuilder();
+                org.crosswire.jsword.book.DefaultBook d = new org.crosswire.jsword.book.DefaultBook(Books.installed(), org.crosswire.jsword.book.BookFilters.getOnlyBibles());
+                sb.append(d.getDefault()).append(' ').append(d.getDefaultName()).append('\n');
+                d.setDefaultByName("");
+                d.setDefaultByName("NoSuchBook");
+                sb.append(d.getDefault()).append('\n');
+                d.setDefaultByName("KJV");
+                sb.append(d.getDefaultName()).append('\n');
+                d.setDefaultConditionally(book("ESV2011"));
+                sb.append(d.getDefaultName()).append('\n');
+                d.setDefault(book("ESV2011"));
+                sb.append(d.getDefaultName()).append('\n');
+                // not a Bible: rejected by the filter
+                d.setDefault(book("Nave"));
+                sb.append(d.getDefaultName()).append('\n');
+                org.crosswire.jsword.book.DefaultBook fresh = new org.crosswire.jsword.book.DefaultBook(Books.installed(), org.crosswire.jsword.book.BookFilters.getOnlyBibles());
+                fresh.setDefaultConditionally(book("Nave"));
+                sb.append(fresh.getDefault()).append('\n');
+                fresh.setDefaultConditionally(book("KJV"));
+                sb.append(fresh.getDefaultName()).append('\n');
+                return sb.toString();
+            }
             default:
                 throw new IllegalArgumentException("Unknown parity op: " + op);
         }
@@ -329,6 +434,11 @@ final class CorpusProbe {
         } catch (Exception e) {
             return fail(e);
         }
+    }
+
+    private static String rawContent(List<org.jdom2.Content> content) {
+        XMLOutputter out = new XMLOutputter(Format.getRawFormat());
+        return out.outputString(content);
     }
 
     private static String fail(Exception e) {

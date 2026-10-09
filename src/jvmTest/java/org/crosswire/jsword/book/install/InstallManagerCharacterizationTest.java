@@ -270,4 +270,23 @@ public class InstallManagerCharacterizationTest {
         Assert.assertEquals(DEFINITION, installer.getInstallerDefinition());
         Assert.assertEquals(new HashSet<String>(manager.getInstallers().keySet()), new HashSet<String>(reloaded.getInstallers().keySet()));
     }
+
+    @Test
+    public void testNullNames() {
+        InstallManager manager = new InstallManager();
+        // Map lookups with a null key: no such installer, nothing removed, no event
+        Assert.assertNull(manager.getInstaller(null));
+        Recorder recorder = new Recorder();
+        manager.addInstallerListener(recorder);
+        int before = manager.getInstallers().size();
+        manager.removeInstaller(null);
+        Assert.assertEquals(before, manager.getInstallers().size());
+        Assert.assertTrue(recorder.events.isEmpty());
+    }
+
+    /** Null name: the HashMap lookup gives a null class, which ReflectionUtil.construct rejects with an NPE. */
+    @Test(expected = NullPointerException.class)
+    public void testGetInstallerFactoryNullNameThrows() {
+        new InstallManager().getInstallerFactory(null);
+    }
 }
