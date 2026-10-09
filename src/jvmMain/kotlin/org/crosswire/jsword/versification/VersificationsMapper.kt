@@ -237,7 +237,7 @@ private constructor() {
     companion object {
         @Volatile
         private var instance: VersificationsMapper? = null
-        private val KJV: Versification = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)
+        private val KJV: Versification = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)!!
         private val MAPPERS: MutableMap<Versification?, VersificationToKJVMapper?> = HashMap()
         private val LOGGER: Logger = LoggerFactory.getLogger(VersificationsMapper::class.java)
 

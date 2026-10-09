@@ -17,15 +17,20 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.versification.system;
+/**
+ * The System package defines each of the known Versifications.
+ * The only useful class is Versifications.
+ *
+ * Each Versification consists of 5 static fields:
+ * 1. **V11N_NAME** - The name of the Versification
+ * 2. **BOOKS_OT** - An ordered list of Old Testament Bible Books.
+ * 3. **BOOKS_NT** - An ordered list of New Testament Bible Books.
+ * 4. **LAST_VERSE_OT** - The highest verse number given by Old Testament book and chapter.
+ * 5. **LAST_VERSE_NT** - The highest verse number given by New Testament book and chapter.
+ */
+package org.crosswire.jsword.versification.system
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.jsword.versification.Versification
 
 /**
  * The Versifications class manages the creation of Versifications as needed.
@@ -34,32 +39,47 @@ import org.crosswire.jsword.versification.Versification;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class Versifications {
+class Versifications private constructor() {
 
     /**
-     * The default Versification for JSword is the KJV.
-     * This is subject to change at any time.
+     * The set of v11n names.
      */
-    public static final String DEFAULT_V11N = SystemKJV.V11N_NAME;
-
-    /**
-     * Get the singleton instance of Versifications.
-     *
-     * @return the singleton
-     */
-    public static Versifications instance() {
-        return instance;
+    private val known: MutableSet<String> = HashSet<String>().apply {
+        add(SystemCalvin.V11N_NAME)
+        add(SystemCatholic.V11N_NAME)
+        add(SystemCatholic2.V11N_NAME)
+        add(SystemDarbyFR.V11N_NAME)
+        add(SystemGerman.V11N_NAME)
+        add(SystemKJV.V11N_NAME)
+        add(SystemKJVA.V11N_NAME)
+        add(SystemLeningrad.V11N_NAME)
+        add(SystemLuther.V11N_NAME)
+        add(SystemLXX.V11N_NAME)
+        add(SystemMT.V11N_NAME)
+        add(SystemNRSV.V11N_NAME)
+        add(SystemNRSVA.V11N_NAME)
+        add(SystemOrthodox.V11N_NAME)
+        add(SystemSegond.V11N_NAME)
+        add(SystemSynodal.V11N_NAME)
+        add(SystemSynodalProt.V11N_NAME)
+        add(SystemVulg.V11N_NAME)
     }
+
+    /**
+     * The map of instantiated Versifications, given by their names.
+     */
+    private val fluffed: MutableMap<String, Versification> = HashMap()
 
     /**
      * Get the default Versification.
      *
      * @return the default Versification.
-     * @deprecated Use {@link #getVersification(String)} instead.
+     * @deprecated Use [getVersification(String)] instead.
      */
-    @Deprecated
-    public synchronized Versification getDefaultVersification() {
-        return getVersification(DEFAULT_V11N);
+    @Deprecated("Use getVersification(String) instead.")
+    @Synchronized
+    fun getDefaultVersification(): Versification? {
+        return getVersification(DEFAULT_V11N)
     }
 
     /**
@@ -68,23 +88,21 @@ public final class Versifications {
      * @param name the name of the Versification
      * @return the Versification or null if it is not known.
      */
-    public synchronized Versification getVersification(String name) {
-        String actual = name;
-        if (actual == null) {
-            actual = DEFAULT_V11N;
-        }
+    @Synchronized
+    fun getVersification(name: String?): Versification? {
+        val actual: String = name ?: DEFAULT_V11N
 
         // This class delays the building of a Versification to when it is
         // actually needed.
-        Versification rs = fluffed.get(actual);
+        var rs = fluffed[actual]
         if (rs == null) {
-            rs = fluff(actual);
+            rs = fluff(actual)
             if (rs != null) {
-                fluffed.put(actual, rs);
+                fluffed[actual] = rs
             }
         }
 
-        return rs;
+        return rs
     }
 
     /**
@@ -93,70 +111,71 @@ public final class Versifications {
      * @param name the name of the Versification
      * @return true when the Versification is available for use
      */
-    public synchronized boolean isDefined(String name) {
-        return name == null || known.contains(name);
+    @Synchronized
+    fun isDefined(name: String?): Boolean {
+        return name == null || known.contains(name)
     }
 
-    private Versification fluff(String name) {
+    private fun fluff(name: String?): Versification? {
         // Keep KJV at the top as it is the most common
-        if (name == null || SystemKJV.V11N_NAME.equals(name)) {
-            return new SystemKJV();
+        if (name == null || SystemKJV.V11N_NAME == name) {
+            return SystemKJV()
         }
 
-        //then in alphabetical order, to ease the developer checking we have them all
-        if (SystemCalvin.V11N_NAME.equals(name)) {
-            return new SystemCalvin();
+        // then in alphabetical order, to ease the developer checking we have them all
+        if (SystemCalvin.V11N_NAME == name) {
+            return SystemCalvin()
         }
-        if (SystemCatholic.V11N_NAME.equals(name)) {
-            return new SystemCatholic();
+        if (SystemCatholic.V11N_NAME == name) {
+            return SystemCatholic()
         }
-        if (SystemCatholic2.V11N_NAME.equals(name)) {
-            return new SystemCatholic2();
+        if (SystemCatholic2.V11N_NAME == name) {
+            return SystemCatholic2()
         }
-        if (SystemDarbyFR.V11N_NAME.equals(name)) {
-            return new SystemDarbyFR();
+        if (SystemDarbyFR.V11N_NAME == name) {
+            return SystemDarbyFR()
         }
-        if (SystemGerman.V11N_NAME.equals(name)) {
-            return new SystemGerman();
+        if (SystemGerman.V11N_NAME == name) {
+            return SystemGerman()
         }
-        if (SystemKJVA.V11N_NAME.equals(name)) {
-            return new SystemKJVA();
+        if (SystemKJVA.V11N_NAME == name) {
+            return SystemKJVA()
         }
-        if (SystemLeningrad.V11N_NAME.equals(name)) {
-            return new SystemLeningrad();
+        if (SystemLeningrad.V11N_NAME == name) {
+            return SystemLeningrad()
         }
-        if (SystemLuther.V11N_NAME.equals(name)) {
-            return new SystemLuther();
+        if (SystemLuther.V11N_NAME == name) {
+            return SystemLuther()
         }
-        if (SystemLXX.V11N_NAME.equals(name)) {
-            return new SystemLXX();
+        if (SystemLXX.V11N_NAME == name) {
+            return SystemLXX()
         }
-        if (SystemMT.V11N_NAME.equals(name)) {
-            return new SystemMT();
+        if (SystemMT.V11N_NAME == name) {
+            return SystemMT()
         }
-        if (SystemNRSV.V11N_NAME.equals(name)) {
-            return new SystemNRSV();
+        if (SystemNRSV.V11N_NAME == name) {
+            return SystemNRSV()
         }
-        if (SystemNRSVA.V11N_NAME.equals(name)) {
-            return new SystemNRSVA();
+        if (SystemNRSVA.V11N_NAME == name) {
+            return SystemNRSVA()
         }
-        if (SystemOrthodox.V11N_NAME.equals(name)) {
-            return new SystemOrthodox();
+        if (SystemOrthodox.V11N_NAME == name) {
+            return SystemOrthodox()
         }
-        if (SystemSegond.V11N_NAME.equals(name)) {
-            return new SystemSegond();
+        if (SystemSegond.V11N_NAME == name) {
+            return SystemSegond()
         }
-        if (SystemSynodal.V11N_NAME.equals(name)) {
-            return new SystemSynodal();
+        if (SystemSynodal.V11N_NAME == name) {
+            return SystemSynodal()
         }
-        if (SystemSynodalProt.V11N_NAME.equals(name)) {
-            return new SystemSynodalProt();
+        if (SystemSynodalProt.V11N_NAME == name) {
+            return SystemSynodalProt()
         }
-        if (SystemVulg.V11N_NAME.equals(name)) {
-            return new SystemVulg();
+        if (SystemVulg.V11N_NAME == name) {
+            return SystemVulg()
         }
 
-        return null;
+        return null
     }
 
     /**
@@ -164,62 +183,45 @@ public final class Versifications {
      *
      * @param rs the Versification to register
      */
-    public synchronized void register(Versification rs) {
-        fluffed.put(rs.getName(), rs);
-        known.add(rs.getName());
+    @Synchronized
+    fun register(rs: Versification) {
+        fluffed[rs.name] = rs
+        known.add(rs.name)
     }
 
     /**
      * Get an iterator over all known versifications.
-     * 
+     *
      * @return an iterator of versification names.
      */
-    public Iterator<String> iterator() {
-        return known.iterator();
+    fun iterator(): Iterator<String> {
+        return known.iterator()
     }
 
     /**
      * @return number of versifications
      */
-    public int size() {
-        return known.size();
+    fun size(): Int {
+        return known.size
     }
 
-    /**
-     * This class is a singleton, enforced by a private constructor.
-     */
-    private Versifications() {
-        known = new HashSet<String>();
-        known.add(SystemCalvin.V11N_NAME);
-        known.add(SystemCatholic.V11N_NAME);
-        known.add(SystemCatholic2.V11N_NAME);
-        known.add(SystemDarbyFR.V11N_NAME);
-        known.add(SystemGerman.V11N_NAME);
-        known.add(SystemKJV.V11N_NAME);
-        known.add(SystemKJVA.V11N_NAME);
-        known.add(SystemLeningrad.V11N_NAME);
-        known.add(SystemLuther.V11N_NAME);
-        known.add(SystemLXX.V11N_NAME);
-        known.add(SystemMT.V11N_NAME);
-        known.add(SystemNRSV.V11N_NAME);
-        known.add(SystemNRSVA.V11N_NAME);
-        known.add(SystemOrthodox.V11N_NAME);
-        known.add(SystemSegond.V11N_NAME);
-        known.add(SystemSynodal.V11N_NAME);
-        known.add(SystemSynodalProt.V11N_NAME);
-        known.add(SystemVulg.V11N_NAME);
-        fluffed = new HashMap<String, Versification>();
+    companion object {
+        /**
+         * The default Versification for JSword is the KJV.
+         * This is subject to change at any time.
+         */
+        const val DEFAULT_V11N: String = SystemKJV.V11N_NAME
+
+        /**
+         * Get the singleton instance of Versifications.
+         *
+         * @return the singleton
+         */
+        @JvmStatic
+        fun instance(): Versifications {
+            return singleton
+        }
+
+        private val singleton = Versifications()
     }
-
-    /**
-     * The set of v11n names.
-     */
-    private Set<String> known;
-
-    /**
-     * The map of instantiated Versifications, given by their names.
-     */
-    private Map<String, Versification> fluffed;
-
-    private static final Versifications instance = new Versifications();
 }

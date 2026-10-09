@@ -17,12 +17,12 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.versification.system;
+package org.crosswire.jsword.versification.system
 
-import org.crosswire.jsword.versification.BibleBook;
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.jsword.versification.BibleBook
+import org.crosswire.jsword.versification.Versification
 
-import java.util.Arrays;
+import java.util.Arrays
 
 /**
  *
@@ -30,118 +30,116 @@ import java.util.Arrays;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class SystemKJVA extends Versification {
-    /**
-     * Build the "KJVA" Versification.
-     */
-    /* protected */ SystemKJVA() {
-        super(V11N_NAME, BOOKS_OT, BOOKS_NT, LAST_VERSE_OT, LAST_VERSE_NT);
+/**
+ * Build the "KJVA" Versification.
+ */
+open class SystemKJVA internal constructor() : Versification(V11N_NAME, BOOKS_OT, BOOKS_NT, LAST_VERSE_OT, LAST_VERSE_NT) {
+    companion object {
+        const val V11N_NAME = "KJVA"
+
+        private fun <T> concat(array1: Array<T>, array2: Array<T>): Array<T> {
+            val result = Arrays.copyOf(array1, array1.size + array2.size)
+            System.arraycopy(array2, 0, result, array1.size, array2.size)
+            return result
+        }
+
+        // All KJV old testament books followed by all deuterocanonical books.
+        internal val BOOKS_OT: Array<BibleBook> = concat(SystemKJV.BOOKS_OT, arrayOf(
+            BibleBook.ESD1,
+            BibleBook.ESD2,
+            BibleBook.TOB,
+            BibleBook.JDT,
+            BibleBook.ADD_ESTH,
+            BibleBook.WIS,
+            BibleBook.SIR,
+            BibleBook.BAR,
+            BibleBook.PR_AZAR,
+            BibleBook.SUS,
+            BibleBook.BEL,
+            BibleBook.PR_MAN,
+            BibleBook.MACC1,
+            BibleBook.MACC2,
+        ))
+
+        internal val BOOKS_NT: Array<BibleBook> = SystemDefault.BOOKS_NT
+
+        // Same verse numbering as KJV for regular OT, followed by additional verse numberings for deuterocanonical books.
+        internal val LAST_VERSE_OT: Array<IntArray> = concat(SystemKJV.LAST_VERSE_OT, arrayOf(
+            // I Esdras
+            intArrayOf(
+                58,  30,  24,  63,  73,  34,  15,  96,  55,
+            ),
+            // II Esdras
+            intArrayOf(
+                40,  48,  36,  52,  56,  59,  70,  63,  47,  59,
+                46,  51,  58,  48,  63,  78,
+            ),
+            // Tobit
+            intArrayOf(
+                22,  14,  17,  21,  22,  17,  18,  21,   6,  12,
+                19,  22,  18,  15,
+            ),
+            // Judith
+            intArrayOf(
+                16,  28,  10,  15,  24,  21,  32,  36,  14,  23,
+                23,  20,  20,  19,  13,  25,
+            ),
+            // Additions to Esther
+            intArrayOf(
+                1,   1,   1,   1,   1,   1,   1,   1,   1,  13,
+                12,   6,  18,  19,  16,  24,
+            ),
+            // Wisdom
+            intArrayOf(
+                16,  24,  19,  20,  23,  25,  30,  21,  18,  21,
+                26,  27,  19,  31,  19,  29,  21,  25,  22,
+            ),
+            // Sirach
+            intArrayOf(
+                30,  18,  31,  31,  15,  37,  36,  19,  18,  31,
+                34,  18,  26,  27,  20,  30,  32,  33,  30,  32,
+                28,  27,  28,  34,  26,  29,  30,  26,  28,  25,
+                31,  24,  31,  26,  20,  26,  31,  34,  35,  30,
+                24,  25,  33,  22,  26,  20,  25,  25,  16,  29,
+                30,
+            ),
+            // Baruch
+            intArrayOf(
+                22,  35,  37,  37,   9,  73,
+            ),
+            // Prayer of Azariah
+            intArrayOf(
+                68,
+            ),
+            // Susanna
+            intArrayOf(
+                64,
+            ),
+            // Bel and the Dragon
+            intArrayOf(
+                42,
+            ),
+            // Prayer of Manasses
+            intArrayOf(
+                1,
+            ),
+            // I Maccabees
+            intArrayOf(
+                64,  70,  60,  61,  68,  63,  50,  32,  73,  89,
+                74,  53,  53,  49,  41,  24,
+            ),
+            // II Maccabees
+            intArrayOf(
+                36,  32,  40,  50,  27,  31,  42,  36,  29,  38,
+                38,  45,  26,  46,  39,
+            ),
+        ))
+
+        internal val LAST_VERSE_NT: Array<IntArray> = SystemKJV.LAST_VERSE_NT
+
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 1054681694714921358L
     }
-
-    public static final String V11N_NAME = "KJVA";
-
-    private static <T> T[] concat(T[] array1, T[] array2) {
-        T[] result = Arrays.copyOf(array1, array1.length + array2.length);
-        System.arraycopy(array2, 0, result, array1.length, array2.length);
-        return result;
-    }
-
-    // All KJV old testament books followed by all deuterocanonical books.
-    /* protected */ static final BibleBook[] BOOKS_OT = concat(SystemKJV.BOOKS_OT, new BibleBook[] {
-        BibleBook.ESD1,
-        BibleBook.ESD2,
-        BibleBook.TOB,
-        BibleBook.JDT,
-        BibleBook.ADD_ESTH,
-        BibleBook.WIS,
-        BibleBook.SIR,
-        BibleBook.BAR,
-        BibleBook.PR_AZAR,
-        BibleBook.SUS,
-        BibleBook.BEL,
-        BibleBook.PR_MAN,
-        BibleBook.MACC1,
-        BibleBook.MACC2,
-    });
-
-    /* protected */ static final BibleBook[] BOOKS_NT = SystemDefault.BOOKS_NT;
-
-    // Same verse numbering as KJV for regular OT, followed by additional verse numberings for deuterocanonical books.
-    /* protected */ static final int[][] LAST_VERSE_OT = concat(SystemKJV.LAST_VERSE_OT, new int[][]{
-        // I Esdras
-        {
-            58,  30,  24,  63,  73,  34,  15,  96,  55,
-        },
-        // II Esdras
-        {
-            40,  48,  36,  52,  56,  59,  70,  63,  47,  59,
-            46,  51,  58,  48,  63,  78,
-        },
-        // Tobit
-        {
-            22,  14,  17,  21,  22,  17,  18,  21,   6,  12,
-            19,  22,  18,  15,
-        },
-        // Judith
-        {
-            16,  28,  10,  15,  24,  21,  32,  36,  14,  23,
-            23,  20,  20,  19,  13,  25,
-        },
-        // Additions to Esther
-        {
-            1,   1,   1,   1,   1,   1,   1,   1,   1,  13,
-            12,   6,  18,  19,  16,  24,
-        },
-        // Wisdom
-        {
-            16,  24,  19,  20,  23,  25,  30,  21,  18,  21,
-            26,  27,  19,  31,  19,  29,  21,  25,  22,
-        },
-        // Sirach
-        {
-            30,  18,  31,  31,  15,  37,  36,  19,  18,  31,
-            34,  18,  26,  27,  20,  30,  32,  33,  30,  32,
-            28,  27,  28,  34,  26,  29,  30,  26,  28,  25,
-            31,  24,  31,  26,  20,  26,  31,  34,  35,  30,
-            24,  25,  33,  22,  26,  20,  25,  25,  16,  29,
-            30,
-        },
-        // Baruch
-        {
-            22,  35,  37,  37,   9,  73,
-        },
-        // Prayer of Azariah
-        {
-            68,
-        },
-        // Susanna
-        {
-            64,
-        },
-        // Bel and the Dragon
-        {
-            42,
-        },
-        // Prayer of Manasses
-        {
-            1,
-        },
-        // I Maccabees
-        {
-            64,  70,  60,  61,  68,  63,  50,  32,  73,  89,
-            74,  53,  53,  49,  41,  24,
-        },
-        // II Maccabees
-        {
-            36,  32,  40,  50,  27,  31,  42,  36,  29,  38,
-            38,  45,  26,  46,  39,
-        },
-    });
-
-    /* protected */ static final int[][] LAST_VERSE_NT = SystemKJV.LAST_VERSE_NT;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 1054681694714921358L;
 }

@@ -670,7 +670,7 @@ open class VersificationToKJVMapper {
     }
 
     private companion object {
-        private val KJV = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)
+        private val KJV = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)!!
         private val LOGGER: Logger = LoggerFactory.getLogger(VersificationToKJVMapper::class.java)
     }
 }
