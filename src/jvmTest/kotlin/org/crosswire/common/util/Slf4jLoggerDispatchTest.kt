@@ -50,6 +50,43 @@ class Slf4jLoggerDispatchTest {
         assertEquals(listOf("warn:(String,Object,Object):x {}:[a, boom]"), recording.events)
     }
 
+    @Test
+    fun nullMessageWithThrowable() {
+        logger.warn(null, ex)
+        assertEquals(listOf("warn:(String,Throwable):null:[boom]"), recording.events)
+    }
+
+    @Test
+    fun singleNullArgIsObjectOverload() {
+        logger.info("a {}", null)
+        assertEquals(listOf("info:(String,Object):a {}:[null]"), recording.events)
+    }
+
+    @Test
+    fun singleArrayArgStaysObjectOverload() {
+        val arr = arrayOf("p", "q")
+        logger.debug("a {}", arr)
+        // not spread as varargs: one (String,Object) call, the array shown by its own toString
+        assertEquals(listOf("debug:(String,Object):a {}:[$arr]"), recording.events)
+    }
+
+    @Test
+    fun throwableOverloadForEveryLevel() {
+        logger.trace("t", ex)
+        logger.debug("d", ex)
+        logger.info("i", ex)
+        logger.warn("w", ex)
+        assertEquals(
+            listOf(
+                "trace:(String,Throwable):t:[boom]",
+                "debug:(String,Throwable):d:[boom]",
+                "info:(String,Throwable):i:[boom]",
+                "warn:(String,Throwable):w:[boom]",
+            ),
+            recording.events,
+        )
+    }
+
     /** Records which slf4j overload was called; Throwables are shown by message so the expectations stay short. */
     private class Recording : MarkerIgnoringBase() {
         val events = mutableListOf<String>()

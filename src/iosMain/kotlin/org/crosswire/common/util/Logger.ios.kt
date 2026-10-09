@@ -22,7 +22,7 @@ private class NSLogLogger(override val name: String) : Logger {
 
     private fun log(level: LogLevel, msg: String?, args: Array<out Any?>) {
         if (!enabled(level)) return
-        val r = Slf4jFormat.format(msg, args)
+        val r = Slf4jFormat.formatForLog(msg, args)
         val text = buildString {
             append(level.name).append(' ').append(name).append(" - ").append(r.message)
             r.throwable?.let { append('\n').append(it.stackTraceToString()) }

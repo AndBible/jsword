@@ -4,6 +4,16 @@ package org.crosswire.common.util
 internal object Slf4jFormat {
     class Result(val message: String?, val throwable: Throwable?)
 
+    /**
+     * Formats like the JVM dispatch does: a lone [Throwable] argument selects slf4j's `(String, Throwable)`
+     * overload, so the message is kept as-is (no placeholder substitution) and the throwable is attached.
+     * Every other argument shape goes through [format].
+     */
+    fun formatForLog(pattern: String?, args: Array<out Any?>): Result {
+        val only = args.singleOrNull()
+        return if (only is Throwable) Result(pattern, only) else format(pattern, args)
+    }
+
     fun format(pattern: String?, args: Array<out Any?>): Result {
         val candidate = args.lastOrNull() as? Throwable
         if (pattern == null) return Result(null, candidate)
