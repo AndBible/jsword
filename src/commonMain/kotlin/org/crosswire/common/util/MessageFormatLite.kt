@@ -116,7 +116,8 @@ object MessageFormatLite {
             } else if (inQuote) (if (part == 0) number else text).append(ch)
             else if (ch == '<' || ch == '#' || ch == '≤') {
                 require(number.isNotEmpty()) { "Each interval must contain a number before a format" }
-                var start = number.toString().trim().toDouble()
+                var start = number.toString().trim().toDoubleOrNull()
+                    ?: throw IllegalArgumentException("Each interval must contain a number before a format")
                 if (ch == '<') start = start.nextUp()
                 require(start > oldStart) { "Incorrect order of intervals, must be in ascending order" }
                 oldStart = start

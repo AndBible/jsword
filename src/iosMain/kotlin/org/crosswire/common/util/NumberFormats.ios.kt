@@ -9,6 +9,9 @@ import platform.Foundation.NSNumberFormatterRoundHalfEven
 /**
  * Foundation-backed formats. Values go through `NSNumber(double)`, so a `Long` above 2^53 loses precision;
  * JSword formats counts and ordinals far below that.
+ *
+ * [pattern] is an approximation of `DecimalFormat` patterns (the pattern becomes the positive format and
+ * `-pattern` the negative one); it never throws for a malformed pattern, unlike the JVM actual.
  */
 actual object NumberFormats {
     private fun formatter(locale: KLocale) = NSNumberFormatter().apply { this.locale = NSLocale(localeIdentifier = locale.toString()) }

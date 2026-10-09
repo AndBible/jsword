@@ -28,6 +28,11 @@ import org.crosswire.common.icu.NumberShaper
  * easy for most cases. Bundles come from [ResourceBundles] (embedded resources),
  * messages are formatted by [MessageFormatLite].
  *
+ * Locale notes: the bundle follows the provider locale ([KswordLocale.current]) while number formatting follows
+ * [KswordLocale.default], i.e. `Locale.getDefault()` rather than `Locale.getDefault(FORMAT)`. The conversion to
+ * [KLocale] drops script and `-u-` extensions, so e.g. a `zh-Hant` or `-u-nu-arab` locale formats as its
+ * language/country/variant only.
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith

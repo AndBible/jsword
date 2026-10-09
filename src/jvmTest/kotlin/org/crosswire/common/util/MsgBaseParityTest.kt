@@ -65,4 +65,28 @@ class MsgBaseParityTest {
             assertEquals(oldLookup("JSOtherMsg", "Cannot find resource: {0}", arrayOf("x.properties")), JSOtherMsg.lookupText("Cannot find resource: {0}", "x.properties"))
         }
     }
+
+    /**
+     * The bundle follows the provider locale while number formatting follows `Locale.getDefault()`; the two must
+     * stay independent (provider fa + default en, and the reverse), as in the old MsgBase.
+     */
+    @Test fun providerLocaleDifferentFromDefaultLocale() {
+        val keys = PropertiesParser.parse(KswordResources.bytes("JSMsg.properties")!!, PropertiesCharset.UTF8_THEN_LATIN1).keys
+            .filter { "number,integer" in it }
+        assertEquals(true, keys.isNotEmpty())
+        val params = arrayOf<Any?>(1234567, 7654321, 1234567, 7654321, 1234567)
+        val results = mutableListOf<List<String>>()
+        for ((providerTag, defaultTag) in listOf("fa" to "en", "en" to "fa")) {
+            val provider = Locale(providerTag)
+            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = provider })
+            Locale.setDefault(Locale(defaultTag))
+            resetShapers()
+            val actual = keys.map { JSMsg.gettext(it, *params) }
+            resetShapers()
+            val expected = keys.map { oldLookup("JSMsg", it, params) }
+            assertEquals("provider $providerTag default $defaultTag", expected, actual)
+            results += actual
+        }
+        assertEquals(false, results[0] == results[1])
+    }
 }

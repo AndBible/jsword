@@ -10,7 +10,8 @@ class MessageFormatLiteDifferentialTest {
     private val patterns = listOf("{0}", "a {0} b {1}", "{0,number,integer}", "{0,number,00}.{1,number,00}",
         "{0,choice,0#verses|1#verse|1<verses}", "{0} {1,choice,0#books|1#book|1<books}", "it''s {0}", "'{0}' {0}", "{3,number,integer}", "{5}", "no args",
         "{0,number}", "{0,number,#,##0.0}", "{0,choice,0#none|1#one {0}|2#{0} items}", "'unterminated {0}", "a '' b '{' c {0}", "{ 0 }", "{0,choice,0#a''b|1#c}",
-        "{0,number,'#'#}", "{1,choice,0#x|1<y {0,number,integer}}", "{0", "{x}", "}{0}", "{0,number,integer} {0,number,integer}")
+        "{0,number,'#'#}", "{1,choice,0#x|1<y {0,number,integer}}", "{0", "{x}", "}{0}", "{0,number,integer} {0,number,integer}",
+        "{0,choice,x#a|1#b}", "{0,choice,1.2.3#a}")
     private val args = listOf<Array<Any?>>(arrayOf(0, 0), arrayOf(1, 1), arrayOf(2, 2), arrayOf(1234, 1L), arrayOf(-7, 2.5), arrayOf(1000000L, 0.5),
         arrayOf("s", 3), arrayOf(null, 1), arrayOf(1, 2, 3, 4567), arrayOf(1.5, 1.0), arrayOf(0.5, -1), arrayOf(1234567.891, 2.0))
 
