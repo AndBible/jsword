@@ -110,4 +110,32 @@ class CopyOnWriteListTest {
         src.add(3)
         assertEquals(listOf(1, 2), l)
     }
+
+    @Test
+    fun subListWithFromGreaterThanToThrowsIndexOutOfBounds() {
+        assertFailsWith<IndexOutOfBoundsException> { listOf3().subList(2, 1) }
+        assertFailsWith<IndexOutOfBoundsException> { listOf3().subList(-1, 1) }
+        assertFailsWith<IndexOutOfBoundsException> { listOf3().subList(0, 4) }
+        assertEquals(emptyList(), listOf3().subList(1, 1))
+    }
+
+    @Test
+    fun removeAllAndRetainAllUseTheArgumentsOwnEquality() {
+        val ignoreCase = CaseInsensitiveStrings("A", "c")
+        val l = CopyOnWriteList(listOf("a", "b", "c"))
+        assertTrue(l.removeAll(ignoreCase))
+        assertEquals(listOf("b"), l)
+
+        val m = CopyOnWriteList(listOf("a", "b", "c"))
+        assertTrue(m.retainAll(ignoreCase))
+        assertEquals(listOf("a", "c"), m)
+    }
+
+    /** A collection whose `contains` differs from `equals`/`hashCode` based lookup, like a TreeSet with a comparator. */
+    private class CaseInsensitiveStrings(vararg items: String) : AbstractCollection<String>() {
+        private val items = items.toList()
+        override val size: Int get() = items.size
+        override fun iterator(): Iterator<String> = items.iterator()
+        override fun contains(element: String): Boolean = items.any { it.equals(element, ignoreCase = true) }
+    }
 }

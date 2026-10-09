@@ -14,8 +14,9 @@ import kotlinx.atomicfu.locks.synchronized
  *  - Iterator `remove`/`set`/`add` throw [UnsupportedOperationException].
  *  - [subList] is a read-only copy, not a write-through view; its mutators throw [UnsupportedOperationException].
  *  - Single operations are atomic; compound sequences (check then add) are not, as with the JDK class.
- *  - Marked [RandomAccess], so the stdlib `removeAll { }`-style helpers work, but the member [removeAll] with a
- *    predicate is preferred: it is one atomic step.
+ *  - Marked [RandomAccess]. Prefer the member [removeAll] with a predicate over the stdlib `MutableList.removeAll { }`
+ *    extension: the member does one copy and one publish, whereas the stdlib helper would go through element-wise
+ *    mutators (many copies, and not atomic).
  */
 class CopyOnWriteList<E>() : MutableList<E>, RandomAccess {
     private val lock = SynchronizedObject()
@@ -57,8 +58,11 @@ class CopyOnWriteList<E>() : MutableList<E>, RandomAccess {
     override fun set(index: Int, element: E): E = mutate { it.set(index, element) }
     override fun removeAt(index: Int): E = mutate { it.removeAt(index) }
     override fun remove(element: E): Boolean = mutateIf { it.remove(element) }
-    override fun removeAll(elements: Collection<E>): Boolean = mutateIf { it.removeAll(elements.toSet()) }
-    override fun retainAll(elements: Collection<E>): Boolean = mutateIf { it.retainAll(elements.toSet()) }
+
+    // `elements.contains` decides, as in the JDK (so a TreeSet with a comparator works). It runs on a snapshot of this
+    // list's own contents and publishes once, so `elements === this` or a `contains` that reads this list is safe.
+    override fun removeAll(elements: Collection<E>): Boolean = mutateIf { copy -> copy.removeAll { elements.contains(it) } }
+    override fun retainAll(elements: Collection<E>): Boolean = mutateIf { copy -> copy.retainAll { elements.contains(it) } }
     override fun clear() = mutate { it.clear() }
 
     /** Atomic equivalent of `removeIf`: one copy, one publish. */
@@ -72,7 +76,13 @@ class CopyOnWriteList<E>() : MutableList<E>, RandomAccess {
         return SnapshotIterator(snapshot, index)
     }
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = ReadOnlySnapshot(array.subList(fromIndex, toIndex).toList())
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
+        val snapshot = array
+        if (fromIndex < 0 || toIndex > snapshot.size || fromIndex > toIndex) {
+            throw IndexOutOfBoundsException("fromIndex: $fromIndex, toIndex: $toIndex, size: ${snapshot.size}")
+        }
+        return ReadOnlySnapshot(snapshot.subList(fromIndex, toIndex).toList())
+    }
 
     override fun equals(other: Any?): Boolean = other === this || (other is List<*> && array == other)
     override fun hashCode(): Int = array.hashCode()

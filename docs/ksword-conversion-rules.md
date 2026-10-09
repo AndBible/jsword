@@ -171,6 +171,7 @@ stated). Phase-1 rules (§1-§10) still apply.
 - Rule: `kotlinx.atomicfu.locks.SynchronizedObject` + `synchronized(lock) { }` (import
   `kotlinx.atomicfu.locks.synchronized`). A `@Synchronized` method becomes a `synchronized(lock)` body on a private
   lock object.
+- `SynchronizedObject` is a real lock on both JVM (a monitor) and native, not a no-op.
 - Trap: it no longer locks on `this`; check that no caller synchronizes on the instance. `static synchronized`
   (`synchronized(Outer::class.java)`) becomes a lock object in the companion.
 - Fields read without the lock and written under it: `kotlin.concurrent.Volatile`.
@@ -187,7 +188,8 @@ stated). Phase-1 rules (§1-§10) still apply.
 - Trap: the native engine differs: lookbehind, `\p{..}` classes; `Pattern.LITERAL` -> `Regex.escape`.
 
 ## 22. Dates
-- Rule: kotlinx-datetime (`0.7.1`), added when first needed.
+- Rule: kotlinx-datetime, added when first needed. `0.7.1` is the target version, to be verified when it is first
+  added (the build does not pin it yet).
 
 ## 23. Java serialization
 - Rule: stays JVM. `Serializable` is dropped when a class moves to common unless a JVM caller is found.
