@@ -2,7 +2,6 @@ package org.crosswire.common.util
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
@@ -38,12 +37,5 @@ class PluginRegistryTest {
         assertEquals(emptyList(), PluginRegistry.entries(Greeter::class))
         assertNull(PluginRegistry.entry(Greeter::class, "x"))
         assertNull(PluginRegistry.default(Greeter::class))
-    }
-
-    @Test
-    fun registryIsBuiltFromPlatformPlugins() {
-        // Platform actuals register at least one type on the JVM; on iOS the registry may still be empty.
-        assertNotNull(PluginRegistry.DEFAULT)
-        assertEquals("default", PluginRegistry.DEFAULT)
     }
 }

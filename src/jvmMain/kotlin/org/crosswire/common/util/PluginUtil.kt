@@ -19,11 +19,10 @@
  */
 package org.crosswire.common.util
 
-import org.crosswire.jsword.JSOtherMsg
 import java.io.IOException
-import kotlin.reflect.KClass
 import java.net.MalformedURLException
 import java.util.MissingResourceException
+import kotlin.reflect.KClass
 
 /**
  * Compatibility shim over [PluginRegistry] (class mappings) plus the `.plugin` data
@@ -99,12 +98,10 @@ private constructor() {
          *             if there is a problem reading the found file
          * @throws ClassNotFoundException
          *             if the read contents are not found
-         * @throws ClassCastException
-         *             if the read contents are not valid
          * @see PluginUtil#getImplementors(Class)
          */
         @JvmStatic
-        @Throws(IOException::class, ClassNotFoundException::class, ClassCastException::class)
+        @Throws(IOException::class, ClassNotFoundException::class)
         @Suppress("UNCHECKED_CAST")
         fun <T> getImplementor(clazz: Class<T>): Class<T> {
             val entry = PluginRegistry.default(kclass(clazz))

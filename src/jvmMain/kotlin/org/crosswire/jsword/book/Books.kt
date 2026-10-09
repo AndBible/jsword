@@ -247,6 +247,9 @@ private constructor() : AbstractBookList() {
                 registerDriver(entry.create())
             } catch (e: BookException) {
                 Reporter.informUser(Books::class.java, e)
+            } catch (e: Exception) {
+                // The old reflective path reported every failure of a driver's creation to the user.
+                Reporter.informUser(Books::class.java, e)
             }
         }
     }

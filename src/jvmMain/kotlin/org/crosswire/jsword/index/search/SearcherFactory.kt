@@ -64,9 +64,6 @@ private constructor() {
             } catch (e: BookException) {
                 log.error("createSearcher failed", e)
                 throw InstantiationException()
-            } catch (e: ReflectiveOperationException) {
-                log.error("createSearcher failed", e)
-                throw InstantiationException()
             }
         }
 

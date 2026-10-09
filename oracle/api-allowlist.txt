@@ -178,3 +178,5 @@ org.crosswire.jsword.book.install.sword.AbstractSwordInstaller - F protected sta
 org.crosswire.jsword.book.install.sword.AbstractSwordInstaller + F protected static final log: org.crosswire.common.util.Logger # K2 F2: same field, new logger facade type.
 org.crosswire.common.util.MsgBase + K protected (java.lang.String) throws [] # K2 F1: bundle-name constructor added; the no-arg protected constructor stays and derives the name from the class.
 org.crosswire.common.util.Translations - <class> # K2: unused, removed (no caller in jsword or AndBible)
+org.crosswire.common.util.PluginUtil - M public static getImplementor(java.lang.Class): java.lang.Class throws [java.io.IOException,java.lang.ClassCastException,java.lang.ClassNotFoundException] # K2 cleanup: the declared unchecked ClassCastException was unreachable (the registry holds typed entries); unchecked, so source-compatible.
+org.crosswire.common.util.PluginUtil + M public static getImplementor(java.lang.Class): java.lang.Class throws [java.io.IOException,java.lang.ClassNotFoundException] # K2 cleanup: same method without the unreachable ClassCastException.
