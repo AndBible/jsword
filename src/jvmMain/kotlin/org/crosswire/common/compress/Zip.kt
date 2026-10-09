@@ -19,14 +19,9 @@
  */
 package org.crosswire.common.compress
 
-import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.util.zip.Deflater
-import java.util.zip.DeflaterOutputStream
-import java.util.zip.Inflater
-import java.util.zip.InflaterInputStream
 
 /**
  * Zip manages the compression and uncompression of Zip files.
@@ -45,19 +40,9 @@ open class Zip(input: InputStream) : AbstractCompressor(input) {
      */
     @Throws(IOException::class)
     override fun compress(): ByteArrayOutputStream {
-        val bin = BufferedInputStream(input)
+        val bytes = input.use { it.readBytes() }
         val bos = ByteArrayOutputStream()
-        val out = DeflaterOutputStream(bos, Deflater(), Compressor.BUF_SIZE)
-        val buf = ByteArray(Compressor.BUF_SIZE)
-
-        var count = bin.read(buf)
-        while (count != -1) {
-            out.write(buf, 0, count)
-            count = bin.read(buf)
-        }
-        bin.close()
-        out.flush()
-        out.close()
+        bos.write(Zlib.deflate(bytes))
         return bos
     }
 
@@ -78,18 +63,9 @@ open class Zip(input: InputStream) : AbstractCompressor(input) {
      */
     @Throws(IOException::class)
     override fun uncompress(expectedLength: Int): ByteArrayOutputStream {
+        val bytes = input.use { it.readBytes() }
         val out = ByteArrayOutputStream(expectedLength)
-        val zin = InflaterInputStream(input, Inflater(), expectedLength)
-        val buf = ByteArray(expectedLength)
-
-        var count = zin.read(buf)
-        while (count != -1) {
-            out.write(buf, 0, count)
-            count = zin.read(buf)
-        }
-        zin.close()
-        out.flush()
-        out.close()
+        out.write(Zlib.inflate(bytes, expectedLength))
         return out
     }
 }
