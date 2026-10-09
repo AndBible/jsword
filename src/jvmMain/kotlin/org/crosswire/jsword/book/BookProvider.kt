@@ -16,7 +16,7 @@
  *
  * © CrossWire Bible Society, 2007 - 2016
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
 /**
  * A BookProvider provides a list of books.
@@ -24,18 +24,18 @@ package org.crosswire.jsword.book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface BookProvider {
+interface BookProvider {
     /**
      * Provide books.
-     * 
+     *
      * @return the books
      */
-    Book[] getBooks();
+    fun getBooks(): Array<Book>
 
     /**
      * Provide the first book.
-     * 
+     *
      * @return the first book
      */
-    Book getFirstBook();
+    val firstBook: Book?
 }

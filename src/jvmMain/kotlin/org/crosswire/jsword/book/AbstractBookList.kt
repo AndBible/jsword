@@ -17,13 +17,12 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Collections
+import java.util.concurrent.CopyOnWriteArrayList
 
-import org.crosswire.common.util.CollectionUtil;
+import org.crosswire.common.util.CollectionUtil
 
 /**
  * A basic implementation of BookList. The methods in this abstract class are
@@ -33,39 +32,45 @@ import org.crosswire.common.util.CollectionUtil;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public abstract class AbstractBookList implements BookList {
+abstract class AbstractBookList
+/**
+ * Build a default BookList
+ */
+() : BookList {
     /**
-     * Build a default BookList
+     * The list of listeners
      */
-    public AbstractBookList() {
-        listeners = new CopyOnWriteArrayList<BooksListener>();
+    private var listeners: MutableList<BooksListener?> = CopyOnWriteArrayList()
+
+    init {
+        listeners = CopyOnWriteArrayList()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#getBooks(org.crosswire.jsword.book.BookFilter)
      */
-    public List<Book> getBooks(BookFilter filter) {
-        List<Book> temp = CollectionUtil.createList(new BookFilterIterator(getBooks(), filter));
-        return Collections.unmodifiableList(temp);
+    override fun getBooks(filter: BookFilter?): MutableList<Book> {
+        val temp = CollectionUtil.createList(BookFilterIterator(getBooks(), filter))
+        return Collections.unmodifiableList(temp)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#addBooksListener(org.crosswire.jsword.book.BooksListener)
      */
-    public void addBooksListener(BooksListener li) {
-        listeners.add(li);
+    override fun addBooksListener(li: BooksListener?) {
+        listeners.add(li)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#removeBooksListener(org.crosswire.jsword.book.BooksListener)
      */
-    public  void removeBooksListener(BooksListener li) {
-        listeners.remove(li);
+    override fun removeBooksListener(li: BooksListener?) {
+        listeners.remove(li)
     }
 
     /**
      * Kick of an event sequence
-     * 
+     *
      * @param source
      *            The event source
      * @param book
@@ -73,19 +78,14 @@ public abstract class AbstractBookList implements BookList {
      * @param added
      *            Is it added?
      */
-    protected void fireBooksChanged(Object source, Book book, boolean added) {
-        BooksEvent ev = new BooksEvent(source, book, added);
-        for (BooksListener listener : listeners) {
+    protected open fun fireBooksChanged(source: Any?, book: Book?, added: Boolean) {
+        val ev = BooksEvent(source, book, added)
+        for (listener in listeners) {
             if (added) {
-                listener.bookAdded(ev);
+                listener!!.bookAdded(ev)
             } else {
-                listener.bookRemoved(ev);
+                listener!!.bookRemoved(ev)
             }
         }
     }
-
-    /**
-     * The list of listeners
-     */
-    private List<BooksListener> listeners = new CopyOnWriteArrayList<BooksListener>();
 }

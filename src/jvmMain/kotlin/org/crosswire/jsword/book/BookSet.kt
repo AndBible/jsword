@@ -17,46 +17,34 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Collections
+import java.util.TreeSet
 
-import org.crosswire.common.util.Filter;
+import org.crosswire.common.util.Filter
 
-/**
- * BookSet represents a collection of descriptions about Books which may be
- * subsetted into other BookMetaDataSets. Each set is naturally ordered.
- * 
- * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author DM Smith
- */
-public class BookSet extends ArrayList<Book> implements Set<Book> {
-    public BookSet() {
-    }
+open class BookSet : ArrayList<Book>, MutableSet<Book> {
+    constructor() : super()
 
-    public BookSet(Collection<Book> books) {
-        this();
-        addAll(books);
+    constructor(books: Collection<Book>) : this() {
+        addAll(books)
     }
 
     /**
      * Gets the sorted set of all keys which can be used for groupings. These
      * are all the property keys across the BookMetaDatas in this list.
-     * 
+     *
      * @return the set of all keys which can be used for grouping.
      */
-    public Set<String> getGroups() {
-        Set<String> results = new TreeSet<String>();
-        for (Book book : this) {
-            results.addAll(book.getPropertyKeys());
+    open val groups: Set<String>
+        get() {
+            val results: MutableSet<String> = TreeSet()
+            for (book in this) {
+                results.addAll(book.propertyKeys)
+            }
+            return results
         }
-        return results;
-    }
 
     /**
      * Get the sorted set of all values for a particular key. If there is a
@@ -64,133 +52,129 @@ public class BookSet extends ArrayList<Book> implements Set<Book> {
      * in the set. This can be use to categorize books that don't have that key.
      * For example, "Language" will return all the languages for this
      * BookMetaDataList and null for which the language is unknown.
-     * 
+     *
      * @param key the property key
      * @return the values for a particular key.
      */
-    public Set<Object> getGroup(String key) {
-        Set<Object> results = new TreeSet<Object>();
-        for (Book book : this) {
-            Object property = book.getProperty(key);
+    open fun getGroup(key: String?): Set<Any> {
+        val results: MutableSet<Any> = TreeSet()
+        for (book in this) {
+            val property: Any? = book.getProperty(key)
             if (property != null) {
-                results.add(property);
+                results.add(property)
             }
         }
-        return results;
+        return results
     }
 
-    public BookSet filter(String key, Object value) {
-        return filter(new GroupFilter(key, value));
+    open fun filter(key: String?, value: Any?): BookSet {
+        return filter(GroupFilter(key, value))
     }
 
     /**
      * Get a set of books that satisfy the condition imposed by the filter.
-     * 
+     *
      * @param filter the condition on which to select books
      * @return the set of matching books
      */
-    public BookSet filter(Filter<Book> filter) {
+    open fun filter(filter: Filter<Book>): BookSet {
         // create a copy of the list and
         // remove everything that fails the test.
-        BookSet listSet = (BookSet) clone();
-        Iterator<Book> iter = listSet.iterator();
+        val listSet = clone() as BookSet
+        val iter = listSet.iterator()
         while (iter.hasNext()) {
-            Book obj = iter.next();
+            val obj = iter.next()
             if (!filter.test(obj)) {
-                iter.remove();
+                iter.remove()
             }
         }
-        return listSet;
+        return listSet
     }
 
     /* (non-Javadoc)
      * @see java.util.ArrayList#add(int, java.lang.Object)
      */
-    @Override
-    public void add(int index, Book element) {
+    override fun add(index: Int, element: Book) {
         // ignore the requested index
-        add(element);
+        add(element)
     }
 
     /* (non-Javadoc)
      * @see java.util.ArrayList#add(java.lang.Object)
      */
-    @Override
-    public final boolean add(Book book) {
+    final override fun add(element: Book): Boolean {
         // Add the item only if it is not in the list.
         // Add it into the list so that it is in sorted order.
-        int pos = Collections.binarySearch(this, book);
+        val pos = Collections.binarySearch(this, element)
         if (pos < 0) {
-            super.add(-pos - 1, book);
-            return true;
+            super.add(-pos - 1, element)
+            return true
         }
-        return false;
+        return false
     }
 
     /* (non-Javadoc)
      * @see java.util.ArrayList#addAll(java.util.Collection)
      */
-    @Override
-    public final boolean addAll(Collection<? extends Book> c) {
+    final override fun addAll(elements: Collection<Book>): Boolean {
         // Might be better to add the list to the end
         // and then sort the list.
         // This can be revisited if the list performs badly.
-        boolean added = false;
-        for (Book book : c) {
+        var added = false
+        for (book in elements) {
             try {
-                book.toString();
-            } catch (NullPointerException e) {
-                continue;
+                book.toString()
+            } catch (e: NullPointerException) {
+                continue
             }
             if (add(book)) {
-                added = true;
+                added = true
             }
         }
-        return added;
+        return added
     }
 
     /* (non-Javadoc)
      * @see java.util.ArrayList#addAll(int, java.util.Collection)
      */
-    @Override
-    public final boolean addAll(int index, Collection<? extends Book> c) {
+    final override fun addAll(index: Int, elements: Collection<Book>): Boolean {
         // Ignore the index
-        return addAll(c);
+        return addAll(elements)
     }
 
     /* (non-Javadoc)
      * @see java.util.ArrayList#set(int, java.lang.Object)
      */
-    @Override
-    public Book set(int index, Book element) {
+    override fun set(index: Int, element: Book): Book {
         // remove the item at the index (keep it to return it),
         // then insert the item into the sorted list.
-        Book item = remove(index);
-        add(element);
-        return item;
+        val item = removeAt(index)
+        add(element)
+        return item
+    }
+
+    /**
+     * Kotlin must be told which inherited implementation wins: Java picks the one of the superclass
+     * (ArrayList) over the default method of Set.
+     */
+    override fun spliterator(): java.util.Spliterator<Book> {
+        return super<ArrayList>.spliterator()
     }
 
     /**
      * GroupFilter does the SQL traditional group by.
      */
-    private static final class GroupFilter implements Filter<Book> {
-        GroupFilter(String aKey, Object aValue) {
-            key = aKey;
-            value = aValue;
+    private class GroupFilter(private var key: String?, private var value: Any?) : Filter<Book> {
+        override fun test(obj: Book): Boolean {
+            val property = obj.getProperty(key)
+            return property != null && property == value
         }
-
-        public boolean test(Book book) {
-            String property = book.getProperty(key);
-            return property != null && property.equals(value);
-        }
-
-        private String key;
-        private Object value;
     }
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3258688806185154867L;
-
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3258688806185154867L
+    }
 }

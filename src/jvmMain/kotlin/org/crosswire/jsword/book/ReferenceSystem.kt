@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
 /**
  * A ReferenceSystem is a marker interface.
@@ -25,6 +25,4 @@ package org.crosswire.jsword.book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface ReferenceSystem {
-
-}
+interface ReferenceSystem

@@ -17,10 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.NoSuchElementException
 
 /**
  * An iterator that filters as it goes.
@@ -29,77 +28,65 @@ import java.util.NoSuchElementException;
  * @author Joe Walker
  * @author DM Smith
  */
-public class BookFilterIterator implements Iterable<Book>, Iterator<Book> {
+open class BookFilterIterator
+/**
+ * Simple ctor
+ *
+ * @param books an iterator over a set of books
+ * @param filter
+ *            The filter to use, if null, will iterate over all values
+ */
+(books: Iterable<Book>, private var filter: BookFilter?) : Iterable<Book>, MutableIterator<Book> {
     /**
-     * Simple ctor
-     * 
-     * @param books an iterator over a set of books
-     * @param filter
-     *            The filter to use, if null, will iterate over all values
+     * The stored next value
      */
-    public BookFilterIterator(Iterable<Book> books, BookFilter filter) {
-        this.it = books.iterator();
-        this.filter = filter;
-    }
+    private var next: Book? = null
+
+    private var it: Iterator<Book> = books.iterator()
 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
-    public Iterator<Book> iterator() {
-        return this;
+    override fun iterator(): Iterator<Book> {
+        return this
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#hasNext()
      */
-    public boolean hasNext() {
-        next = findNext();
-        return next != null;
+    override fun hasNext(): Boolean {
+        next = findNext()
+        return next != null
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#next()
      */
-    public Book next() {
-        if (next == null) {
-            throw new NoSuchElementException();
-        }
-        return next;
+    override fun next(): Book {
+        return next ?: throw NoSuchElementException()
     }
 
     /* (non-Javadoc)
      * @see java.util.Iterator#remove()
      */
-    public void remove() {
-        throw new UnsupportedOperationException();
+    override fun remove() {
+        throw UnsupportedOperationException()
     }
 
     /**
      * Find the next (if there is one)
-     * 
+     *
      * @return the next book
      */
-    private Book findNext() {
+    private fun findNext(): Book? {
         while (it.hasNext()) {
-            Book book = it.next();
-            if (filter == null || filter.test(book)) {
-                return book;
+            val book = it.next()
+            val f = filter
+            if (f == null || f.test(book)) {
+                return book
             }
         }
 
-        return null;
+        return null
     }
-
-    /**
-     * The stored next value
-     */
-    private Book next;
-
-    private Iterator<Book> it;
-
-    /**
-     * The value filter
-     */
-    private BookFilter filter;
-
 }

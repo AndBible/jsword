@@ -17,25 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.lang.reflect.InvocationTargetException
+import java.util.TreeSet
 
-import org.crosswire.common.activate.Activator;
-import org.crosswire.common.util.CollectionUtil;
-import org.crosswire.common.util.PluginUtil;
-import org.crosswire.common.util.Reporter;
-import org.crosswire.jsword.JSOtherMsg;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.activate.Activator
+import org.crosswire.common.util.CollectionUtil
+import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.Reporter
+import org.crosswire.jsword.JSOtherMsg
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * The Books class (along with Book) is the central point of contact between the
@@ -45,118 +38,127 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public final class Books extends AbstractBookList {
+class Books
+/**
+ * Create a singleton instance of the class. This is private to ensure that
+ * only one can be created. This also makes the class final!
+ */
+private constructor() : AbstractBookList() {
     /**
-     * Create a singleton instance of the class. This is private to ensure that
-     * only one can be created. This also makes the class final!
+     * The collection of Books
      */
-    private Books() {
-        super();
-        initials = new HashMap<String, Book>();
-        names = new HashMap<String, Book>();
-        drivers = new HashSet<BookDriver>();
-        books = new TreeSet();
-    }
+    private var books: MutableSet<Book> = TreeSet()
 
     /**
-     * Accessor for the singleton instance
-     * 
-     * @return The singleton instance
+     * The map of book initials
      */
-    public static Books installed() {
-        return instance;
-    }
+    private var initials: MutableMap<String, Book> = HashMap()
+
+    /**
+     * The map of book names
+     */
+    private var names: MutableMap<String, Book> = HashMap()
+
+    /**
+     * An array of BookDrivers
+     */
+    private var driverSet: MutableSet<BookDriver> = HashSet()
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#getBooks()
      */
-    public synchronized List<Book> getBooks() {
-        return CollectionUtil.createList(books);
+    @Synchronized
+    override fun getBooks(): MutableList<Book> {
+        return CollectionUtil.createList(books)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#getBooks(org.crosswire.jsword.book.BookFilter)
      */
-    @Override
-    public synchronized List<Book> getBooks(BookFilter filter) {
-        return CollectionUtil.createList(new BookFilterIterator(books, filter));
+    @Synchronized
+    override fun getBooks(filter: BookFilter?): MutableList<Book> {
+        return CollectionUtil.createList(BookFilterIterator(books, filter))
     }
 
     /**
      * Search for the book by initials and name.
-     * Looks for exact matches first, then searches case insensitive. 
+     * Looks for exact matches first, then searches case insensitive.
      * In all cases the whole initials or the whole name has to match.
-     * 
+     *
      * @param name The initials or name of the book to find
      * @return the book or null
      */
-    public synchronized Book getBook(String name) {
+    @Synchronized
+    fun getBook(name: String?): Book? {
         if (name == null) {
-            return null;
+            return null
         }
 
-        Book book = initials.get(name);
+        var book = initials.get(name)
         if (book != null) {
-            return book;
+            return book
         }
 
-        book = names.get(name);
+        book = names.get(name)
         if (book != null) {
-            return book;
+            return book
         }
 
         // Check for case-insensitive initial and name matches
-        for (Book b : books) {
-            if (name.equalsIgnoreCase(b.getInitials()) || name.equalsIgnoreCase(b.getName())) {
-                return b;
+        for (b in books) {
+            if (name.equals(b.initials, ignoreCase = true) || name.equals(b.name, ignoreCase = true)) {
+                return b
             }
         }
 
-        return null;
+        return null
     }
 
     /**
      * Add a Book to the current list of Books. This method should only be
      * called by BibleDrivers, it is not a method for general consumption.
-     * 
+     *
      * @param book the book to add to this book list
      */
-    public synchronized void addBook(Book book) {
-        if (book == null) return;
+    @Synchronized
+    fun addBook(book: Book?) {
+        if (book == null) return
 
         // If we are upgrading module, we need to remove existing data first.
         if (books.contains(book)) {
-            initials.remove(book.getInitials());
-            names.remove(book.getName());
-            books.remove(book);
+            initials.remove(book.initials)
+            names.remove(book.name)
+            books.remove(book)
         }
 
         if (books.add(book)) {
-            initials.put(book.getInitials(), book);
-            names.put(book.getName(), book);
-            fireBooksChanged(instance, book, true);
+            initials.put(book.initials, book)
+            names.put(book.name, book)
+            fireBooksChanged(instance, book, true)
         }
     }
 
     /**
      * Remove a Book from the current list of Books. This method should only be
      * called by BibleDrivers, it is not a method for general consumption.
-     * 
+     *
      * @param book the book to be removed from this book list
      * @throws BookException when an error occurs when performing this method
      */
-    public synchronized void removeBook(Book book) throws BookException {
+    @Synchronized
+    @Throws(BookException::class)
+    fun removeBook(book: Book) {
         // log.debug("unregistering book: {}", bmd.getName());
 
-        Activator.deactivate(book);
+        Activator.deactivate(book)
 
-        boolean removed = books.remove(book);
+        val removed = books.remove(book)
         if (removed) {
-            initials.remove(book.getInitials());
-            names.remove(book.getName());
-            fireBooksChanged(instance, book, false);
+            initials.remove(book.initials)
+            names.remove(book.name)
+            fireBooksChanged(instance, book, false)
         } else {
-            throw new BookException(JSOtherMsg.lookupText("Could not remove unregistered Book: {0}", book.getName()));
+            throw BookException(JSOtherMsg.lookupText("Could not remove unregistered Book: {0}", book.name))
         }
     }
 
@@ -164,137 +166,134 @@ public final class Books extends AbstractBookList {
      * Register the driver, adding its books to the list. Any books that this
      * driver used, but not any more are removed. This can be called repeatedly
      * to re-register the driver.
-     * 
+     *
      * @param driver
      *            The BookDriver to add
      * @throws BookException when an error occurs when performing this method
      */
-    public synchronized void registerDriver(BookDriver driver) throws BookException {
-        log.debug("begin registering driver: {}", driver.getClass().getName());
+    @Synchronized
+    @Throws(BookException::class)
+    fun registerDriver(driver: BookDriver) {
+        log.debug("begin registering driver: {}", driver.javaClass.getName())
 
-        drivers.add(driver);
+        driverSet.add(driver)
 
         // Go through all the books and add all the new ones.
         // Remove those that are not known to the driver, but used to be.
-        Book[] bookArray = driver.getBooks();
-        Set<Book> current = CollectionUtil.createSet(new BookFilterIterator(books, BookFilters.getBooksByDriver(driver)));
+        val bookArray = driver.getBooks()
+        val current = CollectionUtil.createSet(BookFilterIterator(books, BookFilters.getBooksByDriver(driver)))
 
-        for (int j = 0; j < bookArray.length; j++) {
-            Book b = bookArray[j];
+        for (j in bookArray.indices) {
+            val b = bookArray[j]
             if (current.contains(b)) {
                 // Since it was already in there, we don't add it.
                 // By removing it from current we will be left with
                 // what is not now known by the driver.
-                current.remove(b);
+                current.remove(b)
             } else {
-                addBook(bookArray[j]);
+                addBook(bookArray[j])
             }
         }
 
         // Remove the books from the previous version of the driver
         // that are not in this version.
-        for (Book book : current) {
-            removeBook(book);
+        for (book in current) {
+            removeBook(book)
         }
 
-        log.debug("end registering driver: {}", driver.getClass().getName());
+        log.debug("end registering driver: {}", driver.javaClass.getName())
     }
 
     /**
      * Since Books keeps a track of drivers itself, including creating them when
      * registered it can be hard to get a hold of the current book driver. This
      * method gives access to the registered instances.
-     * 
+     *
      * @param type the type of BookDriver
      * @return matching BookDrivers
      */
-    public synchronized BookDriver[] getDriversByClass(Class<? extends BookDriver> type) {
-        List<BookDriver> matches = new ArrayList<BookDriver>();
-        for (BookDriver driver : drivers) {
-            if (driver.getClass() == type) {
-                matches.add(driver);
+    @Synchronized
+    fun getDriversByClass(type: Class<out BookDriver>?): Array<BookDriver> {
+        val matches: MutableList<BookDriver> = ArrayList()
+        for (driver in driverSet) {
+            if (driver.javaClass === type) {
+                matches.add(driver)
             }
         }
 
-        return matches.toArray(new BookDriver[matches.size()]);
+        return matches.toTypedArray()
     }
 
     /**
      * Get an array of all the known drivers
-     * 
+     *
      * @return Found int or the default value
      */
-    public synchronized BookDriver[] getDrivers() {
-        return drivers.toArray(new BookDriver[drivers.size()]);
-    }
+    val drivers: Array<BookDriver>
+        @Synchronized get() {
+            return driverSet.toTypedArray()
+        }
 
     /**
      * Registers all the drivers known to the program.
      */
-    private void autoRegister() {
+    private fun autoRegister() {
         // This will classload them all and they will register themselves.
-        Class<? extends BookDriver>[] types = PluginUtil.getImplementors(BookDriver.class);
+        val types = PluginUtil.getImplementors(BookDriver::class.java)
 
-        log.debug("begin auto-registering {} drivers:", Integer.toString(types.length));
+        log.debug("begin auto-registering {} drivers:", Integer.toString(types.size))
 
-        for (int i = 0; i < types.length; i++) {
+        for (i in types.indices) {
             // job.setProgress(Msg.JOB_DRIVER.toString() +
             // ClassUtils.getShortClassName(types[i]));
 
             try {
-                Method driverInstance = types[i].getMethod("instance", new Class[0]);
-                BookDriver driver = (BookDriver) driverInstance.invoke(null, new Object[0]); // types[i].newInstance();
-                registerDriver(driver);
-            } catch (NoSuchMethodException e) {
-                Reporter.informUser(Books.class, e);
-            } catch (IllegalArgumentException e) {
-                Reporter.informUser(Books.class, e);
-            } catch (IllegalAccessException e) {
-                Reporter.informUser(Books.class, e);
-            } catch (InvocationTargetException e) {
-                Reporter.informUser(Books.class, e);
-            } catch (BookException e) {
-                Reporter.informUser(Books.class, e);
+                val driverInstance = types[i].getMethod("instance")
+                val driver = driverInstance.invoke(null) as BookDriver // types[i].newInstance();
+                registerDriver(driver)
+            } catch (e: NoSuchMethodException) {
+                Reporter.informUser(Books::class.java, e)
+            } catch (e: IllegalArgumentException) {
+                Reporter.informUser(Books::class.java, e)
+            } catch (e: IllegalAccessException) {
+                Reporter.informUser(Books::class.java, e)
+            } catch (e: InvocationTargetException) {
+                Reporter.informUser(Books::class.java, e)
+            } catch (e: BookException) {
+                Reporter.informUser(Books::class.java, e)
             }
         }
     }
 
-    /**
-     * The collection of Books
-     */
-    private Set<Book> books;
+    companion object {
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(Books::class.java)
 
-    /**
-     * The map of book initials
-     */
-    private Map<String, Book> initials;
+        /**
+         * The singleton instance.
+         * This needs to be declared after all other statics it uses.
+         */
+        private val instance = Books()
 
-    /**
-     * The map of book names
-     */
-    private Map<String, Book> names;
+        /**
+         * Accessor for the singleton instance
+         *
+         * @return The singleton instance
+         */
+        @JvmStatic
+        fun installed(): Books {
+            return instance
+        }
 
-    /**
-     * An array of BookDrivers
-     */
-    private Set<BookDriver> drivers;
-
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(Books.class);
-
-    /**
-     * The singleton instance.
-     * This needs to be declared after all other statics it uses.
-     */
-    private static final Books instance = new Books();
-    // And it cannot register books until it is fully constructed
-    // When this was the last call in the constructor it resulted
-    // in "instance" being null in something it called.
-    static {
-        log.trace("Auto-registering start @ {}", Long.toString(System.currentTimeMillis()));
-        instance.autoRegister();
-        log.trace("Auto-registering stop @ {}", Long.toString(System.currentTimeMillis()));
+        // And it cannot register books until it is fully constructed
+        // When this was the last call in the constructor it resulted
+        // in "instance" being null in something it called.
+        init {
+            log.trace("Auto-registering start @ {}", System.currentTimeMillis().toString())
+            instance.autoRegister()
+            log.trace("Auto-registering stop @ {}", System.currentTimeMillis().toString())
+        }
     }
 }

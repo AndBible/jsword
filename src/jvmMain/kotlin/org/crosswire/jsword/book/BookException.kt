@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import org.crosswire.common.util.LucidException;
+import org.crosswire.common.util.LucidException
 
 /**
  * Something went wrong with a Book.
@@ -27,31 +27,29 @@ import org.crosswire.common.util.LucidException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class BookException extends LucidException {
+open class BookException : LucidException {
     /**
      * Construct the Exception with a message
-     * 
+     *
      * @param msg
      *            The resource id to read
      */
-    public BookException(String msg) {
-        super(msg);
-    }
+    constructor(msg: String?) : super(msg)
 
     /**
      * Construct the Exception with a message and a nested Exception
-     * 
+     *
      * @param msg
      *            The resource id to read
      * @param ex
      *            The nested Exception
      */
-    public BookException(String msg, Throwable ex) {
-        super(msg, ex);
-    }
+    constructor(msg: String?, ex: Throwable?) : super(msg, ex)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3977575883768738103L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3977575883768738103L
+    }
 }

@@ -17,9 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
-
-import java.util.List;
+package org.crosswire.jsword.book
 
 /**
  * There are several lists of Books, the most important being the installed
@@ -31,34 +29,34 @@ import java.util.List;
  * @see gnu.lgpl.License
  * @author Joe Walker
  */
-public interface BookList {
+interface BookList {
     /**
      * Get a list of all the Books of all types.
-     * 
+     *
      * @return the desired list of books
      */
-    List<Book> getBooks();
+    fun getBooks(): MutableList<Book>
 
     /**
      * Get a filtered list of all the Books.
-     * 
+     *
      * @param filter the filter to apply to the list of books
      * @return the desired list of books
      * @see BookFilters
      */
-    List<Book> getBooks(BookFilter filter);
+    fun getBooks(filter: BookFilter?): MutableList<Book>
 
     /**
      * Add a BibleListener from our list of listeners
-     * 
+     *
      * @param li interested listener
      */
-    void addBooksListener(BooksListener li);
+    fun addBooksListener(li: BooksListener?)
 
     /**
      * Remove a BibleListener to our list of listeners
-     * 
+     *
      * @param li disinterested listener
      */
-    void removeBooksListener(BooksListener li);
+    fun removeBooksListener(li: BooksListener?)
 }

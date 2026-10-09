@@ -17,15 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.Set;
+import java.net.URI
 
-import org.crosswire.common.util.Language;
-import org.crosswire.jsword.index.IndexStatus;
-import org.jdom2.Document;
+import org.crosswire.common.util.Language
+import org.crosswire.jsword.index.IndexStatus
+import org.jdom2.Document
 
 /**
  * A BookMetaData represents a method of translating the Bible. All Books with
@@ -45,132 +43,130 @@ import org.jdom2.Document;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface BookMetaData extends Comparable<BookMetaData> {
+interface BookMetaData : Comparable<BookMetaData> {
     /**
      * The name of the book, for example "King James Version" or
      * "Bible in Basic English" or "Greek". This method should not
      * return null or a blank string.
-     * 
+     *
      * @return The name of this book
      */
-    String getName();
+    val name: String
 
     /**
      * With which Charset is this Book encoded?
-     * 
+     *
      * @return the encoding of the Book
      */
-    String getBookCharset();
+    val bookCharset: String?
 
     /**
      * How this Book organizes it's keys.
-     * 
+     *
      * @return the organization of keys of this Book
      */
-    KeyType getKeyType();
+    val keyType: KeyType?
 
     /**
      * What category of content is this, a Bible or a reference work like a
      * Dictionary or Commentary.
-     * 
+     *
      * @return The category of book
      */
-    BookCategory getBookCategory();
+    val bookCategory: BookCategory
 
     /**
      * Accessor for the driver that runs this Book. Note this method should only
      * be used to delete() Books. Everything else you should want to do to a
      * Book should be available in other ways.
-     * 
+     *
      * @return the driver for the book.
      */
-    BookDriver getDriver();
+    val driver: BookDriver?
 
     /**
      * The language of the book.
-     * 
+     *
      * @return the book's language
      */
-    Language getLanguage();
-
     /**
      * Set the language for this book.
-     * 
+     *
      * @param language
      *            the book's language
      */
-    void setLanguage(Language language);
+    var language: Language
 
     /**
      * The initials of this book - how people familiar with this book will know
      * it, for example "NIV", "KJV".
-     * 
+     *
      * @return The book's initials
      */
-    String getAbbreviation();
+    val abbreviation: String
 
     /**
      * The internal name of this book.
-     * 
+     *
      * @return The book's internal name
      */
-    String getInitials();
+    val initials: String
 
     /**
      * Calculated field: Get an OSIS identifier for the OsisText.setOsisIDWork()
      * and the Work.setOsisWork() methods. The response will generally be of the
      * form [Bible][Dict..].getInitials
-     * 
+     *
      * @return The osis id of this book
      */
-    String getOsisID();
+    val osisID: String
 
     /**
      * Indicate whether this book is supported by JSword. Since the expectation
      * is that all books are supported, abstract implementations should return
      * true and let specific implementations return false if they cannot support
      * the book.
-     * 
+     *
      * @return true if the book is supported
      */
-    boolean isSupported();
+    val isSupported: Boolean
 
     /**
      * Indicate whether this book is enciphered. Since the expectation is that
      * most books are unenciphered, abstract implementations should return false
      * and let specific implementations return true otherwise.
-     * 
+     *
      * @return true if the book is enciphered
      */
-    boolean isEnciphered();
+    val isEnciphered: Boolean
 
     /**
      * Indicate whether this book is enciphered and without a key. Since the
      * expectation is that most books are unenciphered, abstract implementations
      * should return false and let specific implementations return true
      * otherwise.
-     * 
+     *
      * @return true if the book is locked
      */
-    boolean isLocked();
+    val isLocked: Boolean
 
     /**
      * Unlocks a book with the given key.
-     * 
+     *
      * @param unlockKey
      *            the key to try
      * @return true if the unlock key worked.
      */
-    boolean unlock(String unlockKey);
+    fun unlock(unlockKey: String?): Boolean
 
-    void resetLock();
+    fun resetLock()
 
     /**
      * Gets the unlock key for the module.
-     * 
+     *
      * @return the unlock key, if any, null otherwise.
      */
-    String getUnlockKey();
+    val unlockKey: String?
 
     /**
      * Indicate whether this book is questionable. A book may be deemed
@@ -178,18 +174,18 @@ public interface BookMetaData extends Comparable<BookMetaData> {
      * expectation is that all books are not questionable, abstract
      * implementations should return false and let specific implementations
      * return true if the book is questionable.
-     * 
+     *
      * @return true if the book is questionable
      */
-    boolean isQuestionable();
+    val isQuestionable: Boolean
 
     /**
      * Calculated field: The name of the name, which could be helpful to
      * distinguish similar Books available through 2 BookDrivers.
-     * 
+     *
      * @return The driver name
      */
-    String getDriverName();
+    val driverName: String?
 
     /**
      * Return the orientation of the script of the Book. If a book contains more
@@ -197,75 +193,73 @@ public interface BookMetaData extends Comparable<BookMetaData> {
      * be used to present Arabic and Hebrew in their proper orientation. Note:
      * some languages have multiple scripts which don't have the same
      * directionality.
-     * 
+     *
      * @return true if the orientation for the dominate script is LeftToRight.
      */
-    boolean isLeftToRight();
+    val isLeftToRight: Boolean
 
     /**
      * Return whether the feature is supported by the book.
-     * 
+     *
      * @param feature the feature in question
      * @return true if the book supports the feature
      */
-    boolean hasFeature(FeatureType feature);
+    fun hasFeature(feature: FeatureType?): Boolean
 
     /**
      * Get the base URI for library of this module.
-     * 
+     *
      * @return the base URI or null if there is none
      */
-    URI getLibrary();
-
     /**
      * Set the base URI for library of this module.
-     * 
+     *
      * @param library
      *            the base URI or null if there is none
      * @throws BookException  indicates missing data files
      */
-    void setLibrary(URI library) throws BookException;
+    @set:Throws(BookException::class)
+    var library: URI?
 
     /**
      * Get the base URI for relative URIs in the document.
-     * 
+     *
      * @return the base URI or null if there is none
      */
-    URI getLocation();
-
     /**
      * Set the base URI for relative URIs in the document.
-     * 
+     *
      * @param library
      *            the base URI or null if there is none
      */
-    void setLocation(URI library);
+    var location: URI?
 
     /**
      * If this BookMetaData is partially loaded, reload it fully.
      * If it is fully loaded, don't do it again.
-     * 
+     *
      * @throws BookException when a problem is encountered loading the file
      */
-    void reload() throws BookException;
+    @Throws(BookException::class)
+    fun reload()
 
     /**
      * Get a list of all the properties available to do with this Book. The
      * returned Properties will be read-only so any attempts to alter it will
      * fail.
-     * 
+     *
      * @return the read-only properties for this book
      */
-    Set<String> getPropertyKeys();
+    val propertyKeys: Set<String>
 
     /**
      * Get the property or null.
-     * 
+     *
      * @param key
      *            the key of the property.
      * @return the value of the property
      */
-    String getProperty(String key);
+    fun getProperty(key: String?): String?
 
     /**
      * Get the values or null.
@@ -274,102 +268,102 @@ public interface BookMetaData extends Comparable<BookMetaData> {
      *            the key of the property.
      * @return the values of the property
      */
-    Collection<String> getValues(String key);
+    fun getValues(key: String?): Collection<String>?
 
     /**
      * Store a transient property.
-     * 
+     *
      * @param key
      *            the key of the property to set
      * @param value
      *            the value of the property
      */
-    void setProperty(String key, String value);
+    fun setProperty(key: String?, value: String?)
 
     /**
      * Save to shared storage.
-     * 
+     *
      * @param key
      *            the key of the property to set
      * @param value
      *            the value of the property
      */
-    void putProperty(String key, String value);
+    fun putProperty(key: String?, value: String?)
 
     /**
      * Saves an entry to a particular configuration file.
-     * 
+     *
      * @param key the entry that we are saving
      * @param value the value of the entry
-     * @param forFrontend when {@code true} save to front end storage, else in shared storage
+     * @param forFrontend when `true` save to front end storage, else in shared storage
      */
-    void putProperty(String key, String value, boolean forFrontend);
+    fun putProperty(key: String?, value: String?, forFrontend: Boolean)
 
     /**
      * Has anyone generated a search index for this Book?
-     * 
+     *
      * @return the status for the index of this book.
      * @see org.crosswire.jsword.index.IndexManager
      */
-    IndexStatus getIndexStatus();
-
     /**
      * This method does not alter the index status, however it is for Indexers
      * that are responsible for indexing and have changed the status themselves.
-     * 
+     *
      * @param status the status for the index of this book
      * @see org.crosswire.jsword.index.IndexManager
      */
-    void setIndexStatus(IndexStatus status);
+    var indexStatus: IndexStatus
 
     /**
      * Get an OSIS representation of information concerning this Book.
-     * 
+     *
      * @return the OSIS representation of information about this book.
      */
-    Document toOSIS();
+    fun toOSIS(): Document
 
-    /**
-     * The key for the type in the properties map
-     */
-    String KEY_CATEGORY = "Category";
+    companion object {
+        /**
+         * The key for the type in the properties map
+         */
+        const val KEY_CATEGORY = "Category"
 
-    /**
-     * The key for the book in the properties map
-     */
-    String KEY_BOOK = "Book";
+        /**
+         * The key for the book in the properties map
+         */
+        const val KEY_BOOK = "Book"
 
-    /**
-     * The key for the driver in the properties map
-     */
-    String KEY_DRIVER = "Driver";
+        /**
+         * The key for the driver in the properties map
+         */
+        const val KEY_DRIVER = "Driver"
 
-    /**
-     * The key for the name in the properties map
-     */
-    String KEY_NAME = "Description";
+        /**
+         * The key for the name in the properties map
+         */
+        const val KEY_NAME = "Description"
 
-    /**
-     * The key for the language in the properties map
-     */
-    String KEY_LANG = "Lang";
+        /**
+         * The key for the language in the properties map
+         */
+        const val KEY_LANG = "Lang"
 
-    /**
-     * The key for the language in the properties map
-     */
-    String KEY_LANGUAGE = "Language";
+        /**
+         * The key for the language in the properties map
+         */
+        const val KEY_LANGUAGE = "Language"
 
-    /**
-     * The key for the font in the properties map
-     */
-    String KEY_FONT = "Font";
+        /**
+         * The key for the font in the properties map
+         */
+        const val KEY_FONT = "Font"
 
-    /**
-     * The key for the Versification property.
-     */
-    String KEY_VERSIFICATION = "Versification";
+        /**
+         * The key for the Versification property.
+         */
+        const val KEY_VERSIFICATION = "Versification"
 
-    String KEY_BOOKLIST = "BookList";
+        const val KEY_BOOKLIST = "BookList"
 
-    String KEY_SCOPE = "Scope";
+        const val KEY_SCOPE = "Scope"
+    }
 }

@@ -17,8 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
+import org.crosswire.common.util.jswordAssert
 
 /**
  * Types of Key that a Book uses, either verse, list, or tree.
@@ -26,7 +27,7 @@ package org.crosswire.jsword.book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum KeyType {
+enum class KeyType {
     /**
      * Book contains verses and can be understood as book, chapter and verse.
      */
@@ -44,29 +45,31 @@ public enum KeyType {
 
     /**
      * Get an integer representation for this KeyType
-     * 
+     *
      * @return the ordinal of a KeyType
      */
-    public int toInteger() {
-        return ordinal();
+    fun toInteger(): Int {
+        return ordinal
     }
 
-    /**
-     * Lookup method to convert from a String
-     * 
-     * @param name the name of a KeyType
-     * @return the matching KeyType
-     */
-    public static KeyType fromString(String name) {
-        for (KeyType v : values()) {
-            if (v.name().equalsIgnoreCase(name)) {
-                return v;
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         *
+         * @param name the name of a KeyType
+         * @return the matching KeyType
+         */
+        @JvmStatic
+        fun fromString(name: String?): KeyType? {
+            for (v in values()) {
+                if (v.name.equals(name, ignoreCase = true)) {
+                    return v
+                }
             }
+
+            // cannot get here
+            jswordAssert(false) { "" }
+            return null
         }
-
-        // cannot get here
-        assert false;
-        return null;
     }
-
 }

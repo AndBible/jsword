@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
 /**
  * A method of filtering Books.
@@ -25,13 +25,13 @@ package org.crosswire.jsword.book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface BookFilter {
+interface BookFilter {
     /**
      * Does this given book pass the tests implemented by this filter
-     * 
+     *
      * @param book
      *            The Book to test
      * @return boolean true if it passes, false otherwise
      */
-    boolean test(Book book);
+    fun test(book: Book): Boolean
 }

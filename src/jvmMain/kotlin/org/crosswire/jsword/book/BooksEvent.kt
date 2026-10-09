@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.EventObject;
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.util.EventObject
 
 /**
  * A BooksEvent is fired whenever a Bible is added or removed from the system.
@@ -29,67 +29,58 @@ import java.util.EventObject;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class BooksEvent extends EventObject {
+open class BooksEvent
+/**
+ * Basic constructor
+ *
+ * @param source the source of this BookEvent
+ * @param book
+ *            The book of the changed Bible, or null if there is more than
+ *            one change.
+ * @param added
+ *            True if the changed Bible is an addition.
+ */
+(source: Any?, book: Book?, private var added: Boolean) : EventObject(source) {
     /**
-     * Basic constructor
-     * 
-     * @param source the source of this BookEvent
-     * @param book
-     *            The book of the changed Bible, or null if there is more than
-     *            one change.
-     * @param added
-     *            True if the changed Bible is an addition.
+     * The name of the changed Bible
      */
-    public BooksEvent(Object source, Book book, boolean added) {
-        super(source);
-
-        this.book = book;
-        this.added = added;
-    }
+    @Transient
+    private var changedBook: Book? = book
 
     /**
      * Get the name of the changed Book
-     * 
+     *
      * @return The Book
      */
-    public Book getBook() {
-        return book;
-    }
+    open val book: Book?
+        get() = changedBook
 
     /**
      * Is this an addition event?
-     * 
+     *
      * @return true if the book is being added
      */
-    public boolean isAddition() {
-        return added;
-    }
+    open val isAddition: Boolean
+        get() = added
 
     /**
      * Serialization support.
-     * 
+     *
      * @param is the input stream
      * @throws IOException if an I/O error occurred
      * @throws ClassNotFoundException this class cannot be recreated.
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
         // Broken but we don't serialize events
-        book = null;
-        is.defaultReadObject();
+        changedBook = null
+        `is`.defaultReadObject()
     }
 
-    /**
-     * Is this an addition event?
-     */
-    private boolean added;
-
-    /**
-     * The name of the changed Bible
-     */
-    private transient Book book;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3834876879554819894L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3834876879554819894L
+    }
 }

@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
 /**
  * The BibleDriver class allows creation of new Books.
@@ -25,51 +25,53 @@ package org.crosswire.jsword.book;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface BookDriver extends BookProvider {
+interface BookDriver : BookProvider {
     /**
      * Is this name capable of creating writing data in the correct format as
      * well as reading it?
-     * 
+     *
      * @return true/false to indicate ability to write data
      */
-    boolean isWritable();
+    val isWritable: Boolean
 
     /**
      * Create a new Book based on a source.
-     * 
+     *
      * @param source
      *            The Book from which to copy data
      * @return The new WritableBible
      * @exception BookException
      *                If the name is not valid
      */
-    Book create(Book source) throws BookException;
+    @Throws(BookException::class)
+    fun create(source: Book?): Book
 
     /**
      * Is this book able to be deleted.
-     * 
+     *
      * @param dead
      *            the book to be deleted
      * @return whether the book can be deleted.
      */
-    boolean isDeletable(Book dead);
+    fun isDeletable(dead: Book): Boolean
 
     /**
      * Delete this Book from the system. Take care with this method for obvious
      * reasons. For most implementations of Book etc, this method will throw up
      * because most will be read-only.
-     * 
+     *
      * @param dead
      *            the book to be deleted
      * @throws BookException
      *             If the Book can't be deleted.
      */
-    void delete(Book dead) throws BookException;
+    @Throws(BookException::class)
+    fun delete(dead: Book)
 
     /**
      * A short name for this BookDriver
-     * 
+     *
      * @return a short name for this BookDriver
      */
-    String getDriverName();
+    fun getDriverName(): String
 }

@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.EventListener;
+import java.util.EventListener
 
 /**
  * BiblesListeners are able to be notified about changes to the numbers of
@@ -28,20 +28,20 @@ import java.util.EventListener;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface BooksListener extends EventListener {
+interface BooksListener : EventListener {
     /**
      * Called whenever a new Bible is added to the system.
-     * 
+     *
      * @param ev
      *            A description of the change
      */
-    void bookAdded(BooksEvent ev);
+    fun bookAdded(ev: BooksEvent)
 
     /**
      * Called whenever a Bible is removed from the system.
-     * 
+     *
      * @param ev
      *            A description of the change
      */
-    void bookRemoved(BooksEvent ev);
+    fun bookRemoved(ev: BooksEvent)
 }

@@ -17,10 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.Comparator;
-import java.util.Locale;
+import java.util.Comparator
+import java.util.Locale
 
 /**
  * Provides different ways to sort Books.
@@ -28,36 +28,38 @@ import java.util.Locale;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public final class BookComparators {
-    /**
-     * Ensure we can't be created
-     */
-    private BookComparators() {
-    }
-
-    /**
-     * Order by default Book ordering
-     * 
-     * @return the desired Comparator
-     */
-    public static Comparator<Book> getDefault() {
-        return new Comparator<Book>() {
-            public int compare(Book o1, Book o2) {
-                return o1.compareTo(o2);
+class BookComparators
+/**
+ * Ensure we can't be created
+ */
+private constructor() {
+    companion object {
+        /**
+         * Order by default Book ordering
+         *
+         * @return the desired Comparator
+         */
+        @JvmStatic
+        fun getDefault(): Comparator<Book> {
+            return object : Comparator<Book> {
+                override fun compare(o1: Book, o2: Book): Int {
+                    return o1.compareTo(o2)
+                }
             }
-        };
-    }
+        }
 
-    /**
-     * Order by Initials.
-     * 
-     * @return the desired Comparator
-     */
-    public static Comparator<Book> getInitialComparator() {
-        return new Comparator<Book>() {
-            public int compare(Book o1, Book o2) {
-                return o1.getInitials().toUpperCase(Locale.ENGLISH).compareTo(o2.getInitials().toUpperCase(Locale.ENGLISH));
+        /**
+         * Order by Initials.
+         *
+         * @return the desired Comparator
+         */
+        @JvmStatic
+        fun getInitialComparator(): Comparator<Book> {
+            return object : Comparator<Book> {
+                override fun compare(o1: Book, o2: Book): Int {
+                    return o1.initials.uppercase(Locale.ENGLISH).compareTo(o2.initials.uppercase(Locale.ENGLISH))
+                }
             }
-        };
+        }
     }
 }

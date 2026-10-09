@@ -17,9 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import org.crosswire.jsword.internationalisation.LocaleProviderManager;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
 
 /**
  * Types of Sentence Case.
@@ -28,155 +29,154 @@ import org.crosswire.jsword.internationalisation.LocaleProviderManager;
  * @author Joe Walker
  * @author DM Smith
  */
-public enum CaseType {
-    LOWER  {
-        @Override
-        public String setCase(String word) {
-            return word.toLowerCase(LocaleProviderManager.getLocale());
+enum class CaseType {
+    LOWER {
+        override fun setCase(word: String): String {
+            return word.lowercase(LocaleProviderManager.getLocale())
         }
     },
 
     SENTENCE {
-        @Override
-        public String setCase(String word) {
-            int index = word.indexOf('-');
+        override fun setCase(word: String): String {
+            val index = word.indexOf('-')
             if (index == -1) {
-                return toSentenceCase(word);
+                return toSentenceCase(word)
             }
 
             // So there is a "-", however first some exceptions
-            if ("maher-shalal-hash-baz".equalsIgnoreCase(word)) {
-                return "Maher-Shalal-Hash-Baz";
+            if ("maher-shalal-hash-baz".equals(word, ignoreCase = true)) {
+                return "Maher-Shalal-Hash-Baz"
             }
 
-            if ("no-one".equalsIgnoreCase(word)) {
-                return "No-one";
+            if ("no-one".equals(word, ignoreCase = true)) {
+                return "No-one"
             }
 
-            if ("god-".equalsIgnoreCase(word.substring(0, 4))) {
-                return toSentenceCase(word);
+            if ("god-".equals(word.substring(0, 4), ignoreCase = true)) {
+                return toSentenceCase(word)
             }
 
             // So cut by the -
-            return toSentenceCase(word.substring(0, index)) + "-" + toSentenceCase(word.substring(index + 1));
+            return toSentenceCase(word.substring(0, index)) + "-" + toSentenceCase(word.substring(index + 1))
         }
     },
 
     UPPER {
-        @Override
-        public String setCase(String word) {
-            return word.toUpperCase(LocaleProviderManager.getLocale());
+        override fun setCase(word: String): String {
+            return word.uppercase(LocaleProviderManager.getLocale())
         }
     };
 
     /**
      * Adjust the case of the string as defined by the type.
-     * 
+     *
      * @param word the string to transform
      * @return the transformed string
      */
-    public abstract String setCase(String word);
-
-    /**
-     * Change to sentence case - that is first character in caps, the rest in lower.
-     * 
-     * @param word
-     *            The word to be manipulated
-     * @return The altered word
-     */
-    public static String toSentenceCase(String word) {
-        assert word != null;
-
-        if (word.length() == 0) {
-            return "";
-        }
-
-        return Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase(LocaleProviderManager.getLocale());
-    }
-
-    /**
-     * What case is the specified word?. A blank word is LOWER, a word with a
-     * single upper case letter is SENTENCE and not UPPER - Simply because this
-     * is more likely, however TO BE SURE I WOULD NEED TO THE CONTEXT. I could
-     * not tell otherwise.
-     * <p>
-     * The issue here is that getCase("FreD") is undefined. Telling if this is
-     * SENTENCE (Tubal-Cain) or MIXED (really the case) is complex and would
-     * slow things down for a case that I don't believe happens with Bible text.
-     * </p>
-     * 
-     * @param word
-     *            The word to be tested
-     * @return LOWER, SENTENCE, UPPER or MIXED
-     * @exception IllegalArgumentException
-     *                is the word is null
-     */
-    public static CaseType getCase(String word) {
-        assert word != null;
-
-        // Blank word
-        if (word.length() == 0) {
-            return LOWER;
-        }
-
-        // Lower case?
-        if (word.equals(word.toLowerCase(LocaleProviderManager.getLocale()))) {
-            return LOWER;
-        }
-
-        // Upper case?
-        // A string length of 1 is no good ('I' or 'A' is sentence case)
-        if (word.equals(word.toUpperCase(LocaleProviderManager.getLocale())) && word.length() != 1) {
-            return UPPER;
-        }
-
-        // So ...
-        return SENTENCE;
-    }
+    abstract fun setCase(word: String): String
 
     /**
      * Get an integer representation for this CaseType
-     * 
+     *
      * @return the ordinal value of this CaseType
      */
-    public int toInteger() {
-        return ordinal();
+    fun toInteger(): Int {
+        return ordinal
     }
 
-    /**
-     * Lookup method to convert from a String
-     * 
-     * @param name the name of the CaseType
-     * @return the CaseType that matches
-     */
-    public static CaseType fromString(String name) {
-        for (CaseType v : values()) {
-            if (v.name().equalsIgnoreCase(name)) {
-                return v;
+    companion object {
+        /**
+         * Change to sentence case - that is first character in caps, the rest in lower.
+         *
+         * @param word
+         *            The word to be manipulated
+         * @return The altered word
+         */
+        @JvmStatic
+        fun toSentenceCase(word: String): String {
+            if (word.length == 0) {
+                return ""
             }
+
+            return Character.toUpperCase(word[0]).toString() + word.substring(1).lowercase(LocaleProviderManager.getLocale())
         }
 
-        // cannot get here
-        assert false;
-        return null;
-    }
-
-    /**
-     * Lookup method to convert from an integer
-     * 
-     * @param i the ordinal value of the CaseType
-     * @return the matching CaseType
-     */
-    public static CaseType fromInteger(int i) {
-        for (CaseType v : values()) {
-            if (v.ordinal() == i) {
-                return v;
+        /**
+         * What case is the specified word?. A blank word is LOWER, a word with a
+         * single upper case letter is SENTENCE and not UPPER - Simply because this
+         * is more likely, however TO BE SURE I WOULD NEED TO THE CONTEXT. I could
+         * not tell otherwise.
+         *
+         *
+         * The issue here is that getCase("FreD") is undefined. Telling if this is
+         * SENTENCE (Tubal-Cain) or MIXED (really the case) is complex and would
+         * slow things down for a case that I don't believe happens with Bible text.
+         *
+         *
+         * @param word
+         *            The word to be tested
+         * @return LOWER, SENTENCE, UPPER or MIXED
+         * @exception IllegalArgumentException
+         *                is the word is null
+         */
+        @JvmStatic
+        fun getCase(word: String): CaseType {
+            // Blank word
+            if (word.length == 0) {
+                return LOWER
             }
+
+            // Lower case?
+            if (word == word.lowercase(LocaleProviderManager.getLocale())) {
+                return LOWER
+            }
+
+            // Upper case?
+            // A string length of 1 is no good ('I' or 'A' is sentence case)
+            if (word == word.uppercase(LocaleProviderManager.getLocale()) && word.length != 1) {
+                return UPPER
+            }
+
+            // So ...
+            return SENTENCE
         }
 
-        // cannot get here
-        assert false;
-        return null;
-    }
+        /**
+         * Lookup method to convert from a String
+         *
+         * @param name the name of the CaseType
+         * @return the CaseType that matches
+         */
+        @JvmStatic
+        fun fromString(name: String?): CaseType? {
+            for (v in values()) {
+                if (v.name.equals(name, ignoreCase = true)) {
+                    return v
+                }
+            }
 
+            // cannot get here
+            jswordAssert(false) { "" }
+            return null
+        }
+
+        /**
+         * Lookup method to convert from an integer
+         *
+         * @param i the ordinal value of the CaseType
+         * @return the matching CaseType
+         */
+        @JvmStatic
+        fun fromInteger(i: Int): CaseType? {
+            for (v in values()) {
+                if (v.ordinal == i) {
+                    return v
+                }
+            }
+
+            // cannot get here
+            jswordAssert(false) { "" }
+            return null
+        }
+    }
 }
