@@ -41,6 +41,17 @@ class CorpusParityTest {
         fail(report.toString())
     }
 
+    /** Anti-vacuity for the filter probes: one non-empty line per input, and a '!' failure on only a small minority of them. A few
+     * inputs fail by design (NUL, a bare '<img/' ...); that both sides fail the same way is checked by assertSameLines. */
+    private fun assertFilterProbeRan(what: String, output: String, inputCount: Int) {
+        assertTrue(output.isNotBlank(), "$what probe output is empty")
+        val lines = output.lines().filter { it.isNotEmpty() }
+        assertTrue(lines.size >= inputCount, "$what probe returned ${lines.size} lines for $inputCount inputs: ${output.take(300)}")
+        assertTrue(!output.startsWith("!"), "$what probe failed as a whole: ${output.take(300)}")
+        val failures = lines.filter { it.contains(" => !") }
+        assertTrue(failures.size * 10 <= lines.size, "$what probe has ${failures.size} failure lines of ${lines.size}: ${failures.take(5)}")
+    }
+
     @Test
     fun sameModulesAndMetadata() {
         val (a, b) = both("corpus.modules")
@@ -69,7 +80,11 @@ class CorpusParityTest {
         assertTrue(refs.lines().size >= 2000, "refs.txt must have at least 2000 lines")
         for (v in versifications) {
             assertSameLines("parse $v", both("passage.parseAll", v, refs))
-            assertSameLines("parse(fi) $v", both("passage.parseAllFi", v, refs))
+            val fi = both("passage.parseAllFi", v, refs)
+            // Not vacuous: the Finnish probe resolves at least one reference on both sides
+            assertTrue(fi.first.lines().any { it.contains(" => ") && !it.contains(" => !") }, "oracle parseAllFi $v never succeeded")
+            assertTrue(fi.second.lines().any { it.contains(" => ") && !it.contains(" => !") }, "current parseAllFi $v never succeeded")
+            assertSameLines("parse(fi) $v", fi)
             assertSameLines("tally $v", both("passage.tally", v, refs))
             assertSameLines("mapKjv $v", both("v11n.mapKjv", v, refs))
         }
@@ -151,7 +166,10 @@ class CorpusParityTest {
             "Tom &amp; Jerry", "&lt;", "say \"hi\"", "a & b", "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7", "<FI>\u00E9\u20AC<Fi>",
             "\u00E9<CM>\u20AC", "a<FI>b<RF>n<WG1>m<Rf>c<Fi>d", "<FI>a<RF>b", "a<WG1><WG2><WTX><WTY>", "\ud83d\ude00<FI>x", "a\nb<CM>\nc", "a<Fb><WG1>", ",. x<WG1>", "?! word<WTNSM>", "a, b<WG1>", " x<WG1>", ", <WG1>", ".,;:<WG1>", ": a b. c<WH1>d<WH2>"
         )
-        assertSameLines("gbf", both("corpus.filter", "gbf", "KJV", inputs.joinToString("\u0001")))
+        val result = both("corpus.filter", "gbf", "KJV", inputs.joinToString("\u0001"))
+        assertFilterProbeRan("oracle gbf", result.first, inputs.size)
+        assertFilterProbeRan("current gbf", result.second, inputs.size)
+        assertSameLines("gbf", result)
     }
 
     @Test
@@ -166,7 +184,10 @@ class CorpusParityTest {
             "<note>unclosed <hi>deep", "x<w>y</w", "<w lemma='a'>q</w>", "<chapter eID=\"x\"/>", "<verse osisID=\"Gen.1.1\"/>text",
             "<a>1</a></a><b>", "</a>", "</a></b>", "<a></b>", "text</a>", "<a b=>", "<a b=c>x</a>"
         )
-        assertSameLines("osis", both("corpus.filter", "osis", "KJV", inputs.joinToString("\u0001")))
+        val result = both("corpus.filter", "osis", "KJV", inputs.joinToString("\u0001"))
+        assertFilterProbeRan("oracle osis", result.first, inputs.size)
+        assertFilterProbeRan("current osis", result.second, inputs.size)
+        assertSameLines("osis", result)
     }
 
     @Test
@@ -217,6 +238,8 @@ class CorpusParityTest {
         for (needle in listOf("osisRef=\"sword://StrongsRealGreek/01909\">1909</reference>", "lemma=\"strong:G3056 strong:G1\"", "dict://abc", "<hi type=\"bold\">bold</hi>")) {
             assertTrue(result.first.contains(needle), "oracle output lacks $needle")
         }
+        assertFilterProbeRan("oracle thml", result.first, inputs.size)
+        assertFilterProbeRan("current thml", result.second, inputs.size)
         assertSameLines("thml", result)
     }
 
@@ -226,7 +249,10 @@ class CorpusParityTest {
             "line1\nline2", "", "a", "a\n", "\n", "\n\n", "a\n\nb", "a\r\nb\r\nc", "\r\n", "  a \n\tb  ", "a & b < c", "<b>x</b>",
             "\u00E9\u20AC\n\u0391\u03B3", "a\n\n\n", "\na", "a\rb", "\ud83d\ude00\nx", "x\u0000y"
         )
-        assertSameLines("plaintext", both("corpus.filter", "plaintext", "KJV", inputs.joinToString("\u0001")))
+        val result = both("corpus.filter", "plaintext", "KJV", inputs.joinToString("\u0001"))
+        assertFilterProbeRan("oracle plaintext", result.first, inputs.size)
+        assertFilterProbeRan("current plaintext", result.second, inputs.size)
+        assertSameLines("plaintext", result)
     }
 
     @Test
