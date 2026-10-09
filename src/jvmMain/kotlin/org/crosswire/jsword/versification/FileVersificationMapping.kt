@@ -17,19 +17,17 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import org.crosswire.common.config.ConfigException;
-import org.crosswire.common.util.KeyValuePair;
-import org.crosswire.common.util.ResourceUtil;
+import org.crosswire.common.config.ConfigException
+import org.crosswire.common.util.KeyValuePair
+import org.crosswire.common.util.ResourceUtil
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.MissingResourceException;
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.util.ArrayList
+import java.util.MissingResourceException
 
 /**
  * This reads a file up front and creates the key value pairs. Because
@@ -39,15 +37,15 @@ import java.util.MissingResourceException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Chris Burrell
  */
-public class FileVersificationMapping {
+open class FileVersificationMapping {
     //unsure what a typical value would be, so leaving at 16 - best to optimize for memory,
     //than speed upon reading the first time.
-    private List<KeyValuePair> pairs = new ArrayList<KeyValuePair>(16);
+    private val pairs: MutableList<KeyValuePair> = ArrayList(16)
 
     /**
      * Allow a default initialising if someone wants to create a mapping file dynamically.
      */
-    public FileVersificationMapping() {
+    constructor() {
         //no work to do.
     }
 
@@ -56,26 +54,31 @@ public class FileVersificationMapping {
      * @throws IOException     error reading the mapping files
      * @throws ConfigException error parsing the contents of the file
      */
-    public FileVersificationMapping(Versification versification) throws IOException, ConfigException {
+    @Throws(IOException::class, ConfigException::class)
+    constructor(versification: Versification?) {
         // It is fine for a mapping to not exist if the Versification is a strict subset of the intermediate mapping.
         try {
-            InputStream s = ResourceUtil.getResourceAsStream(getClass(), versification.getName() + ".properties");
-            BufferedReader lineReader = new BufferedReader(new InputStreamReader(s));
-            String line;
-            while ((line = lineReader.readLine()) != null) {
-                if (line.length() == 0 || line.charAt(0) == '#') {
-                    continue;
+            val s = ResourceUtil.getResourceAsStream(javaClass, versification!!.name + ".properties")
+            val lineReader = BufferedReader(InputStreamReader(s))
+            var line: String?
+            while (true) {
+                line = lineReader.readLine()
+                if (line == null) {
+                    break
+                }
+                if (line.length == 0 || line[0] == '#') {
+                    continue
                 }
 
-                int firstEqual = line.indexOf('=');
+                val firstEqual = line.indexOf('=')
                 if (firstEqual == -1) {
-                    this.addProperty(line, null);
+                    this.addProperty(line, null)
                 } else {
-                    this.addProperty(line.substring(0, firstEqual), line.substring(firstEqual + 1));
+                    this.addProperty(line.substring(0, firstEqual), line.substring(firstEqual + 1))
                 }
-        }
-        } catch (MissingResourceException e) {
-            return;
+            }
+        } catch (e: MissingResourceException) {
+            return
         }
     }
 
@@ -83,11 +86,10 @@ public class FileVersificationMapping {
      * @param key   the key
      * @param value the value
      */
-    public void addProperty(String key, String value) {
-        pairs.add(new KeyValuePair(key, value));
+    open fun addProperty(key: String?, value: String?) {
+        pairs.add(KeyValuePair(key, value))
     }
 
-    public List<KeyValuePair> getMappings() {
-        return this.pairs;
-    }
+    open val mappings: MutableList<KeyValuePair>
+        get() = this.pairs
 }

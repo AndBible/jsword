@@ -17,11 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.HashMap
+import java.util.Locale
 
 /**
  * A BibleBook is a book of the Bible. It may or may not be canonical.
@@ -30,7 +29,20 @@ import java.util.Map;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum BibleBook {
+enum class BibleBook(
+    /**
+     * Get the OSIS representation of this BibleBook.
+     *
+     * @return the OSIS name
+     */
+    @get:JvmName("getOSIS") val osis: String,
+    /**
+     * Indicates that the book consists of a single chapter.
+     *
+     * @return true to indicate a 1-chapter book only
+     */
+    val isShortBook: Boolean = false
+) {
     // JSword introduction to the Bible
     INTRO_BIBLE("Intro.Bible"),
     // JSword introduction to the Old Testament
@@ -173,79 +185,46 @@ public enum BibleBook {
     ADD_PS("AddPs"),
     ESTH_GR("EsthGr");
 
-    BibleBook(String osis, boolean shortBook) {
-        this(osis);
-        this.isShortBook = shortBook;
-    }
-
-    BibleBook(String osis) {
-        this.osis = osis;
-    }
-
     /**
      * Get the OSIS representation of this BibleBook.
      *
      * @return the OSIS name
      */
-    public String getOSIS() {
-        return osis;
+    override fun toString(): String {
+        return osis
     }
 
-    /**
-     * Get the OSIS representation of this BibleBook.
-     *
-     * @return the OSIS name
-     */
-    @Override
-    public String toString() {
-        return osis;
-    }
+    companion object {
+        /**
+         * Case insensitive search for BibleBook for an OSIS name.
+         *
+         * @param osis
+         * @return the matching BibleBook or null
+         */
+        @JvmStatic
+        fun fromOSIS(osis: String?): BibleBook? {
+            val match = BookName.normalize(osis, Locale.ENGLISH)
+            return osisMap[match]
+        }
 
-    /**
-     * Case insensitive search for BibleBook for an OSIS name.
-     *
-     * @param osis
-     * @return the matching BibleBook or null
-     */
-    public static BibleBook fromOSIS(String osis) {
-        String match = BookName.normalize(osis, Locale.ENGLISH);
-        return osisMap.get(match);
-    }
+        /**
+         * @param osis the osis book reference, case sensitive
+         * @return the corresponding BibleBook
+         */
+        @JvmStatic
+        fun fromExactOSIS(osis: String?): BibleBook? {
+            return if (osis == null) null else exactMatches[osis]
+        }
 
-    /**
-     * @param osis the osis book reference, case sensitive
-     * @return the corresponding BibleBook
-     */
-    public static BibleBook fromExactOSIS(String osis) {
-        return exactMatches.get(osis);
-    }
+        /** A quick lookup based on OSIS name for the book  */
+        private val osisMap: MutableMap<String, BibleBook> = HashMap(128)
+        private val exactMatches: MutableMap<String, BibleBook> = HashMap(128)
 
-    /**
-     * @return true to indicate a 1-chapter book only
-     */
-    public boolean isShortBook() {
-        return isShortBook;
-    }
-
-    /**
-     * The OSIS name for the book. 
-     */
-    private String osis;
-
-    /**
-     * Indicates that the book consists of a single chapter.
-     */
-    private boolean isShortBook;
-
-    /** A quick lookup based on OSIS name for the book */
-    private static Map<String, BibleBook> osisMap = new HashMap<String, BibleBook>(128);
-    private static Map<String, BibleBook> exactMatches = new HashMap<String, BibleBook>(128);
-
-     static {
-        for (BibleBook book : BibleBook.values()) {
-            osisMap.put(BookName.normalize(book.getOSIS(), Locale.ENGLISH), book);
-            exactMatches.put(book.getOSIS(), book);
+        init {
+            for (book in values()) {
+                osisMap[BookName.normalize(book.osis, Locale.ENGLISH)] = book
+                exactMatches[book.osis] = book
+            }
         }
     }
-
 }

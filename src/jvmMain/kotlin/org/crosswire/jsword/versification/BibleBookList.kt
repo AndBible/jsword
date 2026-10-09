@@ -17,27 +17,37 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import java.io.Serializable;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.io.Serializable
+import java.util.NoSuchElementException
 
 /**
  * A BibleBookList is an ordered list of one or more BibleBooks.
  * Typically, a BibleBookList is a member of a Versification.
  *
+ * Java had this class package-private; Kotlin has no package visibility and the public
+ * `Versification.dump`/`optimize` expose it, so it is public here (was package-private).
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-/* pkg protected */ class BibleBookList implements Iterable<BibleBook>, Serializable {
-    /**
-     * Create an ordered BibleBookList from the input.
-     * @param books
-     */
-    BibleBookList(BibleBook[] books) {
-        this.books = books.clone();
-        initialize();
+/* pkg protected */
+open class BibleBookList
+/**
+ * Create an ordered BibleBookList from the input.
+ * @param books
+ */
+internal constructor(books: Array<BibleBook>) : Iterable<BibleBook>, Serializable {
+    /** The ordered books in this list  */
+    @JvmField
+    protected var books: Array<BibleBook> = books.clone()
+
+    /** The bookMap maps from a BibleBook to the position that it has in `books`.  */
+    private lateinit var bookMap: IntArray
+
+    init {
+        initialize()
     }
 
     /**
@@ -46,8 +56,8 @@ import java.util.NoSuchElementException;
      * @param book
      * @return true if it is present.
      */
-    public boolean contains(BibleBook book) {
-        return book != null && bookMap[book.ordinal()] != -1;
+    open fun contains(book: BibleBook?): Boolean {
+        return book != null && bookMap[book.ordinal] != -1
     }
 
     /**
@@ -59,17 +69,16 @@ import java.util.NoSuchElementException;
      * @param book
      * @return the ordinal value of the book or -1 if not present
      */
-    public int getOrdinal(BibleBook book) {
-        return bookMap[book.ordinal()];
+    open fun getOrdinal(book: BibleBook?): Int {
+        return bookMap[book!!.ordinal]
     }
 
     /**
      * Get the number of books in this Versification.
      * @return the number of books
      */
-    public int getBookCount() {
-        return books.length;
-    }
+    open val bookCount: Int
+        get() = books.size
 
     /**
      * Get the BibleBook by its position in this Versification.
@@ -79,15 +88,15 @@ import java.util.NoSuchElementException;
      * @param ordinal
      * @return the indicated book
      */
-    public BibleBook getBook(int ordinal) {
-        int ord = ordinal;
+    open fun getBook(ordinal: Int): BibleBook {
+        var ord = ordinal
         if (ord < 0) {
-            ord = 0;
+            ord = 0
         }
-        if (ord >= books.length) {
-            ord = books.length - 1;
+        if (ord >= books.size) {
+            ord = books.size - 1
         }
-        return books[ord];
+        return books[ord]
     }
 
     /**
@@ -95,31 +104,28 @@ import java.util.NoSuchElementException;
      *
      * @return an Iterator over the books
      */
-    public Iterator<BibleBook> iterator() {
-        return new Iterator<BibleBook>() {
+    override fun iterator(): Iterator<BibleBook> {
+        return object : MutableIterator<BibleBook> {
+            private var nextBook: BibleBook? = books[0]
 
-            private BibleBook nextBook = books[0];
-
-            public boolean hasNext() {
-                return nextBook != null;
+            override fun hasNext(): Boolean {
+                return nextBook != null
             }
 
-            public BibleBook next() {
-
+            override fun next(): BibleBook {
                 if (nextBook == null) {
-                    throw new NoSuchElementException();
+                    throw NoSuchElementException()
                 }
 
-                BibleBook current = nextBook;
-                nextBook = getNextBook(nextBook);
-                return current;
+                val current = nextBook!!
+                nextBook = getNextBook(nextBook)
+                return current
             }
 
-            public void remove() {
-                throw new UnsupportedOperationException();
+            override fun remove() {
+                throw UnsupportedOperationException()
             }
-
-        };
+        }
     }
 
     /**
@@ -127,32 +133,30 @@ import java.util.NoSuchElementException;
      *
      * @return the first book in the list
      */
-    public BibleBook getFirstBook() {
-        return books[0];
-    }
+    open val firstBook: BibleBook
+        get() = books[0]
 
     /**
      * Return the first book in the list.
      *
      * @return the first book in the list
      */
-    public BibleBook getLastBook() {
-        return books[books.length - 1];
-    }
+    open val lastBook: BibleBook
+        get() = books[books.size - 1]
 
     /**
      * Given a BibleBook, get the previous BibleBook in this Versification. If it is the first book, return null.
      * @param book A BibleBook in the Versification
      * @return the previous BibleBook or null.
      */
-    public BibleBook getPreviousBook(BibleBook book) {
-        int ordinal = book.ordinal();
-        int position = bookMap[ordinal];
+    open fun getPreviousBook(book: BibleBook?): BibleBook? {
+        val ordinal = book!!.ordinal
+        val position = bookMap[ordinal]
         if (position > 0) {
-            return books[position - 1];
+            return books[position - 1]
         }
 
-        return null;
+        return null
     }
 
     /**
@@ -160,13 +164,13 @@ import java.util.NoSuchElementException;
      * @param book A BibleBook in the Versification
      * @return the previous BibleBook or null.
      */
-    public BibleBook getNextBook(BibleBook book) {
-        int ordinal = book.ordinal();
-        int position = bookMap[ordinal];
-        if (position != -1 && position + 1 < books.length) {
-            return books[position + 1];
+    open fun getNextBook(book: BibleBook?): BibleBook? {
+        val ordinal = book!!.ordinal
+        val position = bookMap[ordinal]
+        if (position != -1 && position + 1 < books.size) {
+            return books[position + 1]
         }
-        return null;
+        return null
     }
 
     /**
@@ -174,27 +178,23 @@ import java.util.NoSuchElementException;
      * The value of that entry is the position of the book in the BookList.
      * If the BibleBook is not present in books, it's value is -1.
      */
-    private void initialize() {
-        bookMap = new int[BibleBook.values().length + 1];
+    private fun initialize() {
+        bookMap = IntArray(BibleBook.values().size + 1)
         // Initialize all slots to -1
-        for (BibleBook b : BibleBook.values()) {
-            bookMap[b.ordinal()] = -1;
+        for (b in BibleBook.values()) {
+            bookMap[b.ordinal] = -1
         }
 
         // Fill in the position of the books into that list
-        for (int i = 0; i < books.length; i++) {
-            bookMap[books[i].ordinal()] = i;
+        for (i in books.indices) {
+            bookMap[books[i].ordinal] = i
         }
     }
 
-    /** The ordered books in this list */
-    protected BibleBook[] books;
-
-    /** The bookMap maps from a BibleBook to the position that it has in <code>books</code>. */
-    private int[] bookMap;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -2681289798451902815L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -2681289798451902815L
+    }
 }

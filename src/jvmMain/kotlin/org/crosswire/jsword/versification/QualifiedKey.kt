@@ -17,12 +17,12 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import org.crosswire.jsword.passage.Verse;
-import org.crosswire.jsword.passage.VerseKey;
-import org.crosswire.jsword.passage.VerseRange;
-import org.crosswire.jsword.versification.system.Versifications;
+import org.crosswire.jsword.passage.Verse
+import org.crosswire.jsword.passage.VerseKey
+import org.crosswire.jsword.passage.VerseRange
+import org.crosswire.jsword.versification.system.Versifications
 
 /**
  * A QualifiedKey represents the various left and right sides of a map entry.
@@ -43,36 +43,35 @@ import org.crosswire.jsword.versification.system.Versifications;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br>
  * The copyright to this program is held by its authors.
  */
-public final class QualifiedKey {
+class QualifiedKey {
     /**
      * A Qualifier indicates whether the verse is numbered the same in both the KJV and the other, is missing in the KJV or the other.
+     *
+     * Java had this enum package-private; it is the return type of the public [absentType], so it is public here (was package-private).
      */
-    enum Qualifier {
+    enum class Qualifier {
         /**
          * The DEFAULT Qualifier indicates a Verse or a VerseRange.
          */
         DEFAULT {
-            @Override
-            public String getDescription(QualifiedKey q) {
-                return "";
+            override fun getDescription(q: QualifiedKey?): String {
+                return ""
             }
         },
         /**
          * The ABSENT_IN_LEFT Qualifier indicates that the left side of the map has no equivalent on the right (KJV).
          */
         ABSENT_IN_LEFT {
-            @Override
-            public String getDescription(QualifiedKey q) {
-                return "Absent in Left";
+            override fun getDescription(q: QualifiedKey?): String {
+                return "Absent in Left"
             }
         },
         /**
          * The ABSENT_IN_KJV Qualifier indicates that the right (KJV) side of the map has no equivalent on the left.
          */
         ABSENT_IN_KJV {
-            @Override
-            public String getDescription(QualifiedKey q) {
-                return q != null && q.getSectionName() != null ? q.getSectionName() : "Missing section name";
+            override fun getDescription(q: QualifiedKey?): String {
+                return if (q != null && q.sectionName != null) q.sectionName!! else "Missing section name"
             }
         };
 
@@ -80,18 +79,33 @@ public final class QualifiedKey {
          * @param q the QualifiedKey that this describes
          * @return The description for the qualified key
          */
-        public abstract String getDescription(QualifiedKey q);
-
+        abstract fun getDescription(q: QualifiedKey?): String
     }
+
+    private var qualifiedKey: VerseKey<*>? = null
+    private var wholeKey: VerseKey<*>? = null
+
+    /**
+     * @return the name (any name) of the section represented within the KJV
+     */
+    var sectionName: String? = null
+        private set
+
+    /**
+     * @return the type of the unknown qualifier
+     */
+    val absentType: Qualifier
 
     /**
      * Construct a QualifiedKey from a Verse.
+     * Java had this constructor protected; a Kotlin protected constructor is not visible to the
+     * package's other classes, so it is public (was protected).
      *
      * @param key the verse from which to create this QualifiedKey
      */
-    protected QualifiedKey(Verse key) {
-        setKey(key);
-        this.absentType = Qualifier.DEFAULT;
+    constructor(key: Verse?) {
+        setKey(key)
+        this.absentType = Qualifier.DEFAULT
     }
 
     /**
@@ -99,78 +113,53 @@ public final class QualifiedKey {
      *
      * @param key the verse range from which to create this QualifiedKey
      */
-    public QualifiedKey(VerseRange key) {
-        setKey(key);
-        this.absentType = Qualifier.DEFAULT;
+    constructor(key: VerseRange?) {
+        setKey(key)
+        this.absentType = Qualifier.DEFAULT
     }
 
     /**
      * @param sectionName with a given section name, we assume absent in KJV
      */
-    public QualifiedKey(String sectionName) {
-        this.sectionName = sectionName;
-        this.absentType = Qualifier.ABSENT_IN_KJV;
+    constructor(sectionName: String?) {
+        this.sectionName = sectionName
+        this.absentType = Qualifier.ABSENT_IN_KJV
     }
 
     /**
      * Constructs the QualifiedKey with the ABSENT_IN_LEFT qualifier.
      * This really means that there are no fields in this QualifiedKey.
      */
-    public QualifiedKey() {
-        this.absentType = Qualifier.ABSENT_IN_LEFT;
-    }
-
-    /**
-     * Create a QualifiedKey from a Verse or a VerseRange.
-     *
-     * @param k the Verse or VerseRange
-     * @return the created QualifiedKey
-     * @throws ClassCastException
-     */
-    public static QualifiedKey create(VerseKey k) {
-        return k instanceof Verse ? new QualifiedKey((Verse) k) : new QualifiedKey((VerseRange) k);
+    constructor() {
+        this.absentType = Qualifier.ABSENT_IN_LEFT
     }
 
     /**
      * @return * The internal key which is either a Verse or VerseRange
      */
-    public VerseKey getKey() {
-        return wholeKey;
-    }
+    val key: VerseKey<*>?
+        get() = wholeKey
 
     /**
      * @return * The internal key cast as a Verse
      * @throws ClassCastException
      */
-    public Verse getVerse() {
-        return (Verse) wholeKey;
-    }
-
-    /**
-     * @return the type of the unknown qualifier
-     */
-    public Qualifier getAbsentType() {
-        return absentType;
-    }
-
-    /**
-     * @return the name (any name) of the section represented within the KJV
-     */
-    public String getSectionName() {
-        return sectionName;
-    }
+    val verse: Verse?
+        get() = wholeKey as Verse?
 
     /**
      * A QualifiedKey is whole if it does not split part of a reference.
      *
      * @return whether this QualifiedKey has a whole reference
      */
-    public boolean isWhole() {
-        // If the reference is null, then it cannot be part or whole.
-        // But we say it is whole because the calls to this are really testing
-        // to see if it is a part.
-        return qualifiedKey == null || qualifiedKey.isWhole();
-    }
+    val isWhole: Boolean
+        get() {
+            // If the reference is null, then it cannot be part or whole.
+            // But we say it is whole because the calls to this are really testing
+            // to see if it is a part.
+            val qualifiedKey = this.qualifiedKey
+            return qualifiedKey == null || qualifiedKey.isWhole
+        }
 
     /**
      * Convert this QualifiedKey from one Versification to another.
@@ -181,58 +170,51 @@ public final class QualifiedKey {
      * @param target The target versification
      * @return The reversified QualifiedKey
      */
-    public QualifiedKey reversify(Versification target) {
+    fun reversify(target: Versification?): QualifiedKey {
         // Only if it has a qualified key can it be reversified
-        if (this.qualifiedKey == null) {
-            return this;
-        }
+        val qualifiedKey = this.qualifiedKey ?: return this
 
-        final VerseKey reversifiedKey = qualifiedKey.reversify(target);
+        val reversifiedKey = qualifiedKey.reversify(target)
         if (reversifiedKey != null) {
-            return create(reversifiedKey);
+            return create(reversifiedKey)
         }
 
-        if (target.getName().equals(Versifications.DEFAULT_V11N)) {
+        if (target!!.name == Versifications.DEFAULT_V11N) {
             //then we're absent in KJV
-            return new QualifiedKey(qualifiedKey.getOsisID());
+            return QualifiedKey(qualifiedKey.osisID)
         }
-        return new QualifiedKey();
-
+        return QualifiedKey()
     }
 
-    @Override
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
+    override fun toString(): String {
+        val buf = StringBuilder()
         if (wholeKey != null) {
-            buf.append(qualifiedKey.getOsisRef());
+            buf.append(qualifiedKey!!.osisRef)
         }
-        String desc = absentType.getDescription(this);
-        if (desc.length() > 0) {
-            if (buf.length() > 0) {
-                buf.append(": ");
+        val desc = absentType.getDescription(this)
+        if (desc.length > 0) {
+            if (buf.length > 0) {
+                buf.append(": ")
             }
-            buf.append(absentType.getDescription(this));
+            buf.append(absentType.getDescription(this))
         }
-        return buf.toString();
+        return buf.toString()
     }
 
-    @Override
-    public int hashCode() {
+    override fun hashCode(): Int {
         // Use a prime number in case one of the values is not around
-        return (this.qualifiedKey == null ? 17 : qualifiedKey.hashCode())
-                + (this.absentType == null ? 13 : this.absentType.ordinal())
-                + (this.sectionName == null ? 19 : this.sectionName.hashCode());
+        return ((this.qualifiedKey?.hashCode() ?: 17)
+                + this.absentType.ordinal
+                + (this.sectionName?.hashCode() ?: 19))
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj instanceof QualifiedKey) {
-            final QualifiedKey otherKey = (QualifiedKey) obj;
-            return this.getAbsentType() == otherKey.getAbsentType()
-                    && bothNullOrEqual(this.sectionName, otherKey.sectionName)
-                    && bothNullOrEqual(this.qualifiedKey, otherKey.qualifiedKey);
+    override fun equals(other: Any?): Boolean {
+        if (other is QualifiedKey) {
+            return (this.absentType === other.absentType
+                    && bothNullOrEqual(this.sectionName, other.sectionName)
+                    && bothNullOrEqual(this.qualifiedKey, other.qualifiedKey))
         }
-        return false;
+        return false
     }
 
     /**
@@ -240,9 +222,9 @@ public final class QualifiedKey {
      *
      * @param key the new key
      */
-    private void setKey(final Verse key) {
-        this.qualifiedKey = key;
-        this.wholeKey = key.getWhole();
+    private fun setKey(key: Verse?) {
+        this.qualifiedKey = key
+        this.wholeKey = key!!.whole
     }
 
     /**
@@ -250,29 +232,37 @@ public final class QualifiedKey {
      *
      * @param key the new key
      */
-    private void setKey(final VerseRange key) {
-        if (key.getCardinality() == 1) {
-            this.qualifiedKey = key.getStart();
+    private fun setKey(key: VerseRange?) {
+        if (key!!.cardinality == 1) {
+            this.qualifiedKey = key.start
         } else {
-            this.qualifiedKey = key;
+            this.qualifiedKey = key
         }
-        this.wholeKey = this.qualifiedKey.getWhole();
+        this.wholeKey = this.qualifiedKey!!.whole
     }
 
-    /**
-     * Determine whether two objects are equal, allowing nulls
-     *
-     * @param x
-     * @param y
-     * @return true if both are null or the two are equal
-     */
-    private static boolean bothNullOrEqual(Object x, Object y) {
-        return x == y || (x != null && x.equals(y));
+    companion object {
+        /**
+         * Create a QualifiedKey from a Verse or a VerseRange.
+         *
+         * @param k the Verse or VerseRange
+         * @return the created QualifiedKey
+         * @throws ClassCastException
+         */
+        @JvmStatic
+        fun create(k: VerseKey<*>?): QualifiedKey {
+            return if (k is Verse) QualifiedKey(k) else QualifiedKey(k as VerseRange?)
+        }
+
+        /**
+         * Determine whether two objects are equal, allowing nulls
+         *
+         * @param x
+         * @param y
+         * @return true if both are null or the two are equal
+         */
+        private fun bothNullOrEqual(x: Any?, y: Any?): Boolean {
+            return x === y || (x != null && x == y)
+        }
     }
-
-    private VerseKey qualifiedKey;
-    private VerseKey wholeKey;
-    private String sectionName;
-    private Qualifier absentType;
-
 }

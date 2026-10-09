@@ -17,20 +17,20 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.regex.Pattern;
+import java.util.HashMap
+import java.util.LinkedHashMap
+import java.util.Locale
+import java.util.MissingResourceException
+import java.util.ResourceBundle
+import java.util.regex.Pattern
 
-import org.crosswire.common.util.CWClassLoader;
-import org.crosswire.common.util.ClassUtil;
-import org.crosswire.common.util.StringUtil;
-import org.crosswire.jsword.internationalisation.LocaleProviderManager;
+import org.crosswire.common.util.CWClassLoader
+import org.crosswire.common.util.ClassUtil
+import org.crosswire.common.util.StringUtil
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
 
 /**
  * BibleNames deals with locale sensitive BibleBook name lookup conversions.
@@ -39,15 +39,20 @@ import org.crosswire.jsword.internationalisation.LocaleProviderManager;
  * @author Joe Walker
  * @author DM Smith
  */
-public final class BibleNames {
-    public static final Pattern undefinedPattern = Pattern.compile("^#.*");
-    /**
-     * Get the singleton instance of BibleNames.
-     *
-     * @return the singleton
-     */
-    public static BibleNames instance() {
-        return instance;
+class BibleNames
+/**
+ * This class is a singleton, enforced by a private constructor.
+ */
+private constructor() {
+    /** we cache the Localized Bible Names because there is quite a bit of processing going on for each individual Locale  */
+    @Transient
+    private var localizedBibleNames: MutableMap<Locale, NameList>
+    var enableFuzzy: Boolean? = true
+
+    init {
+        localizedBibleNames = HashMap()
+        englishBibleNames = getBibleNamesForLocale(Locale.ENGLISH)
+        localizedBibleNames[Locale.ENGLISH] = englishBibleNames!!
     }
 
     /**
@@ -56,8 +61,8 @@ public final class BibleNames {
      * @param book the desired book
      * @return The requested BookName or null if not in this versification
      */
-    public BookName getBookName(BibleBook book) {
-        return getLocalizedBibleNames().getBookName(book);
+    fun getBookName(book: BibleBook?): BookName? {
+        return getLocalizedBibleNames().getBookName(book)
     }
 
     /**
@@ -67,8 +72,8 @@ public final class BibleNames {
      * @param book the desired book
      * @return The full name of the book or blank if not in this versification
      */
-    public String getPreferredName(BibleBook book) {
-        return getLocalizedBibleNames().getPreferredName(book);
+    fun getPreferredName(book: BibleBook?): String {
+        return getLocalizedBibleNames().getPreferredName(book)
     }
 
     /**
@@ -79,9 +84,9 @@ public final class BibleNames {
      * @param book the desired book
      * @return The full name of the book or blank if not in this versification
      */
-    public String getPreferredNameInLocale(BibleBook book, Locale locale) {
-        if (locale == null) return getPreferredName(book);
-        return getBibleNamesForLocale(locale).getPreferredName(book);
+    fun getPreferredNameInLocale(book: BibleBook?, locale: Locale?): String {
+        if (locale == null) return getPreferredName(book)
+        return getBibleNamesForLocale(locale).getPreferredName(book)
     }
 
     /**
@@ -91,8 +96,8 @@ public final class BibleNames {
      * @param book the book
      * @return The full name of the book or blank if not in this versification
      */
-    public String getLongName(BibleBook book) {
-        return getLocalizedBibleNames().getLongName(book);
+    fun getLongName(book: BibleBook?): String {
+        return getLocalizedBibleNames().getLongName(book)
     }
 
     /**
@@ -102,8 +107,8 @@ public final class BibleNames {
      * @param book the book
      * @return The short name of the book or blank if not in this versification
      */
-    public String getShortName(BibleBook book) {
-        return getLocalizedBibleNames().getShortName(book);
+    fun getShortName(book: BibleBook?): String {
+        return getLocalizedBibleNames().getShortName(book)
     }
 
     /**
@@ -113,29 +118,29 @@ public final class BibleNames {
      *            The string to identify
      * @return The BibleBook, On error null
      */
-    public BibleBook getBook(String find) {
-        BibleBook book = null;
+    fun getBook(find: String?): BibleBook? {
+        var book: BibleBook? = null
         if (containsLetter(find)) {
-            book = BibleBook.fromOSIS(find);
+            book = BibleBook.fromOSIS(find)
 
             if (book == null) {
-                book = getLocalizedBibleNames().getBook(find, false);
+                book = getLocalizedBibleNames().getBook(find, false)
             }
 
             if (book == null) {
-                book = englishBibleNames.getBook(find, false);
+                book = englishBibleNames!!.getBook(find, false)
             }
 
-            if (book == null && enableFuzzy) {
-                book = getLocalizedBibleNames().getBook(find, true);
+            if (book == null && enableFuzzy!!) {
+                book = getLocalizedBibleNames().getBook(find, true)
             }
 
-            if (book == null && enableFuzzy) {
-                book = englishBibleNames.getBook(find, true);
+            if (book == null && enableFuzzy!!) {
+                book = englishBibleNames!!.getBook(find, true)
             }
         }
 
-        return book;
+        return book
     }
 
     /**
@@ -146,40 +151,32 @@ public final class BibleNames {
      *            The string to identify
      * @return true when the book name is recognized
      */
-    public boolean isBook(String find) {
-        return getBook(find) != null;
+    fun isBook(find: String?): Boolean {
+        return getBook(find) != null
     }
 
     /**
      * Load name information for BibleNames for a given locale.
      * This routine is for testing the underlying NameList.
+     * Java had this method package-private (was package-private).
      * 
      * @param locale
      */
-    void load(Locale locale) {
-        NameList bibleNames = new NameList(locale);
-        if (localizedBibleNames.get(locale) == null) {
-            localizedBibleNames.put(locale, bibleNames);
+    fun load(locale: Locale?) {
+        val bibleNames = NameList(locale)
+        if (localizedBibleNames[locale] == null) {
+            localizedBibleNames[locale!!] = bibleNames
         }
     }
 
     /**
-     * This class is a singleton, enforced by a private constructor.
-     */
-    private BibleNames() {
-        localizedBibleNames = new HashMap<Locale, NameList>();
-        englishBibleNames = getBibleNamesForLocale(Locale.ENGLISH);
-        localizedBibleNames.put(Locale.ENGLISH, englishBibleNames);
-    }
-
-    /**
-     * Gets the localized bible names, based on the {@link LocaleProviderManager}
+     * Gets the localized bible names, based on the [LocaleProviderManager]
      *
      * @return the localized bible names
      */
-    private NameList getLocalizedBibleNames() {
+    private fun getLocalizedBibleNames(): NameList {
         // Get the current Locale
-        return getBibleNamesForLocale(LocaleProviderManager.getLocale());
+        return getBibleNamesForLocale(LocaleProviderManager.getLocale())
     }
 
     /**
@@ -188,60 +185,97 @@ public final class BibleNames {
      * @param locale the locale
      * @return the bible names for locale
      */
-    private NameList getBibleNamesForLocale(Locale locale) {
-        NameList bibleNames = localizedBibleNames.get(locale);
+    private fun getBibleNamesForLocale(locale: Locale?): NameList {
+        var bibleNames = localizedBibleNames[locale]
         if (bibleNames == null) {
-            bibleNames = new NameList(locale);
-            localizedBibleNames.put(locale, bibleNames);
+            bibleNames = NameList(locale)
+            localizedBibleNames[locale!!] = bibleNames
         }
 
-        return bibleNames;
-    }
-
-    /**
-     * This is simply a convenience function to wrap Character.isLetter()
-     *
-     * @param text
-     *            The string to be parsed
-     * @return true if the string contains letters
-     */
-    private static boolean containsLetter(String text) {
-        for (int i = 0; i < text.length(); i++) {
-            if (Character.isLetter(text.charAt(i))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public Boolean getEnableFuzzy() {
-        return enableFuzzy;
-    }
-
-    public void setEnableFuzzy(Boolean enableFuzzy) {
-        this.enableFuzzy = enableFuzzy;
+        return bibleNames
     }
 
     /**
      * NameList is the internal, internationalize list of names
      * for a locale.
      *
-     * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br>
-     *      The copyright to this program is held by its authors.
+     * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br></br>
+     * The copyright to this program is held by its authors.
      * @author DM Smith
      */
-    private class NameList {
+    private inner class NameList
+    /**
+     * Create NameList for the given locale
+     */
+    internal constructor(locale: Locale?) {
+        /** The locale for the Bible Names  */
+        private var locale: Locale = locale!!
+
         /**
-         * Create NameList for the given locale
+         * The collection of BookNames by BibleBooks.
          */
-        NameList(Locale locale) {
-            this.locale = locale;
-            initialize();
+        private lateinit var books: LinkedHashMap<BibleBook, BookName>
+
+        /**
+         * The full names of the New Testament books of the Bible normalized,
+         * generated at runtime
+         */
+        private lateinit var fullNT: MutableMap<String, BookName>
+
+        /**
+         * The full names of the Old Testament books of the Bible normalized,
+         * generated at runtime
+         */
+        private lateinit var fullOT: MutableMap<String, BookName>
+
+        /**
+         * The full names of the Deuterocanonical books of the Bible normalized,
+         * generated at runtime
+         */
+        private lateinit var fullNC: MutableMap<String, BookName>
+
+        /**
+         * Standard shortened names for the New Testament books of the Bible,
+         * normalized, generated at runtime.
+         */
+        private lateinit var shortNT: MutableMap<String, BookName>
+
+        /**
+         * Standard shortened names for the Old Testament books of the Bible
+         * normalized, generated at runtime.
+         */
+        private lateinit var shortOT: MutableMap<String, BookName>
+
+        /**
+         * Standard shortened names for the Deuterocanonical books of the Bible
+         * normalized, generated at runtime.
+         */
+        private lateinit var shortNC: MutableMap<String, BookName>
+
+        /**
+         * Alternative shortened names for the New Testament books of the Bible
+         * normalized, generated at runtime.
+         */
+        private lateinit var altNT: MutableMap<String, BookName>
+
+        /**
+         * Alternative shortened names for the Old Testament books of the Bible
+         * normalized, generated at runtime.
+         */
+        private lateinit var altOT: MutableMap<String, BookName>
+
+        /**
+         * Alternative shortened names for the Deuterocanonical books of the
+         * Bible normalized, generated at runtime.
+         */
+        private lateinit var altNC: MutableMap<String, BookName>
+
+        init {
+            initialize()
         }
 
-        BookName getBookName(BibleBook book) {
-            return books.get(book);
+        fun getBookName(book: BibleBook?): BookName? {
+            return books[book]
         }
 
         /**
@@ -252,8 +286,8 @@ public final class BibleNames {
          *            The book of the Bible
          * @return The full name of the book
          */
-        String getPreferredName(BibleBook book) {
-            return getBookName(book).getPreferredName();
+        fun getPreferredName(book: BibleBook?): String {
+            return getBookName(book)!!.preferredName
         }
 
         /**
@@ -264,8 +298,8 @@ public final class BibleNames {
          *            The book of the Bible
          * @return The full name of the book
          */
-        String getLongName(BibleBook book) {
-            return getBookName(book).getLongName();
+        fun getLongName(book: BibleBook?): String {
+            return getBookName(book)!!.longName
         }
 
         /**
@@ -276,8 +310,8 @@ public final class BibleNames {
          *            The book of the Bible
          * @return The short name of the book
          */
-        String getShortName(BibleBook book) {
-            return getBookName(book).getShortName();
+        fun getShortName(book: BibleBook?): String {
+            return getBookName(book)!!.shortName
         }
 
         /**
@@ -289,236 +323,202 @@ public final class BibleNames {
          *            Whether to also find bible books where only a substring matches
          * @return The BibleBook, On error null
          */
-        BibleBook getBook(String find, boolean fuzzy) {
-            String match = BookName.normalize(find, locale);
+        fun getBook(find: String?, fuzzy: Boolean): BibleBook? {
+            val match = BookName.normalize(find, locale)
 
-            BookName bookName = fullNT.get(match);
+            var bookName = fullNT[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = shortNT.get(match);
+            bookName = shortNT[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = altNT.get(match);
+            bookName = altNT[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = fullOT.get(match);
+            bookName = fullOT[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = shortOT.get(match);
+            bookName = shortOT[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = altOT.get(match);
+            bookName = altOT[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = fullNC.get(match);
+            bookName = fullNC[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = shortNC.get(match);
+            bookName = shortNC[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
-            bookName = altNC.get(match);
+            bookName = altNC[match]
             if (bookName != null) {
-                return bookName.getBook();
+                return bookName.book
             }
 
             if (!fuzzy) {
-                return null;
+                return null
             }
 
-            for (BookName aBook : books.values()) {
+            for (aBook in books.values) {
                 if (aBook.match(match)) {
-                    return aBook.getBook();
+                    return aBook.book
                 }
             }
 
-            return null;
+            return null
         }
 
         /**
          * Load up the resources for Bible book and section names, and cache the
          * upper and lower versions of them.
          */
-        private void initialize() {
-            int ntCount = 0;
-            int otCount = 0;
-            int ncCount = 0;
-            BibleBook[] bibleBooks = BibleBook.values();
-            for (BibleBook book : bibleBooks) {
-                int ordinal = book.ordinal();
-                if (ordinal > BibleBook.INTRO_OT.ordinal() && ordinal < BibleBook.INTRO_NT.ordinal()) {
-                    ++ntCount;
-                } else if (ordinal > BibleBook.INTRO_NT.ordinal() && ordinal <= BibleBook.REV.ordinal()) {
-                    ++otCount;
+        private fun initialize() {
+            var ntCount = 0
+            var otCount = 0
+            var ncCount = 0
+            val bibleBooks = BibleBook.values()
+            for (book in bibleBooks) {
+                val ordinal = book.ordinal
+                if (ordinal > BibleBook.INTRO_OT.ordinal && ordinal < BibleBook.INTRO_NT.ordinal) {
+                    ++ntCount
+                } else if (ordinal > BibleBook.INTRO_NT.ordinal && ordinal <= BibleBook.REV.ordinal) {
+                    ++otCount
                 } else {
-                    ++ncCount;
+                    ++ncCount
                 }
             }
 
             // Create the book name maps
-            books = new LinkedHashMap<BibleBook, BookName>(ntCount + otCount + ncCount);
+            books = LinkedHashMap(ntCount + otCount + ncCount)
 
-            String className = BibleNames.class.getName();
-            String shortClassName = ClassUtil.getShortClassName(className);
-            ResourceBundle resources = ResourceBundle.getBundle(shortClassName, locale, CWClassLoader.instance(BibleNames.class));
+            val className = BibleNames::class.java.name
+            val shortClassName = ClassUtil.getShortClassName(className)
+            val resources = ResourceBundle.getBundle(shortClassName, locale, CWClassLoader.instance(BibleNames::class.java))
 
-            fullNT = new HashMap<String, BookName>(ntCount);
-            shortNT = new HashMap<String, BookName>(ntCount);
-            altNT = new HashMap<String, BookName>(ntCount);
-            for (int i = BibleBook.MATT.ordinal(); i <= BibleBook.REV.ordinal(); ++i) {
-                BibleBook book = bibleBooks[i];
-                store(resources, book, fullNT, shortNT, altNT);
+            fullNT = HashMap(ntCount)
+            shortNT = HashMap(ntCount)
+            altNT = HashMap(ntCount)
+            for (i in BibleBook.MATT.ordinal..BibleBook.REV.ordinal) {
+                val book = bibleBooks[i]
+                store(resources, book, fullNT, shortNT, altNT)
             }
 
-            fullOT = new HashMap<String, BookName>(otCount);
-            shortOT = new HashMap<String, BookName>(otCount);
-            altOT = new HashMap<String, BookName>(otCount);
-            for (int i = BibleBook.GEN.ordinal(); i <= BibleBook.MAL.ordinal(); ++i) {
-                BibleBook book = bibleBooks[i];
-                store(resources, book, fullOT, shortOT, altOT);
+            fullOT = HashMap(otCount)
+            shortOT = HashMap(otCount)
+            altOT = HashMap(otCount)
+            for (i in BibleBook.GEN.ordinal..BibleBook.MAL.ordinal) {
+                val book = bibleBooks[i]
+                store(resources, book, fullOT, shortOT, altOT)
             }
 
-            fullNC = new HashMap<String, BookName>(ncCount);
-            shortNC = new HashMap<String, BookName>(ncCount);
-            altNC = new HashMap<String, BookName>(ncCount);
-            store(resources, BibleBook.INTRO_BIBLE, fullNC, shortNC, altNC);
-            store(resources, BibleBook.INTRO_OT, fullNC, shortNC, altNC);
-            store(resources, BibleBook.INTRO_NT, fullNC, shortNC, altNC);
-            for (int i = BibleBook.REV.ordinal() + 1; i < bibleBooks.length; ++i) {
-                BibleBook book = bibleBooks[i];
-                store(resources, book, fullNC, shortNC, altNC);
+            fullNC = HashMap(ncCount)
+            shortNC = HashMap(ncCount)
+            altNC = HashMap(ncCount)
+            store(resources, BibleBook.INTRO_BIBLE, fullNC, shortNC, altNC)
+            store(resources, BibleBook.INTRO_OT, fullNC, shortNC, altNC)
+            store(resources, BibleBook.INTRO_NT, fullNC, shortNC, altNC)
+            for (i in BibleBook.REV.ordinal + 1 until bibleBooks.size) {
+                val book = bibleBooks[i]
+                store(resources, book, fullNC, shortNC, altNC)
             }
         }
 
-        private void store(ResourceBundle resources, BibleBook book, Map fullMap, Map shortMap, Map altMap) {
-            String osisName = book.getOSIS();
+        private fun store(resources: ResourceBundle, book: BibleBook, fullMap: MutableMap<String, BookName>, shortMap: MutableMap<String, BookName>, altMap: MutableMap<String, BookName>) {
+            val osisName = book.osis
 
-            String fullBook = getString(resources, osisName + FULL_KEY);
+            val fullBook = getString(resources, osisName + FULL_KEY)
 
-            String shortBook = getString(resources, osisName + SHORT_KEY);
-            if (shortBook.length() == 0) {
-                shortBook = fullBook;
+            var shortBook = getString(resources, osisName + SHORT_KEY)
+            if (shortBook!!.length == 0) {
+                shortBook = fullBook
             }
 
-            String altBook = getString(resources, osisName + ALT_KEY);
-            if(altBook == null || undefinedPattern.matcher(altBook).matches()) {
-                altBook = "";
+            var altBook = getString(resources, osisName + ALT_KEY)
+            if (altBook == null || undefinedPattern.matcher(altBook).matches()) {
+                altBook = ""
             }
 
-            BookName bookName = new BookName(locale, BibleBook.fromOSIS(osisName), fullBook, shortBook, altBook);
-            books.put(book, bookName);
+            val bookName = BookName(locale, BibleBook.fromOSIS(osisName), fullBook, shortBook, altBook)
+            books[book] = bookName
 
-            fullMap.put(bookName.getNormalizedLongName(), bookName);
+            fullMap[bookName.normalizedLongName] = bookName
 
-            shortMap.put(bookName.getNormalizedShortName(), bookName);
+            shortMap[bookName.normalizedShortName] = bookName
 
-            String[] alternates = StringUtil.split(BookName.normalize(altBook, locale), ',');
+            val alternates = StringUtil.split(BookName.normalize(altBook, locale), ',')
 
-            for (int j = 0; j < alternates.length; j++) {
-                altMap.put(alternates[j], bookName);
+            for (j in alternates.indices) {
+                altMap[alternates[j]] = bookName
             }
         }
 
         /*
          * Helper to make the code more readable.
          */
-        private String getString(ResourceBundle resources, String key) {
+        private fun getString(resources: ResourceBundle, key: String): String? {
             try {
-                return resources.getString(key);
-            } catch (MissingResourceException e) {
-                assert false;
+                return resources.getString(key)
+            } catch (e: MissingResourceException) {
+                jswordAssert(false) { "" }
             }
-            return null;
+            return null
         }
-
-        private static final String FULL_KEY = ".Full";
-        private static final String SHORT_KEY = ".Short";
-        private static final String ALT_KEY = ".Alt";
-
-        /** The locale for the Bible Names */
-        private Locale locale;
-
-        /**
-         * The collection of BookNames by BibleBooks.
-         */
-        private LinkedHashMap<BibleBook, BookName> books;
-
-        /**
-         * The full names of the New Testament books of the Bible normalized,
-         * generated at runtime
-         */
-        private Map<String, BookName> fullNT;
-
-        /**
-         * The full names of the Old Testament books of the Bible normalized,
-         * generated at runtime
-         */
-        private Map<String, BookName> fullOT;
-
-        /**
-         * The full names of the Deuterocanonical books of the Bible normalized,
-         * generated at runtime
-         */
-        private Map<String, BookName> fullNC;
-
-        /**
-         * Standard shortened names for the New Testament books of the Bible,
-         * normalized, generated at runtime.
-         */
-        private Map<String, BookName> shortNT;
-
-        /**
-         * Standard shortened names for the Old Testament books of the Bible
-         * normalized, generated at runtime.
-         */
-        private Map<String, BookName> shortOT;
-
-        /**
-         * Standard shortened names for the Deuterocanonical books of the Bible
-         * normalized, generated at runtime.
-         */
-        private Map<String, BookName> shortNC;
-
-        /**
-         * Alternative shortened names for the New Testament books of the Bible
-         * normalized, generated at runtime.
-         */
-        private Map<String, BookName> altNT;
-
-        /**
-         * Alternative shortened names for the Old Testament books of the Bible
-         * normalized, generated at runtime.
-         */
-        private Map<String, BookName> altOT;
-
-        /**
-         * Alternative shortened names for the Deuterocanonical books of the
-         * Bible normalized, generated at runtime.
-         */
-        private Map<String, BookName> altNC;
     }
 
-    /** we cache the Localized Bible Names because there is quite a bit of processing going on for each individual Locale */
-    private transient Map<Locale, NameList> localizedBibleNames;
-    private Boolean enableFuzzy = true;
+    companion object {
+        @JvmField
+        val undefinedPattern: Pattern = Pattern.compile("^#.*")
 
-    /** English BibleNames, or null when using the program's default locale */
-    private static NameList englishBibleNames;
+        /** English BibleNames, or null when using the program's default locale  */
+        private var englishBibleNames: NameList? = null
 
-    private static final BibleNames instance = new BibleNames();
+        private val instance: BibleNames = BibleNames()
+
+        private const val FULL_KEY = ".Full"
+        private const val SHORT_KEY = ".Short"
+        private const val ALT_KEY = ".Alt"
+
+        /**
+         * This is simply a convenience function to wrap Character.isLetter()
+         *
+         * @param text
+         *            The string to be parsed
+         * @return true if the string contains letters
+         */
+        private fun containsLetter(text: String?): Boolean {
+            for (i in 0 until text!!.length) {
+                if (Character.isLetter(text[i])) {
+                    return true
+                }
+            }
+
+            return false
+        }
+
+        /**
+         * Get the singleton instance of BibleNames.
+         *
+         * @return the singleton
+         */
+        @JvmStatic
+        fun instance(): BibleNames {
+            return instance
+        }
+    }
 }

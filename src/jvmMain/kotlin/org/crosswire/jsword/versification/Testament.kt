@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
 /**
  * Testament is either OLD or NEW. All BibleBooks belong to one or the other, even if deuterocanonical.
@@ -25,7 +25,7 @@ package org.crosswire.jsword.versification;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum Testament {
+enum class Testament {
     OLD,
-    NEW;
+    NEW
 }

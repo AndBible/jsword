@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import org.crosswire.jsword.JSMsg;
+import org.crosswire.jsword.JSMsg
 
 /**
  * DivisionName deals with traditional sections of the Bible.
@@ -52,358 +52,274 @@ import org.crosswire.jsword.JSMsg;
  * @author Joe Walker
  * @author DM Smith
  */
-public enum DivisionName {
+enum class DivisionName {
     /** BIBLE consists of the entire/whole Bible (Gen - Rev) **/
     BIBLE {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.GEN.ordinal() && bookNum <= BibleBook.REV.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.GEN.ordinal && bookNum <= BibleBook.REV.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 66;
-        }
+        override val size: Int
+            get() = 66
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: The entire/whole Bible (Gen - Rev)
-            return JSMsg.gettext("The Whole Bible");
+            return JSMsg.gettext("The Whole Bible")
         }
 
-        @Override
-        public String getRange() {
-            return "Gen-Rev";
-        }
+        override val range: String
+            get() = "Gen-Rev"
 
     },
     /** OLD_TESTAMENT consists of the old testament (Gen - Mal) **/
     OLD_TESTAMENT {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.GEN.ordinal() && bookNum <= BibleBook.MAL.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.GEN.ordinal && bookNum <= BibleBook.MAL.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 39;
-        }
+        override val size: Int
+            get() = 39
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: The old testament (Gen - Mal)
-            return JSMsg.gettext("Old Testament");
+            return JSMsg.gettext("Old Testament")
         }
 
-        @Override
-        public String getRange() {
-            return "Gen-Mal";
-        }
+        override val range: String
+            get() = "Gen-Mal"
     },
     /** PENTATEUCH consists of the 5 books of Moses (Gen - Deu) **/
     PENTATEUCH {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.GEN.ordinal() && bookNum <= BibleBook.DEUT.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.GEN.ordinal && bookNum <= BibleBook.DEUT.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 5;
-        }
+        override val size: Int
+            get() = 5
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: Pentateuch is the first 5 books of the Bible.
-            return JSMsg.gettext("Pentateuch");
+            return JSMsg.gettext("Pentateuch")
         }
 
-        @Override
-        public String getRange() {
-            return "Gen-Deu";
-        }
+        override val range: String
+            get() = "Gen-Deu"
     },
     /** HISTORY consists of the history in the Old Testament of Israel */
     HISTORY {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.JOSH.ordinal() && bookNum <= BibleBook.ESTH.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.JOSH.ordinal && bookNum <= BibleBook.ESTH.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 12;
-        }
+        override val size: Int
+            get() = 12
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: History are the books of the Old Testament that give the history of Israel
-            return JSMsg.gettext("History");
+            return JSMsg.gettext("History")
         }
 
-        @Override
-        public String getRange() {
-            return "Jos-Est";
-        }
+        override val range: String
+            get() = "Jos-Est"
     },
     /** POETRY consists of the poetic works (Job-Song) */
     POETRY {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.JOB.ordinal() && bookNum <= BibleBook.SONG.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.JOB.ordinal && bookNum <= BibleBook.SONG.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 5;
-        }
+        override val size: Int
+            get() = 5
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: The poetic works of the Bible consisting of:
             // Job, Psalms, Proverbs, Ecclesiastes, and Song of Solomon
-            return JSMsg.gettext("Poetry");
+            return JSMsg.gettext("Poetry")
         }
 
-        @Override
-        public String getRange() {
-            return "Job-Song";
-        }
+        override val range: String
+            get() = "Job-Song"
     },
     /** PROPHECY consists of the Deu 28, major prophets, minor prophets, Revelation (Isa-Mal, Rev) */
     PROPHECY {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum == BibleBook.REV.ordinal() || bookNum >= BibleBook.ISA.ordinal() && bookNum <= BibleBook.MAL.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum == BibleBook.REV.ordinal || bookNum >= BibleBook.ISA.ordinal && bookNum <= BibleBook.MAL.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 18;
-        }
+        override val size: Int
+            get() = 18
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing prophecy:
             // Deuteronomy 28
             // Major Prophets: Isaiah, Jeremiah, Lamentations, Ezekiel, Daniel
             // Minor Prophets: Hosea, Joel, Amos, Obadiah, Jonah, Micah, Nahum,
             //                 Habakkuk, Zephaniah, Haggai, Zechariah, Malachi 
             // Revelation
-            return JSMsg.gettext("All Prophecy");
+            return JSMsg.gettext("All Prophecy")
         }
 
-        @Override
-        public String getRange() {
-            return "Deu 28,Isa-Mal,Rev";
-        }
+        override val range: String
+            get() = "Deu 28,Isa-Mal,Rev"
     },
     /** MAJOR_PROPHETS consists of the major prophets (Isa-Dan) */
     MAJOR_PROPHETS {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.ISA.ordinal() && bookNum <= BibleBook.DAN.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.ISA.ordinal && bookNum <= BibleBook.DAN.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 5;
-        }
+        override val size: Int
+            get() = 5
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the major prophets (Isa-Dan)
             // Isaiah, Jeremiah, Lamentations, Ezekiel, Daniel 
-            return JSMsg.gettext("Major Prophets");
+            return JSMsg.gettext("Major Prophets")
         }
 
-        @Override
-        public String getRange() {
-            return "Isa-Dan";
-        }
+        override val range: String
+            get() = "Isa-Dan"
     },
     /** MINOR_PROPHETS consists of the minor prophets (Hos-Mal) */
     MINOR_PROPHETS {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.HOS.ordinal() && bookNum <= BibleBook.MAL.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.HOS.ordinal && bookNum <= BibleBook.MAL.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 12;
-        }
+        override val size: Int
+            get() = 12
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the minor prophets (Hos-Mal)
             // Hosea, Joel, Amos, Obadiah, Jonah, Micah, Nahum, 
             // Habakkuk, Zephaniah, Haggai, Zechariah, Malachi 
-            return JSMsg.gettext("Minor Prophets");
+            return JSMsg.gettext("Minor Prophets")
         }
 
-        @Override
-        public String getRange() {
-            return "Hos-Mal";
-        }
+        override val range: String
+            get() = "Hos-Mal"
     },
     /** NEW_TESTAMENT consists of the new testament (Mat - Rev) **/
     NEW_TESTAMENT {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.MATT.ordinal() && bookNum <= BibleBook.REV.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.MATT.ordinal && bookNum <= BibleBook.REV.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 27;
-        }
+        override val size: Int
+            get() = 27
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: The New Testament (Mat - Rev)
-            return JSMsg.gettext("New Testament");
+            return JSMsg.gettext("New Testament")
         }
 
-        @Override
-        public String getRange() {
-            return "Mat-Rev";
-        }
+        override val range: String
+            get() = "Mat-Rev"
     },
     /** GOSPELS_AND_ACTS consists of the 4 Gospels and Acts (Mat-Acts) */
     GOSPELS_AND_ACTS {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.MATT.ordinal() && bookNum <= BibleBook.ACTS.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.MATT.ordinal && bookNum <= BibleBook.ACTS.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 5;
-        }
+        override val size: Int
+            get() = 5
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the 4 Gospels and Acts (Mat-Acts)
             // Matthew, Mark, Luke, John, Acts
-            return JSMsg.gettext("Gospels and Acts");
+            return JSMsg.gettext("Gospels and Acts")
         }
 
-        @Override
-        public String getRange() {
-            return "Mat-Acts";
-        }
+        override val range: String
+            get() = "Mat-Acts"
     },
     /** LETTERS consists of the letters/epistles (Rom-Jud) */
     LETTERS {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.ROM.ordinal() && bookNum <= BibleBook.JUDE.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.ROM.ordinal && bookNum <= BibleBook.JUDE.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 21;
-        }
+        override val size: Int
+            get() = 21
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the letters/epistles (Rom-Jud)
             // Pauline: Romans, 1&2 Corinthians, Galatians, Ephesians, Philippians, Colossians,
             //          1&2 Thessalonians, 1&2 Timothy, Titus, Philemon, Hebrews
             // General: James, 1-2 Peter, 1-3 John, Jude
-            return JSMsg.gettext("Letters");
+            return JSMsg.gettext("Letters")
         }
 
-        @Override
-        public String getRange() {
-            return "Rom-Jud";
-        }
+        override val range: String
+            get() = "Rom-Jud"
     },
     /** LETTERS consists of the Pauline letters/epistles (Rom-Heb) */
     PAULINE_LETTERS {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.ROM.ordinal() && bookNum <= BibleBook.JUDE.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.ROM.ordinal && bookNum <= BibleBook.JUDE.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 14;
-        }
+        override val size: Int
+            get() = 14
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the Pauline letters/epistles (Rom-Heb)
             // Romans, 1-2 Corinthians, Galatians, Ephesians, Philippians, Colossians,
             // 1-2 Thessalonians, 1-2 Timothy, Titus, Philemon, Hebrews
-            return JSMsg.gettext("Letters to People");
+            return JSMsg.gettext("Letters to People")
         }
 
-        @Override
-        public String getRange() {
-            return "Rom-Heb";
-        }
+        override val range: String
+            get() = "Rom-Heb"
     },
     /** LETTERS consists of the general letters/epistles (Jas-Jud) */
     GENERAL_LETTERS {
-        @Override
-        public boolean contains(BibleBook book) {
-            int bookNum = book.ordinal();
-            return bookNum >= BibleBook.JAS.ordinal() && bookNum <= BibleBook.JUDE.ordinal();
+        override fun contains(book: BibleBook?): Boolean {
+            val bookNum = book!!.ordinal
+            return bookNum >= BibleBook.JAS.ordinal && bookNum <= BibleBook.JUDE.ordinal
         }
 
-        @Override
-        public int getSize() {
-            return 7;
-        }
+        override val size: Int
+            get() = 7
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the general letters/epistles (Jas-Jud)
             // James, 1-2 Peter, 1-3 John, Jude
-            return JSMsg.gettext("Letters from People");
+            return JSMsg.gettext("Letters from People")
         }
 
-        @Override
-        public String getRange() {
-            return "Jas-Jud";
-        }
+        override val range: String
+            get() = "Jas-Jud"
     },
     /** REVELATION consists of the book of Revelation (Rev) */
     REVELATION {
-        @Override
-        public boolean contains(BibleBook book) {
-            return book == BibleBook.REV;
+        override fun contains(book: BibleBook?): Boolean {
+            return book === BibleBook.REV
         }
 
-        @Override
-        public int getSize() {
-            return 1;
-        }
+        override val size: Int
+            get() = 1
 
-        @Override
-        public String getName() {
+        override fun getName(): String {
             // TRANSLATOR: A division of the Bible containing the book of Revelation (Rev)
-            return JSMsg.gettext("Revelation");
+            return JSMsg.gettext("Revelation")
         }
 
-        @Override
-        public String getRange() {
-            return "Rev";
-        }
+        override val range: String
+            get() = "Rev"
     };
 
     /**
@@ -411,69 +327,71 @@ public enum DivisionName {
      * @param book
      * @return true if the book is contained within the division
      */
-    public abstract boolean contains(BibleBook book);
+    abstract fun contains(book: BibleBook?): Boolean
 
     /**
      * Get the number of whole books in the section.
      * @return the number of whole books in the section
      */
-    public abstract int getSize();
+    abstract val size: Int
 
     /**
      * Obtain a localized string description of the section.
      * @return the localized name.
      */
-    public abstract String getName();
+    abstract fun getName(): String
 
     /**
      * Obtain a string representation of the scope of the section.
      * @return the localized name.
      */
-    public abstract String getRange();
+    abstract val range: String
 
-    @Override
-    public String toString() {
-        return getName();
+    override fun toString(): String {
+        return getName()
     }
 
-    /**
-     * Determine the section to which this book belongs.
-     * 
-     * @param book The book to test
-     * @return the section
-     */
-    public static DivisionName getSection(BibleBook book) {
-        // Ordered by section size for speed
-        if (LETTERS.contains(book)) {
-            return LETTERS;
-        }
+    companion object {
+        /**
+         * Determine the section to which this book belongs.
+         * 
+         * @param book The book to test
+         * @return the section
+         */
+        @JvmStatic
+        fun getSection(book: BibleBook?): DivisionName {
+            // Ordered by section size for speed
+            if (LETTERS.contains(book)) {
+                return LETTERS
+            }
 
-        if (HISTORY.contains(book)) {
-            return HISTORY;
-        }
+            if (HISTORY.contains(book)) {
+                return HISTORY
+            }
 
-        if (MINOR_PROPHETS.contains(book)) {
-            return MINOR_PROPHETS;
-        }
+            if (MINOR_PROPHETS.contains(book)) {
+                return MINOR_PROPHETS
+            }
 
-        if (GOSPELS_AND_ACTS.contains(book)) {
-            return GOSPELS_AND_ACTS;
-        }
+            if (GOSPELS_AND_ACTS.contains(book)) {
+                return GOSPELS_AND_ACTS
+            }
 
-        if (PENTATEUCH.contains(book)) {
-            return PENTATEUCH;
-        }
+            if (PENTATEUCH.contains(book)) {
+                return PENTATEUCH
+            }
 
-        if (POETRY.contains(book)) {
-            return POETRY;
-        }
+            if (POETRY.contains(book)) {
+                return POETRY
+            }
 
-        if (MAJOR_PROPHETS.contains(book)) {
-            return MAJOR_PROPHETS;
-        }
+            if (MAJOR_PROPHETS.contains(book)) {
+                return MAJOR_PROPHETS
+            }
 
-        // AAV11N(DMS): might not be true
-        return REVELATION;
+            // AAV11N(DMS): might not be true
+            return REVELATION
+        }
     }
 
     /**
