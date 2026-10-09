@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * \u00A9 CrossWire Bible Society, 2005 - 2016
  */
 package org.crosswire.jsword.index.search;
 
@@ -209,8 +209,8 @@ public class SearchTypeCharacterizationTest {
         DefaultSearchModifier m = new DefaultSearchModifier();
         m.setRanked(true);
         m.setMaxResults(7);
-        DefaultSearchRequest copy = roundTrip(new DefaultSearchRequest("café λόγος", m));
-        assertEquals("café λόγος", copy.getRequest());
+        DefaultSearchRequest copy = roundTrip(new DefaultSearchRequest("caf\u00E9 \u03BB\u03CC\u03B3\u03BF\u03C2", m));
+        assertEquals("caf\u00E9 \u03BB\u03CC\u03B3\u03BF\u03C2", copy.getRequest());
         assertTrue(copy.getSearchModifier().isRanked());
         assertEquals(7, copy.getSearchModifier().getMaxResults());
         assertNull(roundTrip(new DefaultSearchRequest("x")).getSearchModifier());

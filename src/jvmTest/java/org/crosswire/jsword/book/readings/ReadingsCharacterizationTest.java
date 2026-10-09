@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * \u00A9 CrossWire Bible Society, 2005 - 2016
  *
  */
 package org.crosswire.jsword.book.readings;
@@ -111,7 +111,7 @@ public class ReadingsCharacterizationTest {
         Key first = global.get(0);
         Assert.assertTrue(first instanceof ReadingsKey);
         Assert.assertEquals(mediumName(date(year, Calendar.JANUARY, 1)), first.getName());
-        Assert.assertEquals("1.January", first.getOsisRef().replace(" ", " "));
+        Assert.assertEquals("1.January", first.getOsisRef().replace("\u00A0", " "));
         Key last = global.get(daysInYear - 1);
         Assert.assertEquals(mediumName(date(year, Calendar.DECEMBER, 31)), last.getName());
     }

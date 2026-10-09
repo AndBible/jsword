@@ -236,7 +236,7 @@ public class GBFFilterCharacterizationTest {
 
     @Test
     public void testNonAscii() throws Exception {
-        String text = "é€ Αγάπη";
+        String text = "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7";
         Assert.assertEquals(text, osis(text));
         Assert.assertEquals("<hi type=\"italic\">" + text + "</hi>", osis("<FI>" + text + "<Fi>"));
     }

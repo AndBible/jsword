@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2026
+ * \u00A9 CrossWire Bible Society, 2026
  *
  */
 package org.crosswire.common.util;
@@ -37,9 +37,9 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
 public class LanguagesCharacterizationTest {
-    private static final String GRC_NAME = "Greek, Ancient [to 1453] (Ἑλληνική)";
-    private static final String HE_NAME = "Hebrew (עברית)";
-    private static final String ZH_HANT_NAME = "Chinese, Traditional (繁体中文)";
+    private static final String GRC_NAME = "Greek, Ancient [to 1453] (\u1F19\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AE)";
+    private static final String HE_NAME = "Hebrew (\u05E2\u05D1\u05E8\u05D9\u05EA)";
+    private static final String ZH_HANT_NAME = "Chinese, Traditional (\u7E41\u4F53\u4E2D\u6587)";
 
     @Before
     public void useEnglish() {

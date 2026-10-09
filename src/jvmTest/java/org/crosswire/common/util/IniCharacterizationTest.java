@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2026
+ * \u00A9 CrossWire Bible Society, 2026
  *
  */
 package org.crosswire.common.util;
@@ -49,10 +49,10 @@ public class IniCharacterizationTest {
     public TemporaryFolder folder = new TemporaryFolder();
 
     /** Greek lambda omicron gamma omicron sigma */
-    private static final String LOGOS = "λόγος";
-    private static final String AAKKOSET = "Ääkköset";
+    private static final String LOGOS = "\u03BB\u03CC\u03B3\u03BF\u03C2";
+    private static final String AAKKOSET = "\u00C4\u00E4kk\u00F6set";
 
-    private static final String CONF = "﻿".substring(1)
+    private static final String CONF = "\uFEFF".substring(1)
             + "[ Name ]\n"
             + "# a comment\n"
             + "; another comment\n"
@@ -240,7 +240,7 @@ public class IniCharacterizationTest {
     @Test
     public void testSectionByteOrderMarkIsStripped() throws IOException {
         IniSection s = new IniSection();
-        s.load(bytes("﻿[Bom]\nk=v\n"), UTF8);
+        s.load(bytes("\uFEFF[Bom]\nk=v\n"), UTF8);
         Assert.assertEquals("Bom", s.getName());
         Assert.assertEquals("v", s.get("k"));
     }
@@ -413,8 +413,8 @@ public class IniCharacterizationTest {
 
     @Test
     public void testIniDoesNotStripByteOrderMark() throws IOException {
-        // Unlike IniSection, "﻿[Bom]" is not a section line; it has no '=' so it is skipped
-        Ini ini = loadedIni("﻿[Bom]\nk=v\n");
+        // Unlike IniSection, "\uFEFF[Bom]" is not a section line; it has no '=' so it is skipped
+        Ini ini = loadedIni("\uFEFF[Bom]\nk=v\n");
         Assert.assertEquals(Arrays.asList(""), ini.getSections());
         Assert.assertEquals("v", ini.getValue("", "k"));
     }

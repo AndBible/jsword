@@ -14,7 +14,7 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * \u00A9 CrossWire Bible Society, 2005 - 2016
  */
 package org.crosswire.jsword.index.query;
 
@@ -93,7 +93,7 @@ public class QueryCharacterizationTest {
 
     @Test
     public void nonAsciiTextPassesThroughUnchanged() {
-        assertEquals("BaseQuery(café λόγος)", parse("café λόγος"));
+        assertEquals("BaseQuery(caf\u00E9 \u03BB\u03CC\u03B3\u03BF\u03C2)", parse("caf\u00E9 \u03BB\u03CC\u03B3\u03BF\u03C2"));
     }
 
     @Test

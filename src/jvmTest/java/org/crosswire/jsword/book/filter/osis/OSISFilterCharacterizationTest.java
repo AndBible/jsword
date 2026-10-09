@@ -92,7 +92,7 @@ public class OSISFilterCharacterizationTest {
 
     @Test
     public void testNonAscii() throws Exception {
-        String text = "é€ Αγάπη";
+        String text = "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7";
         Assert.assertEquals("<w>" + text + "</w>", osis("<w>" + text + "</w>"));
     }
 
@@ -107,7 +107,7 @@ public class OSISFilterCharacterizationTest {
         // &foo; is unknown: handleEntity replaces it by a space.
         Assert.assertEquals("a   b", osis("a &foo; b"));
         // &eacute; is a known HTML entity that XML lacks: replaced by its character.
-        Assert.assertEquals("café", osis("caf&eacute;"));
+        Assert.assertEquals("caf\u00E9", osis("caf&eacute;"));
     }
 
     @Test
