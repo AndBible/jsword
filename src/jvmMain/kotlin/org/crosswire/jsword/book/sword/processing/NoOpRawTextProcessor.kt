@@ -17,13 +17,11 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.processing;
+package org.crosswire.jsword.book.sword.processing
 
-import java.util.List;
-
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.VerseRange;
-import org.jdom2.Content;
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.VerseRange
+import org.jdom2.Content
 
 /**
  * A processor that does absolutely nothing.
@@ -31,26 +29,26 @@ import org.jdom2.Content;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class NoOpRawTextProcessor implements RawTextToXmlProcessor {
+open class NoOpRawTextProcessor : RawTextToXmlProcessor {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor#preRange(org.crosswire.jsword.passage.VerseRange, java.util.List)
      */
-    public void preRange(VerseRange range, List<Content> partialDom) {
+    override fun preRange(range: VerseRange?, partialDom: MutableList<Content>?) {
         // No-Op
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor#postVerse(org.crosswire.jsword.passage.Key, java.util.List, java.lang.String)
      */
-    public void postVerse(Key verse, List<Content> partialDom, String rawText) {
+    override fun postVerse(verse: Key?, partialDom: MutableList<Content>?, rawText: String?) {
         // No-Op
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor#init(java.util.List)
      */
-    public void init(List<Content> partialDom) {
+    override fun init(partialDom: MutableList<Content>?) {
         // No-Op
     }
 }

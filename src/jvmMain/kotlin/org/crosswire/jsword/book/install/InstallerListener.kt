@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install;
+package org.crosswire.jsword.book.install
 
-import java.util.EventListener;
+import java.util.EventListener
 
 /**
  * InstallerListener are able to be notified about changes to the numbers of
@@ -28,14 +28,14 @@ import java.util.EventListener;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface InstallerListener extends EventListener {
+interface InstallerListener : EventListener {
     /**
      * Called whenever a new Installer is added to the system.
      * 
      * @param ev
      *            A description of the change
      */
-    void installerAdded(InstallerEvent ev);
+    fun installerAdded(ev: InstallerEvent)
 
     /**
      * Called whenever an Installer is removed from the system.
@@ -43,5 +43,5 @@ public interface InstallerListener extends EventListener {
      * @param ev
      *            A description of the change
      */
-    void installerRemoved(InstallerEvent ev);
+    fun installerRemoved(ev: InstallerEvent)
 }

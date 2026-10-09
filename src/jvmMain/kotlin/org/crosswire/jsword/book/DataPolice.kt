@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import org.crosswire.jsword.passage.Key;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.jsword.passage.Key
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * When we can't convert some source data then the user doesn't really care and
@@ -31,65 +31,67 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class DataPolice {
-    /**
-     * Prevent instantiation
-     */
-    private DataPolice() {
-    }
-
-    /**
-     * Report a message against the current book and key.
-     * 
-     * @param book
-     *            the book against which to report
-     * @param key
-     *            the key against which to report
-     * @param message
-     *            the police report.
-     */
-    public static void report(Book book, Key key, String message) {
-        if (!reporting) {
-            return;
+class DataPolice
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Report a message against the current book and key.
+         * 
+         * @param book
+         *            the book against which to report
+         * @param key
+         *            the key against which to report
+         * @param message
+         *            the police report.
+         */
+        @JvmStatic
+        fun report(book: Book?, key: Key?, message: String?) {
+            if (!reporting) {
+                return
+            }
+            val buf = StringBuilder()
+            val bmd: BookMetaData? = book!!.bookMetaData
+            if (bmd != null) {
+                buf.append(bmd.initials)
+            }
+            if (bmd != null && key != null) {
+                buf.append(':')
+            }
+            if (key != null) {
+                buf.append(key.getOsisID())
+            }
+            buf.append(": ")
+            buf.append(message)
+            LOGGER.info(buf.toString())
         }
-        StringBuilder buf = new StringBuilder();
-        BookMetaData bmd = book.getBookMetaData();
-        if (bmd != null) {
-            buf.append(bmd.getInitials());
-        }
-        if (bmd != null && key != null) {
-            buf.append(':');
-        }
-        if (key != null) {
-            buf.append(key.getOsisID());
-        }
-        buf.append(": ");
-        buf.append(message);
-        LOGGER.info(buf.toString());
+
+        /**
+         * Whether to report found problems. Turn on reporting of found problems.
+         */
+        @JvmStatic
+        var isReporting: Boolean
+            get() {
+                synchronized(DataPolice::class.java) {
+                    return reporting
+                }
+            }
+            set(value) {
+                synchronized(DataPolice::class.java) {
+                    reporting = value
+                }
+            }
+
+        /**
+         * Whether to report problems or not. By default, reporting is off.
+         */
+        private var reporting = false
+
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(DataPolice::class.java)
     }
-
-    /**
-     * @return Returns whether to report found problems.
-     */
-    public static synchronized boolean isReporting() {
-        return reporting;
-    }
-
-    /**
-     * @param reporting
-     *            Turn on reporting of found problems
-     */
-    public static synchronized void setReporting(boolean reporting) {
-        DataPolice.reporting = reporting;
-    }
-
-    /**
-     * Whether to report problems or not. By default, reporting is off.
-     */
-    private static boolean reporting;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataPolice.class);
 }

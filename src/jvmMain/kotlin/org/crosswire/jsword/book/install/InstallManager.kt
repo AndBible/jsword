@@ -17,27 +17,22 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install;
+package org.crosswire.jsword.book.install
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import org.crosswire.common.util.CWProject
+import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PropertyMap
+import org.crosswire.common.util.ReflectionUtil
+import org.crosswire.common.util.Reporter
+import org.crosswire.common.util.jswordAssert
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.crosswire.common.util.CWProject;
-import org.crosswire.common.util.FileUtil;
-import org.crosswire.common.util.NetUtil;
-import org.crosswire.common.util.PluginUtil;
-import org.crosswire.common.util.PropertyMap;
-import org.crosswire.common.util.ReflectionUtil;
-import org.crosswire.common.util.Reporter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
+import java.util.Collections
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * A manager to abstract out the non-view specific book installation tasks.
@@ -46,47 +41,54 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public final class InstallManager {
+class InstallManager {
+    /**
+     * The map of installer factories
+     */
+    private lateinit var factories: MutableMap<String, Class<InstallerFactory>>
+
+    /**
+     * The list of discovered installers
+     */
+    private var installersMap: MutableMap<String, Installer> = LinkedHashMap<String, Installer>()
+
+    /**
+     * The list of listeners
+     */
+    private var listeners: MutableList<InstallerListener> = CopyOnWriteArrayList<InstallerListener>()
+
     /**
      * Simple ctor
      */
-
-    static PropertyMap preloadedSitemap;
-
-    public static void installSiteMap(PropertyMap siteMap) {
-        preloadedSitemap = siteMap;
-    }
-
-    public InstallManager() {
-        listeners = new CopyOnWriteArrayList<InstallerListener>();
-        installers = new LinkedHashMap<String, Installer>();
-
+    init {
         try {
-            PropertyMap sitemap = preloadedSitemap != null ? preloadedSitemap : PluginUtil.getPlugin(getClass());
-            factories = PluginUtil.getImplementorsMap(InstallerFactory.class);
-            int i = 0;
-            for (String def = sitemap.get(PREFIX + ++i); def != null; def = sitemap.get(PREFIX + ++i)) {
+            val sitemap: PropertyMap = preloadedSitemap ?: PluginUtil.getPlugin(javaClass)
+            factories = PluginUtil.getImplementorsMap(InstallerFactory::class.java)
+            var i = 0
+            var def = sitemap.get(PREFIX + ++i)
+            while (def != null) {
                 try {
-                    String[] parts = def.split(",", 3);
-                    String type = parts[0];
-                    String name = parts[1];
-                    String rest = parts[2];
+                    val parts = def.split(",", limit = 3)
+                    val type = parts[0]
+                    val name = parts[1]
+                    val rest = parts[2]
 
-                    Class<InstallerFactory> clazz = factories.get(type);
+                    val clazz = factories[type]
                     if (clazz == null) {
-                        log.warn("Unable to get class for {}", type);
+                        log.warn("Unable to get class for {}", type)
                     } else {
-                        InstallerFactory ifactory = ReflectionUtil.construct(clazz);
-                        Installer installer = ifactory.createInstaller(rest);
+                        val ifactory = ReflectionUtil.construct<InstallerFactory>(clazz)
+                        val installer = ifactory.createInstaller(rest)
 
-                        internalAdd(name, installer);
+                        internalAdd(name, installer)
                     }
-                } catch (ReflectiveOperationException e) {
-                    Reporter.informUser(this, e);
+                } catch (e: ReflectiveOperationException) {
+                    Reporter.informUser(this, e)
                 }
+                def = sitemap.get(PREFIX + ++i)
             }
-        } catch (IOException ex) {
-            Reporter.informUser(this, ex);
+        } catch (ex: IOException) {
+            Reporter.informUser(this, ex)
         }
     }
 
@@ -94,26 +96,26 @@ public final class InstallManager {
      * Save all properties to the user's local area. Uses the same property name
      * so as to override it.
      */
-    public void save() {
-        PropertyMap props = new PropertyMap();
-        StringBuilder buf = new StringBuilder();
-        int i = 1;
-        for (String name : installers.keySet()) {
-            Installer installer = installers.get(name);
+    fun save() {
+        val props = PropertyMap()
+        val buf = StringBuilder()
+        var i = 1
+        for (name in installersMap.keys) {
+            val installer = installersMap[name]!!
             // Clear the buffer
-            buf.delete(0, buf.length());
-            buf.append(installer.getType());
-            buf.append(',');
-            buf.append(name);
-            buf.append(',');
-            buf.append(installer.getInstallerDefinition());
-            props.put(PREFIX + i++, buf.toString());
+            buf.delete(0, buf.length)
+            buf.append(installer.getType())
+            buf.append(',')
+            buf.append(name)
+            buf.append(',')
+            buf.append(installer.getInstallerDefinition())
+            props.put(PREFIX + i++, buf.toString())
         }
-        URI outputURI = CWProject.instance().getWritableURI(getClass().getName(), FileUtil.EXTENSION_PLUGIN);
+        val outputURI = CWProject.instance().getWritableURI(javaClass.name, FileUtil.EXTENSION_PLUGIN)
         try {
-            NetUtil.storeProperties(props, outputURI, "Saved Installer Sites");
-        } catch (IOException e) {
-            log.error("Failed to save installers", e);
+            NetUtil.storeProperties(props, outputURI!!, "Saved Installer Sites")
+        } catch (e: IOException) {
+            log.error("Failed to save installers", e)
         }
     }
 
@@ -122,9 +124,8 @@ public final class InstallManager {
      * 
      * @return the set of all installer factory names
      */
-    public Set<String> getInstallerFactoryNames() {
-        return Collections.unmodifiableSet(factories.keySet());
-    }
+    val installerFactoryNames: Set<String>
+        get() = Collections.unmodifiableSet(factories.keys)
 
     /**
      * Find the registered name of the InstallerFactory that created the given
@@ -134,23 +135,23 @@ public final class InstallManager {
      * @param installer the installer
      * @return the name of the factory for the installer
      */
-    public String getFactoryNameForInstaller(Installer installer) {
-        Class<? extends Installer> match = installer.getClass();
-        for (String name : factories.keySet()) {
-            Class<InstallerFactory> factclazz = factories.get(name);
+    fun getFactoryNameForInstaller(installer: Installer): String? {
+        val match: Class<out Installer> = installer.javaClass
+        for (name in factories.keys) {
+            val factclazz = factories[name]
             try {
-                InstallerFactory ifactory = ReflectionUtil.construct(factclazz);
-                Class<? extends Installer> clazz = ifactory.createInstaller().getClass();
+                val ifactory = ReflectionUtil.construct<InstallerFactory>(factclazz)
+                val clazz: Class<out Installer> = ifactory.createInstaller().javaClass
                 if (clazz == match) {
-                    return name;
+                    return name
                 }
-            } catch (ReflectiveOperationException e) {
-                log.warn("Failed to instantiate installer factory: {}={}", name, factclazz.getName(), e);
+            } catch (e: ReflectiveOperationException) {
+                log.warn("Failed to instantiate installer factory: {}={}", name, factclazz!!.name, e)
             }
         }
 
-        log.warn("Failed to find factory name for {} among the {} factories.", installer, Integer.toString(factories.size()));
-        return null;
+        log.warn("Failed to find factory name for {} among the {} factories.", installer, Integer.toString(factories.size))
+        return null
     }
 
     /**
@@ -161,20 +162,20 @@ public final class InstallManager {
      * @param installer the installer
      * @return the name of the installer
      */
-    public String getInstallerNameForInstaller(Installer installer) {
-        for (String name : installers.keySet()) {
-            Installer test = installers.get(name);
-            if (installer.equals(test)) {
-                return name;
+    fun getInstallerNameForInstaller(installer: Installer): String? {
+        for (name in installersMap.keys) {
+            val test = installersMap[name]
+            if (installer == test) {
+                return name
             }
         }
 
-        log.warn("Failed to find installer name for {} among the {} installers.", installer, Integer.toString(installers.size()));
-        for (String name : installers.keySet()) {
-            Installer test = installers.get(name);
-            log.warn("  it isn't equal to {}", test.getInstallerDefinition());
+        log.warn("Failed to find installer name for {} among the {} installers.", installer, Integer.toString(installersMap.size))
+        for (name in installersMap.keys) {
+            val test = installersMap[name]
+            log.warn("  it isn't equal to {}", test!!.getInstallerDefinition())
         }
-        return null;
+        return null
     }
 
     /**
@@ -184,22 +185,21 @@ public final class InstallManager {
      *            The InstallerFactory name to look-up
      * @return The found InstallerFactory or null if the name was not found
      */
-    public InstallerFactory getInstallerFactory(String name) {
+    fun getInstallerFactory(name: String?): InstallerFactory? {
         try {
-            return ReflectionUtil.construct(factories.get(name));
-        } catch (ReflectiveOperationException e) {
-            assert false : e;
+            return ReflectionUtil.construct<InstallerFactory>(if (name == null) null else factories[name])
+        } catch (e: ReflectiveOperationException) {
+            jswordAssert(false) { e }
         }
-        return null;
+        return null
     }
 
     /**
      * Accessor for the known installers
      * @return a map of named installers
      */
-    public Map<String, Installer> getInstallers() {
-        return Collections.unmodifiableMap(installers);
-    }
+    val installers: Map<String, Installer>
+        get() = Collections.unmodifiableMap(installersMap)
 
     /**
      * Find an installer by name
@@ -208,8 +208,8 @@ public final class InstallManager {
      *            The name of the installer to find
      * @return The installer or null if none was found by the given name
      */
-    public Installer getInstaller(String name) {
-        return installers.get(name);
+    fun getInstaller(name: String?): Installer? {
+        return if (name == null) null else installersMap[name]
     }
 
     /**
@@ -220,14 +220,11 @@ public final class InstallManager {
      * @param installer
      *            The installer to add
      */
-    public void addInstaller(String name, Installer installer) {
-        assert installer != null;
-        assert name != null;
+    fun addInstaller(name: String, installer: Installer) {
+        removeInstaller(name)
 
-        removeInstaller(name);
-
-        internalAdd(name, installer);
-        fireInstallersChanged(this, installer, true);
+        internalAdd(name, installer)
+        fireInstallersChanged(this, installer, true)
     }
 
     /**
@@ -239,23 +236,23 @@ public final class InstallManager {
      * @param installer
      *            The installer to associate with the given name
      */
-    private void internalAdd(String name, Installer installer) {
-        Iterator<String> it = installers.keySet().iterator();
+    private fun internalAdd(name: String, installer: Installer) {
+        val it = installersMap.keys.iterator()
         while (it.hasNext()) {
-            String tname = it.next();
-            Installer tinstaller = installers.get(tname);
+            val tname = it.next()
+            val tinstaller = installersMap[tname]!!
 
-            if (tinstaller.equals(installer)) {
+            if (tinstaller == installer) {
                 // We have a dupe - remove the old name
-                log.warn("duplicate installers: {}={}. removing {}", name, tname, tname);
+                log.warn("duplicate installers: {}={}. removing {}", name, tname, tname)
 
                 // Can't call removeInstaller while iterating.
-                it.remove();
-                fireInstallersChanged(this, tinstaller, false);
+                it.remove()
+                fireInstallersChanged(this, tinstaller, false)
             }
         }
 
-        installers.put(name, installer);
+        installersMap[name] = installer
     }
 
     /**
@@ -264,10 +261,10 @@ public final class InstallManager {
      * @param name
      *            The name by which this installer is referenced
      */
-    public void removeInstaller(String name) {
-        if (installers.containsKey(name)) {
-            Installer old = installers.remove(name);
-            fireInstallersChanged(this, old, false);
+    fun removeInstaller(name: String?) {
+        if (name != null && installersMap.containsKey(name)) {
+            val old = installersMap.remove(name)
+            fireInstallersChanged(this, old, false)
         }
     }
 
@@ -277,8 +274,8 @@ public final class InstallManager {
      * @param li
      *            The old listener
      */
-    public void addInstallerListener(InstallerListener li) {
-        listeners.add(li);
+    fun addInstallerListener(li: InstallerListener) {
+        listeners.add(li)
     }
 
     /**
@@ -287,8 +284,8 @@ public final class InstallManager {
      * @param li
      *            The new listener
      */
-    public void removeBooksListener(InstallerListener li) {
-        listeners.remove(li);
+    fun removeBooksListener(li: InstallerListener) {
+        listeners.remove(li)
     }
 
     /**
@@ -301,39 +298,34 @@ public final class InstallManager {
      * @param added
      *            Is it added?
      */
-    protected void fireInstallersChanged(Object source, Installer installer, boolean added) {
-        InstallerEvent ev = new InstallerEvent(source, installer, added);
-        for (InstallerListener listener : listeners) {
+    protected fun fireInstallersChanged(source: Any?, installer: Installer?, added: Boolean) {
+        val ev = InstallerEvent(source, installer, added)
+        for (listener in listeners) {
             if (added) {
-                listener.installerAdded(ev);
+                listener.installerAdded(ev)
             } else {
-                listener.installerRemoved(ev);
+                listener.installerRemoved(ev)
             }
         }
     }
 
-    /**
-     * The prefix for the keys in the installer property file.
-     */
-    private static final String PREFIX = "Installer.";
+    companion object {
+        // was package-private
+        internal var preloadedSitemap: PropertyMap? = null
 
-    /**
-     * The map of installer factories
-     */
-    private Map<String, Class<InstallerFactory>> factories;
+        @JvmStatic
+        fun installSiteMap(siteMap: PropertyMap?) {
+            preloadedSitemap = siteMap
+        }
 
-    /**
-     * The list of discovered installers
-     */
-    private Map<String, Installer> installers;
+        /**
+         * The prefix for the keys in the installer property file.
+         */
+        private const val PREFIX = "Installer."
 
-    /**
-     * The list of listeners
-     */
-    private List<InstallerListener> listeners;
-
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(InstallManager.class);
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(InstallManager::class.java)
+    }
 }

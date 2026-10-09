@@ -17,13 +17,15 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install;
+/**
+ * An abstraction of an installer.
+ */
+package org.crosswire.jsword.book.install
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookList;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookList
 
-import java.net.URI;
-import java.util.List;
+import java.net.URI
 
 /**
  * An interface that allows us to download from a specific source of Bible data.
@@ -40,27 +42,27 @@ import java.util.List;
  * @author Joe Walker
  * @author DM Smith
  */
-public interface Installer extends BookList {
+interface Installer : BookList {
     /**
      * Get the type of the Installer.
      * 
      * @return the type of the installer
      */
-    String getType();
+    fun getType(): String
 
     /**
      * Accessor for the URI
      * 
      * @return the source URI
      */
-    String getInstallerDefinition();
+    fun getInstallerDefinition(): String
 
     /**
      * @param book
      *            The book meta-data to get a URI from.
      * @return the remote URI for the BookMetaData
      */
-    URI toRemoteURI(final Book book);
+    fun toRemoteURI(book: Book): URI?
 
     /**
      * Get a list of BookMetaData objects that represent downloadable books. If
@@ -71,7 +73,7 @@ public interface Installer extends BookList {
      * @return the list of books
      * @see Installer#reloadBookList()
      */
-    List<Book> getBooks();
+    override fun getBooks(): MutableList<Book>
 
     /**
      * Get a Book matching the name from the local cache. Null if none is found.
@@ -79,7 +81,7 @@ public interface Installer extends BookList {
      * @param book the book name
      * @return the instantiated book
      */
-    Book getBook(final String book);
+    fun getBook(book: String): Book?
 
     /**
      * Return true if the book is not installed or there is a newer version to
@@ -89,7 +91,7 @@ public interface Installer extends BookList {
      *            The book meta-data to check on.
      * @return whether there is a newer version to install
      */
-    int getSize(final Book book);
+    fun getSize(book: Book): Int
 
     /**
      * Return true if the book is not installed or there is a newer version to
@@ -99,7 +101,7 @@ public interface Installer extends BookList {
      *            The book meta-data to check on.
      * @return whether there is a newer version to install
      */
-    boolean isNewer(final Book book);
+    fun isNewer(book: Book): Boolean
 
     /**
      * Re-fetch a list of names from the remote source. <b>It would make sense
@@ -109,9 +111,10 @@ public interface Installer extends BookList {
      * 
      * @throws InstallException 
      */
-    void reloadBookList() throws InstallException;
+    @Throws(InstallException::class)
+    fun reloadBookList()
 
-    public Long indexLastUpdated();
+    fun indexLastUpdated(): Long?
 
     /**
      * Download and install a book locally. The name should be one from an index
@@ -123,8 +126,11 @@ public interface Installer extends BookList {
      *            The book to install
      * @throws InstallException 
      */
-    void install(final Book book) throws InstallException;
-    void install(final Book book, String jobId) throws InstallException;
+    @Throws(InstallException::class)
+    fun install(book: Book)
+
+    @Throws(InstallException::class)
+    fun install(book: Book, jobId: String?)
 
     /**
      * Download a search index for the given Book. The installation of the
@@ -137,9 +143,10 @@ public interface Installer extends BookList {
      *            for installation.
      * @throws InstallException 
      */
-    void downloadSearchIndex(final Book book, final URI tempDest) throws InstallException;
+    @Throws(InstallException::class)
+    fun downloadSearchIndex(book: Book, tempDest: URI)
 
     /** remove the cached book list to clear memory
      */
-    void close();
+    fun close()
 }

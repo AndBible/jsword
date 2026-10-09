@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.io.IOException;
+import org.crosswire.common.util.PluginUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.crosswire.common.util.PluginUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException
 
 /**
  * A Factory class for Bookmarks.
@@ -31,42 +31,43 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class BookmarkFactory {
-    /**
-     * Prevent instantiation
-     */
-    private BookmarkFactory() {
-    }
+class BookmarkFactory
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Create a new Bookmark.
+         * 
+         * @return the singleton
+         */
+        @JvmStatic
+        fun getBookmark(): Bookmark {
+            return instance!!.clone()
+        }
 
-    /**
-     * Create a new Bookmark.
-     * 
-     * @return the singleton
-     */
-    public static Bookmark getBookmark() {
-        return instance.clone();
-    }
+        /**
+         * The singleton
+         */
+        private var instance: Bookmark? = null
 
-    /**
-     * The singleton
-     */
-    private static Bookmark instance;
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(BookmarkFactory::class.java)
 
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(BookmarkFactory.class);
-
-    /**
-     * Setup the instance
-     */
-    static {
-        try {
-            instance = PluginUtil.getImplementation(Bookmark.class);
-        } catch (IOException e) {
-            LOGGER.error("createBookmark failed", e);
-        } catch (ReflectiveOperationException e) {
-            LOGGER.error("createBookmark failed", e);
+        /**
+         * Setup the instance
+         */
+        init {
+            try {
+                instance = PluginUtil.getImplementation(Bookmark::class.java)
+            } catch (e: IOException) {
+                LOGGER.error("createBookmark failed", e)
+            } catch (e: ReflectiveOperationException) {
+                LOGGER.error("createBookmark failed", e)
+            }
         }
     }
 }

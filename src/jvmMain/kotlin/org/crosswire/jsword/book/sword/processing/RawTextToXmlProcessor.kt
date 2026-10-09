@@ -17,13 +17,14 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.processing;
+/**
+ * Interface and default implementation for the transformation of raw text into XML.
+ */
+package org.crosswire.jsword.book.sword.processing
 
-import java.util.List;
-
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.VerseRange;
-import org.jdom2.Content;
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.VerseRange
+import org.jdom2.Content
 
 /**
  * This interface declares operations to be carried out after Raw Text
@@ -32,13 +33,13 @@ import org.jdom2.Content;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface RawTextToXmlProcessor {
+interface RawTextToXmlProcessor {
     /**
      * Runs before the processing starts.
      * 
      * @param partialDom the DOM, empty at this stage
      */
-    void init(List<Content> partialDom);
+    fun init(partialDom: MutableList<Content>?)
 
     /**
      * Executes before a range is read from the raw data.
@@ -46,7 +47,7 @@ public interface RawTextToXmlProcessor {
      * @param range the verse that is currently being examined
      * @param partialDom the DOM that is being built up as data is read
      */
-    void preRange(VerseRange range, List<Content> partialDom);
+    fun preRange(range: VerseRange?, partialDom: MutableList<Content>?)
 
     /**
      * Executes after a verse is read from the raw data.
@@ -55,5 +56,5 @@ public interface RawTextToXmlProcessor {
      * @param partialDom the DOM that is being built up as data is read
      * @param rawText the text that has been read, deciphered
      */
-    void postVerse(Key verse, List<Content> partialDom, String rawText);
+    fun postVerse(verse: Key?, partialDom: MutableList<Content>?, rawText: String?)
 }

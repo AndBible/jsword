@@ -14,15 +14,14 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.io.Serializable;
-import java.util.List;
+import org.crosswire.jsword.index.search.SearchRequest
 
-import org.crosswire.jsword.index.search.SearchRequest;
+import java.io.Serializable
 
 /**
  * A Bookmark remembers a particular view of one or more Books. What is viewed
@@ -31,7 +30,7 @@ import org.crosswire.jsword.index.search.SearchRequest;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface Bookmark extends Serializable, Cloneable {
+interface Bookmark : Serializable, Cloneable {
     /**
      * Add a Book to this Bookmark. The books are maintained in the order they
      * are added as a set.
@@ -39,14 +38,14 @@ public interface Bookmark extends Serializable, Cloneable {
      * @param book
      *            the Book to add.
      */
-    void addBook(Book book);
+    fun addBook(book: Book?)
 
     /**
      * Return the ordered set of books.
      * 
      * @return the books
      */
-    List<Book> getBooks();
+    val books: MutableList<Book>
 
     /**
      * Set the SearchRequest for this Bookmark. A copy of the SearchRequest will
@@ -55,14 +54,12 @@ public interface Bookmark extends Serializable, Cloneable {
      * @param request
      *            the SearchRequest
      */
-    void setSearchRequest(SearchRequest request);
-
     /**
      * Get the SearchRequest for this Bookmark.
      * 
      * @return a copy of the SearchRequest, or null.
      */
-    SearchRequest getSearchRequest();
+    var searchRequest: SearchRequest?
 
     /**
      * Set the lookup request for this Bookmark. Note, setting this will clear
@@ -71,14 +68,12 @@ public interface Bookmark extends Serializable, Cloneable {
      * @param request
      *            the lookup request.
      */
-    void setLookupRequest(String request);
-
     /**
      * Get the lookup request.
      * 
      * @return the lookup request or null.
      */
-    String getLookupRequest();
+    var lookupRequest: String?
 
     /**
      * Convert this Bookmark into a BookData by converting the SearchReqeust or
@@ -86,7 +81,7 @@ public interface Bookmark extends Serializable, Cloneable {
      * 
      * @return the resulting BookData
      */
-    BookData getBookData();
+    val bookData: BookData?
 
     /**
      * This needs to be declared here so that it is visible as a method on a
@@ -94,5 +89,5 @@ public interface Bookmark extends Serializable, Cloneable {
      * 
      * @return A complete copy of ourselves
      */
-    Bookmark clone();
+    public override fun clone(): Bookmark
 }

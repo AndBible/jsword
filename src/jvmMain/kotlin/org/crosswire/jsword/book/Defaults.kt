@@ -79,7 +79,7 @@ private constructor() {
         @JvmStatic
         fun getCurrentBible(): Book? {
             if (currentBible == null) {
-                return bibleDeft.getDefault()
+                return bibleDeft.default
             }
             return currentBible
         }
@@ -99,7 +99,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetBible() {
-            bibleDeft.unsetDefault()
+            bibleDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -107,7 +107,7 @@ private constructor() {
          */
         @JvmStatic
         fun getBible(): Book? {
-            return bibleDeft.getDefault()
+            return bibleDeft.default
         }
 
         /**
@@ -115,7 +115,7 @@ private constructor() {
          */
         @JvmStatic
         fun getBibleByName(): String? {
-            return bibleDeft.getDefaultName()
+            return bibleDeft.defaultName
         }
 
         /**
@@ -143,7 +143,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetCommentary() {
-            commentaryDeft.unsetDefault()
+            commentaryDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -151,7 +151,7 @@ private constructor() {
          */
         @JvmStatic
         fun getCommentary(): Book? {
-            return commentaryDeft.getDefault()
+            return commentaryDeft.default
         }
 
         /**
@@ -159,7 +159,7 @@ private constructor() {
          */
         @JvmStatic
         fun getCommentaryByName(): String? {
-            return commentaryDeft.getDefaultName()
+            return commentaryDeft.defaultName
         }
 
         /**
@@ -187,7 +187,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetDictionary() {
-            dictionaryDeft.unsetDefault()
+            dictionaryDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -195,7 +195,7 @@ private constructor() {
          */
         @JvmStatic
         fun getDictionary(): Book? {
-            return dictionaryDeft.getDefault()
+            return dictionaryDeft.default
         }
 
         /**
@@ -203,7 +203,7 @@ private constructor() {
          */
         @JvmStatic
         fun getDictionaryByName(): String? {
-            return dictionaryDeft.getDefaultName()
+            return dictionaryDeft.defaultName
         }
 
         /**
@@ -231,7 +231,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetDailyDevotional() {
-            dailyDevotionalDeft.unsetDefault()
+            dailyDevotionalDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -239,7 +239,7 @@ private constructor() {
          */
         @JvmStatic
         fun getDailyDevotional(): Book? {
-            return dailyDevotionalDeft.getDefault()
+            return dailyDevotionalDeft.default
         }
 
         /**
@@ -247,7 +247,7 @@ private constructor() {
          */
         @JvmStatic
         fun getDailyDevotionalByName(): String? {
-            return dailyDevotionalDeft.getDefaultName()
+            return dailyDevotionalDeft.defaultName
         }
 
         /**
@@ -275,7 +275,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetGreekDefinitions() {
-            greekDefinitionsDeft.unsetDefault()
+            greekDefinitionsDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -283,7 +283,7 @@ private constructor() {
          */
         @JvmStatic
         fun getGreekDefinitions(): Book? {
-            return greekDefinitionsDeft.getDefault()
+            return greekDefinitionsDeft.default
         }
 
         /**
@@ -291,7 +291,7 @@ private constructor() {
          */
         @JvmStatic
         fun getGreekDefinitionsByName(): String? {
-            return greekDefinitionsDeft.getDefaultName()
+            return greekDefinitionsDeft.defaultName
         }
 
         /**
@@ -319,7 +319,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetHebrewDefinitions() {
-            hebrewDefinitionsDeft.unsetDefault()
+            hebrewDefinitionsDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -327,7 +327,7 @@ private constructor() {
          */
         @JvmStatic
         fun getHebrewDefinitions(): Book? {
-            return hebrewDefinitionsDeft.getDefault()
+            return hebrewDefinitionsDeft.default
         }
 
         /**
@@ -335,7 +335,7 @@ private constructor() {
          */
         @JvmStatic
         fun getHebrewDefinitionsByName(): String? {
-            return hebrewDefinitionsDeft.getDefaultName()
+            return hebrewDefinitionsDeft.defaultName
         }
 
         /**
@@ -363,7 +363,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetGreekParse() {
-            greekParseDeft.unsetDefault()
+            greekParseDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -371,7 +371,7 @@ private constructor() {
          */
         @JvmStatic
         fun getGreekParse(): Book? {
-            return greekParseDeft.getDefault()
+            return greekParseDeft.default
         }
 
         /**
@@ -381,7 +381,7 @@ private constructor() {
          */
         @JvmStatic
         fun getGreekParseByName(): String? {
-            return greekParseDeft.getDefaultName()
+            return greekParseDeft.defaultName
         }
 
         /**
@@ -407,7 +407,7 @@ private constructor() {
          */
         @JvmStatic
         protected fun unsetHebrewParse() {
-            hebrewParseDeft.unsetDefault()
+            hebrewParseDeft.unsetDefaultForPackage()
         }
 
         /**
@@ -415,7 +415,7 @@ private constructor() {
          */
         @JvmStatic
         fun getHebrewParse(): Book? {
-            return hebrewParseDeft.getDefault()
+            return hebrewParseDeft.default
         }
 
         /**
@@ -423,7 +423,7 @@ private constructor() {
          */
         @JvmStatic
         fun getHebrewParseByName(): String? {
-            return hebrewParseDeft.getDefaultName()
+            return hebrewParseDeft.defaultName
         }
 
         /**
@@ -673,14 +673,14 @@ private constructor() {
         override fun bookRemoved(ev: BooksEvent) {
             val book = ev.book
 
-            getDefaultBible().unsetDefaultConditionally(book)
-            getDefaultCommentary().unsetDefaultConditionally(book)
-            getDefaultDailyDevotional().unsetDefaultConditionally(book)
-            getDefaultDictionary().unsetDefaultConditionally(book)
-            getDefaultGreekDefinitions().unsetDefaultConditionally(book)
-            getDefaultGreekParse().unsetDefaultConditionally(book)
-            getDefaultHebrewDefinitions().unsetDefaultConditionally(book)
-            getDefaultHebrewParse().unsetDefaultConditionally(book)
+            getDefaultBible().unsetDefaultConditionallyForPackage(book)
+            getDefaultCommentary().unsetDefaultConditionallyForPackage(book)
+            getDefaultDailyDevotional().unsetDefaultConditionallyForPackage(book)
+            getDefaultDictionary().unsetDefaultConditionallyForPackage(book)
+            getDefaultGreekDefinitions().unsetDefaultConditionallyForPackage(book)
+            getDefaultGreekParse().unsetDefaultConditionallyForPackage(book)
+            getDefaultHebrewDefinitions().unsetDefaultConditionallyForPackage(book)
+            getDefaultHebrewParse().unsetDefaultConditionallyForPackage(book)
         }
     }
 }

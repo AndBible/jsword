@@ -17,13 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.Iterator;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Defines a single default book.
@@ -31,11 +28,21 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DefaultBook {
-    public DefaultBook(BookList bookList, BookFilter bookFilter) {
-        books = bookList;
-        filter = bookFilter;
-    }
+open class DefaultBook(bookList: BookList, bookFilter: BookFilter) {
+    /**
+     * The list of candidate books.
+     */
+    private val books: BookList = bookList
+
+    /**
+     * The filter against books that returns candidates.
+     */
+    private val filter: BookFilter = bookFilter
+
+    /**
+     * The default book
+     */
+    private var book: Book? = null
 
     /**
      * Set the default Book. It must satisfy the filter.
@@ -43,9 +50,9 @@ public class DefaultBook {
      * @param newBook
      *            The version to use as default.
      */
-    public void setDefault(Book newBook) {
-        if (filter.test(newBook)) {
-            book = newBook;
+    open fun setDefault(newBook: Book?) {
+        if (filter.test(newBook!!)) {
+            book = newBook
         }
     }
 
@@ -56,19 +63,34 @@ public class DefaultBook {
      * @param newBook
      *            The version to use as default.
      */
-    public void setDefaultConditionally(Book newBook) {
+    open fun setDefaultConditionally(newBook: Book?) {
         if (book == null) {
-            setDefault(newBook);
+            setDefault(newBook)
         }
     }
 
     /**
      * Unset the current default book and attempt to appoint another.
      */
-    protected void unsetDefault() {
-        book = null;
+    protected open fun unsetDefault() {
+        book = null
 
-        checkReplacement();
+        checkReplacement()
+    }
+
+    /**
+     * Calls [unsetDefault] for [Defaults], which is in the same package
+     * but, unlike with Java's protected, can no longer reach a protected member.
+     */
+    internal fun unsetDefaultForPackage() {
+        unsetDefault()
+    }
+
+    /**
+     * Calls [unsetDefaultConditionally] for [Defaults], see [unsetDefaultForPackage].
+     */
+    internal fun unsetDefaultConditionallyForPackage(oldBook: Book?) {
+        unsetDefaultConditionally(oldBook)
     }
 
     /**
@@ -77,9 +99,9 @@ public class DefaultBook {
      * 
      * @param oldBook the book to unset if it is the default
      */
-    protected void unsetDefaultConditionally(Book oldBook) {
-        if (book == oldBook) {
-            unsetDefault();
+    protected open fun unsetDefaultConditionally(oldBook: Book?) {
+        if (book === oldBook) {
+            unsetDefault()
         }
     }
 
@@ -88,9 +110,8 @@ public class DefaultBook {
      * 
      * @return the current default version
      */
-    public Book getDefault() {
-        return book;
-    }
+    open val default: Book?
+        get() = book
 
     /**
      * This method is identical to <code>getDefault().getName()</code> and is
@@ -98,13 +119,14 @@ public class DefaultBook {
      * 
      * @return the default book name
      */
-    public String getDefaultName() {
-        if (book == null) {
-            return null;
-        }
+    open val defaultName: String?
+        get() {
+            if (book == null) {
+                return null
+            }
 
-        return book.getName();
-    }
+            return book!!.name
+        }
 
     /**
      * Trawl through all the known Books satisfying the filter looking for the
@@ -122,52 +144,39 @@ public class DefaultBook {
      * @param name
      *            The version to use as default.
      */
-    public void setDefaultByName(String name) {
-        if (name == null || name.length() == 0) {
-            LOGGER.warn("Attempt to set empty book as default. Ignoring");
-            return;
+    open fun setDefaultByName(name: String?) {
+        if (name == null || name.length == 0) {
+            LOGGER.warn("Attempt to set empty book as default. Ignoring")
+            return
         }
 
-        for (Book aBook : books.getBooks(filter)) {
+        for (aBook in books.getBooks(filter)) {
             if (aBook.match(name)) {
-                setDefault(aBook);
-                return;
+                setDefault(aBook)
+                return
             }
         }
 
-        LOGGER.warn("Book not found. Ignoring: {}", name);
+        LOGGER.warn("Book not found. Ignoring: {}", name)
     }
 
     /**
      * Go through all of the current books checking to see if we need to replace
      * the current defaults with one of these.
      */
-    protected void checkReplacement() {
-        List<Book> bookList = books.getBooks(filter);
+    protected open fun checkReplacement() {
+        val bookList = books.getBooks(filter)
 
-        Iterator<Book> it = bookList.iterator();
+        val it = bookList.iterator()
         if (it.hasNext()) {
-            book = it.next();
+            book = it.next()
         }
     }
 
-    /**
-     * The default book
-     */
-    private Book book;
-
-    /**
-     * The list of candidate books.
-     */
-    private final BookList books;
-
-    /**
-     * The filter against books that returns candidates.
-     */
-    private final BookFilter filter;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultBook.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(DefaultBook::class.java)
+    }
 }

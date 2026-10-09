@@ -1,20 +1,21 @@
-package org.crosswire.jsword.book.install;
+package org.crosswire.jsword.book.install
 
-import java.net.URI;
+import java.net.URI
 
-public class DownloadException extends InstallException {
-    public int statusCode;
-    public URI uri;
+open class DownloadException : InstallException {
+    @JvmField
+    var statusCode: Int
 
-    public DownloadException(URI uri, int statusCode) {
-        super("Downloading " + uri + " failed with status code " + statusCode);
-        this.statusCode = statusCode;
-        this.uri = uri;
+    @JvmField
+    var uri: URI?
+
+    constructor(uri: URI?, statusCode: Int) : super("Downloading $uri failed with status code $statusCode") {
+        this.statusCode = statusCode
+        this.uri = uri
     }
 
-    public DownloadException(URI uri, int statusCode, Throwable cause) {
-        super("Downloading " + uri + " failed with status code " + statusCode, cause);
-        this.statusCode = statusCode;
-        this.uri = uri;
+    constructor(uri: URI?, statusCode: Int, cause: Throwable?) : super("Downloading $uri failed with status code $statusCode", cause) {
+        this.statusCode = statusCode
+        this.uri = uri
     }
 }

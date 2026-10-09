@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install;
+package org.crosswire.jsword.book.install
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.EventObject;
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.util.EventObject
 
 /**
  * An InstallerEvent is fired whenever an Installer is added or removed from the
@@ -30,39 +30,37 @@ import java.util.EventObject;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class InstallerEvent extends EventObject {
+open class InstallerEvent
+/**
+ * Basic constructor
+ * 
+ * @param source the originator of the event
+ * @param installer
+ *            The installer, or null if there is more than one change.
+ * @param added
+ *            True if the changed installer is an addition.
+ */
+(source: Any?, installer: Installer?, private val added: Boolean) : EventObject(source) {
     /**
-     * Basic constructor
-     * 
-     * @param source the originator of the event
-     * @param installer
-     *            The installer, or null if there is more than one change.
-     * @param added
-     *            True if the changed installer is an addition.
+     * The name of the changed Bible
      */
-    public InstallerEvent(Object source, Installer installer, boolean added) {
-        super(source);
-
-        this.installer = installer;
-        this.added = added;
-    }
+    @Transient
+    private var changedInstaller: Installer? = installer
 
     /**
      * Get the name of the changed Bible
      * 
      * @return The Bible bmd
      */
-    public Installer getInstaller() {
-        return installer;
-    }
+    open val installer: Installer?
+        get() = changedInstaller
 
     /**
      * Is this an addition event?
      * @return whether this is an addition event
      */
-    public boolean isAddition() {
-        return added;
-    }
+    open val isAddition: Boolean
+        get() = added
 
     /**
      * Serialization support.
@@ -71,24 +69,17 @@ public class InstallerEvent extends EventObject {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
         // Broken but we don't serialize events
-        installer = null;
-        is.defaultReadObject();
+        changedInstaller = null
+        `is`.defaultReadObject()
     }
 
-    /**
-     * Is this an addition event?
-     */
-    private boolean added;
-
-    /**
-     * The name of the changed Bible
-     */
-    private transient Installer installer;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3257290248836102194L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3257290248836102194L
+    }
 }

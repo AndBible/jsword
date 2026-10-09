@@ -17,16 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter;
+package org.crosswire.jsword.book.filter
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.ReflectionUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.crosswire.common.util.PluginUtil;
-import org.crosswire.common.util.ReflectionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Locale
 
 /**
  * A simple container for all the known SourceFilters.
@@ -34,93 +32,97 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public final class SourceFilterFactory {
-    /**
-     * Prevent instantiation
-     */
-    private SourceFilterFactory() {
-    }
+class SourceFilterFactory
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Find a filter given a lookup string. If lookup is null or the filter is
+         * not found then the default filter will be used.
+         * 
+         * @param lookup the lookup string for the filter
+         * @return the matching filter
+         */
+        @JvmStatic
+        fun getFilter(lookup: String?): SourceFilter {
+            var reply = filters[lookup!!.lowercase(Locale.ENGLISH)]
 
-    /**
-     * Find a filter given a lookup string. If lookup is null or the filter is
-     * not found then the default filter will be used.
-     * 
-     * @param lookup the lookup string for the filter
-     * @return the matching filter
-     */
-    public static SourceFilter getFilter(String lookup) {
-        SourceFilter reply = filters.get(lookup.toLowerCase(Locale.ENGLISH));
-
-        if (reply == null) {
-            reply = deft;
-        }
-
-        return reply.clone();
-    }
-
-    /**
-     * Find a filter given a lookup string
-     * 
-     * @return the default filter
-     */
-    public static SourceFilter getDefaultFilter() {
-        return deft.clone();
-    }
-
-    /**
-     * Add to our list of known filters
-     * 
-     * @param name 
-     * @param instance 
-     */
-    public static void addFilter(String name, SourceFilter instance) {
-        filters.put(name.toLowerCase(Locale.ENGLISH), instance);
-    }
-
-    /**
-     * The lookup table of filters
-     */
-    private static Map<String, SourceFilter> filters = new HashMap<String, SourceFilter>();
-
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(SourceFilterFactory.class);
-
-    /**
-     * The lookup table of filters
-     */
-    private static volatile SourceFilter deft;
-
-    /**
-     * Populate the lookup table of filters and the default from the properties
-     * file.
-     */
-    static {
-        Map<String, Class<SourceFilter>> map = PluginUtil.getImplementorsMap(SourceFilter.class);
-
-        // the default value
-        try {
-            Class<SourceFilter> cdeft = map.remove("default");
-            deft = cdeft.getDeclaredConstructor().newInstance();
-        } catch (ReflectiveOperationException e) {
-            log.error("Failed to get default filter, will attempt to use first", e);
-        }
-
-        // the lookup table
-        SourceFilter instance = null;
-        for (Map.Entry<String, Class<SourceFilter>> entry : map.entrySet()) {
-            try {
-                instance = ReflectionUtil.construct(entry.getValue());
-                addFilter(entry.getKey(), instance);
-            } catch (ReflectiveOperationException e) {
-                log.error("Failed to add filter", e);
+            if (reply == null) {
+                reply = deft
             }
+
+            return reply!!.clone()
         }
 
-        // if the default didn't work then make a stab at an answer
-        if (deft == null) {
-            deft = instance;
+        /**
+         * Find a filter given a lookup string
+         * 
+         * @return the default filter
+         */
+        @JvmStatic
+        fun getDefaultFilter(): SourceFilter {
+            return deft!!.clone()
+        }
+
+        /**
+         * Add to our list of known filters
+         * 
+         * @param name 
+         * @param instance 
+         */
+        @JvmStatic
+        fun addFilter(name: String?, instance: SourceFilter?) {
+            filters[name!!.lowercase(Locale.ENGLISH)] = instance
+        }
+
+        /**
+         * The lookup table of filters
+         */
+        private var filters: MutableMap<String, SourceFilter?> = HashMap()
+
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(SourceFilterFactory::class.java)
+
+        /**
+         * The lookup table of filters
+         */
+        @Volatile
+        private var deft: SourceFilter? = null
+
+        /**
+         * Populate the lookup table of filters and the default from the properties
+         * file.
+         */
+        init {
+            val map: MutableMap<String, Class<SourceFilter>> = PluginUtil.getImplementorsMap(SourceFilter::class.java)
+
+            // the default value
+            try {
+                val cdeft = map.remove("default")
+                deft = cdeft!!.getDeclaredConstructor().newInstance()
+            } catch (e: ReflectiveOperationException) {
+                log.error("Failed to get default filter, will attempt to use first", e)
+            }
+
+            // the lookup table
+            var instance: SourceFilter? = null
+            for (entry in map.entries) {
+                try {
+                    instance = ReflectionUtil.construct<SourceFilter>(entry.value)
+                    addFilter(entry.key, instance)
+                } catch (e: ReflectiveOperationException) {
+                    log.error("Failed to add filter", e)
+                }
+            }
+
+            // if the default didn't work then make a stab at an answer
+            if (deft == null) {
+                deft = instance
+            }
         }
     }
 }

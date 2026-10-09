@@ -17,13 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter;
+/**
+ * This data package manages the filtering of book data returned by the various books.
+ *
+ * <p>There are a number of SourceFilters that are designed to marshal text from THML,
+ * GBF, OSIS or plain text into a BookData object. The Filters class gives
+ * access to these,</p>
+ */
+package org.crosswire.jsword.book.filter
 
-import java.util.List;
-
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
 
 /**
  * A generic interface for things that can convert a String into OSIS data.
@@ -31,7 +36,7 @@ import org.jdom2.Content;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface SourceFilter extends Cloneable {
+interface SourceFilter : Cloneable {
     /**
      * Converter from plain (encoded) text to OSIS data
      * 
@@ -42,7 +47,7 @@ public interface SourceFilter extends Cloneable {
      *            The encoded text
      * @return a List of OSIS Elements
      */
-    List<Content> toOSIS(Book book, Key key, String plain);
+    fun toOSIS(book: Book?, key: Key?, plain: String?): MutableList<Content>
 
     /**
      * This needs to be declared here so that it is visible as a method on a
@@ -50,5 +55,5 @@ public interface SourceFilter extends Cloneable {
      * 
      * @return A complete copy of ourselves
      */
-    SourceFilter clone();
+    public override fun clone(): SourceFilter
 }

@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install;
+package org.crosswire.jsword.book.install
 
-import org.crosswire.common.util.LucidException;
+import org.crosswire.common.util.LucidException
 
 /**
  * Something went wrong with a Book.
@@ -27,16 +27,14 @@ import org.crosswire.common.util.LucidException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class InstallException extends LucidException {
+open class InstallException : LucidException {
     /**
      * Construct the Exception with a message
      * 
      * @param msg
      *            The resource id to read
      */
-    public InstallException(String msg) {
-        super(msg);
-    }
+    constructor(msg: String?) : super(msg)
 
     /**
      * Construct the Exception with a message and a nested Exception
@@ -46,12 +44,12 @@ public class InstallException extends LucidException {
      * @param ex
      *            The nested Exception
      */
-    public InstallException(String msg, Throwable ex) {
-        super(msg, ex);
-    }
+    constructor(msg: String?, ex: Throwable?) : super(msg, ex)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3258132440416335669L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3258132440416335669L
+    }
 }
