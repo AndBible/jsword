@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install.sword;
+package org.crosswire.jsword.book.install.sword
 
-import org.crosswire.common.util.MsgBase;
+import org.crosswire.common.util.MsgBase
 
 /**
  * Compile safe Msg resource settings.
@@ -27,27 +27,29 @@ import org.crosswire.common.util.MsgBase;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-final class FTPMsg extends MsgBase {
-    static final MsgBase AUTH_REFUSED = new FTPMsg("SwordInstaller.AuthRefused");
-    static final MsgBase CONNECT_REFUSED = new FTPMsg("SwordInstaller.ConnectRefused");
-    static final MsgBase CWD_REFUSED = new FTPMsg("SwordInstaller.CWDRefused");
-    static final MsgBase DOWNLOAD_REFUSED = new FTPMsg("SwordInstaller.DownloadRefused");
-    static final MsgBase URL_AT_COUNT = new FTPMsg("SwordInstallerFactory.URLAtCount");
-    static final MsgBase URL_COLON_COUNT = new FTPMsg("SwordInstallerFactory.URLColonCount");
-
-    /**
-     * Passthrough ctor
-     */
-    private FTPMsg(String name) {
-        super();
-        this.name = name;
-    }
-
+internal class FTPMsg
+/**
+ * Passthrough ctor
+ */
+private constructor(
     /**
      * @return the name
      */
-    public String getName() {
-        return name;
+    val name: String
+) : MsgBase() {
+    // was package-private: Kotlin has no package visibility, internal compiles to public
+    companion object {
+        @JvmField
+        val AUTH_REFUSED: MsgBase = FTPMsg("SwordInstaller.AuthRefused")
+        @JvmField
+        val CONNECT_REFUSED: MsgBase = FTPMsg("SwordInstaller.ConnectRefused")
+        @JvmField
+        val CWD_REFUSED: MsgBase = FTPMsg("SwordInstaller.CWDRefused")
+        @JvmField
+        val DOWNLOAD_REFUSED: MsgBase = FTPMsg("SwordInstaller.DownloadRefused")
+        @JvmField
+        val URL_AT_COUNT: MsgBase = FTPMsg("SwordInstallerFactory.URLAtCount")
+        @JvmField
+        val URL_COLON_COUNT: MsgBase = FTPMsg("SwordInstallerFactory.URLColonCount")
     }
-    private String name;
 }

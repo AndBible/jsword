@@ -17,15 +17,15 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.readings;
+package org.crosswire.jsword.book.readings
 
-import java.text.MessageFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.text.MessageFormat
+import java.util.Calendar
+import java.util.Date
 
-import org.crosswire.common.icu.DateFormatter;
-import org.crosswire.jsword.passage.DefaultLeafKeyList;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.common.icu.DateFormatter
+import org.crosswire.jsword.passage.DefaultLeafKeyList
+import org.crosswire.jsword.passage.Key
 
 /**
  * For a readings dictionary the keys are dates.
@@ -34,7 +34,7 @@ import org.crosswire.jsword.passage.Key;
  * @author Joe Walker
  * @author DM Smith
  */
-public class ReadingsKey extends DefaultLeafKeyList {
+open class ReadingsKey : DefaultLeafKeyList {
     /**
      * Simple Constructor.
      * 
@@ -46,12 +46,12 @@ public class ReadingsKey extends DefaultLeafKeyList {
      * @param parent
      *            This Key's parent (or null of this Key has no parent)
      */
-    protected ReadingsKey(String text, String osisName, Key parent) {
-        super(text, osisName, parent);
-
-        DateFormatter formatter = DateFormatter.getDateInstance();
-        formatter.setLenient(true);
-        date = formatter.parse(text);
+    // Java had this constructor protected, used from ReadingsBook in the same package; a Kotlin protected
+    // constructor is not visible to a package neighbour, so internal (which compiles to public).
+    internal constructor(text: String?, osisName: String?, parent: Key?) : super(text, osisName, parent) {
+        val formatter = DateFormatter.getDateInstance()
+        formatter.setLenient(true)
+        date = formatter.parse(text)
     }
 
     /**
@@ -60,76 +60,75 @@ public class ReadingsKey extends DefaultLeafKeyList {
      * @param date
      *            The date for this key
      */
-    protected ReadingsKey(Date date) {
-        super(DateFormatter.getDateInstance().format(date), DateFormatter.getSimpleDateInstance("d.MMMM").format(date));
-        this.date = date;
+    // Java had this constructor protected, see above.
+    internal constructor(date: Date?) : super(DateFormatter.getDateInstance().format(date), DateFormatter.getSimpleDateInstance("d.MMMM").format(date)) {
+        this.date = date
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
         }
 
         // Since this can not be null
-        if (obj == null) {
-            return false;
+        if (other == null) {
+            return false
         }
 
         // Check that that is the same as this
         // Don't use instanceof since that breaks inheritance
-        if (!obj.getClass().equals(this.getClass())) {
-            return false;
+        if (other.javaClass != this.javaClass) {
+            return false
         }
 
         // The real bit ...
-        ReadingsKey that = (ReadingsKey) obj;
+        val that = other as ReadingsKey
 
-        return getName().equals(that.getName());
+        return getName() == that.getName()
     }
 
-    @Override
-    public int hashCode() {
-        return date.hashCode();
+    override fun hashCode(): Int {
+        return date!!.hashCode()
     }
 
-    @Override
-    public int compareTo(Key obj) {
-        ReadingsKey that = (ReadingsKey) obj;
-        return this.date.compareTo(that.date);
+    override fun compareTo(other: Key?): Int {
+        val that = other as ReadingsKey
+        return this.date!!.compareTo(that.date!!)
     }
 
-    @Override
-    public ReadingsKey clone() {
-        return (ReadingsKey) super.clone();
-    }
-
-    /**
-     * Convert the Gregorian Calendar to a string.
-     * 
-     * @param externalKey
-     * @return the internal representation of the key
-     */
-    public static String external2internal(Calendar externalKey) {
-        Object[] objs = {
-                Integer.valueOf(1 + externalKey.get(Calendar.MONTH)), Integer.valueOf(externalKey.get(Calendar.DATE))
-        };
-        return KEY_FORMAT.format(objs);
-
+    override fun clone(): ReadingsKey {
+        return super.clone() as ReadingsKey
     }
 
     /**
      * The day of the year for the readings
      */
-    private Date date;
+    private var date: Date? = null
 
-    /**
-     * Date formatter
-     */
-    private static final MessageFormat KEY_FORMAT = new MessageFormat("{0,number,00}.{1,number,00}");
+    companion object {
+        /**
+         * Convert the Gregorian Calendar to a string.
+         * 
+         * @param externalKey
+         * @return the internal representation of the key
+         */
+        @JvmStatic
+        fun external2internal(externalKey: Calendar): String {
+            val objs = arrayOf<Any?>(
+                Integer.valueOf(1 + externalKey.get(Calendar.MONTH)), Integer.valueOf(externalKey.get(Calendar.DATE))
+            )
+            return KEY_FORMAT.format(objs)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -5500401548068844993L;
+        }
+
+        /**
+         * Date formatter
+         */
+        private val KEY_FORMAT: MessageFormat = MessageFormat("{0,number,00}.{1,number,00}")
+
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID: Long = -5500401548068844993L
+    }
 }

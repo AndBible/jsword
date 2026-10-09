@@ -17,20 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.readings;
+package org.crosswire.jsword.book.readings
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException
+import java.util.ArrayList
 
-import org.crosswire.common.util.NetUtil;
-import org.crosswire.common.util.ResourceUtil;
-import org.crosswire.common.util.URIFilter;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookCategory;
-import org.crosswire.jsword.book.BookDriver;
-import org.crosswire.jsword.book.basic.AbstractBookDriver;
+import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.ResourceUtil
+import org.crosswire.common.util.URIFilter
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookCategory
+import org.crosswire.jsword.book.BookDriver
+import org.crosswire.jsword.book.basic.AbstractBookDriver
 
 /**
  * A driver for the readings dictionary.
@@ -38,18 +36,23 @@ import org.crosswire.jsword.book.basic.AbstractBookDriver;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ReadingsBookDriver extends AbstractBookDriver {
+open class ReadingsBookDriver : AbstractBookDriver() {
+    /**
+     * The meta data array
+     */
+    private var books: Array<Book>? = null
+
     /**
      * Setup the array of BookMetaDatas
      */
-    public ReadingsBookDriver() {
-        List<Book> bookList = new ArrayList<Book>();
-        String[] installedBooks = getInstalledReadingsSets();
-        for (int i = 0; i < installedBooks.length; i++) {
-            bookList.add(new ReadingsBook(this, installedBooks[i], BookCategory.DAILY_DEVOTIONS));
+    init {
+        val bookList: MutableList<Book> = ArrayList<Book>()
+        val installedBooks = getInstalledReadingsSets()
+        for (i in installedBooks.indices) {
+            bookList.add(ReadingsBook(this, installedBooks[i], BookCategory.DAILY_DEVOTIONS))
         }
 
-        books = bookList.toArray(new Book[bookList.size()]);
+        books = bookList.toTypedArray()
     }
 
     /*
@@ -57,8 +60,8 @@ public class ReadingsBookDriver extends AbstractBookDriver {
      * 
      * @see org.crosswire.jsword.book.BookDriver#getBooks()
      */
-    public Book[] getBooks() {
-        return books == null ? null : (Book[]) books.clone();
+    override fun getBooks(): Array<Book> {
+        return books!!.clone()
     }
 
     /*
@@ -66,17 +69,8 @@ public class ReadingsBookDriver extends AbstractBookDriver {
      * 
      * @see org.crosswire.jsword.book.BookDriver#getDriverName()
      */
-    public String getDriverName() {
-        return "Readings";
-    }
-
-    /**
-     * Get the singleton instance of this driver.
-     * 
-     * @return this driver instance
-     */
-    public static BookDriver instance() {
-        return INSTANCE;
+    override fun getDriverName(): String {
+        return "Readings"
     }
 
     /**
@@ -84,36 +78,44 @@ public class ReadingsBookDriver extends AbstractBookDriver {
      *
      * @return all the installed reading sets
      */
-    public String[] getInstalledReadingsSets() {
+    open fun getInstalledReadingsSets(): Array<String> {
         try {
-            URL index = ResourceUtil.getResource(ReadingsBookDriver.class, "readings.txt");
-            return NetUtil.listByIndexFile(NetUtil.toURI(index), new ReadingsFilter());
-        } catch (IOException ex) {
-            return new String[0];
+            val index = ResourceUtil.getResource(ReadingsBookDriver::class.java, "readings.txt")
+            return NetUtil.listByIndexFile(NetUtil.toURI(index)!!, ReadingsFilter())
+        } catch (ex: IOException) {
+            return arrayOf<String>()
         }
     }
 
     /**
      * Get all files mentioned by readings.txt
      */
-    static final class ReadingsFilter implements URIFilter {
-        public boolean accept(String name) {
-            return true;
+    // was package-private: Kotlin has no package visibility, internal compiles to public
+    internal class ReadingsFilter : URIFilter {
+        override fun accept(name: String?): Boolean {
+            return true
         }
     }
 
-    /**
-     * The meta data array
-     */
-    private Book[] books;
+    companion object {
+        /**
+         * Get the singleton instance of this driver.
+         * 
+         * @return this driver instance
+         */
+        @JvmStatic
+        fun instance(): BookDriver {
+            return INSTANCE
+        }
 
-    /**
-     * Resources subdir for readings sets
-     */
-    public static final String DIR_READINGS = "readings";
+        /**
+         * Resources subdir for readings sets
+         */
+        const val DIR_READINGS: String = "readings"
 
-    /**
-     * A shared instance of this driver.
-     */
-    private static final BookDriver INSTANCE = new ReadingsBookDriver();
+        /**
+         * A shared instance of this driver.
+         */
+        private val INSTANCE: BookDriver = ReadingsBookDriver()
+    }
 }

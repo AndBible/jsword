@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install.sword;
+package org.crosswire.jsword.book.install.sword
 
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.book.install.Installer;
-import org.crosswire.jsword.book.install.InstallerFactory;
+import java.util.regex.Pattern
 
-import java.util.regex.Pattern;
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.install.Installer
+import org.crosswire.jsword.book.install.InstallerFactory
 
 /**
  * A Factory for instances of HttpsSwordInstaller.
@@ -33,14 +33,14 @@ import java.util.regex.Pattern;
  * @author Joe Walker
  * @author DM Smith
  */
-public class HttpsSwordInstallerFactory implements InstallerFactory {
+open class HttpsSwordInstallerFactory : InstallerFactory {
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.book.install.InstallerFactory#createInstaller()
      */
-    public Installer createInstaller() {
-        return new HttpsSwordInstaller();
+    override fun createInstaller(): Installer {
+        return HttpsSwordInstaller()
     }
 
     /*
@@ -50,60 +50,58 @@ public class HttpsSwordInstallerFactory implements InstallerFactory {
      * org.crosswire.jsword.book.install.InstallerFactory#createInstaller(java
      * .lang.String)
      */
-    public Installer createInstaller(String installerDefinition) {
-        String[] parts = commaPattern.split(installerDefinition, 6);
-        switch (parts.length) {
-        case 4:
-            return createOldInstaller(parts);
-        case 6:
-            return createInstaller(parts);
-        default:
-            throw new IllegalArgumentException(JSOtherMsg.lookupText("Not enough / symbols in url: {0}", installerDefinition));
+    override fun createInstaller(url: String): Installer {
+        val parts = commaPattern.split(url, 6)
+        when (parts.size) {
+            4 -> return createOldInstaller(parts)
+            6 -> return createInstaller(parts)
+            else -> throw IllegalArgumentException(JSOtherMsg.lookupText("Not enough / symbols in url: {0}", url))
         }
-
     }
 
-    private Installer createInstaller(String[] parts) {
-        AbstractSwordInstaller reply = new HttpsSwordInstaller();
+    private fun createInstaller(parts: Array<String>): Installer {
+        val reply: AbstractSwordInstaller = HttpsSwordInstaller()
 
-        reply.setHost(parts[0]);
-        reply.setPackageDirectory(parts[1]);
-        reply.setCatalogDirectory(parts[2]);
-        if (parts[3].length() > 0) {
-            reply.setProxyHost(parts[3]);
-            if (parts[4].length() > 0) {
-                reply.setProxyPort(Integer.valueOf(parts[4]));
+        reply.setHost(parts[0])
+        reply.setPackageDirectory(parts[1])
+        reply.setCatalogDirectory(parts[2])
+        if (parts[3].length > 0) {
+            reply.setProxyHost(parts[3])
+            if (parts[4].length > 0) {
+                reply.setProxyPort(Integer.valueOf(parts[4]))
             }
         }
 
-        return reply;
+        return reply
     }
 
-    private Installer createOldInstaller(String[] parts) {
-        AbstractSwordInstaller reply = new HttpsSwordInstaller();
+    private fun createOldInstaller(parts: Array<String>): Installer {
+        val reply: AbstractSwordInstaller = HttpsSwordInstaller()
 
-        reply.setHost(parts[0]);
-        reply.setPackageDirectory(parts[1] + '/' + PACKAGE_DIR);
-        reply.setCatalogDirectory(parts[1] + '/' + LIST_DIR);
-        if (parts[2].length() > 0) {
-            reply.setProxyHost(parts[2]);
-            if (parts[3].length() > 0) {
-                reply.setProxyPort(Integer.valueOf(parts[3]));
+        reply.setHost(parts[0])
+        reply.setPackageDirectory(parts[1] + '/' + PACKAGE_DIR)
+        reply.setCatalogDirectory(parts[1] + '/' + LIST_DIR)
+        if (parts[2].length > 0) {
+            reply.setProxyHost(parts[2])
+            if (parts[3].length > 0) {
+                reply.setProxyPort(Integer.valueOf(parts[3]))
             }
         }
 
-        return reply;
+        return reply
     }
 
-    /**
-     * The relative path of the dir holding the zip files
-     */
-    protected static final String PACKAGE_DIR = "packages/rawzip";
+    private val commaPattern: Pattern = Pattern.compile(",")
 
-    /**
-     * The relative path of the dir holding the index file
-     */
-    private static final String LIST_DIR = "raw";
+    companion object {
+        /**
+         * The relative path of the dir holding the zip files
+         */
+        protected const val PACKAGE_DIR: String = "packages/rawzip"
 
-    private Pattern commaPattern = Pattern.compile(",");
+        /**
+         * The relative path of the dir holding the index file
+         */
+        private const val LIST_DIR: String = "raw"
+    }
 }

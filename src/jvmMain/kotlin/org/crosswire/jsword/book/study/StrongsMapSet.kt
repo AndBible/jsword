@@ -17,13 +17,11 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.book.study;
+package org.crosswire.jsword.book.study
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.HashMap
+import java.util.Locale
+import java.util.TreeSet
 
 /**
  * A StrongsMapSet is keyed by a Strong's Number of the form Gd or Hd, where G
@@ -34,13 +32,12 @@ import java.util.TreeSet;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class StrongsMapSet {
-    /**
-     * Build an empty Strong's Map Set.
-     */
-    public StrongsMapSet() {
-        map = new HashMap<String, Set<String>>();
-    }
+open class StrongsMapSet
+/**
+ * Build an empty Strong's Map Set.
+ */
+() {
+    private var map: MutableMap<String?, MutableSet<String>> = HashMap<String?, MutableSet<String>>()
 
     /**
      * Add a String representing the content of an instance of a Strong's Number
@@ -51,13 +48,13 @@ public class StrongsMapSet {
      * @param representation
      *            a way the Strong's number is represented.
      */
-    public void add(String strongsNumber, String representation) {
-        Set<String> reps = map.get(strongsNumber);
+    open fun add(strongsNumber: String?, representation: String?) {
+        var reps = map.get(strongsNumber)
         if (reps == null) {
-            reps = new TreeSet<String>();
-            map.put(strongsNumber, reps);
+            reps = TreeSet<String>()
+            map.put(strongsNumber, reps)
         }
-        reps.add(representation.toLowerCase(Locale.ENGLISH));
+        reps.add(representation!!.lowercase(Locale.ENGLISH))
     }
 
     /**
@@ -66,9 +63,7 @@ public class StrongsMapSet {
      * @param strongsNumber
      * @return the whole set
      */
-    public Set<String> get(String strongsNumber) {
-        return map.get(strongsNumber);
+    open fun get(strongsNumber: String?): MutableSet<String>? {
+        return map.get(strongsNumber)
     }
-
-    private Map<String, Set<String>> map;
 }

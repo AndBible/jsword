@@ -17,28 +17,32 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+/**
+ * A Filter that converts from THML format data to OSIS format data.
+ *
+ * <p>See <a href="http://www.ccel.org/ThML/ThML1.04.htm">http://www.ccel.org/ThML/ThML1.04.htm</a>
+ * for more information.</p>
+ */
+package org.crosswire.jsword.book.filter.thml
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
+import java.io.IOException
+import java.io.StringReader
+import javax.xml.parsers.ParserConfigurationException
+import javax.xml.parsers.SAXParserFactory
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.crosswire.common.xml.XMLUtil;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.book.filter.SourceFilter;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
-import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.common.xml.XMLUtil
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.SourceFilter
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
+import org.jdom2.Element
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.xml.sax.InputSource
+import org.xml.sax.SAXException
+import org.xml.sax.SAXParseException
 
 /**
  * Filter to convert THML to OSIS format.
@@ -53,126 +57,134 @@ import org.xml.sax.SAXParseException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class THMLFilter implements SourceFilter {
+open class THMLFilter : SourceFilter, Cloneable {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public List<Content> toOSIS(Book book, Key key, String plain) {
-        Element ele = cleanParse(book, key, plain);
+    override fun toOSIS(book: Book?, key: Key?, plain: String?): MutableList<Content> {
+        var ele: Element? = cleanParse(book, key, plain)
 
         if (ele == null) {
-            if (error instanceof SAXParseException) {
-                SAXParseException spe = (SAXParseException) error;
-                int colNumber = spe.getColumnNumber();
-                int start = Math.max(0, colNumber - 40);
-                int stop = Math.min(finalInput.length(), colNumber + 40);
-                int here = stop - start;
+            val failure = error
+            if (failure is SAXParseException) {
+                val spe: SAXParseException = failure
+                val colNumber = spe.columnNumber
+                val start = Math.max(0, colNumber - 40)
+                val stop = Math.min(finalInput!!.length, colNumber + 40)
+                val here = stop - start
                 log.warn("Could not fix {}({}) by {}: Error here({},{},{}): {}",
-                         book.getInitials(),
-                         key.getName(),
+                         book!!.initials,
+                         key!!.getName(),
                          errorMessage,
                          Integer.toString(colNumber),
-                         Integer.toString(finalInput.length()),
+                         Integer.toString(finalInput!!.length),
                          Integer.toString(here),
-                         finalInput.substring(start, stop));
+                         finalInput!!.substring(start, stop))
             } else {
                 log.warn("Could not fix {}({}) by {}: {}",
-                         book.getInitials(),
-                         key.getName(),
+                         book!!.initials,
+                         key!!.getName(),
                          errorMessage,
-                         error.getMessage());
+                         error!!.message)
             }
-            ele = OSISUtil.factory().createP();
+            ele = OSISUtil.factory().createP()
         }
 
-        return ele.removeContent();
+        return ele.removeContent()
     }
 
-    @Override
-    public THMLFilter clone() {
-        THMLFilter clone = null;
+    override fun clone(): THMLFilter {
+        var clone: THMLFilter? = null
         try {
-            clone = (THMLFilter) super.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            clone = super<Cloneable>.clone() as THMLFilter
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 
-    private Element cleanParse(Book book, Key key, String plain) {
+    private fun cleanParse(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things
-        String clean = XMLUtil.cleanAllEntities(plain);
-        Element ele = parse(book, key, clean, "cleaning entities");
+        val clean = XMLUtil.cleanAllEntities(plain)
+        var ele = parse(book, key, clean, "cleaning entities")
 
         if (ele == null) {
-            ele = cleanText(book, key, clean);
+            ele = cleanText(book, key, clean)
         }
 
-        return ele;
+        return ele
     }
 
-    private Element cleanText(Book book, Key key, String plain) {
+    private fun cleanText(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things
-        String clean = XMLUtil.cleanAllCharacters(plain);
-        Element ele = parse(book, key, clean, "cleaning text");
+        val clean = XMLUtil.cleanAllCharacters(plain!!)
+        var ele = parse(book, key, clean, "cleaning text")
 
         if (ele == null) {
-            ele = parse(book, key, XMLUtil.closeEmptyTags(clean), "closing empty tags");
+            ele = parse(book, key, XMLUtil.closeEmptyTags(clean), "closing empty tags")
         }
 
         if (ele == null) {
-            ele = cleanTags(book, key, clean);
+            ele = cleanTags(book, key, clean)
         }
 
-        return ele;
+        return ele
     }
 
-    private Element cleanTags(Book book, Key key, String plain) {
+    private fun cleanTags(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things
-        String clean = XMLUtil.cleanAllTags(plain);
-        return parse(book, key, clean, "cleaning tags");
+        val clean = XMLUtil.cleanAllTags(plain)
+        return parse(book, key, clean, "cleaning tags")
     }
 
-    private Element parse(Book book, Key key, String plain, String failMessage) {
-        Exception ex = null;
+    private fun parse(book: Book?, key: Key?, plain: String?, failMessage: String): Element? {
+        var ex: Exception? = null
         // We need to create a root element to house our document fragment
         // 15 for the tags we add
-        StringBuilder buf = new StringBuilder(15 + plain.length());
-        buf.append('<').append(RootTag.TAG_ROOT).append('>').append(plain).append("</").append(RootTag.TAG_ROOT).append('>');
-        finalInput = buf.toString();
+        val buf = StringBuilder(15 + plain!!.length)
+        buf.append('<').append(TAG_ROOT).append('>').append(plain).append("</").append(TAG_ROOT).append('>')
+        finalInput = buf.toString()
         try {
-            StringReader in = new StringReader(finalInput);
-            InputSource is = new InputSource(in);
-            SAXParserFactory spf = SAXParserFactory.newInstance();
-            SAXParser parser = spf.newSAXParser();
-            CustomHandler handler = new CustomHandler(book, key);
+            val `in` = StringReader(finalInput)
+            val `is` = InputSource(`in`)
+            val spf = SAXParserFactory.newInstance()
+            val parser = spf.newSAXParser()
+            val handler = CustomHandler(book, key)
 
-            parser.parse(is, handler);
-            return handler.getRootElement();
-        } catch (SAXParseException e) {
-            ex = e;
-        } catch (SAXException e) {
-            ex = e;
-        } catch (IOException e) {
-            ex = e;
-        } catch (ParserConfigurationException e) {
-            ex = e;
-        } catch (IllegalArgumentException e) {
+            parser.parse(`is`, handler)
+            return handler.rootElement
+        } catch (e: SAXParseException) {
+            ex = e
+        } catch (e: SAXException) {
+            ex = e
+        } catch (e: IOException) {
+            ex = e
+        } catch (e: ParserConfigurationException) {
+            ex = e
+        } catch (e: IllegalArgumentException) {
             // JDOM has a few exceptions which are all derived from this.
-            ex = e;
+            ex = e
         }
 
-        errorMessage = failMessage;
-        error = ex;
-        return null;
+        errorMessage = failMessage
+        error = ex
+        return null
     }
 
-    private String errorMessage;
-    private Exception error;
-    private String finalInput;
+    private var errorMessage: String? = null
+    private var error: Exception? = null
+    private var finalInput: String? = null
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(THMLFilter.class);
+    private companion object {
+        /**
+         * The name of the root element that is added around the fragment. This is
+         * RootTag.TAG_ROOT, which is protected in Kotlin (and so not visible here).
+         */
+        private const val TAG_ROOT = "root"
+
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(THMLFilter::class.java)
+    }
 }

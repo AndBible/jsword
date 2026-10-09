@@ -17,45 +17,43 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.readings;
+/**
+ * An implementation of BookDriver and Dictionary that read provide access to
+ * readings planners.
+ */
+package org.crosswire.jsword.book.readings
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.TreeMap;
+import java.util.ArrayList
+import java.util.Collections
+import java.util.Date
+import java.util.Locale
+import java.util.MissingResourceException
+import java.util.ResourceBundle
+import java.util.TreeMap
 
-import org.crosswire.common.util.CWClassLoader;
-import org.crosswire.common.util.Language;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.book.BookCategory;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.FeatureType;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.book.basic.AbstractBook;
-import org.crosswire.jsword.book.basic.DefaultBookMetaData;
-import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
-import org.crosswire.jsword.internationalisation.LocaleProviderManager;
-import org.crosswire.jsword.passage.DefaultKeyList;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.NoSuchKeyException;
-import org.crosswire.jsword.passage.Passage;
-import org.crosswire.jsword.passage.PassageKeyFactory;
-import org.crosswire.jsword.passage.PreferredKey;
-import org.crosswire.jsword.passage.RestrictionType;
-import org.crosswire.jsword.passage.SetKeyList;
-import org.crosswire.jsword.passage.VerseRange;
-import org.crosswire.jsword.versification.system.Versifications;
-import org.jdom2.Content;
-import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.CWClassLoader
+import org.crosswire.common.util.Language
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.BookCategory
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.FeatureType
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.basic.AbstractBook
+import org.crosswire.jsword.book.basic.DefaultBookMetaData
+import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
+import org.crosswire.jsword.passage.DefaultKeyList
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.NoSuchKeyException
+import org.crosswire.jsword.passage.PassageKeyFactory
+import org.crosswire.jsword.passage.PreferredKey
+import org.crosswire.jsword.passage.RestrictionType
+import org.crosswire.jsword.passage.SetKeyList
+import org.crosswire.jsword.versification.system.Versifications
+import org.jdom2.Content
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A Dictionary that displays daily Readings.
@@ -63,209 +61,212 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ReadingsBook extends AbstractBook implements PreferredKey {
+open class ReadingsBook
+/**
+ * Constructor for ReadingsBook.
+ * @param driver the driver for this book
+ * @param setname the name of this book
+ * @param type the type of book
+ */
+(driver: ReadingsBookDriver?, setname: String?, type: BookCategory?) : AbstractBook(null, null), PreferredKey { // set the book metadata later and no backend
     /**
-     * Constructor for ReadingsBook.
-     * @param driver the driver for this book
-     * @param setname the name of this book
-     * @param type the type of book
+     * The global key list
      */
-    public ReadingsBook(ReadingsBookDriver driver, String setname, BookCategory type) {
-        super(null, null); // set the book metadata later and no backend
+    private val global: Key
 
-        hash = new TreeMap<Key, String>();
+    /**
+     * The store of keys and data
+     */
+    private val hash: MutableMap<Key, String> = TreeMap<Key, String>()
 
+    init {
         //although we're getting this from the LocaleProviderManager, we're still setting 
         //the language on the metadata once, so won't cope for dynamic changes
-        Locale defaultLocale = LocaleProviderManager.getLocale();
-        ResourceBundle prop = ResourceBundle.getBundle(setname, defaultLocale, CWClassLoader.instance(ReadingsBookDriver.class));
+        val defaultLocale = LocaleProviderManager.getLocale()
+        val prop = ResourceBundle.getBundle(setname, defaultLocale, CWClassLoader.instance(ReadingsBookDriver::class.java))
 
         // TRANSLATOR: The default name for JSword's Reading plan.
-        String name = JSMsg.gettext("Readings");
+        var bookName = JSMsg.gettext("Readings")
         try {
-            name = prop.getString("title");
-        } catch (MissingResourceException e) {
-            log.warn("Missing resource: 'title' while parsing: {}", setname);
+            bookName = prop.getString("title")
+        } catch (e: MissingResourceException) {
+            log.warn("Missing resource: 'title' while parsing: {}", setname)
         }
 
-        DefaultBookMetaData bmd = new DefaultBookMetaData(driver, name, type);
-        bmd.setInitials(setname);
-        bmd.setLanguage(new Language(defaultLocale.getLanguage()));
-        setBookMetaData(bmd);
+        val bmd = DefaultBookMetaData(driver, bookName, type)
+        bmd.setInitials(setname)
+        bmd.language = Language(defaultLocale.language)
+        bookMetaData = bmd
 
         // Go through the current year
-        java.util.Calendar greg = new java.util.GregorianCalendar();
-        greg.set(java.util.Calendar.DAY_OF_MONTH, 1);
-        greg.set(java.util.Calendar.MONDAY, java.util.Calendar.JANUARY);
-        int currentYear = greg.get(java.util.Calendar.YEAR);
+        val greg: java.util.Calendar = java.util.GregorianCalendar()
+        greg.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        greg.set(java.util.Calendar.MONDAY, java.util.Calendar.JANUARY)
+        val currentYear = greg.get(java.util.Calendar.YEAR)
 
         while (greg.get(java.util.Calendar.YEAR) == currentYear) {
-            String internalKey = ReadingsKey.external2internal(greg);
-            String readings = "";
+            val internalKey = ReadingsKey.external2internal(greg)
+            var readings = ""
 
             try {
-                readings = prop.getString(internalKey);
-                hash.put(new ReadingsKey(greg.getTime()), readings);
-            } catch (MissingResourceException e) {
-                log.warn("Missing resource: {} while parsing: {}", internalKey, setname);
+                readings = prop.getString(internalKey)
+                hash.put(ReadingsKey(greg.time), readings)
+            } catch (e: MissingResourceException) {
+                log.warn("Missing resource: {} while parsing: {}", internalKey, setname)
             }
 
-            greg.add(java.util.Calendar.DATE, 1);
+            greg.add(java.util.Calendar.DATE, 1)
         }
 
-        global = new SetKeyList(hash.keySet(), getName());
+        global = SetKeyList(hash.keys, name)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.PreferredKey#getPreferred()
      */
-    public Key getPreferred() {
-        return new ReadingsKey(new Date());
+    override fun getPreferred(): Key {
+        return ReadingsKey(Date())
     }
 
-    public Iterator<Content> getOsisIterator(final Key key, final boolean allowEmpty, final boolean allowGenTitles) throws BookException {
-        if (!(key instanceof ReadingsKey)) {
+    @Throws(BookException::class)
+    override fun getOsisIterator(key: Key?, allowEmpty: Boolean, allowGenTitles: Boolean): MutableIterator<Content> {
+        if (key !is ReadingsKey) {
             // TRANSLATOR: Error condition: Indicates that something could not be found in the book. {0} is a placeholder for the unknown key.
-            throw new BookException(JSMsg.gettext("Key not found {0}", key.getName()));
+            throw BookException(JSMsg.gettext("Key not found {0}", key!!.getName()))
         }
 
         // TODO(DMS): make the iterator be demand driven
-        List<Content> content = new ArrayList<Content>();
+        val content: MutableList<Content> = ArrayList<Content>()
 
-        Element title = OSISUtil.factory().createTitle();
-        title.addContent(key.getName());
-        content.add(title);
+        val title = OSISUtil.factory().createTitle()
+        title.addContent(key.getName())
+        content.add(title)
 
-        String readings = hash.get(key);
+        val readings = hash.get(key)
         if (readings == null) {
             // TRANSLATOR: Error condition: Indicates that something could not be found in the book. {0} is a placeholder for the unknown key.
-            throw new BookException(JSMsg.gettext("Key not found {0}", key.getName()));
+            throw BookException(JSMsg.gettext("Key not found {0}", key.getName()))
         }
 
         try {
             // AV11N(DMS): Is this right?
             // At this point and time, ReadingsBook is a verse list from the KJV.
             // Should store the v11n in the ReadingsBook
-            PassageKeyFactory keyf = PassageKeyFactory.instance();
-            Passage ref = keyf.getKey(Versifications.instance().getVersification("KJV"), readings);
+            val keyf = PassageKeyFactory.instance()
+            val ref = keyf.getKey(Versifications.instance().getVersification("KJV"), readings)
 
-            Element list = OSISUtil.factory().createList();
-            content.add(list);
+            val list = OSISUtil.factory().createList()
+            content.add(list)
 
-            Iterator<VerseRange> it = ref.rangeIterator(RestrictionType.NONE);
+            val it = ref.rangeIterator(RestrictionType.NONE)
             while (it.hasNext()) {
-                Key range = it.next();
+                val range: Key = it.next()
 
-                Element reading = OSISUtil.factory().createReference();
-                reading.setAttribute(OSISUtil.OSIS_ATTR_REF, range.getOsisRef());
-                reading.addContent(range.getName());
+                val reading = OSISUtil.factory().createReference()
+                reading.setAttribute(OSISUtil.OSIS_ATTR_REF, range.getOsisRef())
+                reading.addContent(range.getName())
 
-                Element item = OSISUtil.factory().createItem();
-                item.addContent(reading);
-                list.addContent(item);
+                val item = OSISUtil.factory().createItem()
+                item.addContent(reading)
+                list.addContent(item)
             }
-        } catch (NoSuchKeyException ex) {
-            content.add(OSISUtil.factory().createText(JSOtherMsg.lookupText("Failed to parse {0}", readings)));
+        } catch (ex: NoSuchKeyException) {
+            content.add(OSISUtil.factory().createText(JSOtherMsg.lookupText("Failed to parse {0}", readings)))
         }
 
-        return content.iterator();
+        return content.iterator()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        return false;
+    override fun contains(key: Key?): Boolean {
+        return false
     }
 
     /** Returns an empty string
      * (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getRawText(org.crosswire.jsword.passage.Key)
      */
-    public String getRawText(Key key) throws BookException {
-        return "";
+    @Throws(BookException::class)
+    override fun getRawText(key: Key?): String {
+        return ""
     }
 
     /**
      * Returns an empty list
      */
-    @Override
-    public List<Content> getOsis(Key key, RawTextToXmlProcessor processor) throws BookException {
-        return Collections.emptyList();
+    @Throws(BookException::class)
+    public override fun getOsis(key: Key?, noOpRawTextProcessor: RawTextToXmlProcessor?): List<Content> {
+        return Collections.emptyList()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isWritable()
      */
-    public boolean isWritable() {
-        return false;
+    override fun isWritable(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#setRawText(org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public void setRawText(Key key, String rawData) throws BookException {
-        throw new BookException(JSOtherMsg.lookupText("This Book is read-only."));
+    @Throws(BookException::class)
+    override fun setRawText(key: Key?, rawData: String?) {
+        throw BookException(JSOtherMsg.lookupText("This Book is read-only."))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#setAliasKey(org.crosswire.jsword.passage.Key, org.crosswire.jsword.passage.Key)
      */
-    public void setAliasKey(Key alias, Key source) throws BookException {
-        throw new BookException(JSOtherMsg.lookupText("This Book is read-only."));
+    @Throws(BookException::class)
+    override fun setAliasKey(alias: Key?, source: Key?) {
+        throw BookException(JSOtherMsg.lookupText("This Book is read-only."))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getValidKey(java.lang.String)
      */
-    public Key getValidKey(String name) {
+    override fun getValidKey(name: String?): Key {
         try {
-            return getKey(name);
-        } catch (NoSuchKeyException e) {
-            return createEmptyKeyList();
+            return getKey(name)
+        } catch (e: NoSuchKeyException) {
+            return createEmptyKeyList()
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getKey(java.lang.String)
      */
-    public Key getKey(String name) throws NoSuchKeyException {
-        DefaultKeyList reply = new DefaultKeyList();
-        reply.addAll(new ReadingsKey(name, name, global));
-        return reply;
+    @Throws(NoSuchKeyException::class)
+    override fun getKey(name: String?): Key {
+        val reply = DefaultKeyList()
+        reply.addAll(ReadingsKey(name, name, global))
+        return reply
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getGlobalKeyList()
      */
-    public Key getGlobalKeyList() {
-        return global;
+    override fun getGlobalKeyList(): Key {
+        return global
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#createEmptyKeyList()
      */
-    public Key createEmptyKeyList() {
-        return new DefaultKeyList();
+    override fun createEmptyKeyList(): Key {
+        return DefaultKeyList()
     }
 
-    @Override
-    public boolean hasFeature(FeatureType feature) {
-        return feature == FeatureType.DAILY_DEVOTIONS;
+    override fun hasFeature(feature: FeatureType?): Boolean {
+        return feature == FeatureType.DAILY_DEVOTIONS
     }
 
-    /**
-     * The global key list
-     */
-    private Key global;
-
-    /**
-     * The store of keys and data
-     */
-    private Map<Key, String> hash;
-
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(ReadingsBook.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(ReadingsBook::class.java)
+    }
 }

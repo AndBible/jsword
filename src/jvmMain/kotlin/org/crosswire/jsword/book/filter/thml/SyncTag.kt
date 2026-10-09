@@ -17,18 +17,16 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import java.util.List;
-
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.DataPolice;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
-import org.jdom2.Element;
-import org.jdom2.Text;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.DataPolice
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
+import org.jdom2.Element
+import org.jdom2.Text
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the sync element. A sync tag is always empty and
@@ -42,119 +40,117 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class SyncTag extends AbstractTag {
+open class SyncTag : AbstractTag() {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
      */
-    public String getTagName() {
-        return "sync";
-    }
+    override val tagName: String
+        get() = "sync"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
         // Strong's reference
-        String type = attrs.getValue("type");
-        String value = attrs.getValue("value");
+        val type = attrs!!.getValue("type")
+        val value = attrs.getValue("value")
 
-        if ("Strongs".equals(type)) {
-            List<Content> siblings = ele.getContent();
-            int size = siblings.size();
+        if ("Strongs" == type) {
+            val siblings = ele!!.content
+            val size = siblings.size
             if (size == 0) {
-                return null;
+                return null
             }
-            Content lastEle = siblings.get(size - 1);
-            if (lastEle instanceof Text) {
-                Element w = OSISUtil.factory().createW();
-                w.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, OSISUtil.LEMMA_STRONGS + value);
-                siblings.set(size - 1, w);
-                w.addContent(lastEle);
-            } else if (lastEle instanceof Element) {
-                Element wEle = (Element) lastEle;
-                if (wEle.getName().equals(OSISUtil.OSIS_ELEMENT_W)) {
-                    StringBuilder buf = new StringBuilder();
-                    String strongsAttr = wEle.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA);
+            val lastEle: Content = siblings[size - 1]
+            if (lastEle is Text) {
+                val w = OSISUtil.factory().createW()
+                w.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, OSISUtil.LEMMA_STRONGS + value)
+                siblings[size - 1] = w
+                w.addContent(lastEle)
+            } else if (lastEle is Element) {
+                val wEle: Element = lastEle
+                if (wEle.name == OSISUtil.OSIS_ELEMENT_W) {
+                    val buf = StringBuilder()
+                    val strongsAttr = wEle.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA)
                     if (strongsAttr != null) {
-                        buf.append(strongsAttr);
-                        buf.append(' ');
+                        buf.append(strongsAttr)
+                        buf.append(' ')
                     }
-                    buf.append(OSISUtil.LEMMA_STRONGS);
-                    buf.append(value);
-                    wEle.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, buf.toString());
+                    buf.append(OSISUtil.LEMMA_STRONGS)
+                    buf.append(value)
+                    wEle.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, buf.toString())
                 }
             }
-            return null;
+            return null
         }
 
-        if ("morph".equals(type)) {
-            List<Content> siblings = ele.getContent();
-            int size = siblings.size();
+        if ("morph" == type) {
+            val siblings = ele!!.content
+            val size = siblings.size
             if (size == 0) {
-                return null;
+                return null
             }
-            Content lastEle = siblings.get(size - 1);
-            if (lastEle instanceof Text) {
-                Element w = OSISUtil.factory().createW();
-                w.setAttribute(OSISUtil.ATTRIBUTE_W_MORPH, OSISUtil.MORPH_ROBINSONS + value);
-                siblings.set(size - 1, w);
-                w.addContent(lastEle);
-            } else if (lastEle instanceof Element) {
-                Element wEle = (Element) lastEle;
-                if (wEle.getName().equals(OSISUtil.OSIS_ELEMENT_W)) {
-                    StringBuilder buf = new StringBuilder();
-                    String strongsAttr = wEle.getAttributeValue(OSISUtil.ATTRIBUTE_W_MORPH);
+            val lastEle: Content = siblings[size - 1]
+            if (lastEle is Text) {
+                val w = OSISUtil.factory().createW()
+                w.setAttribute(OSISUtil.ATTRIBUTE_W_MORPH, OSISUtil.MORPH_ROBINSONS + value)
+                siblings[size - 1] = w
+                w.addContent(lastEle)
+            } else if (lastEle is Element) {
+                val wEle: Element = lastEle
+                if (wEle.name == OSISUtil.OSIS_ELEMENT_W) {
+                    val buf = StringBuilder()
+                    val strongsAttr = wEle.getAttributeValue(OSISUtil.ATTRIBUTE_W_MORPH)
                     if (strongsAttr != null) {
-                        buf.append(strongsAttr);
-                        buf.append(' ');
+                        buf.append(strongsAttr)
+                        buf.append(' ')
                     }
-                    buf.append(OSISUtil.MORPH_ROBINSONS);
-                    buf.append(value);
-                    wEle.setAttribute(OSISUtil.ATTRIBUTE_W_MORPH, buf.toString());
+                    buf.append(OSISUtil.MORPH_ROBINSONS)
+                    buf.append(value)
+                    wEle.setAttribute(OSISUtil.ATTRIBUTE_W_MORPH, buf.toString())
                 }
             }
-            return null;
+            return null
         }
 
-        if ("lemma".equals(type)) {
-            List<Content> siblings = ele.getContent();
-            int size = siblings.size();
+        if ("lemma" == type) {
+            val siblings = ele!!.content
+            val size = siblings.size
             if (size == 0) {
-                return null;
+                return null
             }
-            Content lastEle = siblings.get(size - 1);
-            if (lastEle instanceof Text) {
-                Element w = OSISUtil.factory().createW();
-                w.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, OSISUtil.LEMMA_MISC + value);
-                siblings.set(size - 1, w);
-                w.addContent(lastEle);
-            } else if (lastEle instanceof Element) {
-                Element wEle = (Element) lastEle;
-                if (wEle.getName().equals(OSISUtil.OSIS_ELEMENT_W)) {
-                    StringBuilder buf = new StringBuilder();
-                    String lemmaAttr = wEle.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA);
+            val lastEle: Content = siblings[size - 1]
+            if (lastEle is Text) {
+                val w = OSISUtil.factory().createW()
+                w.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, OSISUtil.LEMMA_MISC + value)
+                siblings[size - 1] = w
+                w.addContent(lastEle)
+            } else if (lastEle is Element) {
+                val wEle: Element = lastEle
+                if (wEle.name == OSISUtil.OSIS_ELEMENT_W) {
+                    val buf = StringBuilder()
+                    val lemmaAttr = wEle.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA)
                     if (lemmaAttr != null) {
-                        buf.append(lemmaAttr);
-                        buf.append(' ');
+                        buf.append(lemmaAttr)
+                        buf.append(' ')
                     }
-                    buf.append(OSISUtil.LEMMA_MISC);
-                    buf.append(value);
-                    wEle.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, buf.toString());
+                    buf.append(OSISUtil.LEMMA_MISC)
+                    buf.append(value)
+                    wEle.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, buf.toString())
                 }
             }
-            return null;
+            return null
         }
 
-        if ("Dict".equals(type)) {
-            Element div = OSISUtil.factory().createDiv();
-            div.setAttribute(OSISUtil.OSIS_ATTR_OSISID, "dict://" + value);
+        if ("Dict" == type) {
+            val div = OSISUtil.factory().createDiv()
+            div.setAttribute(OSISUtil.OSIS_ATTR_OSISID, "dict://" + value)
 
             if (ele != null) {
-                ele.addContent(div);
+                ele.addContent(div)
             }
 
-            return div;
+            return div
         }
 
-        DataPolice.report(book, key, "sync tag has type=" + type + " when value=" + value);
-        return null;
+        DataPolice.report(book, key, "sync tag has type=" + type + " when value=" + value)
+        return null
     }
 }

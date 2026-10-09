@@ -17,11 +17,13 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.book.study;
+/**
+ *Classes to analyze the usage of Strong's numbers.
+ */
+package org.crosswire.jsword.book.study
 
-import java.text.DecimalFormat;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.text.DecimalFormat
+import java.util.regex.Pattern
 
 /**
  * A Strong's Number is either Greek or Hebrew, where the actual numbers for
@@ -45,15 +47,15 @@ import java.util.regex.Pattern;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class StrongsNumber {
+open class StrongsNumber {
     /**
      * Build an immutable Strong's Number.
      * 
      * @param input
      *            a string that needs to be parsed.
      */
-    public StrongsNumber(String input) {
-        valid = parse(input);
+    constructor(input: String?) {
+        valid = parse(input)
     }
 
     /**
@@ -62,9 +64,7 @@ public class StrongsNumber {
      * @param language
      * @param strongsNumber
      */
-    public StrongsNumber(char language, short strongsNumber) {
-        this(language, strongsNumber, null);
-    }
+    constructor(language: Char, strongsNumber: Short) : this(language, strongsNumber, null)
 
     /**
      * Build an immutable Strong's Number.
@@ -73,11 +73,11 @@ public class StrongsNumber {
      * @param strongsNumber
      * @param part 
      */
-    public StrongsNumber(char language, short strongsNumber, String part) {
-        this.language = language;
-        this.strongsNumber = strongsNumber;
-        this.part = part;
-        valid = isValid();
+    constructor(language: Char, strongsNumber: Short, part: String?) {
+        this.language = language
+        this.strongsNumber = strongsNumber.toInt()
+        this.part = part
+        valid = isValid()
     }
 
     /**
@@ -85,11 +85,11 @@ public class StrongsNumber {
      * 
      * @return the strongsNumber
      */
-    public String getStrongsNumber() {
-        StringBuilder buf = new StringBuilder(5);
-        buf.append(language);
-        buf.append(ZERO_PAD.format(strongsNumber));
-        return buf.toString();
+    open fun getStrongsNumber(): String {
+        val buf = StringBuilder(5)
+        buf.append(language)
+        buf.append(ZERO_PAD.format(strongsNumber.toLong()))
+        return buf.toString()
     }
 
     /**
@@ -97,36 +97,34 @@ public class StrongsNumber {
      * 
      * @return the strongsNumber
      */
-    public String getFullStrongsNumber() {
-        StringBuilder buf = new StringBuilder(5);
-        buf.append(language);
-        buf.append(ZERO_PAD.format(strongsNumber));
-        if (part != null) {
-            buf.append(part);
+    open val fullStrongsNumber: String
+        get() {
+            val buf = StringBuilder(5)
+            buf.append(language)
+            buf.append(ZERO_PAD.format(strongsNumber.toLong()))
+            if (part != null) {
+                buf.append(part)
+            }
+            return buf.toString()
         }
-        return buf.toString();
-    }
 
     /**
      * @return true if the Strong's number is for Greek
      */
-    public boolean isGreek() {
-        return language == 'G';
-    }
+    open val isGreek: Boolean
+        get() = language == 'G'
 
     /**
      * @return true if the Strong's number is for Hebrew
      */
-    public boolean isHebrew() {
-        return language == 'H';
-    }
+    open val isHebrew: Boolean
+        get() = language == 'H'
 
     /**
      * @return true if this Strong's number is identified by a sub part
      */
-    public boolean isPart() {
-        return part != null;
-    }
+    open val isPart: Boolean
+        get() = part != null
 
     /**
      * Validates the number portion of this StrongsNumber.
@@ -138,9 +136,9 @@ public class StrongsNumber {
      * 
      * @return true if the Strong's number is in range.
      */
-    public boolean isValid() {
+    open fun isValid(): Boolean {
         if (!valid) {
-            return false;
+            return false
         }
 
         // Dig deeper.
@@ -149,7 +147,7 @@ public class StrongsNumber {
                 && strongsNumber >= 1
                 && strongsNumber <= 8674)
         {
-            return true;
+            return true
         }
 
         if (language == 'G'
@@ -159,11 +157,11 @@ public class StrongsNumber {
                         || (strongsNumber > 3302 && strongsNumber < 5624)
                         || (strongsNumber > 5999 && strongsNumber < 10000)))
         {
-            return true;
+            return true
         }
 
-        valid = false;
-        return false;
+        valid = false
+        return false
     }
 
     /*
@@ -171,10 +169,9 @@ public class StrongsNumber {
      * 
      * @see java.lang.Object#hashCode()
      */
-    @Override
-    public int hashCode() {
-        int result = 31 + language;
-        return 31 * result + strongsNumber;
+    override fun hashCode(): Int {
+        val result = 31 + language.code
+        return 31 * result + strongsNumber
     }
 
     /*
@@ -182,19 +179,18 @@ public class StrongsNumber {
      * 
      * @see java.lang.Object#equals(java.lang.Object)
      */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
         }
 
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
+        if (other == null || javaClass != other.javaClass) {
+            return false
         }
 
-        final StrongsNumber other = (StrongsNumber) obj;
+        val that = other as StrongsNumber
 
-        return language == other.language && strongsNumber == other.strongsNumber;
+        return language == that.language && strongsNumber == that.strongsNumber
     }
 
     /*
@@ -202,9 +198,8 @@ public class StrongsNumber {
      * 
      * @see java.lang.Object#toString()
      */
-    @Override
-    public String toString() {
-        return getStrongsNumber();
+    override fun toString(): String {
+        return getStrongsNumber()
     }
 
     /**
@@ -213,67 +208,66 @@ public class StrongsNumber {
      * @param input
      * @return true when the input looks like a Strong's Number
      */
-    private boolean parse(String input) {
-        String text = input;
-        language = 'U';
-        strongsNumber = 9999;
-        part = "";
+    private fun parse(input: String?): Boolean {
+        val text = input
+        language = 'U'
+        strongsNumber = 9999
+        part = ""
 
         // Does it match
-        Matcher m = STRONGS_PATTERN.matcher(text);
+        val m = STRONGS_PATTERN.matcher(text)
         if (!m.lookingAt()) {
-            return false;
+            return false
         }
 
-        String lang = m.group(1);
-        language = lang.charAt(0);
-        switch (language) {
-        case 'g':
-            language = 'G';
-            break;
-        case 'h':
-            language = 'H';
-            break;
-        default:
-            // pass through
+        val lang = m.group(1)
+        language = lang[0]
+        when (language) {
+            'g' -> language = 'G'
+            'h' -> language = 'H'
+            else -> {
+                // pass through
+            }
         }
 
         // Get the number after the G or H
         try {
-            strongsNumber = Integer.parseInt(m.group(2));
-        } catch (NumberFormatException e) {
-            strongsNumber = 0; // An invalid Strong's Number
-            return false;
+            strongsNumber = Integer.parseInt(m.group(2))
+        } catch (e: NumberFormatException) {
+            strongsNumber = 0 // An invalid Strong's Number
+            return false
         }
 
         // FYI: OSIS refers to what follows a ! as a grain
-        part = m.group(3);
-        return true;
+        part = m.group(3)
+        return true
     }
 
     /**
      * Whether it is Greek (G) or Hebrew (H).
      */
-    private char language;
+    private var language: Char = '\u0000'
 
     /**
      * The Strong's Number.
      */
-    private int strongsNumber;
+    private var strongsNumber: Int = 0
 
     /**
      * The part if any.
      */
-    private String part;
+    private var part: String? = null
 
     /*
      * The value is valid.
      */
-    private boolean valid;
+    private var valid: Boolean = false
 
-    /**
-     * The pattern of an acceptable Strong's number.
-     */
-    private static final Pattern STRONGS_PATTERN = Pattern.compile("([GgHh])([0-9]*)!?([A-Za-z]+)?");
-    private static final DecimalFormat ZERO_PAD = new DecimalFormat("0000");
+    private companion object {
+        /**
+         * The pattern of an acceptable Strong's number.
+         */
+        private val STRONGS_PATTERN: Pattern = Pattern.compile("([GgHh])([0-9]*)!?([A-Za-z]+)?")
+        private val ZERO_PAD: DecimalFormat = DecimalFormat("0000")
+    }
 }

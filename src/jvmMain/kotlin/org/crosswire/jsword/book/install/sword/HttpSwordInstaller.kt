@@ -17,18 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install.sword;
+package org.crosswire.jsword.book.install.sword
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URI
+import java.net.URISyntaxException
 
-import org.crosswire.common.progress.Progress;
-import org.crosswire.common.util.LucidException;
-import org.crosswire.common.util.NetUtil;
-import org.crosswire.common.util.WebResource;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.install.InstallException;
+import org.crosswire.common.progress.Progress
+import org.crosswire.common.util.LucidException
+import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.WebResource
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.install.InstallException
 
 /**
  * An implementation of Installer for reading data from Sword Web sites.
@@ -38,56 +38,55 @@ import org.crosswire.jsword.book.install.InstallException;
  * @author Joe Walker
  * @author DM Smith
  */
-public class HttpSwordInstaller extends AbstractSwordInstaller {
+open class HttpSwordInstaller : AbstractSwordInstaller() {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#getType()
      */
-    public String getType() {
-        return "sword-http";
+    override fun getType(): String {
+        return "sword-http"
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#getSize(org.crosswire.jsword.book.Book)
      */
-    public int getSize(final Book book) {
-        return NetUtil.getSize(toRemoteURI(book), proxyHost, proxyPort);
+    override fun getSize(book: Book): Int {
+        return NetUtil.getSize(toRemoteURI(book)!!, proxyHost, proxyPort)
     }
 
-    @Override
-    public Long indexLastUpdated() {
-        return 0L;
+    override fun indexLastUpdated(): Long? {
+        return 0L
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#toRemoteURI(org.crosswire.jsword.book.Book)
      */
-    public URI toRemoteURI(final Book book) {
+    override fun toRemoteURI(book: Book): URI? {
         try {
-            return new URI(NetUtil.PROTOCOL_HTTP, host, packageDirectory + '/' + book.getInitials() + ZIP_SUFFIX, null);
-        } catch (URISyntaxException e) {
-            return null;
+            return URI(NetUtil.PROTOCOL_HTTP, host, packageDirectory + '/' + book.initials + ZIP_SUFFIX, null)
+        } catch (e: URISyntaxException) {
+            return null
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#download(org.crosswire.common.progress.Progress, java.lang.String, java.lang.String, java.net.URI)
      */
-    @Override
-    protected void download(Progress job, String dir, String file, URI dest) throws InstallException {
-        URI uri;
+    @Throws(InstallException::class)
+    override fun download(job: Progress?, dir: String?, file: String?, dest: URI?) {
+        val uri: URI
         try {
-            uri = new URI(NetUtil.PROTOCOL_HTTP, host, dir + '/' + file, null);
-        } catch (URISyntaxException ex) {
+            uri = URI(NetUtil.PROTOCOL_HTTP, host, dir + '/' + file, null)
+        } catch (ex: URISyntaxException) {
             // TRANSLATOR: Common error condition: {0} is a placeholder for the URL of what could not be found.
-            throw new InstallException(JSMsg.gettext("Unable to find: {0}", dir + '/' + file), ex);
+            throw InstallException(JSMsg.gettext("Unable to find: {0}", dir + '/' + file), ex)
         }
 
         try {
-            copy(job, uri, dest);
-        } catch (LucidException ex) {
+            copy(job, uri, dest)
+        } catch (ex: LucidException) {
             // TRANSLATOR: Common error condition: {0} is a placeholder for the URL of what could not be found.
-            throw new InstallException(JSMsg.gettext("Unable to find: {0}", uri.toString()), ex);
+            throw InstallException(JSMsg.gettext("Unable to find: {0}", uri.toString()), ex)
         }
     }
 
@@ -97,39 +96,38 @@ public class HttpSwordInstaller extends AbstractSwordInstaller {
      * @param dest
      * @throws LucidException
      */
-    private void copy(Progress job, URI uri, URI dest) throws LucidException {
+    @Throws(LucidException::class)
+    private fun copy(job: Progress?, uri: URI, dest: URI?) {
         if (job != null) {
             // TRANSLATOR: Progress label for downloading one or more files.
-            job.setSectionName(JSMsg.gettext("Downloading files"));
+            job.sectionName = JSMsg.gettext("Downloading files")
         }
 
-        WebResource wr = new WebResource(uri, proxyHost, proxyPort);
-        wr.copy(dest, job);
-        wr.shutdown();
+        val wr = WebResource(uri, proxyHost, proxyPort)
+        wr.copy(dest, job)
+        wr.shutdown()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#equals(java.lang.Object)
      */
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof HttpSwordInstaller)) {
-            return false;
+    override fun equals(other: Any?): Boolean {
+        if (other !is HttpSwordInstaller) {
+            return false
         }
-        HttpSwordInstaller that = (HttpSwordInstaller) object;
+        val that: HttpSwordInstaller = other
 
         if (!super.equals(that)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#hashCode()
      */
-    @Override
-    public int hashCode() {
-        return super.hashCode();
+    override fun hashCode(): Int {
+        return super.hashCode()
     }
 }
