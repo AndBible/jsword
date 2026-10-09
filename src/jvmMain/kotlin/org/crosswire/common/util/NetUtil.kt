@@ -646,49 +646,11 @@ private constructor() {
         @Throws(IOException::class)
         fun listByIndexFile(index: URI, filter: URIFilter?): Array<String> {
             var `in`: InputStream? = null
-            var din: BufferedReader? = null
             try {
                 `in` = getInputStream(index)
-                // Quiet Android from complaining about using the default BufferReader buffer size.
-                // The actual buffer size is undocumented. So this is a good idea any way.
-                din = BufferedReader(InputStreamReader(`in`), 8192)
-
-                // We still need to do the filtering
-                val list: MutableList<String> = ArrayList()
-
-                while (true) {
-                    val line = din.readLine()
-
-                    if (line == null) {
-                        break
-                    }
-
-                    var name: String = line
-
-                    // Strip comments from the line
-                    val len = name.length
-                    var commentPos = 0
-                    while (commentPos < len && name[commentPos] != '#') {
-                        ++commentPos // test does the work
-                    }
-
-                    if (commentPos < len) {
-                        name = name.substring(0, commentPos)
-                    }
-
-                    // we need to trim extraneous whitespace on the line
-                    // (java.lang.String.trim() strips everything up to U+0020, unlike Kotlin's trim())
-                    name = name.trim { it <= ' ' }
-
-                    // Is it acceptable?
-                    if (name.length > 0 && name != INDEX_FILE && filter!!.accept(name)) {
-                        list.add(name)
-                    }
-                }
-
-                return list.toTypedArray()
+                val text = `in`.readBytes().decodeToString()
+                return IndexFiles.parse(text) { filter!!.accept(it) }.toTypedArray()
             } finally {
-                IOUtil.close(din)
                 IOUtil.close(`in`)
             }
         }
