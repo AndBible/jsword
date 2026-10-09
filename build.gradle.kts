@@ -26,6 +26,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation("org.jetbrains.kotlinx:atomicfu:0.33.0")
+            implementation("com.squareup.okio:okio:3.9.0")
         }
         jvmMain.dependencies {
             implementation("org.apache.commons:commons-compress:1.12")
@@ -37,6 +38,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation("com.squareup.okio:okio-fakefilesystem:3.9.0")
         }
         jvmTest.dependencies {
             implementation("junit:junit:4.13")
