@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.gbf;
+package org.crosswire.jsword.book.filter.gbf
 
 /**
  * A Tag that has a tagname from the input.
@@ -25,20 +25,9 @@ package org.crosswire.jsword.book.filter.gbf;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractTag implements Tag {
-    /**
-     * @param name
-     */
-    public AbstractTag(String name) {
-        this.name = name;
-    }
-
+abstract class AbstractTag(
     /**
      * @return Returns the name.
      */
-    public String getName() {
-        return name;
-    }
-
-    private String name;
-}
+    open val name: String
+) : Tag

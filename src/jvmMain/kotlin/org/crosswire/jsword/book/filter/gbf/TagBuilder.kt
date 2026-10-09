@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.gbf;
+package org.crosswire.jsword.book.filter.gbf
 
 /**
  * A class that packages start and end Tags together.
@@ -25,7 +25,7 @@ package org.crosswire.jsword.book.filter.gbf;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface TagBuilder {
+interface TagBuilder {
     /**
      * Is the <code>name</code> one that we can create a Tag for?. If so then we
      * return a Tag, but if not we return null.
@@ -34,5 +34,5 @@ public interface TagBuilder {
      *            The tag name to test
      * @return a new tag or null if the name isn't one we know about
      */
-    Tag createTag(String name);
+    fun createTag(name: String): Tag?
 }

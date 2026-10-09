@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.gbf;
+package org.crosswire.jsword.book.filter.gbf
 
-import java.util.LinkedList;
+import java.util.LinkedList
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
 
 /**
  * GBF Tag interface.
@@ -31,7 +31,7 @@ import org.jdom2.Content;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Tag {
+interface Tag {
     /**
      * Sub-classes should implement this method to generate OSIS Object
      * 
@@ -39,5 +39,5 @@ public interface Tag {
      * @param key 
      * @param osisStack 
      */
-    void updateOsisStack(Book book, Key key, LinkedList<Content> osisStack);
+    fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>)
 }

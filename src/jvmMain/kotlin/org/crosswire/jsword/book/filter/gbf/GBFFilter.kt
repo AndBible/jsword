@@ -17,19 +17,24 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.gbf;
+/**
+ * A Filter that converts from GBF format data to OSIS format data.
+ *
+ * <p>See <a href="http://ebible.org/bible/gbf.htm">http://ebible.org/bible/gbf.htm</a>
+ * for more information.</p>
+ */
+package org.crosswire.jsword.book.filter.gbf
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList
+import java.util.LinkedList
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.DataPolice;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.book.filter.SourceFilter;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
-import org.jdom2.Element;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.DataPolice
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.SourceFilter
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
 
 /**
  * Filter to convert GBF data to OSIS format.
@@ -40,47 +45,47 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class GBFFilter implements SourceFilter {
+open class GBFFilter : SourceFilter, Cloneable {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public List<Content> toOSIS(Book book, Key key, String plain) {
-        Element ele = OSISUtil.factory().createDiv();
-        LinkedList<Content> stack = new LinkedList<Content>();
-        stack.addFirst(ele);
+    override fun toOSIS(book: Book?, key: Key?, plain: String?): MutableList<Content> {
+        val ele = OSISUtil.factory().createDiv()
+        val stack = LinkedList<Content>()
+        stack.addFirst(ele)
 
-        List<Tag> taglist = parseTags(book, key, plain.trim());
+        // String.trim() in Java removes every char <= ' ', which differs from Kotlin's trim()
+        val taglist = parseTags(book, key, plain!!.trim { it <= ' ' })
         while (true) {
             if (taglist.isEmpty()) {
-                break;
+                break
             }
 
-            Tag tag = taglist.remove(0);
-            tag.updateOsisStack(book, key, stack);
+            val tag = taglist.removeAt(0)
+            tag.updateOsisStack(book, key, stack)
         }
 
-        stack.removeFirst();
-        return ele.removeContent();
+        stack.removeFirst()
+        return ele.removeContent()
     }
 
-    @Override
-    public GBFFilter clone() {
-        GBFFilter clone = null;
+    override fun clone(): GBFFilter {
+        var clone: GBFFilter? = null
         try {
-            clone = (GBFFilter) super.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            clone = super<Cloneable>.clone() as GBFFilter
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 
     /**
      * Turn the string into a list of tags in the order that they appear in the
      * original string.
      */
-    private List<Tag> parseTags(Book book, Key key, String aRemains) {
-        String remains = aRemains;
-        List<Tag> taglist = new ArrayList<Tag>();
+    private fun parseTags(book: Book?, key: Key?, aRemains: String): MutableList<Tag> {
+        var remains = aRemains
+        val taglist: MutableList<Tag> = ArrayList()
 
         // A GBF code is of the form <XY...> or <Xy...>
         // where the first letter is always capitalized and
@@ -91,8 +96,8 @@ public class GBFFilter implements SourceFilter {
         // In GBF it is legal to have < and > otherwise.
         // In at least one module, GerLut1545, << ... >> is used for quotes.
         while (true) {
-            int ltpos = remains.indexOf('<');
-            int gtpos = remains.indexOf('>', ltpos + 1);
+            val ltpos = remains.indexOf('<')
+            val gtpos = remains.indexOf('>', ltpos + 1)
 
             // check whether we have unmatched < and >, or no tags at all
             // If so then we don't have a tag in the remaining.
@@ -100,24 +105,24 @@ public class GBFFilter implements SourceFilter {
                 // If the first letter after < is an upper case letter
                 // then report it as a potential problem
                 if (ltpos >= 0
-                        && ltpos < remains.length() + 1
-                        && Character.isUpperCase(remains.charAt(ltpos + 1)))
+                        && ltpos < remains.length + 1
+                        && Character.isUpperCase(remains[ltpos + 1]))
                 {
-                    DataPolice.report(book, key, "Possible bad GBF tag" + remains);
+                    DataPolice.report(book, key, "Possible bad GBF tag" + remains)
                 }
                 if (gtpos != -1 && ltpos >= 0) {
-                    DataPolice.report(book, key, "Possible bad GBF tag" + remains);
+                    DataPolice.report(book, key, "Possible bad GBF tag" + remains)
                 }
-                int pos = Math.max(ltpos, gtpos) + 1;
+                val pos = Math.max(ltpos, gtpos) + 1
                 // If there were not any <, > or either ended the string
                 // then we only have text.
-                if (pos == 0 || pos == remains.length()) {
-                    taglist.add(GBFTagBuilders.getTextTag(remains));
-                    break;
+                if (pos == 0 || pos == remains.length) {
+                    taglist.add(GBFTagBuilders.getTextTag(remains))
+                    break
                 }
-                taglist.add(GBFTagBuilders.getTextTag(remains.substring(0, pos)));
-                remains = remains.substring(pos);
-                continue;
+                taglist.add(GBFTagBuilders.getTextTag(remains.substring(0, pos)))
+                remains = remains.substring(pos)
+                continue
             }
 
             // If the character after the < is not an upper case letter
@@ -125,51 +130,54 @@ public class GBFFilter implements SourceFilter {
             // So, create a text tag that ends with the found >.
             // Note that in JST, there are spurious html tags and
             // this will treat them as valid GBF text.
-            char firstChar = remains.charAt(ltpos + 1);
+            val firstChar = remains[ltpos + 1]
             if (!Character.isUpperCase(firstChar)) {
-                taglist.add(GBFTagBuilders.getTextTag(remains.substring(0, gtpos + 1)));
-                remains = remains.substring(gtpos + 1);
-                continue;
+                taglist.add(GBFTagBuilders.getTextTag(remains.substring(0, gtpos + 1)))
+                remains = remains.substring(gtpos + 1)
+                continue
             }
 
             // generate tags
-            String start = remains.substring(0, ltpos);
-            int strLen = start.length();
+            val start = remains.substring(0, ltpos)
+            val strLen = start.length
             if (strLen > 0) {
-                int beginIndex = 0;
-                boolean inSepStr = SEPARATORS.indexOf(start.charAt(0)) >= 0;
+                var beginIndex = 0
+                var inSepStr = SEPARATORS.indexOf(start[0]) >= 0
                 // split words from separators...
                 // e.g., "a b c? e g." -> "a b c", "? ", "e g."
                 // "a b c<tag> e g." -> "a b c", tag, " ", "e g."
-                for (int i = 1; inSepStr && i < strLen; i++) {
-                    char currentChar = start.charAt(i);
+                var i = 1
+                while (inSepStr && i < strLen) {
+                    val currentChar = start[i]
                     if (!(SEPARATORS.indexOf(currentChar) >= 0)) {
-                        taglist.add(GBFTagBuilders.getTextTag(start.substring(beginIndex, i)));
-                        beginIndex = i;
-                        inSepStr = false;
+                        taglist.add(GBFTagBuilders.getTextTag(start.substring(beginIndex, i)))
+                        beginIndex = i
+                        inSepStr = false
                     }
+                    i++
                 }
 
                 if (beginIndex < strLen) {
-                    taglist.add(GBFTagBuilders.getTextTag(start.substring(beginIndex)));
+                    taglist.add(GBFTagBuilders.getTextTag(start.substring(beginIndex)))
                 }
             }
 
-            String tag = remains.substring(ltpos + 1, gtpos);
-            int length = tag.length();
+            val tag = remains.substring(ltpos + 1, gtpos)
+            val length = tag.length
             if (length > 0) {
-                Tag reply = GBFTagBuilders.getTag(book, key, tag);
+                val reply = GBFTagBuilders.getTag(book, key, tag)
                 if (reply != null) {
-                    taglist.add(reply);
+                    taglist.add(reply)
                 }
             }
 
-            remains = remains.substring(gtpos + 1);
+            remains = remains.substring(gtpos + 1)
         }
 
-        return taglist;
+        return taglist
     }
 
-    private static final String SEPARATORS = " ,:;.?!";
-
+    private companion object {
+        private const val SEPARATORS = " ,:;.?!"
+    }
 }

@@ -299,6 +299,39 @@ final class CorpusProbe {
                 }
                 return sb.toString();
             }
+            case "corpus.filter": {
+                // args: filter ("gbf", "osis" or "plaintext"), initials, inputs separated by U+0001. Serialized
+                // OSIS (raw format) of each filter run, or the exception; line breaks of input and output are escaped.
+                StringBuilder sb = new StringBuilder();
+                try {
+                    Book b = book(args.get(1));
+                    Key key = b.getKey("Gen 1:1");
+                    org.crosswire.jsword.book.filter.SourceFilter filter;
+                    switch (args.get(0)) {
+                        case "gbf":
+                            filter = new org.crosswire.jsword.book.filter.gbf.GBFFilter();
+                            break;
+                        case "osis":
+                            filter = new org.crosswire.jsword.book.filter.osis.OSISFilter();
+                            break;
+                        default:
+                            filter = new org.crosswire.jsword.book.filter.plaintext.PlainTextFilter();
+                            break;
+                    }
+                    for (String input : args.get(2).split("\u0001", -1)) {
+                        String line;
+                        try {
+                            line = rawContent(filter.clone().toOSIS(b, key, input));
+                        } catch (Exception e) {
+                            line = fail(e);
+                        }
+                        sb.append(escapeBreaks(input)).append(" => ").append(escapeBreaks(line)).append('\n');
+                    }
+                } catch (Exception e) {
+                    return fail(e);
+                }
+                return sb.toString();
+            }
             case "corpus.osis.diff": {
                 // args: pairs "source U+0002 target" separated by U+0001. diffToOsis of the cleaned-up diff.
                 StringBuilder sb = new StringBuilder();
@@ -463,6 +496,10 @@ final class CorpusProbe {
     private static String rawContent(List<org.jdom2.Content> content) {
         XMLOutputter out = new XMLOutputter(Format.getRawFormat());
         return out.outputString(content);
+    }
+
+    private static String escapeBreaks(String s) {
+        return s.replace("\r", "\\r").replace("\n", "\\n");
     }
 
     private static String fail(Exception e) {

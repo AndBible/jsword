@@ -17,17 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.plaintext;
+/**
+ * A Filter that converts from plain text format data to OSIS format data.
+ */
+package org.crosswire.jsword.book.filter.plaintext
 
-import java.util.List;
-
-import org.crosswire.common.util.StringUtil;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.book.filter.SourceFilter;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
-import org.jdom2.Element;
+import org.crosswire.common.util.StringUtil
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.SourceFilter
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
 
 /**
  * Filter to convert plain text to OSIS format. Plain text is nothing more than
@@ -37,37 +38,36 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class PlainTextFilter implements SourceFilter {
+open class PlainTextFilter : SourceFilter, Cloneable {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public List<Content> toOSIS(Book book, Key key, String plain) {
-        OSISUtil.OSISFactory factory = OSISUtil.factory();
-        Element ele = factory.createDiv();
+    override fun toOSIS(book: Book?, key: Key?, plain: String?): MutableList<Content> {
+        val factory = OSISUtil.factory()
+        val ele = factory.createDiv()
 
-        String[] lines = StringUtil.splitAll(plain, '\n');
-        int lastIndex = lines.length - 1;
-        for (int i = 0; i < lastIndex; i++) {
+        val lines = StringUtil.splitAll(plain, '\n')
+        val lastIndex = lines.size - 1
+        for (i in 0 until lastIndex) {
             // TODO(DMS): Preserve whitespace, in a smart manner.
-            ele.addContent(lines[i]);
-            ele.addContent(factory.createLB());
+            ele.addContent(lines[i])
+            ele.addContent(factory.createLB())
         }
         // Don't add a line break after the last line.
         if (lastIndex >= 0) {
-            ele.addContent(lines[lastIndex]);
+            ele.addContent(lines[lastIndex])
         }
 
-        return ele.removeContent();
+        return ele.removeContent()
     }
 
-    @Override
-    public PlainTextFilter clone() {
-        PlainTextFilter clone = null;
+    override fun clone(): PlainTextFilter {
+        var clone: PlainTextFilter? = null
         try {
-            clone = (PlainTextFilter) super.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            clone = super<Cloneable>.clone() as PlainTextFilter
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 }

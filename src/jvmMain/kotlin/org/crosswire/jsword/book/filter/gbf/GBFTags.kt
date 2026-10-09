@@ -17,22 +17,21 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.gbf;
+package org.crosswire.jsword.book.filter.gbf
 
-import java.util.LinkedList;
+import java.util.LinkedList
 
-import org.crosswire.common.util.ClassUtil;
-import org.crosswire.common.xml.XMLUtil;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.DataPolice;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.book.OSISUtil.OSISFactory;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.NoSuchKeyException;
-import org.crosswire.jsword.passage.Passage;
-import org.jdom2.Content;
-import org.jdom2.Element;
-import org.jdom2.Text;
+import org.crosswire.common.util.ClassUtil
+import org.crosswire.common.xml.XMLUtil
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.DataPolice
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.NoSuchKeyException
+import org.crosswire.jsword.passage.Passage
+import org.jdom2.Content
+import org.jdom2.Element
+import org.jdom2.Text
 
 /**
  * A holder of all of the GBF Tag Handler classes.
@@ -41,109 +40,75 @@ import org.jdom2.Text;
  * @author Joe Walker
  * @author DM Smith
  */
-public final class GBFTags {
-    /**
-     * Prevent instantiation.
-     */
-    private GBFTags() {
-    }
-
+class GBFTags private constructor() {
     /**
      *
+     * @param name
      */
-    public static final class DefaultEndTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public DefaultEndTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            if (stack.isEmpty()) {
-                DataPolice.report(book, key, "Ignoring end tag without corresponding start tag: " + getName());
-                return;
+    class DefaultEndTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            if (osisStack.isEmpty()) {
+                DataPolice.report(book, key, "Ignoring end tag without corresponding start tag: " + name)
+                return
             }
-            stack.removeFirst();
+            osisStack.removeFirst()
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class BoldStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public BoldStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createHI();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD);
-            GBFTags.updateOsisStack(stack, ele);
+    class BoldStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createHI()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD)
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class BookTitleStartTag extends AbstractTag {
-       /**
-        * @param name
-        */
-       public BookTitleStartTag(String name) {
-           super(name);
-       }
-
-       public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-           Element ele = OSIS_FACTORY.createTitle();
-           ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "main");
-           GBFTags.updateOsisStack(stack, ele);
-       }
-   }
-
-    public static final class CrossRefStartTag extends AbstractTag {
-        public CrossRefStartTag(String name) {
-            super(name);
+    class BookTitleStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createTitle()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "main")
+            updateOsisStack(osisStack, ele)
         }
+    }
 
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createReference();
+    class CrossRefStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createReference()
 
-            String refstr = getName().substring(2);
+            val refstr = name.substring(2)
             try {
-                Passage ref = (Passage) book.getKey(refstr);
-                ele.setAttribute(OSISUtil.OSIS_ATTR_REF, ref.getOsisRef());
-            } catch (NoSuchKeyException ex) {
-                DataPolice.report(book, key, "unable to parse reference: " + refstr);
+                val ref = book!!.getKey(refstr) as Passage
+                ele.setAttribute(OSISUtil.OSIS_ATTR_REF, ref.getOsisRef())
+            } catch (ex: NoSuchKeyException) {
+                DataPolice.report(book, key, "unable to parse reference: " + refstr)
             }
-            GBFTags.updateOsisStack(stack, ele);
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class EOLTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public EOLTag(String name) {
-            super(name);
-        }
+    class EOLTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
 
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-
-            Element p = OSIS_FACTORY.createLB();
-            if (stack.isEmpty()) {
-                stack.addFirst(p);
+            val p = OSIS_FACTORY.createLB()
+            if (osisStack.isEmpty()) {
+                osisStack.addFirst(p)
             } else {
-                Content top = stack.get(0);
-                if (top instanceof Element) {
-                    Element current = (Element) top;
-                    current.addContent(p);
+                val top = osisStack[0]
+                if (top is Element) {
+                    val current = top
+                    current.addContent(p)
                 }
             }
         }
@@ -151,51 +116,39 @@ public final class GBFTags {
 
     /**
      *
+     * @param name
      */
-    public static final class FootnoteStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public FootnoteStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createNote();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY);
-            GBFTags.updateOsisStack(stack, ele);
+    class FootnoteStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createNote()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY)
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class FootnoteEndTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public FootnoteEndTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            if (stack.isEmpty()) {
-                DataPolice.report(book, key, "Ignoring end tag without corresponding start tag: " + getName());
-                return;
+    class FootnoteEndTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            if (osisStack.isEmpty()) {
+                DataPolice.report(book, key, "Ignoring end tag without corresponding start tag: " + name)
+                return
             }
 
-            Object pop = stack.removeFirst();
-            if (!(pop instanceof Element)) {
-                DataPolice.report(book, key, "expected to pop a Note, but found " + ClassUtil.getShortClassName(pop.getClass()));
-                return;
+            val pop: Any = osisStack.removeFirst()
+            if (pop !is Element) {
+                DataPolice.report(book, key, "expected to pop a Note, but found " + ClassUtil.getShortClassName(pop.javaClass))
+                return
             }
 
-            Element note = (Element) pop;
-            if (note.getContentSize() < 1) {
-                Content top = stack.get(0);
-                if (top instanceof Element) {
-                    Element ele = (Element) top;
-                    ele.removeContent(note);
+            val note = pop
+            if (note.contentSize < 1) {
+                val top = osisStack[0]
+                if (top is Element) {
+                    val ele = top
+                    ele.removeContent(note)
                 }
             }
         }
@@ -203,128 +156,86 @@ public final class GBFTags {
 
     /**
      *
+     * @param name
      */
-    public static final class HeaderStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public HeaderStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            GBFTags.updateOsisStack(stack, OSIS_FACTORY.createTitle());
+    class HeaderStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            updateOsisStack(osisStack, OSIS_FACTORY.createTitle())
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class IgnoredTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public IgnoredTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
+    class IgnoredTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class ItalicStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public ItalicStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createHI();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_ITALIC);
-            GBFTags.updateOsisStack(stack, ele);
+    class ItalicStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createHI()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_ITALIC)
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class JustifyRightTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public JustifyRightTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
+    class JustifyRightTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
             // LATER(joe): is seg the right thing?
-            Element ele = OSIS_FACTORY.createSeg();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.SEG_JUSTIFYRIGHT);
-            GBFTags.updateOsisStack(stack, ele);
+            val ele = OSIS_FACTORY.createSeg()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.SEG_JUSTIFYRIGHT)
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class JustifyLeftTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public JustifyLeftTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createSeg();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.SEG_JUSTIFYLEFT);
-            GBFTags.updateOsisStack(stack, ele);
+    class JustifyLeftTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createSeg()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.SEG_JUSTIFYLEFT)
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class OTQuoteStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public OTQuoteStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            GBFTags.updateOsisStack(stack, OSIS_FACTORY.createQ());
+    class OTQuoteStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            updateOsisStack(osisStack, OSIS_FACTORY.createQ())
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class ParagraphTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public ParagraphTag(String name) {
-            super(name);
-        }
+    class ParagraphTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
 
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-
-            if (stack.isEmpty()) {
-                Element p = OSIS_FACTORY.createLB();
-                stack.addFirst(p);
+            if (osisStack.isEmpty()) {
+                val p = OSIS_FACTORY.createLB()
+                osisStack.addFirst(p)
             } else {
-                Element p = OSIS_FACTORY.createP();
-                Content top = stack.get(0);
-                if (top instanceof Element) {
-                    Element current = (Element) top;
-                    current.addContent(p);
+                val p = OSIS_FACTORY.createP()
+                val top = osisStack[0]
+                if (top is Element) {
+                    val current = top
+                    current.addContent(p)
                 }
             }
         }
@@ -332,167 +243,136 @@ public final class GBFTags {
 
     /**
      *
+     * @param name
      */
-    public static final class PoetryStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public PoetryStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            GBFTags.updateOsisStack(stack, OSIS_FACTORY.createLG());
+    class PoetryStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            updateOsisStack(osisStack, OSIS_FACTORY.createLG())
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class PsalmStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public PsalmStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
+    class PsalmStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
             // In OSIS Psalm titles are canonical
-            Element title = OSIS_FACTORY.createTitle();
-            title.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "psalm");
-            title.setAttribute(OSISUtil.OSIS_ATTR_SUBTYPE, "x-preverse");
-            title.setAttribute(OSISUtil.OSIS_ATTR_CANONICAL, "true");
-            GBFTags.updateOsisStack(stack, title);
+            val title = OSIS_FACTORY.createTitle()
+            title.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "psalm")
+            title.setAttribute(OSISUtil.OSIS_ATTR_SUBTYPE, "x-preverse")
+            title.setAttribute(OSISUtil.OSIS_ATTR_CANONICAL, "true")
+            updateOsisStack(osisStack, title)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class RedLetterStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public RedLetterStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createQ();
-            ele.setAttribute(OSISUtil.ATTRIBUTE_Q_WHO, "Jesus");
-            GBFTags.updateOsisStack(stack, ele);
+    class RedLetterStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createQ()
+            ele.setAttribute(OSISUtil.ATTRIBUTE_Q_WHO, "Jesus")
+            updateOsisStack(osisStack, ele)
         }
     }
 
-    /**
-     *
-     */
-    public static final class StrongsMorphTag extends AbstractTag {
-        public StrongsMorphTag(String name) {
-            super(name);
-        }
+    class StrongsMorphTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val name = name.trim { it <= ' ' }
 
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            String name = getName().trim();
-
-            Content top = stack.get(0);
-            if (top instanceof Element) {
-                Element ele = (Element) top;
-                int size = ele.getContentSize();
+            val top = osisStack[0]
+            if (top is Element) {
+                val ele = top
+                val size = ele.contentSize
                 if (size == 0) {
-                    DataPolice.report(book, key, "No content to attach Strong's Morph tag to: <" + name + ">.");
-                    return;
+                    DataPolice.report(book, key, "No content to attach Strong's Morph tag to: <" + name + ">.")
+                    return
                 }
 
-                int lastIndex = size - 1;
-                Content prevObj = ele.getContent(lastIndex);
-                Element word = null;
+                val lastIndex = size - 1
+                val prevObj = ele.getContent(lastIndex)
+                var word: Element? = null
 
-                if (prevObj instanceof Text) {
-                    word = OSIS_FACTORY.createW();
-                    ele.removeContent(prevObj);
-                    word.addContent(prevObj);
-                    ele.addContent(word);
-                } else if (prevObj instanceof Element) {
-                    word = (Element) prevObj;
+                if (prevObj is Text) {
+                    word = OSIS_FACTORY.createW()
+                    ele.removeContent(prevObj)
+                    word.addContent(prevObj)
+                    ele.addContent(word)
+                } else if (prevObj is Element) {
+                    word = prevObj
                 } else {
-                    DataPolice.report(book, key, "No words to attach Strong's Morph tag to: <" + name + ">.");
-                    return;
+                    DataPolice.report(book, key, "No words to attach Strong's Morph tag to: <" + name + ">.")
+                    return
                 }
 
-                String existingMorph = word.getAttributeValue(OSISUtil.ATTRIBUTE_W_MORPH);
-                StringBuilder newMorph = new StringBuilder();
+                val existingMorph = word.getAttributeValue(OSISUtil.ATTRIBUTE_W_MORPH)
+                val newMorph = StringBuilder()
 
-                if (existingMorph != null && existingMorph.length() > 0) {
-                    newMorph.append(existingMorph).append('|');
+                if (existingMorph != null && existingMorph.length > 0) {
+                    newMorph.append(existingMorph).append('|')
                 }
-                newMorph.append(OSISUtil.MORPH_STRONGS).append(name.substring(2));
-                word.setAttribute(OSISUtil.ATTRIBUTE_W_MORPH, newMorph.toString());
+                newMorph.append(OSISUtil.MORPH_STRONGS).append(name.substring(2))
+                word.setAttribute(OSISUtil.ATTRIBUTE_W_MORPH, newMorph.toString())
             }
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class StrongsWordTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public StrongsWordTag(String name) {
-            super(name);
-        }
+    class StrongsWordTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            var empty = false
+            val name = name.trim { it <= ' ' }
+            var word: Element? = null
 
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            boolean empty = false;
-            String name = getName().trim();
-            Element word = null;
-
-            Content top = stack.get(0);
-            if (top instanceof Element) {
-                Element ele = (Element) top;
-                int size = ele.getContentSize();
+            var top = osisStack[0]
+            if (top is Element) {
+                val ele = top
+                val size = ele.contentSize
                 if (size > 0) {
-                    int lastIndex = size - 1;
-                    Content prevObj = ele.getContent(lastIndex);
+                    val lastIndex = size - 1
+                    val prevObj = ele.getContent(lastIndex)
 
-                    if (prevObj instanceof Text) {
-                        Text textItem = (Text) prevObj;
-                        word = OSIS_FACTORY.createW();
-                        ele.removeContent(textItem);
-                        word.addContent(textItem);
-                        ele.addContent(word);
-                    } else if (prevObj instanceof Element) {
-                        word = (Element) prevObj;
+                    if (prevObj is Text) {
+                        val textItem = prevObj
+                        word = OSIS_FACTORY.createW()
+                        ele.removeContent(textItem)
+                        word.addContent(textItem)
+                        ele.addContent(word)
+                    } else if (prevObj is Element) {
+                        word = prevObj
                     }
                 }
             }
 
             if (word == null) {
-                word = OSIS_FACTORY.createW();
-                empty = true;
+                word = OSIS_FACTORY.createW()
+                empty = true
             }
 
-            String existingLemma = word.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA);
-            StringBuilder newLemma = new StringBuilder();
+            val existingLemma = word.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA)
+            val newLemma = StringBuilder()
 
             // Strong's numbers are separated by spaces w/in the attribute
-            if (existingLemma != null && existingLemma.length() > 0) {
-                newLemma.append(existingLemma).append(' ');
+            if (existingLemma != null && existingLemma.length > 0) {
+                newLemma.append(existingLemma).append(' ')
             }
 
             // Grab the G or H and the number that follows
-            newLemma.append(OSISUtil.LEMMA_STRONGS).append(name.substring(1));
-            word.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, newLemma.toString());
+            newLemma.append(OSISUtil.LEMMA_STRONGS).append(name.substring(1))
+            word.setAttribute(OSISUtil.ATTRIBUTE_W_LEMMA, newLemma.toString())
 
             if (empty) {
-                // The last element of the stack is the wrapping div.
+                // The last element of the osisStack is the wrapping div.
                 // Empty elements are merely appended to the parent container
-                top = stack.getLast();
-                if (top instanceof Element) {
-                    Element ele = (Element) top;
-                    ele.addContent(word);
+                top = osisStack.last()
+                if (top is Element) {
+                    val ele = top
+                    ele.addContent(word)
                 }
             }
         }
@@ -500,52 +380,40 @@ public final class GBFTags {
 
     /**
      *
+     * @param name
      */
-    public static final class TextFootnoteTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public TextFootnoteTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createNote();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY);
-            GBFTags.updateOsisStack(stack, ele);
+    class TextFootnoteTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createNote()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY)
+            updateOsisStack(osisStack, ele)
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class TextTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public TextTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
+    class TextTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
             // Make sure that characters that XML requires to be escaped are.
-            String text = XMLUtil.escape(getName());
-            if (stack.isEmpty()) {
-                stack.addFirst(new Text(text));
+            val text = XMLUtil.escape(name)
+            if (osisStack.isEmpty()) {
+                osisStack.addFirst(Text(text))
             } else {
-                Content top = stack.get(0);
-                if (top instanceof Element) {
-                    Element ele = (Element) top;
+                var top = osisStack[0]
+                if (top is Element) {
+                    var ele = top
                     // Don't make this text the child of a preceding <w>
-                    if (OSISUtil.OSIS_ELEMENT_W.equals(ele.getName())) {
-                        // The last element of the stack is the wrapping div.
-                        top = stack.getLast();
-                        if (top instanceof Element) {
-                            ele = (Element) top;
-                            ele.addContent(new Text(text));
+                    if (OSISUtil.OSIS_ELEMENT_W == ele.name) {
+                        // The last element of the osisStack is the wrapping div.
+                        top = osisStack.last()
+                        if (top is Element) {
+                            ele = top
+                            ele.addContent(Text(text))
                         }
                     } else {
-                        ele.addContent(text);
+                        ele.addContent(text)
                     }
                 }
             }
@@ -554,49 +422,40 @@ public final class GBFTags {
 
     /**
      *
+     * @param name
      */
-    public static final class TitleStartTag extends AbstractTag {
-        /**
-         * @param name
-         */
-        public TitleStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            GBFTags.updateOsisStack(stack, OSIS_FACTORY.createTitle());
+    class TitleStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            updateOsisStack(osisStack, OSIS_FACTORY.createTitle())
         }
     }
 
     /**
      *
+     * @param name
      */
-    public static final class UnderlineStartTag extends AbstractTag {
+    class UnderlineStartTag(name: String) : AbstractTag(name) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>) {
+            val ele = OSIS_FACTORY.createHI()
+            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_UNDERLINE)
+            updateOsisStack(osisStack, ele)
+        }
+    }
+
+    private companion object {
+        /* private */
+        private fun updateOsisStack(osisStack: LinkedList<Content>, content: Content) {
+            val top = osisStack[0]
+            if (top is Element) {
+                val current = top
+                current.addContent(content)
+                osisStack.addFirst(content)
+            }
+        }
+
         /**
-         * @param name
+         * To create OSIS DOM nodes.
          */
-        public UnderlineStartTag(String name) {
-            super(name);
-        }
-
-        public void updateOsisStack(Book book, Key key, LinkedList<Content> stack) {
-            Element ele = OSIS_FACTORY.createHI();
-            ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_UNDERLINE);
-            GBFTags.updateOsisStack(stack, ele);
-        }
+        private val OSIS_FACTORY: OSISUtil.OSISFactory = OSISUtil.factory()
     }
-
-    /* private */static void updateOsisStack(LinkedList<Content> stack, Content content) {
-        Content top = stack.get(0);
-        if (top instanceof Element) {
-            Element current = (Element) top;
-            current.addContent(content);
-            stack.addFirst(content);
-        }
-    }
-
-    /**
-     * To create OSIS DOM nodes.
-     */
-    static final OSISFactory OSIS_FACTORY = OSISUtil.factory();
 }

@@ -139,6 +139,46 @@ class CorpusParityTest {
     }
 
     @Test
+    fun gbfFilter() {
+        val inputs = listOf(
+            "plain", "", "  padded \t\n", "<FI>it<Fi>", "<FB>b<Fb>", "<FU>u<Fu>", "<FR>red<Fr>", "<FO>ot<Fo>", "<PP>poem<Pp>",
+            "<JR>right", "<JL>left", "<TS>head<Ts>", "<TH>t<Th>", "<TT>book<Tt>", "<TB>ps<Tb>", "a<CM>b", "a<CL>b", "<CM>", "<CL>",
+            "a<RF>note<Rf>b", "x<RF><Rf>y", "<RB>x", "<Rf>", "a<Rf>", "beginning<WH7225>", "w<WG3056><WG1234>", "a<WG1>b", "<WG3056>",
+            "word<WTN-NSM>", "word<WG1><WTNSM>", "<WTNSM>", "x<WTNSM>", "a<WG1:2>b", "a<WH7225-1>b", "a<WT1>b", "a<WG1 2>b", "a<WG 1>b",
+            "<RXGen.1.1>see<Rx>", "<RXzzzz qq>see<Rx>", "<RX>see<Rx>", "a<CG>b", "a<CT>b", "a<JC>b", "a<BI>b", "a<ZZ>b", "a<Zebra>b",
+            "a<FI", "abc<FI", "a<b", "a<", "<", ">", "a>", "a>b", "a>b<FI>c", "<<hello>>", "<b>x</b>", "<>", "a<>b", "<F>", "<Fi>", "a<Fi>b",
+            "a<Fi><Fi>b", "<FI>abc", "<FI><FB>x<Fb><Fi>y", "a<FB>b<FI>c<Fi>d<Fb>e", "?! x<FI>y<Fi>", ",.;: a<CM>b", " , x<CM>", "a ? b<CM>",
+            "Tom &amp; Jerry", "&lt;", "say \"hi\"", "a & b", "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7", "<FI>\u00E9\u20AC<Fi>",
+            "\u00E9<CM>\u20AC", "a<FI>b<RF>n<WG1>m<Rf>c<Fi>d", "<FI>a<RF>b", "a<WG1><WG2><WTX><WTY>", "\ud83d\ude00<FI>x", "a\nb<CM>\nc", "a<Fb><WG1>", ",. x<WG1>", "?! word<WTNSM>", "a, b<WG1>", " x<WG1>", ", <WG1>", ".,;:<WG1>", ": a b. c<WH1>d<WH2>"
+        )
+        assertSameLines("gbf", both("corpus.filter", "gbf", "KJV", inputs.joinToString("\u0001")))
+    }
+
+    @Test
+    fun osisFilter() {
+        val inputs = listOf(
+            "plain", "", "<w lemma=\"strong:H7225\">In the beginning</w>", "<note type=\"study\">A note</note>",
+            "<hi type=\"italic\">a <hi type=\"bold\">b</hi></hi>", "<title type=\"main\" canonical=\"true\">T</title>", "<a/>x",
+            "a &amp; b", "1 &lt; 2", "a & b", "a &foo; b", "caf&eacute;", "&nbsp;&copy;&euro;", "&#233;&#x20AC;", "&#1;", "a&b;c",
+            "<w>unclosed", "<w>a</x>", "<w>a & b", "</w>text", "<w lemma=\"x>tail", "a\u0001b", "<l>x</l>", "x</l>", "x</lg>", "<lg><l>a</l>",
+            "<p>a</p></p>", "<b>x", "<br>x<br>", "<div>a</div><div>b", "<<>>", "<", ">", "<>", "&", "&;", "&&amp;", "<w a=\"1\" a=\"2\">x</w>",
+            "\u00E9\u20AC \u0391\u03B3", "<w>\u00E9</w>", "<!-- c -->x", "<![CDATA[x<y]]>", "<?pi x?>y", "<w>a</w>\n<w>b</w>", "a\r\nb",
+            "<note>unclosed <hi>deep", "x<w>y</w", "<w lemma='a'>q</w>", "<chapter eID=\"x\"/>", "<verse osisID=\"Gen.1.1\"/>text",
+            "<a>1</a></a><b>", "</a>", "</a></b>", "<a></b>", "text</a>", "<a b=>", "<a b=c>x</a>"
+        )
+        assertSameLines("osis", both("corpus.filter", "osis", "KJV", inputs.joinToString("\u0001")))
+    }
+
+    @Test
+    fun plainTextFilter() {
+        val inputs = listOf(
+            "line1\nline2", "", "a", "a\n", "\n", "\n\n", "a\n\nb", "a\r\nb\r\nc", "\r\n", "  a \n\tb  ", "a & b < c", "<b>x</b>",
+            "\u00E9\u20AC\n\u0391\u03B3", "a\n\n\n", "\na", "a\rb", "\ud83d\ude00\nx", "x\u0000y"
+        )
+        assertSameLines("plaintext", both("corpus.filter", "plaintext", "KJV", inputs.joinToString("\u0001")))
+    }
+
+    @Test
     fun diffToOsis() {
         val pairs = listOf(
             "same" to "same", "the quick fox" to "the slow fox", "" to "added", "removed" to "", "abc" to "xyz",
