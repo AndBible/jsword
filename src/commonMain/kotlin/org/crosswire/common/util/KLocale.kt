@@ -1,6 +1,12 @@
 package org.crosswire.common.util
 
-/** A locale value for common code (language, country, variant), JDK-compatible in its string form (K2 F1). */
+import kotlin.concurrent.Volatile
+
+/**
+ * A locale value for common code (language, country, variant) (K2 F1). The string form matches
+ * `java.util.Locale` except for a variant-only locale (ours "__POSIX", Java ""). There is no script
+ * support, so the JDK's script-based candidates (e.g. zh_#Hant) are not produced.
+ */
 class KLocale(language: String, country: String = "", variant: String = "") {
     val language: String = normalizeLanguage(language.lowercase())
     val country: String = country.uppercase()
@@ -33,7 +39,7 @@ class KLocale(language: String, country: String = "", variant: String = "") {
 
 /** The locale JSword formats and translates for. A host without a JVM `LocaleProvider` (iOS) sets [provider]. */
 object KswordLocale {
-    var provider: (() -> KLocale)? = null
+    @Volatile var provider: (() -> KLocale)? = null
     fun current(): KLocale = provider?.invoke() ?: platformCurrentLocale()
     /** The platform default locale (`Locale.getDefault()` on the JVM), used by bundle fallback and number formats. */
     fun default(): KLocale = platformDefaultLocale()

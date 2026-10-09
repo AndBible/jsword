@@ -2,7 +2,11 @@ package org.crosswire.common.util
 
 /** How the bytes of a properties file are decoded; each JSword consumer keeps the encoding it had. */
 enum class PropertiesCharset {
-    /** `PropertyResourceBundle` (JDK 9+): UTF-8, re-read as ISO-8859-1 when the bytes are not valid UTF-8. */
+    /**
+     * `PropertyResourceBundle` (JDK 9+): UTF-8, re-read as ISO-8859-1 when the bytes are not valid UTF-8.
+     * Lenient: any malformed UTF-8 makes the whole file be re-decoded as ISO-8859-1, also when a sequence is
+     * truncated at the end of the file (where the JDK throws). Meant for fixed embedded resources only.
+     */
     UTF8_THEN_LATIN1,
     /** `Properties.load(InputStream)`: ISO-8859-1. */
     LATIN1,
@@ -102,7 +106,13 @@ object PropertiesParser {
                 if (i + 4 > s.length) throw IllegalArgumentException("Malformed \\uxxxx encoding.")
                 var value = 0
                 repeat(4) {
-                    val d = s[i++].digitToIntOrNull(16) ?: throw IllegalArgumentException("Malformed \\uxxxx encoding.")
+                    val h = s[i++]
+                    val d = when (h) {
+                        in '0'..'9' -> h - '0'
+                        in 'a'..'f' -> h - 'a' + 10
+                        in 'A'..'F' -> h - 'A' + 10
+                        else -> throw IllegalArgumentException("Malformed \\uxxxx encoding.")
+                    }
                     value = (value shl 4) + d
                 }
                 sb.append(value.toChar())

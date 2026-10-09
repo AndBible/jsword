@@ -27,7 +27,7 @@ class PropertiesParserDifferentialTest {
     }
 
     @Test fun malformedUnicodeThrowsLikeJdk() {
-        for (e in listOf("a=\\u00", "a=\\u00zz", "a=\\u")) {
+        for (e in listOf("a=\\u00", "a=\\u00zz", "a=\\u", "a=\\u\u0660\u0660\u0664\u0661")) {
             try { jdk(e); fail("jdk accepted $e") } catch (_: IllegalArgumentException) {}
             try { PropertiesParser.parse(e); fail("parser accepted $e") } catch (_: IllegalArgumentException) {}
         }

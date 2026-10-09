@@ -68,7 +68,11 @@ object ResourceBundles {
             }
         }
         if (l.language == "nn" || (l.language == "no" && l.country == "NO" && l.variant == "NY")) {
-            return defaultList("nn", if (l.language == "nn") l.country else "NO", "") + defaultList("no", "NO", "NY").filter { it.variant.isNotEmpty() } + KLocale.ROOT
+            // JDK: nn candidates, then the no_NO_NY / no_NO / no chain (no_NO_NY itself starts with the "nn" list).
+            val nnVariant = if (l.language == "nn") l.variant else ""
+            val nnCountry = if (l.language == "nn") l.country else "NO"
+            return defaultList("nn", nnCountry, nnVariant) +
+                listOf(KLocale("no", "NO", "NY"), KLocale("no", "NO"), KLocale("no")) + KLocale.ROOT
         }
         return defaultList(l.language, l.country, l.variant) + KLocale.ROOT
     }
