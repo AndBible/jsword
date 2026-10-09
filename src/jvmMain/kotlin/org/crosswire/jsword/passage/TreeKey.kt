@@ -190,8 +190,8 @@ open class TreeKey : AbstractKeyList {
     override fun getRootName(): String {
         var rootName = getName()
         var parentKey: Key? = this
-        while (parentKey != null && parentKey.getName()!!.length > 0) {
-            rootName = parentKey.getName()!!
+        while (parentKey != null && parentKey.getName().length > 0) {
+            rootName = parentKey.getName()
             parentKey = parentKey.getParent()
         }
         return rootName
@@ -205,7 +205,7 @@ open class TreeKey : AbstractKeyList {
         val b = StringBuilder(100)
         b.append(getName())
         var parentKey: Key? = this.getParent()
-        while (parentKey != null && parentKey.getName()!!.length > 0) {
+        while (parentKey != null && parentKey.getName().length > 0) {
             b.insert(0, "/")
             b.insert(0, parentKey.getName())
             parentKey = parentKey.getParent()

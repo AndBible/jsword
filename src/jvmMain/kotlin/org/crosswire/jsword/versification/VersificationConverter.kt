@@ -86,7 +86,7 @@ open class VersificationConverter {
             if (!key.isEmpty()) {
                 val mappedVerse = KeyUtil.getVerse(key)
                 // If target v11n does not contain mapped verse then an exception normally occurs and the ordinal is set to 0
-                if (mappedVerse!!.ordinal > 0) {
+                if (mappedVerse.ordinal > 0) {
                     return mappedVerse
                 }
             }

@@ -35,7 +35,7 @@ interface KeyFactory {
      *
      * @return A Key that includes all of the known Keys
      */
-    fun getGlobalKeyList(): Key?
+    fun getGlobalKeyList(): Key
 
     /**
      * Get a Key for the name, if possible. Otherwise return an empty Key.
@@ -43,7 +43,7 @@ interface KeyFactory {
      * @param name
      * @return a valid key.
      */
-    fun getValidKey(name: String?): Key?
+    fun getValidKey(name: String?): Key
 
     /**
      * Someone has typed in a reference to find, but we need a Key to actually
@@ -58,7 +58,7 @@ interface KeyFactory {
      *             If the name can not be parsed.
      */
     @Throws(NoSuchKeyException::class)
-    fun getKey(name: String?): Key?
+    fun getKey(name: String?): Key
 
     /**
      * Fetch an empty Key to which we can add Keys. Not all implementations of
@@ -69,5 +69,5 @@ interface KeyFactory {
      *
      * @return An empty Key that can hold other Keys from this factory.
      */
-    fun createEmptyKeyList(): Key?
+    fun createEmptyKeyList(): Key
 }

@@ -125,35 +125,35 @@ open class ReadOnlyKeyList
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    override fun getName(): String? {
+    override fun getName(): String {
         return keys!!.getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    override fun getName(base: Key?): String? {
+    override fun getName(base: Key?): String {
         return keys!!.getName(base)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    override fun getRootName(): String? {
+    override fun getRootName(): String {
         return keys!!.getRootName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    override fun getOsisRef(): String? {
+    override fun getOsisRef(): String {
         return keys!!.getOsisRef()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    override fun getOsisID(): String? {
+    override fun getOsisID(): String {
         return keys!!.getOsisID()
     }
 

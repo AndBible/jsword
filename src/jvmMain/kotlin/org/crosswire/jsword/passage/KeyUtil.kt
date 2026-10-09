@@ -66,7 +66,7 @@ private constructor() {
          * @throws ClassCastException
          */
         @JvmStatic
-        fun getVerse(key: Key?): Verse? {
+        fun getVerse(key: Key?): Verse {
             if (key is Verse) {
                 return key
             }
@@ -117,11 +117,11 @@ private constructor() {
          * @return the versification for the key
          */
         @JvmStatic
-        fun getVersification(key: Key?): Versification? {
+        fun getVersification(key: Key?): Versification {
             if (key is VerseKey<*>) {
                 return key.getVersification()
             }
-            return Versifications.instance().getVersification(Versifications.DEFAULT_V11N)
+            return Versifications.instance().getVersification(Versifications.DEFAULT_V11N)!!
         }
     }
 }

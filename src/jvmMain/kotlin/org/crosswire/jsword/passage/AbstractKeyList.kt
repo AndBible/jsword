@@ -151,7 +151,7 @@ abstract class AbstractKeyList : Key, Cloneable {
             return -1
         }
 
-        val ret = this.getName().compareTo(other.getName()!!)
+        val ret = this.getName().compareTo(other.getName())
 
         if (ret != 0) {
             return ret
@@ -186,7 +186,7 @@ abstract class AbstractKeyList : Key, Cloneable {
             return -1
         }
 
-        return thisfirst.getName()!!.compareTo(thatfirst.getName()!!)
+        return thisfirst.getName().compareTo(thatfirst.getName())
     }
 
     override fun clone(): AbstractKeyList {

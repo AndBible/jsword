@@ -71,35 +71,35 @@ open class DefaultLeafKeyList : Key, Cloneable {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    override fun getName(): String? {
-        return name
+    override fun getName(): String {
+        return name!!
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    override fun getName(base: Key?): String? {
+    override fun getName(base: Key?): String {
         return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    override fun getRootName(): String? {
+    override fun getRootName(): String {
         return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    override fun getOsisRef(): String? {
-        return osisName
+    override fun getOsisRef(): String {
+        return osisName!!
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    override fun getOsisID(): String? {
+    override fun getOsisID(): String {
         return getOsisRef()
     }
 
@@ -200,7 +200,7 @@ open class DefaultLeafKeyList : Key, Cloneable {
     }
 
     override fun toString(): String {
-        return getName()!!
+        return getName()
     }
 
     override fun equals(other: Any?): Boolean {

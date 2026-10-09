@@ -39,7 +39,7 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable 
      *
      * @return a String containing a description of the Key
      */
-    fun getName(): String?
+    fun getName(): String
 
     /**
      * A Human readable version of the Key's top level name. For Biblical
@@ -48,7 +48,7 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable 
      *
      * @return a String containing a description of the Key
      */
-    fun getRootName(): String?
+    fun getRootName(): String
 
     /**
      * Translate the Key into a human readable string, with the assumption that
@@ -59,7 +59,7 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable 
      *            The key to use to cut down unnecessary output.
      * @return The string representation
      */
-    fun getName(base: Key?): String?
+    fun getName(base: Key?): String
 
     /**
      * The OSIS defined reference specification for this Key. When the key is a
@@ -69,7 +69,7 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable 
      *
      * @return a String containing the OSIS description of the verses
      */
-    fun getOsisRef(): String?
+    fun getOsisRef(): String
 
     /**
      * The OSIS defined id specification for this Key. When the key is a single
@@ -78,7 +78,7 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable 
      *
      * @return a String containing the OSIS description of the verses
      */
-    fun getOsisID(): String?
+    fun getOsisID(): String
 
     /**
      * All keys have parents unless they are the root of a Key.

@@ -33,5 +33,5 @@ interface PreferredKey {
      *
      * @return The preferredKey
      */
-    fun getPreferred(): Key?
+    fun getPreferred(): Key
 }
