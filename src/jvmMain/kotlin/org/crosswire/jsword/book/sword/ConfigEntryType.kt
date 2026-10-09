@@ -17,14 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.util.regex.Pattern;
+import java.util.regex.Pattern
 
-import org.crosswire.common.util.Language;
-import org.crosswire.common.util.Version;
-import org.crosswire.jsword.book.BookCategory;
-import org.crosswire.jsword.book.BookMetaData;
+import org.crosswire.common.util.Language
+import org.crosswire.common.util.Version
+import org.crosswire.jsword.book.BookCategory
+import org.crosswire.jsword.book.BookMetaData
 
 /**
  * Enumeration of SWORD config file keys and their characteristics.
@@ -58,14 +58,14 @@ import org.crosswire.jsword.book.BookMetaData;
  * @author Joe Walker
  * @author DM Smith
  */
-/* protected */ enum ConfigEntryType {
+// was package-private (/* protected */); public in Kotlin so that the public ConfigValueInterceptor can expose it
+enum class ConfigEntryType {
     /**
      * Relative path to the data files, some issues with this
      */
     DATA_PATH(SwordBookMetaData.KEY_DATA_PATH) {
-        @Override
-        public boolean isAllowed(String value) {
-            return true;
+        override fun isAllowed(value: String?): Boolean {
+            return true
         }
     },
 
@@ -119,27 +119,24 @@ import org.crosswire.jsword.book.BookMetaData;
      * using it
      */
     BLOCK_COUNT(SwordBookMetaData.KEY_BLOCK_COUNT) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public boolean isAllowed(String aValue) {
+        override fun isAllowed(value: String?): Boolean {
             try {
-                Integer.parseInt(aValue);
-                return true;
-            } catch (NumberFormatException e) {
-                return false;
+                Integer.parseInt(value)
+                return true
+            } catch (e: NumberFormatException) {
+                return false
             }
         }
 
-        @Override
-        public Object convert(String input) {
+        override fun convert(input: String?): Any? {
             try {
-                return Integer.valueOf(input);
-            } catch (NumberFormatException e) {
-                return getDefault();
+                return Integer.valueOf(input)
+            } catch (e: NumberFormatException) {
+                return getDefault()
             }
         }
     },
@@ -160,14 +157,12 @@ import org.crosswire.jsword.book.BookMetaData;
         "false"
     )
     {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public Object convert(String input) {
-            return Boolean.valueOf(input);
+        override fun convert(input: String?): Any? {
+            return java.lang.Boolean.valueOf(input)
         }
     },
 
@@ -237,9 +232,8 @@ import org.crosswire.jsword.book.BookMetaData;
         "OSISDictionary" // Deprecated, no replacement
     )
     {
-        @Override
-        public boolean mayRepeat() {
-            return true;
+        override fun mayRepeat(): Boolean {
+            return true
         }
     },
 
@@ -292,27 +286,24 @@ import org.crosswire.jsword.book.BookMetaData;
      * level of 2 indicates that the first two levels should be shown.
      */
     DISPLAY_LEVEL(SwordBookMetaData.KEY_DISPLAY_LEVEL) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public boolean isAllowed(String value) {
+        override fun isAllowed(value: String?): Boolean {
             try {
-                Integer.parseInt(value);
-                return true;
-            } catch (NumberFormatException e) {
-                return false;
+                Integer.parseInt(value)
+                return true
+            } catch (e: NumberFormatException) {
+                return false
             }
         }
 
-        @Override
-        public Object convert(String input) {
+        override fun convert(input: String?): Any? {
             try {
-                return Integer.valueOf(input);
-            } catch (NumberFormatException e) {
-                return null;
+                return Integer.valueOf(input)
+            } catch (e: NumberFormatException) {
+                return null
             }
         }
     },
@@ -331,14 +322,12 @@ import org.crosswire.jsword.book.BookMetaData;
         "false"
     )
     {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public Object convert(String input) {
-            return Boolean.valueOf(input);
+        override fun convert(input: String?): Any? {
+            return java.lang.Boolean.valueOf(input)
         }
     },
 
@@ -357,9 +346,8 @@ import org.crosswire.jsword.book.BookMetaData;
         "NoParagraphs"
     )
     {
-        @Override
-        public boolean mayRepeat() {
-            return true;
+        override fun mayRepeat(): Boolean {
+            return true
         }
     },
 
@@ -368,22 +356,19 @@ import org.crosswire.jsword.book.BookMetaData;
      * TO another.
      */
     GLOSSARY_FROM(SwordBookMetaData.KEY_GLOSSARY_FROM) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public Object convert(String input) {
-            return new Language(input);
+        override fun convert(input: String?): Any? {
+            return Language(input)
         }
 
-        @Override
-        public String unconvert(Object internal) {
-            if (internal instanceof Language) {
-                return ((Language) internal).getGivenSpecification();
+        override fun unconvert(internal: Any?): String? {
+            if (internal is Language) {
+                return internal.givenSpecification
             }
-            return super.unconvert(internal);
+            return super.unconvert(internal)
         }
     },
 
@@ -392,22 +377,19 @@ import org.crosswire.jsword.book.BookMetaData;
      * TO another.
      */
     GLOSSARY_TO(SwordBookMetaData.KEY_GLOSSARY_TO) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public Object convert(String input) {
-            return new Language(input);
+        override fun convert(input: String?): Any? {
+            return Language(input)
         }
 
-        @Override
-        public String unconvert(Object internal) {
-            if (internal instanceof Language) {
-                return ((Language) internal).getGivenSpecification();
+        override fun unconvert(internal: Any?): String? {
+            if (internal is Language) {
+                return internal.givenSpecification
             }
-            return super.unconvert(internal);
+            return super.unconvert(internal)
         }
     },
 
@@ -432,14 +414,12 @@ import org.crosswire.jsword.book.BookMetaData;
      * Contains RTF that describes the book.
      */
     ABOUT(SwordBookMetaData.KEY_ABOUT) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
 
-        @Override
-        public boolean allowsRTF() {
-            return true;
+        override fun allowsRTF(): Boolean {
+            return true
         }
     },
 
@@ -447,27 +427,24 @@ import org.crosswire.jsword.book.BookMetaData;
      * An informational string indicating the current version of the book.
      */
     VERSION(SwordBookMetaData.KEY_VERSION) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public boolean isAllowed(String aValue) {
+        override fun isAllowed(value: String?): Boolean {
             try {
-                new Version(aValue);
-                return true;
-            } catch (IllegalArgumentException e) {
-                return false;
+                Version(value)
+                return true
+            } catch (e: IllegalArgumentException) {
+                return false
             }
         }
 
-        @Override
-        public Object convert(String input) {
+        override fun convert(input: String?): Any? {
             try {
-                return new Version(input);
-            } catch (IllegalArgumentException e) {
-                return null;
+                return Version(input)
+            } catch (e: IllegalArgumentException) {
+                return null
             }
         }
     },
@@ -479,9 +456,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * value.
      */
     HISTORY(SwordBookMetaData.KEY_HISTORY) {
-        @Override
-        public boolean mayRepeat() {
-            return true;
+        override fun mayRepeat(): Boolean {
+            return true
         }
     },
 
@@ -509,9 +485,8 @@ import org.crosswire.jsword.book.BookMetaData;
         "And Bible"
     )
     {
-        @Override
-        public Object convert(String input) {
-            return BookCategory.fromString(input);
+        override fun convert(input: String?): Any? {
+            return BookCategory.fromString(input)
         }
     },
 
@@ -525,22 +500,19 @@ import org.crosswire.jsword.book.BookMetaData;
      * single value string, defaults to en, the language of the book
      */
     LANG(BookMetaData.KEY_LANG) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public Object convert(String input) {
-            return new Language(input);
+        override fun convert(input: String?): Any? {
+            return Language(input)
         }
 
-        @Override
-        public String unconvert(Object internal) {
-            if (internal instanceof Language) {
-                return ((Language) internal).getGivenSpecification();
+        override fun unconvert(internal: Any?): String? {
+            if (internal is Language) {
+                return internal.givenSpecification
             }
-            return super.unconvert(internal);
+            return super.unconvert(internal)
         }
     },
 
@@ -549,27 +521,24 @@ import org.crosswire.jsword.book.BookMetaData;
      * that is downloaded.
      */
     INSTALL_SIZE(SwordBookMetaData.KEY_INSTALL_SIZE) {
-        @Override
-        public boolean isText() {
-            return false;
+        override fun isText(): Boolean {
+            return false
         }
 
-        @Override
-        public boolean isAllowed(String value) {
+        override fun isAllowed(value: String?): Boolean {
             try {
-                Integer.parseInt(value);
-                return true;
-            } catch (NumberFormatException e) {
-                return false;
+                Integer.parseInt(value)
+                return true
+            } catch (e: NumberFormatException) {
+                return false
             }
         }
 
-        @Override
-        public Object convert(String input) {
+        override fun convert(input: String?): Any? {
             try {
-                return Integer.valueOf(input);
-            } catch (NumberFormatException e) {
-                return null;
+                return Integer.valueOf(input)
+            } catch (e: NumberFormatException) {
+                return null
             }
         }
     },
@@ -579,12 +548,11 @@ import org.crosswire.jsword.book.BookMetaData;
      * only.
      */
     SWORD_VERSION_DATE(SwordBookMetaData.KEY_SWORD_VERSION_DATE) {
-        @Override
-        public boolean isAllowed(String value) {
-            return validDatePattern.matcher(value).matches();
+        override fun isAllowed(value: String?): Boolean {
+            return validDatePattern.matcher(value).matches()
         }
 
-        private Pattern validDatePattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+        private val validDatePattern: Pattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2}")
     },
 
     /**
@@ -593,9 +561,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * an installed book, offer the user the opportunity to delete the old book.
      */
     OBSOLETES(SwordBookMetaData.KEY_OBSOLETES) {
-        @Override
-        public boolean mayRepeat() {
-            return true;
+        override fun mayRepeat(): Boolean {
+            return true
         }
     },
 
@@ -609,9 +576,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * Informational copyright notice.
      */
     COPYRIGHT(SwordBookMetaData.KEY_COPYRIGHT) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
     },
 
@@ -625,26 +591,23 @@ import org.crosswire.jsword.book.BookMetaData;
      * This is a year, a year range or a comma separated list of these.
      */
     COPYRIGHT_DATE(SwordBookMetaData.KEY_COPYRIGHT_DATE) {
-        @Override
-        public boolean isAllowed(String value) {
-            return validDatePattern.matcher(value).matches();
+        override fun isAllowed(value: String?): Boolean {
+            return validDatePattern.matcher(value).matches()
         }
 
-        private Pattern validDatePattern = Pattern.compile("\\d{4}(\\s*-\\s*\\d{4})?(\\s*,\\s*\\d{4}(\\s*-\\s*\\d{4})?)*");
+        private val validDatePattern: Pattern = Pattern.compile("\\d{4}(\\s*-\\s*\\d{4})?(\\s*,\\s*\\d{4}(\\s*-\\s*\\d{4})?)*")
     },
 
     /**
      * Copyright info. Informational only.
      */
     COPYRIGHT_NOTES(SwordBookMetaData.KEY_COPYRIGHT_NOTES) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
 
-        @Override
-        public boolean allowsRTF() {
-            return true;
+        override fun allowsRTF(): Boolean {
+            return true
         }
     },
 
@@ -652,14 +615,12 @@ import org.crosswire.jsword.book.BookMetaData;
      * Copyright info. Informational only.
      */
     COPYRIGHT_CONTACT_NAME(SwordBookMetaData.KEY_COPYRIGHT_CONTACT_NAME) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
 
-        @Override
-        public boolean allowsRTF() {
-            return true;
+        override fun allowsRTF(): Boolean {
+            return true
         }
     },
 
@@ -667,14 +628,12 @@ import org.crosswire.jsword.book.BookMetaData;
      * Copyright info. Informational only.
      */
     COPYRIGHT_CONTACT_NOTES(SwordBookMetaData.KEY_COPYRIGHT_CONTACT_NOTES) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
 
-        @Override
-        public boolean allowsRTF() {
-            return true;
+        override fun allowsRTF(): Boolean {
+            return true
         }
     },
 
@@ -682,14 +641,12 @@ import org.crosswire.jsword.book.BookMetaData;
      * Copyright info. Informational only.
      */
     COPYRIGHT_CONTACT_ADDRESS(SwordBookMetaData.KEY_COPYRIGHT_CONTACT_ADDRESS) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
 
-        @Override
-        public boolean allowsRTF() {
-            return true;
+        override fun allowsRTF(): Boolean {
+            return true
         }
     },
 
@@ -702,9 +659,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * A one line promo statement, required by Lockman for NASB
      */
     SHORT_PROMO(SwordBookMetaData.KEY_SHORT_PROMO) {
-        @Override
-        public boolean allowsHTML() {
-            return true;
+        override fun allowsHTML(): Boolean {
+            return true
         }
     },
 
@@ -739,9 +695,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * Copyright info. Informational only.
      */
     DISTRIBUTION_NOTES(SwordBookMetaData.KEY_DISTRIBUTION_NOTES) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
     },
 
@@ -749,9 +704,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * Information on where the book's text was obtained.
      */
     TEXT_SOURCE(SwordBookMetaData.KEY_TEXT_SOURCE) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
     },
 
@@ -766,9 +720,8 @@ import org.crosswire.jsword.book.BookMetaData;
      * be found. Informational only.
      */
     DISTRIBUTION_SOURCE(SwordBookMetaData.KEY_DISTRIBUTION_SOURCE) {
-        @Override
-        public boolean allowsContinuation() {
-            return true;
+        override fun allowsContinuation(): Boolean {
+            return true
         }
     },
 
@@ -794,233 +747,235 @@ import org.crosswire.jsword.book.BookMetaData;
      */
     BOOK_LIST(BookMetaData.KEY_BOOKLIST);
 
+
     /**
      * Simple ctor
      */
-    ConfigEntryType(String name) {
-        this.name = name;
-        this.picks = null;
-        String defValue = SwordBookMetaData.DEFAULTS.get(name);
-        this.defaultValue = defValue == null ? null : convert(defValue);
+    constructor(name: String) {
+        this.entryName = name
+        this.picks = null
+        val defValue = SwordBookMetaData.DEFAULTS.get(name)
+        this.defaultValue = if (defValue == null) null else convert(defValue)
     }
 
     /**
      * Simple ctor
      */
-    ConfigEntryType(String name, String... picks) {
-        this.name = name;
-        this.picks = picks;
-        String defValue = SwordBookMetaData.DEFAULTS.get(name);
-        this.defaultValue = defValue == null ? null : convert(defValue);
+    constructor(name: String, vararg picks: String) {
+        this.entryName = name
+        this.picks = arrayOf(*picks)
+        val defValue = SwordBookMetaData.DEFAULTS.get(name)
+        this.defaultValue = if (defValue == null) null else convert(defValue)
     }
+
+    /**
+     * The name of the ConfigEntryType
+     */
+    private val entryName: String
+
+    /**
+     * The default for the ConfigEntryType
+     */
+    private val defaultValue: Any?
+
+    /**
+     * The array of choices.
+     */
+    private val picks: Array<String>?
 
     /**
      * Some keys can be converted to something other than a string.
-     * 
+     *
      * @return true if this ConfigEntryType is a string
      */
-    public boolean isText() {
-        return true;
+    open fun isText(): Boolean {
+        return true
     }
 
     /**
      * Determines whether the string is allowed. For some config entries, the
      * value is expected to be one of a group, for others the format is defined.
-     * 
+     *
      * @param value
      *            the string to be checked
      * @return true if the string is allowed
      */
-    public boolean isAllowed(String value) {
+    open fun isAllowed(value: String?): Boolean {
         if (value == null) {
-            return false;
+            return false
         }
         if (hasChoices()) {
-            for (String item : picks) {
-                String val = value;
-                String pick = item;
+            for (item in picks!!) {
+                var v: String = value
+                var pick = item
                 // If the pick ends with *
                 // then we want to do a "startsWithCaseInsensitive"
                 // with what is before the *
                 if (pick.endsWith("*")) {
-                    int len = pick.length() - 1;
-                    pick = pick.substring(0, len);
-                    if (val.length() > len) {
-                        val = val.substring(0, len);
+                    val len = pick.length - 1
+                    pick = pick.substring(0, len)
+                    if (v.length > len) {
+                        v = v.substring(0, len)
                     }
                 }
-                if (pick.equalsIgnoreCase(val)) {
-                    return true;
+                if (pick.equals(v, ignoreCase = true)) {
+                    return true
                 }
             }
 
-            return false;
+            return false
         }
-        return true;
+        return true
     }
 
     /**
      * Modify the value if necessary.
-     * 
+     *
      * @param value
      *            the input
      * @return either value or a modified version of it.
      */
-    public String filter(String value) {
+    open fun filter(value: String?): String? {
         // Look through the choice array, if present, for matches.
         if (hasChoices()) {
             // Do we have an exact match?
-            for (String pick : picks) {
-                if (pick.equals(value)) {
-                    return value;
+            for (pick in picks!!) {
+                if (pick == value) {
+                    return value
                 }
             }
 
             // Do we have a case insensitive match?
-            for (String pick : picks) {
-                if (pick.equalsIgnoreCase(value)) {
-                    return pick;
+            for (pick in picks) {
+                if (pick.equals(value, ignoreCase = true)) {
+                    return pick
                 }
             }
         }
 
-        return value;
+        return value
     }
 
     /**
      * RTF is allowed in a few config entries.
-     * 
+     *
      * @return true if RTF is allowed
      */
-    public boolean allowsRTF() {
-        return false;
+    open fun allowsRTF(): Boolean {
+        return false
     }
 
     /**
      * HTML is allowed in a few config entries.
-     * 
+     *
      * @return true if HTML is allowed
      */
-    public boolean allowsHTML() {
-        return false;
+    open fun allowsHTML(): Boolean {
+        return false
     }
 
     /**
      * While most fields are single line or single value, some allow
      * continuation. A continuation mark is a backslash at the end of a line. It
      * is not to be followed by whitespace.
-     * 
+     *
      * @return true if continuation is allowed
      */
-    public boolean allowsContinuation() {
-        return false;
+    open fun allowsContinuation(): Boolean {
+        return false
     }
 
     /**
      * Some keys can repeat. When this happens each is a single value pick from
      * a list of choices.
-     * 
+     *
      * @return true if this ConfigEntryType can occur more than once
      */
-    public boolean mayRepeat() {
-        return false;
+    open fun mayRepeat(): Boolean {
+        return false
     }
 
     /**
      * Some keys can repeat. When this happens each is a single value pick from
      * a list of choices.
-     * 
+     *
      * @return true if this ConfigEntryType can occur more than once
      */
-    protected boolean hasChoices() {
-        return picks != null;
+    protected open fun hasChoices(): Boolean {
+        return picks != null
     }
 
     /**
      * Some ConfigEntryTypes have defaults.
-     * 
+     *
      * @return the default, if there is one, null otherwise
      */
-    public Object getDefault() {
-        return defaultValue;
+    fun getDefault(): Any? {
+        return defaultValue
     }
 
     /**
      * Convert the string value from the conf into the representation of this
      * ConfigEntryType.
-     * 
+     *
      * @param input the text to convert
      * @return the converted object
      */
-    public Object convert(String input) {
-        return input;
+    open fun convert(input: String?): Any? {
+        return input
     }
 
     /**
      * Return the original representation of the object.
-     * 
+     *
      * @param internal the object to convert
      * @return the original string
      */
-    public String unconvert(Object internal) {
+    open fun unconvert(internal: Any?): String? {
         if (internal == null) {
-            return null;
+            return null
         }
-        return internal.toString();
+        return internal.toString()
     }
 
-    /**
-     * Lookup method to convert from a String
-     * 
-     * @param name the key for the entry
-     * @return the matching type
-     */
-    public static ConfigEntryType fromString(String name) {
-        if (name != null) {
-            // special case
-            if (name.startsWith(ConfigEntryType.HISTORY.toString())) {
-                return ConfigEntryType.HISTORY;
-            }
+    override fun toString(): String {
+        return entryName
+    }
 
-            for (ConfigEntryType o : ConfigEntryType.values()) {
-                if (name.equals(o.name)) {
-                    return o;
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         *
+         * @param name the key for the entry
+         * @return the matching type
+         */
+        @JvmStatic
+        fun fromString(name: String?): ConfigEntryType? {
+            if (name != null) {
+                // special case
+                if (name.startsWith(HISTORY.toString())) {
+                    return HISTORY
+                }
+
+                for (o in values()) {
+                    if (name == o.entryName) {
+                        return o
+                    }
                 }
             }
+
+            // should not get here.
+            // But there are typos in the keys in the book conf files
+            // And this allows for the addition of new fields in
+            // advance of changing JSword
+            return null
         }
 
-        // should not get here.
-        // But there are typos in the keys in the book conf files
-        // And this allows for the addition of new fields in
-        // advance of changing JSword
-        return null;
+        /**
+         * Constants for direction
+         */
+        const val DIRECTION_LTOR = "LtoR"
+        const val DIRECTION_RTOL = "RtoL"
+        const val DIRECTION_BIDI = "bidi"
     }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    /**
-     * The name of the ConfigEntryType
-     */
-    private final String name;
-
-    /**
-     * The default for the ConfigEntryType
-     */
-    private final Object defaultValue;
-
-    /**
-     * The array of choices.
-     */
-    private final String[] picks;
-
-    /**
-     * Constants for direction
-     */
-    public static final String DIRECTION_LTOR = "LtoR";
-    public static final String DIRECTION_RTOL = "RtoL";
-    public static final String DIRECTION_BIDI = "bidi";
-
 }

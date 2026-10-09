@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2014 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
 /**
  * Intercepts values from the configuration before these are widely distributed to the rest of the application.
@@ -25,7 +25,7 @@ package org.crosswire.jsword.book.sword;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Chris Burrell
  */
-public interface ConfigValueInterceptor {
+interface ConfigValueInterceptor {
     /**
      * Intercepts a value before distribution to the rest of the JSword library
      * @param bookName the initials of the book that is being intercepted
@@ -33,5 +33,5 @@ public interface ConfigValueInterceptor {
      * @param value the value to be intercepted
      * @return the new value, if different
      */
-    Object intercept(String bookName, ConfigEntryType configEntryType, Object value);
+    fun intercept(bookName: String?, configEntryType: ConfigEntryType?, value: Any?): Any?
 }

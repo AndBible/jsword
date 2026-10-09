@@ -17,38 +17,35 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.util.Date;
+import java.util.Date
 
-import org.crosswire.common.icu.DateFormatter;
-import org.crosswire.jsword.passage.DefaultLeafKeyList;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.PreferredKey;
+import org.crosswire.common.icu.DateFormatter
+import org.crosswire.jsword.passage.DefaultLeafKeyList
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.PreferredKey
 
 /**
  * A book that has a preferred key of today's date.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class SwordDailyDevotion extends SwordDictionary implements PreferredKey {
-    /**
-     * Construct an SwordDailyDevotion given the BookMetaData and the AbstractBackend.
-     * 
-     * @param sbmd the metadata that describes the book
-     * @param backend the means by which the resource is accessed
-     */
-    public SwordDailyDevotion(SwordBookMetaData sbmd, Backend backend) {
-        super(sbmd, backend);
-    }
-
+open class SwordDailyDevotion
+/**
+ * Construct an SwordDailyDevotion given the BookMetaData and the AbstractBackend.
+ *
+ * @param sbmd the metadata that describes the book
+ * @param backend the means by which the resource is accessed
+ */
+(sbmd: SwordBookMetaData, backend: Backend<*>?) : SwordDictionary(sbmd, backend), PreferredKey {
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.PreferredKey#getPreferred()
      */
-    public Key getPreferred() {
-        return new DefaultLeafKeyList(DateFormatter.getDateInstance().format(new Date()));
+    override fun getPreferred(): Key {
+        return DefaultLeafKeyList(DateFormatter.getDateInstance().format(Date()))
     }
 }

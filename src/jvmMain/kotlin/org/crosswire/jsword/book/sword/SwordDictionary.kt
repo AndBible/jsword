@@ -17,158 +17,157 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.ArrayList
 
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.book.basic.AbstractBook;
-import org.crosswire.jsword.book.filter.SourceFilter;
-import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
-import org.crosswire.jsword.passage.DefaultKeyList;
-import org.crosswire.jsword.passage.DefaultLeafKeyList;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.NoSuchKeyException;
-import org.jdom2.Content;
-import org.jdom2.Element;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.basic.AbstractBook
+import org.crosswire.jsword.book.filter.SourceFilter
+import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor
+import org.crosswire.jsword.passage.DefaultKeyList
+import org.crosswire.jsword.passage.DefaultLeafKeyList
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.NoSuchKeyException
+import org.jdom2.Content
 
 /**
  * A Sword version of Dictionary.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class SwordDictionary extends AbstractBook {
-    /**
-     * Construct an SwordDictionary given the BookMetaData and the AbstractBackend.
-     * 
-     * @param sbmd the metadata that describes the book
-     * @param backend the means by which the resource is accessed
-     */
-    public SwordDictionary(SwordBookMetaData sbmd, Backend backend) {
-        super(sbmd, backend);
-
-        if (!(backend instanceof AbstractKeyBackend)) {
-            throw new IllegalArgumentException("AbstractBackend must be an AbstractKeyBackened");
+open class SwordDictionary
+/**
+ * Construct an SwordDictionary given the BookMetaData and the AbstractBackend.
+ *
+ * @param sbmd the metadata that describes the book
+ * @param backend the means by which the resource is accessed
+ */
+(sbmd: SwordBookMetaData, backend: Backend<*>?) : AbstractBook(sbmd, backend) {
+    init {
+        if (backend !is AbstractKeyBackend<*>) {
+            throw IllegalArgumentException("AbstractBackend must be an AbstractKeyBackened")
         }
-
-        this.filter = sbmd.getFilter();
     }
+
+    /**
+     * The filter to use to convert to OSIS.
+     */
+    private val filter: SourceFilter = sbmd.filter
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getOsisIterator(org.crosswire.jsword.passage.Key, boolean, boolean)
      */
-    public Iterator<Content> getOsisIterator(final Key key, boolean allowEmpty, final boolean allowGenTitles) throws BookException {
-        assert key != null;
+    @Throws(BookException::class)
+    override fun getOsisIterator(key: Key?, allowEmpty: Boolean, allowGenTitles: Boolean): MutableIterator<Content> {
+        jswordAssert(key != null) { "key must not be null" }
 
-        List<Content> content = new ArrayList<Content>();
-        Element title = OSISUtil.factory().createGeneratedTitle();
-        title.addContent(key.getName());
-        content.add(title);
+        val content: MutableList<Content> = ArrayList()
+        val title = OSISUtil.factory().createGeneratedTitle()
+        title.addContent(key!!.getName())
+        content.add(title)
 
-        String txt = getBackend().getRawText(key);
-        List<Content> osisContent = filter.toOSIS(this, key, txt);
-        content.addAll(osisContent);
+        val txt = backend!!.getRawText(key)
+        val osisContent = filter.toOSIS(this, key, txt)
+        content.addAll(osisContent)
 
-        return content.iterator();
+        return content.iterator()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getRawText(org.crosswire.jsword.passage.Key)
      */
-    public String getRawText(Key key) throws BookException {
-        return getBackend().getRawText(key);
+    @Throws(BookException::class)
+    override fun getRawText(key: Key?): String {
+        return backend!!.getRawText(key)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        Backend backend = getBackend();
-        return backend != null && backend.contains(key);
+    override fun contains(key: Key?): Boolean {
+        val backend = backend
+        return backend != null && backend.contains(key)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getRawText(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public List<Content> getOsis(Key key, RawTextToXmlProcessor processor) throws BookException {
-        assert key != null;
+    @Throws(BookException::class)
+    public override fun getOsis(key: Key?, noOpRawTextProcessor: RawTextToXmlProcessor?): MutableList<Content> {
+        jswordAssert(key != null) { "key must not be null" }
 
-        return getBackend().readToOsis(key, processor);
+        return backend!!.readToOsis(key, noOpRawTextProcessor)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isWritable()
      */
-    public boolean isWritable() {
-        return getBackend().isWritable();
+    override fun isWritable(): Boolean {
+        return backend!!.isWritable
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#setRawText(org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public void setRawText(Key key, String rawData) throws BookException {
-        throw new BookException(JSOtherMsg.lookupText("This Book is read-only."));
+    @Throws(BookException::class)
+    override fun setRawText(key: Key?, rawData: String?) {
+        throw BookException(JSOtherMsg.lookupText("This Book is read-only."))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#setAliasKey(org.crosswire.jsword.passage.Key, org.crosswire.jsword.passage.Key)
      */
-    public void setAliasKey(Key alias, Key source) throws BookException {
-        throw new BookException(JSOtherMsg.lookupText("This Book is read-only."));
+    @Throws(BookException::class)
+    override fun setAliasKey(alias: Key?, source: Key?) {
+        throw BookException(JSOtherMsg.lookupText("This Book is read-only."))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getGlobalKeyList()
      */
-    public Key getGlobalKeyList() {
-        return (AbstractKeyBackend) getBackend();
+    override fun getGlobalKeyList(): Key {
+        return backend as AbstractKeyBackend<*>
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getValidKey(java.lang.String)
      */
-    public Key getValidKey(String name) {
+    override fun getValidKey(name: String?): Key {
         try {
-            return getKey(name);
-        } catch (NoSuchKeyException e) {
-            return createEmptyKeyList();
+            return getKey(name)
+        } catch (e: NoSuchKeyException) {
+            return createEmptyKeyList()
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getKey(java.lang.String)
      */
-    public Key getKey(String text) throws NoSuchKeyException {
-        AbstractKeyBackend keyBackend = (AbstractKeyBackend) getBackend();
+    @Throws(NoSuchKeyException::class)
+    override fun getKey(name: String?): Key {
+        val keyBackend = backend as AbstractKeyBackend<*>
 
-        int pos = keyBackend.indexOf(new DefaultLeafKeyList(text));
+        val pos = keyBackend.indexOf(DefaultLeafKeyList(name))
         if (pos < 0) {
-            throw new NoSuchKeyException(JSMsg.gettext("No entry for '{0}' in {1}.", text, getInitials()));
+            throw NoSuchKeyException(JSMsg.gettext("No entry for '{0}' in {1}.", name, initials))
             //if (keyBackend.getCardinality() > -pos - 1) {
             //    return keyBackend.get(-pos - 1);
             //}
             //return keyBackend.get(keyBackend.getCardinality() - 1);
         }
-        return keyBackend.get(pos);
+        return keyBackend.get(pos)!!
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#createEmptyKeyList()
      */
-    public Key createEmptyKeyList() {
-        return new DefaultKeyList();
+    override fun createEmptyKeyList(): Key {
+        return DefaultKeyList()
     }
-
-    /**
-     * The filter to use to convert to OSIS.
-     */
-    private SourceFilter filter;
-
 }
