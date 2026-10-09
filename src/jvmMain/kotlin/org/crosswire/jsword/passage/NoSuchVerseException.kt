@@ -17,40 +17,37 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
-
+package org.crosswire.jsword.passage
 
 /**
  * When something tries to use a verse that we don't understand.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class NoSuchVerseException extends NoSuchKeyException {
+open class NoSuchVerseException : NoSuchKeyException {
     /**
      * Construct the Exception with a message
-     * 
+     *
      * @param msg
      *            The resource id to read
      */
-    public NoSuchVerseException(String msg) {
-        super(msg);
-    }
+    constructor(msg: String?) : super(msg)
 
     /**
      * Construct the Exception with a message and a nested Exception
-     * 
+     *
      * @param msg
      *            The resource id to read
      * @param ex
      *            The nested Exception
      */
-    public NoSuchVerseException(String msg, Throwable ex) {
-        super(msg, ex);
-    }
+    constructor(msg: String?, ex: Throwable?) : super(msg, ex)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3257572797638129463L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 3257572797638129463L
+    }
 }

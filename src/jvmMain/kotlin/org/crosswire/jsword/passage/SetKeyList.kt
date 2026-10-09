@@ -17,208 +17,183 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A Key that uses a Set of Keys as it's store of data.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class SetKeyList extends AbstractKeyList {
+open class SetKeyList : AbstractKeyList {
     /**
      * Simple ctor
-     * @param set 
+     * @param set
      */
-    public SetKeyList(Set<Key> set) {
-        this(set, null, null);
-    }
+    constructor(set: Set<@JvmSuppressWildcards Key>?) : this(set, null as Key?, null as String?)
 
     /**
      * Simple ctor
-     * @param set 
-     * @param name 
+     * @param set
+     * @param name
      */
-    public SetKeyList(Set<Key> set, String name) {
-        this(set, null, name);
-    }
+    constructor(set: Set<@JvmSuppressWildcards Key>?, name: String?) : this(set, null as Key?, name)
 
     /**
      * Simple ctor
-     * @param set 
-     * @param parent 
+     * @param set
+     * @param parent
      */
-    public SetKeyList(Set<Key> set, Key parent) {
-        this(set, parent, null);
-    }
+    constructor(set: Set<@JvmSuppressWildcards Key>?, parent: Key?) : this(set, parent, null as String?)
 
     /**
      * Simple ctor
-     * @param set 
-     * @param parent 
-     * @param name 
+     * @param set
+     * @param parent
+     * @param name
      */
-    public SetKeyList(Set<Key> set, Key parent, String name) {
-        super(name);
-        this.parent = parent;
-        list.addAll(set);
+    constructor(set: Set<@JvmSuppressWildcards Key>?, parent: Key?, name: String?) : super(name) {
+        this.parent = parent
+        list.addAll(set!!)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#add(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
-        list.add(key);
+    override fun addAll(key: Key?) {
+        list.add(key)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
-        list.clear();
+    override fun clear() {
+        list.clear()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#contains(org.crosswire.jsword.passage
      * .Key)
      */
-    @Override
-    public boolean contains(Key key) {
-        return list.contains(key);
+    override fun contains(key: Key?): Boolean {
+        return list.contains(key)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#equals(java.lang.Object)
      */
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof SetKeyList) {
-            SetKeyList that = (SetKeyList) obj;
-            return list.equals(that.list);
+    override fun equals(other: Any?): Boolean {
+        if (other is SetKeyList) {
+            return list == other.list
         }
-        return false;
+        return false
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
-    @Override
-    public int hashCode() {
-        return list.hashCode();
+    override fun hashCode(): Int {
+        return list.hashCode()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    @Override
-    public boolean isEmpty() {
-        return list.isEmpty();
+    override fun isEmpty(): Boolean {
+        return list.isEmpty()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#iterator()
      */
-    public Iterator<Key> iterator() {
-        return list.iterator();
+    @Suppress("UNCHECKED_CAST")
+    override fun iterator(): MutableIterator<Key> {
+        return list.iterator() as MutableIterator<Key>
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#remove(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        list.remove(key);
+    override fun removeAll(key: Key?) {
+        list.remove(key)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        return list.size();
+    override fun getCardinality(): Int {
+        return list.size
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return false;
+    override fun canHaveChildren(): Boolean {
+        return false
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return 0;
+    override fun getChildCount(): Int {
+        return 0
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        return list.get(index);
+    override fun get(index: Int): Key? {
+        return list.get(index)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage
      * .Key)
      */
-    public int indexOf(Key that) {
-        return list.indexOf(that);
+    override fun indexOf(that: Key?): Int {
+        return list.indexOf(that)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return parent;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.crosswire.jsword.passage.Key#blur(int)
-     */
-    public void blur(int by, RestrictionType restrict) {
-        blur(by, restrict, true, true);
+    override fun getParent(): Key? {
+        return parent
     }
 
     /*
@@ -226,27 +201,38 @@ public class SetKeyList extends AbstractKeyList {
      *
      * @see org.crosswire.jsword.passage.Key#blur(int)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
-        log.warn("attempt to blur a non-blur-able list");
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        blur(by, restrict, true, true)
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.crosswire.jsword.passage.Key#blur(int)
+     */
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
+        log.warn("attempt to blur a non-blur-able list")
     }
 
     /**
      * The parent of this key
      */
-    private Key parent;
+    private var parent: Key? = null
 
     /**
      * The Set that we are proxying to
      */
-    private List<Key> list = new ArrayList<Key>();
+    private var list: MutableList<Key?> = ArrayList()
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -1460162676283475117L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -1460162676283475117L
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(SetKeyList.class);
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(SetKeyList::class.java)
+    }
 }

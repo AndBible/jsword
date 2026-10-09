@@ -181,7 +181,7 @@ class QualifiedKey {
 
         if (target!!.name == Versifications.DEFAULT_V11N) {
             //then we're absent in KJV
-            return QualifiedKey(qualifiedKey.osisID)
+            return QualifiedKey(qualifiedKey.getOsisID())
         }
         return QualifiedKey()
     }
@@ -189,7 +189,7 @@ class QualifiedKey {
     override fun toString(): String {
         val buf = StringBuilder()
         if (wholeKey != null) {
-            buf.append(qualifiedKey!!.osisRef)
+            buf.append(qualifiedKey!!.getOsisRef())
         }
         val desc = absentType.getDescription(this)
         if (desc.length > 0) {
@@ -233,7 +233,7 @@ class QualifiedKey {
      * @param key the new key
      */
     private fun setKey(key: VerseRange?) {
-        if (key!!.cardinality == 1) {
+        if (key!!.getCardinality() == 1) {
             this.qualifiedKey = key.start
         } else {
             this.qualifiedKey = key

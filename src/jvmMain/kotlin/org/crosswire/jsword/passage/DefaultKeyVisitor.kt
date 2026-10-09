@@ -17,33 +17,33 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
 /**
  * A default implementation of KeyVisitor that does nothing, for use in
  * inheritance where you want to save space by not overriding all methods.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DefaultKeyVisitor implements KeyVisitor {
+open class DefaultKeyVisitor : KeyVisitor {
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.KeyVisitor#visitLeaf(org.crosswire.jsword
      * .passage.Key)
      */
-    public void visitLeaf(Key key) {
+    override fun visitLeaf(key: Key?) {
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.KeyVisitor#visitBranch(org.crosswire.jsword
      * .passage.Key)
      */
-    public void visitBranch(Key key) {
+    override fun visitBranch(key: Key?) {
     }
 }

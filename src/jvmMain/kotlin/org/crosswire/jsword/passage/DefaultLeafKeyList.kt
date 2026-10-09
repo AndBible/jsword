@@ -17,207 +17,200 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.util.Iterator;
-
-import org.crosswire.common.util.ItemIterator;
+import org.crosswire.common.util.ItemIterator
+import org.crosswire.common.util.jswordAssert
 
 /**
  * A simple default implementation of the Key interface.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DefaultLeafKeyList implements Key {
+open class DefaultLeafKeyList : Key, Cloneable {
     /**
      * Default ctor
-     * @param name 
+     * @param name
      */
-    public DefaultLeafKeyList(String name) {
-        this(name, name, null);
-    }
+    constructor(name: String?) : this(name, name, null)
 
     /**
      * Default ctor
-     * @param name 
-     * @param osisName 
+     * @param name
+     * @param osisName
      */
-    public DefaultLeafKeyList(String name, String osisName) {
-        this(name, osisName, null);
-    }
+    constructor(name: String?, osisName: String?) : this(name, osisName, null)
 
     /**
      * Default ctor
-     * @param name 
-     * @param osisName 
-     * @param parent 
+     * @param name
+     * @param osisName
+     * @param parent
      */
-    public DefaultLeafKeyList(String name, String osisName, Key parent) {
-        this.name = name;
-        this.parent = parent;
-        this.osisName = osisName;
+    constructor(name: String?, osisName: String?, parent: Key?) {
+        this.name = name
+        this.parent = parent
+        this.osisName = osisName
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return false;
+    override fun canHaveChildren(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return 0;
+    override fun getChildCount(): Int {
+        return 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    public String getName() {
-        return name;
+    override fun getName(): String? {
+        return name
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    public String getName(Key base) {
-        return getName();
+    override fun getName(base: Key?): String? {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    public String getRootName() {
-        return getName();
+    override fun getRootName(): String? {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    public String getOsisRef() {
-        return osisName;
+    override fun getOsisRef(): String? {
+        return osisName
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    public String getOsisID() {
-        return getOsisRef();
+    override fun getOsisID(): String? {
+        return getOsisRef()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return parent;
+    override fun getParent(): Key? {
+        return parent
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        return 1;
+    override fun getCardinality(): Int {
+        return 1
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    public boolean isEmpty() {
-        return false;
+    override fun isEmpty(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        return this.equals(key);
+    override fun contains(key: Key?): Boolean {
+        return this == key
     }
 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
-    public Iterator<Key> iterator() {
-        return new ItemIterator<Key>(this);
+    override fun iterator(): MutableIterator<Key> {
+        return ItemIterator<Key>(this)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#addAll(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun addAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#removeAll(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun removeAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#retainAll(org.crosswire.jsword.passage.Key)
      */
-    public void retainAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun retainAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
+    override fun clear() {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
+    override fun get(index: Int): Key? {
         if (index == 0) {
-            return this;
+            return this
         }
-        return null;
+        return null
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage.Key)
      */
-    public int indexOf(Key that) {
-        if (this.equals(that)) {
-            return 0;
+    override fun indexOf(that: Key?): Int {
+        if (this == that) {
+            return 0
         }
-        return -1;
+        return -1
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict) {
-        blur(by, restrict, true, true);
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        blur(by, restrict, true, true)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
-        throw new UnsupportedOperationException();
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
+        throw UnsupportedOperationException()
     }
 
-    @Override
-    public String toString() {
-        return getName();
+    override fun toString(): String {
+        return getName()!!
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
         }
 
         // Since this can not be null
-        if (obj == null) {
-            return false;
+        if (other == null) {
+            return false
         }
 
         // We might consider checking for equality against all Keys?
@@ -225,60 +218,59 @@ public class DefaultLeafKeyList implements Key {
 
         // Check that that is the same as this
         // Don't use instanceof since that breaks inheritance
-        if (!obj.getClass().equals(this.getClass())) {
-            return false;
+        if (other.javaClass != this.javaClass) {
+            return false
         }
 
         // The real bit ...
-        DefaultLeafKeyList that = (DefaultLeafKeyList) obj;
-        return osisName.equals(that.osisName);
+        val that = other as DefaultLeafKeyList
+        return osisName!! == that.osisName
     }
 
-    @Override
-    public int hashCode() {
-        return osisName.hashCode();
+    override fun hashCode(): Int {
+        return osisName!!.hashCode()
     }
 
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Key obj) {
-        DefaultLeafKeyList that = (DefaultLeafKeyList) obj;
-        return osisName.compareTo(that.osisName);
+    override fun compareTo(other: Key?): Int {
+        val that = other as DefaultLeafKeyList
+        return osisName!!.compareTo(that.osisName!!)
     }
 
-    @Override
-    public DefaultLeafKeyList clone() {
-        DefaultLeafKeyList clone = null;
+    override fun clone(): DefaultLeafKeyList {
+        var clone: DefaultLeafKeyList? = null
         try {
-            clone = (DefaultLeafKeyList) super.clone();
+            clone = super<Cloneable>.clone() as DefaultLeafKeyList
             if (parent != null) {
-                clone.parent = parent.clone();
+                clone.parent = parent!!.clone()
             }
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 
     /**
      * The parent of this key
      */
-    private Key parent;
+    private var parent: Key? = null
 
     /**
      * The human readable string that this key represents
      */
-    private String name;
+    private var name: String? = null
 
     /**
      * The OSIS version of this Key
      */
-    private String osisName;
+    private var osisName: String? = null
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = -7462556005744186622L;
-
+    private companion object {
+        /**
+         *
+         */
+        private const val serialVersionUID = -7462556005744186622L
+    }
 }

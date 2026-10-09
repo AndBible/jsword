@@ -204,7 +204,7 @@ open class VersificationToKJVMapper {
     private fun addMappings(leftHand: QualifiedKey, kjvVerses: QualifiedKey) {
         if (leftHand.absentType === QualifiedKey.Qualifier.ABSENT_IN_LEFT) {
             this.absentVerses.addAll(kjvVerses.key)
-        } else if (leftHand.key!!.cardinality == 1) {
+        } else if (leftHand.key!!.getCardinality() == 1) {
             add1ToManyMappings(leftHand.verse, kjvVerses)
         } else {
             addManyToMany(leftHand, kjvVerses)
@@ -223,9 +223,9 @@ open class VersificationToKJVMapper {
         val kjvKeys = kjvVerses.key
         val leftIter = leftKeys.iterator()
 
-        if (kjvKeys != null && kjvKeys.cardinality != 1) {
+        if (kjvKeys != null && kjvKeys.getCardinality() != 1) {
             // We detect if the keys are 1-apart from each other. If so, then we skip verse 0 on both sides.
-            val diff = Math.abs(leftKeys.cardinality - kjvKeys.cardinality)
+            val diff = Math.abs(leftKeys.getCardinality() - kjvKeys.getCardinality())
 
             if (diff > 1) {
                 reportCardinalityError(leftKeys, kjvKeys)
@@ -311,8 +311,8 @@ open class VersificationToKJVMapper {
         // TODO (CJB): change this to a neater exception
         // then something went wrong, as we have remaining verses
         throw LucidRuntimeException(String.format("%s has a cardinality of %s whilst %s has a cardinality of %s.",
-                leftKeys, Integer.toString(leftKeys.cardinality),
-                kjvKeys, Integer.toString(kjvKeys.cardinality)))
+                leftKeys, Integer.toString(leftKeys.getCardinality()),
+                kjvKeys, Integer.toString(kjvKeys.getCardinality())))
     }
 
     /**
@@ -354,7 +354,7 @@ open class VersificationToKJVMapper {
      */
     private fun addReverse1ToManyMappings(leftHand: Verse?, kjvHand: QualifiedKey) {
         //add the reverse mapping, for 1-1 mappings
-        if (kjvHand.absentType === QualifiedKey.Qualifier.ABSENT_IN_KJV || kjvHand.key!!.cardinality == 1) {
+        if (kjvHand.absentType === QualifiedKey.Qualifier.ABSENT_IN_KJV || kjvHand.key!!.getCardinality() == 1) {
             // TODO(CJB): deal with parts
             addKJVToMapping(kjvHand, leftHand)
         } else {
@@ -453,7 +453,7 @@ open class VersificationToKJVMapper {
      */
     @Throws(NoSuchKeyException::class)
     private fun getOffsetQualifiedKey(versification: Versification?, versesKey: String, offsetBasis: VerseKey<*>?): QualifiedKey {
-        if (offsetBasis == null || offsetBasis.cardinality == 0) {
+        if (offsetBasis == null || offsetBasis.getCardinality() == 0) {
             // TODO(CJB): internationalize
             throw NoSuchKeyException(JSMsg.gettext("Unable to offset the given key [{0}]", offsetBasis))
         }
@@ -485,8 +485,8 @@ open class VersificationToKJVMapper {
             start = versification!!.add(start, offset)
         }
         var end = start
-        if (vr.cardinality > 1) {
-            end = versification!!.add(start, vr.cardinality - 1)
+        if (vr.getCardinality() > 1) {
+            end = versification!!.add(start, vr.getCardinality() - 1)
         }
 
         if (start == null || end == null) {
@@ -629,7 +629,7 @@ open class VersificationToKJVMapper {
         out.println("    ******************************")
         for (entry in this.toKJVMappings.entries) {
             val kjvVerses = entry.value
-            val osisRef = entry.key.osisRef
+            val osisRef = entry.key.getOsisRef()
             for (q in kjvVerses) {
                 out.println(String.format("\t(%s) %s => (KJV) %s",
                         nonKjvName,
@@ -640,7 +640,7 @@ open class VersificationToKJVMapper {
 
         out.println("    ******************************")
         out.println("    Absent verses in left versification:")
-        out.println(String.format("\t[%s]", this.absentVerses.osisRef))
+        out.println(String.format("\t[%s]", this.absentVerses.getOsisRef()))
         out.println("    ******************************")
         out.println("    Backwards mappings from KJV")
         out.println("    ******************************")
@@ -648,7 +648,7 @@ open class VersificationToKJVMapper {
             out.println(String.format("\t(KJV): %s => (%s) %s",
                     entry.key.toString(),
                     nonKjvName,
-                    entry.value.osisRef))
+                    entry.value.getOsisRef()))
         }
     }
 

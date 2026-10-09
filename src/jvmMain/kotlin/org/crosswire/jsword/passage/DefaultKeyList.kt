@@ -17,191 +17,185 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A default implementation of Key.
- * 
- * <p>
- * This implementation uses <tt>java.util.List</tt> to store keys.
- * 
+ *
+ *
+ * This implementation uses `java.util.List` to store keys.
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DefaultKeyList extends AbstractKeyList {
+open class DefaultKeyList : AbstractKeyList {
     /**
      * Simple ctor
      */
-    public DefaultKeyList() {
-        super(null);
-    }
+    constructor() : super(null)
 
     /**
      * Simple ctor
-     * @param parent 
-     * @param name 
+     * @param parent
+     * @param name
      */
-    public DefaultKeyList(Key parent, String name) {
-        super(name);
-        this.parent = parent;
+    constructor(parent: Key?, name: String?) : super(name) {
+        this.parent = parent
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return false;
+    override fun canHaveChildren(): Boolean {
+        return false
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return 0;
+    override fun getChildCount(): Int {
+        return 0
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        return keys.size();
+    override fun getCardinality(): Int {
+        return keys.size
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    @Override
-    public boolean isEmpty() {
-        return keys.isEmpty();
+    override fun isEmpty(): Boolean {
+        return keys.isEmpty()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#contains(org.crosswire.jsword.passage
      * .Key)
      */
-    @Override
-    public boolean contains(Key key) {
-        return keys.contains(key);
+    override fun contains(key: Key?): Boolean {
+        return keys.contains(key)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#iterator()
      */
-    public Iterator<Key> iterator() {
-        return keys.iterator();
+    @Suppress("UNCHECKED_CAST")
+    override fun iterator(): MutableIterator<Key> {
+        return keys.iterator() as MutableIterator<Key>
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#add(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
-        keys.add(key);
+    override fun addAll(key: Key?) {
+        keys.add(key)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#remove(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        keys.remove(key);
+    override fun removeAll(key: Key?) {
+        keys.remove(key)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
-        keys.clear();
+    override fun clear() {
+        keys.clear()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        return keys.get(index);
+    override fun get(index: Int): Key? {
+        return keys.get(index)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage
      * .Key)
      */
-    public int indexOf(Key that) {
-        return keys.indexOf(that);
+    override fun indexOf(that: Key?): Int {
+        return keys.indexOf(that)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return parent;
+    override fun getParent(): Key? {
+        return parent
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#blur(int)
      */
-    public void blur(int by, RestrictionType restrict) {
-        this.blur(by, restrict, true, true);
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        this.blur(by, restrict, true, true)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
-        log.warn("attempt to blur a non-blur-able list");
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
+        log.warn("attempt to blur a non-blur-able list")
     }
 
     /**
      * The parent of this key
      */
-    private Key parent;
+    private var parent: Key? = null
 
     /**
      * The store of Keys
      */
-    private List<Key> keys = new ArrayList<Key>();
+    private var keys: MutableList<Key?> = ArrayList()
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -1633375337613230599L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -1633375337613230599L
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(DefaultKeyList.class);
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(DefaultKeyList::class.java)
+    }
 }

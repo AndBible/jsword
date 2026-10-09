@@ -17,21 +17,21 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
 /**
  * For any time when a component wishes to express a preference for a Key. This
  * interface will often be optional to allow objects to not specify a
  * preference.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface PreferredKey {
+interface PreferredKey {
     /**
      * What Key would this object like us to use?
-     * 
+     *
      * @return The preferredKey
      */
-    Key getPreferred();
+    fun getPreferred(): Key?
 }

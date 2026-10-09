@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.io.Serializable;
+import java.io.Serializable
 
 /**
  * A Key is a Key that can contain other Keys.
@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializable {
+interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable {
     /**
      * A Human readable version of the Key. For Biblical passages this uses
      * short books names, and the shortest sensible rendering, for example
@@ -39,7 +39,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return a String containing a description of the Key
      */
-    String getName();
+    fun getName(): String?
 
     /**
      * A Human readable version of the Key's top level name. For Biblical
@@ -48,7 +48,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return a String containing a description of the Key
      */
-    String getRootName();
+    fun getRootName(): String?
 
     /**
      * Translate the Key into a human readable string, with the assumption that
@@ -59,7 +59,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *            The key to use to cut down unnecessary output.
      * @return The string representation
      */
-    String getName(Key base);
+    fun getName(base: Key?): String?
 
     /**
      * The OSIS defined reference specification for this Key. When the key is a
@@ -69,7 +69,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return a String containing the OSIS description of the verses
      */
-    String getOsisRef();
+    fun getOsisRef(): String?
 
     /**
      * The OSIS defined id specification for this Key. When the key is a single
@@ -78,14 +78,14 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return a String containing the OSIS description of the verses
      */
-    String getOsisID();
+    fun getOsisID(): String?
 
     /**
      * All keys have parents unless they are the root of a Key.
      *
      * @return The parent of this tree, or null if this Key is the root.
      */
-    Key getParent();
+    fun getParent(): Key?
 
     /**
      * Returns false if the receiver is a leaf node and can not have children.
@@ -93,14 +93,14 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return true if the key can have children
      */
-    boolean canHaveChildren();
+    fun canHaveChildren(): Boolean
 
     /**
      * Returns the number of children that this node has. Leaf nodes return 0.
      *
      * @return the number of children for the node
      */
-    int getChildCount();
+    fun getChildCount(): Int
 
     /**
      * Returns the number of elements in this set (its cardinality). If this set
@@ -110,14 +110,14 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * This method is potentially expensive, as it often requires cycling through all the keys in the set.</p>
      * @return the number of elements in this set (its cardinality).
      */
-    int getCardinality();
+    fun getCardinality(): Int
 
     /**
      * Does this Key have 0 members
      *
      * @return <tt>true</tt> if this set contains no elements.
      */
-    boolean isEmpty();
+    fun isEmpty(): Boolean
 
     /**
      * Returns <tt>true</tt> if this set contains the specified element.
@@ -126,7 +126,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *            element whose presence in this set is to be tested.
      * @return <tt>true</tt> if this set contains the specified element.
      */
-    boolean contains(Key key);
+    fun contains(key: Key?): Boolean
 
     /**
      * Adds the specified element to this set if it is not already present.
@@ -136,7 +136,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * @throws NullPointerException
      *             if the specified element is null
      */
-    void addAll(Key key);
+    fun addAll(key: Key?)
 
     /**
      * Removes the specified elements from this set if it is present.
@@ -146,7 +146,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * @throws NullPointerException
      *             if the specified element is null
      */
-    void removeAll(Key key);
+    fun removeAll(key: Key?)
 
     /**
      * Removes all but the specified element from this set.
@@ -156,13 +156,13 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * @throws NullPointerException
      *             if the specified element is null
      */
-    void retainAll(Key key);
+    fun retainAll(key: Key?)
 
     /**
      * Removes all of the elements from this set (optional operation). This set
      * will be empty after this call returns (unless it throws an exception).
      */
-    void clear();
+    fun clear()
 
     /**
      * Gets a key from a specific point in this list of children.
@@ -172,7 +172,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * @return The specified key
      * @throws IndexOutOfBoundsException
      */
-    Key get(int index);
+    fun get(index: Int): Key?
 
     /**
      * Reverse a Key into the position the key holds in the list of children
@@ -181,7 +181,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *            The Key to find
      * @return The index of the key or &lt; 0 if the key is not in the list
      */
-    int indexOf(Key that);
+    fun indexOf(that: Key?): Int
 
     /**
      * Widen the range of the verses/keys in this list. This is primarily for
@@ -193,7 +193,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *            How should we restrict the blurring?
      * @see Passage
      */
-    void blur(int by, RestrictionType restrict);
+    fun blur(by: Int, restrict: RestrictionType?)
 
     /**
      * Widen the range of the verses/keys in this list. This is primarily for
@@ -207,7 +207,7 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      * @param blurUp true to indicate the passage should be extended upwards (i.e. towards the end)
      * @see Passage
      */
-    void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp);
+    fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean)
 
     /**
      * This needs to be declared here so that it is visible as a method on a
@@ -215,16 +215,16 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return A complete copy of ourselves
      */
-    Key clone();
+    public override fun clone(): Key
 
     /**
      * This needs to be declared here so that it is visible as a method on a
      * derived Key.
      *
-     * @param obj
+     * @param other
      * @return true if equal
      */
-    boolean equals(Object obj);
+    override fun equals(other: Any?): Boolean
 
     /**
      * This needs to be declared here so that it is visible as a method on a
@@ -232,5 +232,5 @@ public interface Key extends Comparable<Key>, Iterable<Key>, Cloneable, Serializ
      *
      * @return the hashcode
      */
-    int hashCode();
+    override fun hashCode(): Int
 }

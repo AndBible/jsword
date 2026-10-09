@@ -17,121 +17,89 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Stack;
+import java.util.NoSuchElementException
 
 /**
  * This KeyIterator performs a depth first iteration over the subkeys in the
  * key.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class KeyIterator implements Iterator<Key> {
-    public KeyIterator(Key key) {
-        stack = new Stack<Locator>();
-        stack.push(new Locator(key));
+open class KeyIterator(key: Key?) : MutableIterator<Key> {
+    private val stack: ArrayDeque<Locator> = ArrayDeque()
+
+    init {
+        stack.addLast(Locator(key))
     }
 
-    protected void prepare() {
+    protected open fun prepare() {
         // If there is nothing on the stack we have nothing to do.
-        if (stack.size() == 0) {
-            return;
+        if (stack.size == 0) {
+            return
         }
 
         // Check to see if there are more children to process
-        Locator peek = stack.peek();
+        val peek = stack.last()
 
-        if (peek.getParent().getChildCount() > peek.getPosition()) {
-            return;
+        if (peek.parent!!.getChildCount() > peek.position) {
+            return
         }
 
         // There are no more so we are done with this Locator.
-        stack.pop();
+        stack.removeLast()
 
         // Try the next
-        prepare();
+        prepare()
     }
 
-    public boolean hasNext() {
-        prepare();
-        return stack.size() != 0;
+    override fun hasNext(): Boolean {
+        prepare()
+        return stack.size != 0
     }
 
-    public Key next() {
+    override fun next(): Key {
         if (!hasNext()) {
-            throw new NoSuchElementException();
+            throw NoSuchElementException()
         }
 
-        Locator peek = stack.peek();
+        val peek = stack.last()
 
         // Determine which child in the list of children to consider
-        int childNum = peek.getPosition();
+        val childNum = peek.position
 
         // Advance to the next potential child
-        peek.setPosition(childNum + 1);
+        peek.position = childNum + 1
 
         // If we have exhausted all the children,
         // then return the parent key
         if (childNum == -1) {
-            return peek.getParent();
+            return peek.parent!!
         }
 
-        stack.push(new Locator(peek.getParent().get(childNum)));
+        stack.addLast(Locator(peek.parent!!.get(childNum)))
 
-        return next();
+        return next()
     }
 
-    public void remove() {
-        throw new UnsupportedOperationException();
+    override fun remove() {
+        throw UnsupportedOperationException()
     }
 
     /**
      * A helper class that remembers where we've been and where we are.
      */
-    public static class Locator {
-        private Key parent;
-        private int position;
-
-        public Locator(Key parent) {
-            this.parent = parent;
-            this.position = -1;
-        }
-
+    open class Locator(
         /**
-         * @return the parent
+         * the parent
          */
-        public Key getParent() {
-            return parent;
-        }
-
+        open var parent: Key?
+    ) {
         /**
-         * @param parent
-         *            the parent to set
+         * the position
          */
-        public void setParent(Key parent) {
-            this.parent = parent;
-        }
-
-        /**
-         * @return the position
-         */
-        public int getPosition() {
-            return position;
-        }
-
-        /**
-         * @param position
-         *            the position to set
-         */
-        public void setPosition(int position) {
-            this.position = position;
-        }
-
+        open var position: Int = -1
     }
-
-    private Stack<Locator> stack;
 }

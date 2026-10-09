@@ -17,230 +17,222 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * A Key that knows where the data is in the real file.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class TreeKey extends AbstractKeyList {
+open class TreeKey : AbstractKeyList {
     /**
      * Setup with the key name and positions of data in the file
      *
      * @param name the key for this TreeKey
      * @param parent the parent node for this TreeKey
      */
-    public TreeKey(String name, Key parent) {
-        super(name);
-        this.parent = parent;
-        this.children = new ArrayList<Key>();
+    constructor(name: String?, parent: Key?) : super(name) {
+        this.parent = parent
+        this.children = ArrayList()
     }
 
     /**
      * Setup with the key name. Use solely for searching.
      *
      * @param text the key for this TreeKey
-      */
-    public TreeKey(String text) {
-        this(text, null);
-    }
+     */
+    constructor(text: String?) : this(text, null)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return true;
+    override fun canHaveChildren(): Boolean {
+        return true
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return children.size();
+    override fun getChildCount(): Int {
+        return children.size
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        int cardinality = 1; // count this node
-        for (Key child : children) {
-            cardinality += child.getCardinality();
+    override fun getCardinality(): Int {
+        var cardinality = 1 // count this node
+        for (child in children) {
+            cardinality += child!!.getCardinality()
         }
 
-        return cardinality;
+        return cardinality
     }
 
-    @Override
-    public boolean isEmpty() {
-        return children.isEmpty();
+    override fun isEmpty(): Boolean {
+        return children.isEmpty()
     }
 
-    @Override
-    public boolean contains(Key key) {
+    override fun contains(key: Key?): Boolean {
         if (children.contains(key)) {
-            return true;
+            return true
         }
 
-        for (Key child : children) {
-            if (child.contains(key)) {
-                return true;
+        for (child in children) {
+            if (child!!.contains(key)) {
+                return true
             }
         }
 
-        return false;
+        return false
     }
 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
-    public Iterator<Key> iterator() {
-        return new KeyIterator(this);
+    override fun iterator(): MutableIterator<Key> {
+        return KeyIterator(this)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#addAll(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
-        children.add(key);
+    override fun addAll(key: Key?) {
+        children.add(key)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#removeAll(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        children.remove(key);
+    override fun removeAll(key: Key?) {
+        children.remove(key)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
-        children.clear();
+    override fun clear() {
+        children.clear()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        return children.get(index);
+    override fun get(index: Int): Key? {
+        return children.get(index)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage.Key)
      */
-    public int indexOf(Key that) {
-        return children.indexOf(that);
+    override fun indexOf(that: Key?): Int {
+        return children.indexOf(that)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return parent;
+    override fun getParent(): Key? {
+        return parent
     }
 
     /** equality is tricky if comparing TreeKeys (as used by GenBooks) because some child keys can have the same name but different parents
      */
-    @Override
-    public boolean equals(Object obj) {
+    override fun equals(other: Any?): Boolean {
         // Since this can not be null
-        if (obj == null) {
-            return false;
+        if (other == null) {
+            return false
         }
 
         // Check that that is the same as this
         // Don't use instanceOf since that breaks inheritance
-        if (!obj.getClass().equals(this.getClass())) {
-            return false;
+        if (other.javaClass != this.javaClass) {
+            return false
         }
 
-        TreeKey otherTreeKey = (TreeKey)obj;
-        if (!getName().equals(otherTreeKey.getName())) {
-            return false;
+        val otherTreeKey = other as TreeKey
+        if (getName() != otherTreeKey.getName()) {
+            return false
         }
 
         // names match so now work up the tree comparing parents
 
-        if (getParent()==null) {
-            return otherTreeKey.getParent()==null;
+        if (getParent() == null) {
+            return otherTreeKey.getParent() == null
         }
 
         // KeyTrees nodes can have the same name but different parents
-        return getParent().equals(otherTreeKey.getParent());
+        return getParent()!! == otherTreeKey.getParent()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict) {
-        blur(by, restrict, true, true);
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        blur(by, restrict, true, true)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
-        log.warn("attempt to blur a non-blur-able list");
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
+        log.warn("attempt to blur a non-blur-able list")
     }
 
-    @Override
-    public TreeKey clone() {
-        return (TreeKey) super.clone();
+    override fun clone(): TreeKey {
+        return super.clone() as TreeKey
     }
 
-    @Override
-    public String getRootName() {
-        String rootName = getName();
-        for (Key parentKey = this; parentKey != null && parentKey.getName().length() > 0; parentKey = parentKey.getParent()) {
-            rootName = parentKey.getName();
+    override fun getRootName(): String {
+        var rootName = getName()
+        var parentKey: Key? = this
+        while (parentKey != null && parentKey.getName()!!.length > 0) {
+            rootName = parentKey.getName()!!
+            parentKey = parentKey.getParent()
         }
-        return rootName;
+        return rootName
     }
 
-    @Override
-    public String getOsisRef() {
-        return getOsisID();
+    override fun getOsisRef(): String {
+        return getOsisID()
     }
 
-    @Override
-    public String getOsisID() {
-        StringBuilder b = new StringBuilder(100);
-        b.append(getName());
-        for (Key parentKey = this.getParent(); parentKey != null && parentKey.getName().length() > 0; parentKey = parentKey.getParent()) {
-            b.insert(0, "/");
-            b.insert(0, parentKey.getName());
+    override fun getOsisID(): String {
+        val b = StringBuilder(100)
+        b.append(getName())
+        var parentKey: Key? = this.getParent()
+        while (parentKey != null && parentKey.getName()!!.length > 0) {
+            b.insert(0, "/")
+            b.insert(0, parentKey.getName())
+            parentKey = parentKey.getParent()
         }
         // Remove the leading .
-        return b.toString();
+        return b.toString()
     }
 
     /**
      * The parent of this key.
      */
-    private Key parent;
+    private var parent: Key? = null
 
     /**
      * The immediate children of this tree node.
      */
-    private List<Key> children;
+    private var children: MutableList<Key?>
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(TreeKey.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(TreeKey::class.java)
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -6560408145705717977L;
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -6560408145705717977L
+    }
 }

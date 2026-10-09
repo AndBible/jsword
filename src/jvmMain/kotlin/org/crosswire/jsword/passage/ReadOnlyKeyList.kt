@@ -17,231 +17,225 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.util.Iterator;
-
-import org.crosswire.jsword.JSOtherMsg;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSOtherMsg
 
 /**
  * A read-only wrapper around any writable implementation of Key.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ReadOnlyKeyList implements Key {
-    /**
-     * Simple ctor
-     * 
-     * @param keys the keys
-     * @param ignore 
-     */
-    public ReadOnlyKeyList(Key keys, boolean ignore) {
-        this.keys = keys;
-        this.ignore = ignore;
-    }
-
+open class ReadOnlyKeyList
+/**
+ * Simple ctor
+ *
+ * @param keys the keys
+ * @param ignore
+ */
+(keys: Key?, ignore: Boolean) : Key, Cloneable {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        return keys.getCardinality();
+    override fun getCardinality(): Int {
+        return keys!!.getCardinality()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return keys.canHaveChildren();
+    override fun canHaveChildren(): Boolean {
+        return keys!!.canHaveChildren()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return keys.getChildCount();
+    override fun getChildCount(): Int {
+        return keys!!.getChildCount()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    public boolean isEmpty() {
-        return keys.isEmpty();
+    override fun isEmpty(): Boolean {
+        return keys!!.isEmpty()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        return keys.contains(key);
+    override fun contains(key: Key?): Boolean {
+        return keys!!.contains(key)
     }
 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
-    public Iterator<Key> iterator() {
-        return keys.iterator();
+    override fun iterator(): MutableIterator<Key> {
+        return keys!!.iterator()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#addAll(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
+    override fun addAll(key: Key?) {
         if (ignore) {
-            return;
+            return
         }
 
-        throw new IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"));
+        throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#removeAll(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
+    override fun removeAll(key: Key?) {
         if (ignore) {
-            return;
+            return
         }
 
-        throw new IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"));
+        throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#retainAll(org.crosswire.jsword.passage.Key)
      */
-    public void retainAll(Key key) {
+    override fun retainAll(key: Key?) {
         if (ignore) {
-            return;
+            return
         }
 
-        throw new IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"));
+        throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
+    override fun clear() {
         if (ignore) {
-            return;
+            return
         }
 
-        throw new IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"));
+        throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    public String getName() {
-        return keys.getName();
+    override fun getName(): String? {
+        return keys!!.getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    public String getName(Key base) {
-        return keys.getName(base);
+    override fun getName(base: Key?): String? {
+        return keys!!.getName(base)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    public String getRootName() {
-        return keys.getRootName();
+    override fun getRootName(): String? {
+        return keys!!.getRootName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    public String getOsisRef() {
-        return keys.getOsisRef();
+    override fun getOsisRef(): String? {
+        return keys!!.getOsisRef()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    public String getOsisID() {
-        return keys.getOsisID();
+    override fun getOsisID(): String? {
+        return keys!!.getOsisID()
     }
 
-    @Override
-    public int hashCode() {
-        return keys.hashCode();
+    override fun hashCode(): Int {
+        return keys!!.hashCode()
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return keys.equals(obj);
+    override fun equals(other: Any?): Boolean {
+        return keys!!.equals(other)
     }
 
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Key o) {
-        return keys.compareTo(o);
+    override fun compareTo(other: Key?): Int {
+        return keys!!.compareTo(other)
     }
 
-   /* (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        return keys.get(index);
+    override fun get(index: Int): Key? {
+        return keys!!.get(index)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage.Key)
      */
-    public int indexOf(Key that) {
-        return keys.indexOf(that);
+    override fun indexOf(that: Key?): Int {
+        return keys!!.indexOf(that)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return keys.getParent();
+    override fun getParent(): Key? {
+        return keys!!.getParent()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict) {
-        blur(by, restrict, true, true);
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        blur(by, restrict, true, true)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
         if (ignore) {
-            return;
+            return
         }
 
-        throw new IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"));
+        throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only key list"))
     }
 
-    @Override
-    public ReadOnlyKeyList clone() {
-        ReadOnlyKeyList clone = null;
+    override fun clone(): ReadOnlyKeyList {
+        var clone: ReadOnlyKeyList? = null
         try {
-            clone = (ReadOnlyKeyList) super.clone();
-            clone.keys = keys.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            clone = super<Cloneable>.clone() as ReadOnlyKeyList
+            clone.keys = keys!!.clone()
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 
     /**
      * Do we ignore write requests or throw?
      */
-    private boolean ignore;
+    private var ignore: Boolean = ignore
 
     /**
      * The Key to which we proxy
      */
-    private Key keys;
+    private var keys: Key? = keys
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -7947159638198641657L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -7947159638198641657L
+    }
 }

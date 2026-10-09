@@ -36,7 +36,7 @@ open class VersificationConverter {
             }
         } catch (e: Exception) {
             // unexpected problem during mapping
-            log.warn("JSword Versification mapper failed to map " + key!!.osisID + " to " + toVersification!!.name)
+            log.warn("JSword Versification mapper failed to map " + key!!.getOsisID() + " to " + toVersification!!.name)
         }
         return PassageKeyFactory.instance().createEmptyKeyList(toVersification)
     }
@@ -83,16 +83,16 @@ open class VersificationConverter {
     private fun convertVerseStrictly(verse: Verse?, toVersification: Versification?): Verse? {
         try {
             val key = versificationsMapper.mapVerse(verse, toVersification)
-            if (!key.isEmpty) {
+            if (!key.isEmpty()) {
                 val mappedVerse = KeyUtil.getVerse(key)
                 // If target v11n does not contain mapped verse then an exception normally occurs and the ordinal is set to 0
-                if (mappedVerse.ordinal > 0) {
+                if (mappedVerse!!.ordinal > 0) {
                     return mappedVerse
                 }
             }
         } catch (e: Exception) {
             // unexpected problem during mapping
-            log.warn("JSword Versification mapper failed to map " + verse!!.osisID + " from " + verse.versification.name + " to " + toVersification!!.name)
+            log.warn("JSword Versification mapper failed to map " + verse!!.getOsisID() + " from " + verse.versification.name + " to " + toVersification!!.name)
             throw e
         }
         return null
