@@ -45,7 +45,7 @@ class InstallManager {
     /**
      * The map of installer factories
      */
-    private lateinit var factories: MutableMap<String, Class<InstallerFactory>>
+    private var factories: MutableMap<String, Class<InstallerFactory>>? = null
 
     /**
      * The list of discovered installers
@@ -73,7 +73,7 @@ class InstallManager {
                     val name = parts[1]
                     val rest = parts[2]
 
-                    val clazz = factories[type]
+                    val clazz = factories!![type]
                     if (clazz == null) {
                         log.warn("Unable to get class for {}", type)
                     } else {
@@ -125,7 +125,7 @@ class InstallManager {
      * @return the set of all installer factory names
      */
     val installerFactoryNames: Set<String>
-        get() = Collections.unmodifiableSet(factories.keys)
+        get() = Collections.unmodifiableSet(factories!!.keys)
 
     /**
      * Find the registered name of the InstallerFactory that created the given
@@ -137,8 +137,8 @@ class InstallManager {
      */
     fun getFactoryNameForInstaller(installer: Installer): String? {
         val match: Class<out Installer> = installer.javaClass
-        for (name in factories.keys) {
-            val factclazz = factories[name]
+        for (name in factories!!.keys) {
+            val factclazz = factories!![name]
             try {
                 val ifactory = ReflectionUtil.construct<InstallerFactory>(factclazz)
                 val clazz: Class<out Installer> = ifactory.createInstaller().javaClass
@@ -150,7 +150,7 @@ class InstallManager {
             }
         }
 
-        log.warn("Failed to find factory name for {} among the {} factories.", installer, Integer.toString(factories.size))
+        log.warn("Failed to find factory name for {} among the {} factories.", installer, Integer.toString(factories!!.size))
         return null
     }
 
@@ -187,7 +187,7 @@ class InstallManager {
      */
     fun getInstallerFactory(name: String?): InstallerFactory? {
         try {
-            return ReflectionUtil.construct<InstallerFactory>(if (name == null) null else factories[name])
+            return ReflectionUtil.construct<InstallerFactory>(if (name == null) null else factories!![name])
         } catch (e: ReflectiveOperationException) {
             jswordAssert(false) { e }
         }

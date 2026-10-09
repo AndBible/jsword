@@ -178,7 +178,7 @@ abstract class AbstractBackend<T : OpenFileState> : StatefulFileBackedBackend<T>
 
         try {
             openFileState = initState()
-            when (this.bmd!!.keyType) {
+            when (this.bmd!!.keyType!!) {
                 KeyType.LIST -> readNormalOsis(key, processor, content, openFileState)
                 KeyType.TREE -> readNormalOsisSingleKey(key, processor, content, openFileState)
                 KeyType.VERSE -> readPassageOsis(key, processor, content, openFileState)
