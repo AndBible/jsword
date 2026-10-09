@@ -217,20 +217,8 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable 
      */
     public override fun clone(): Key
 
-    /**
-     * This needs to be declared here so that it is visible as a method on a
-     * derived Key.
-     *
-     * @param other
-     * @return true if equal
-     */
-    override fun equals(other: Any?): Boolean
+    // equals(Object) and hashCode() were redeclared here in the Java interface so that they
+    // were visible as methods on a derived Key; Kotlin interfaces cannot redeclare them
+    // without making them abstract for implementers. Every implementer inherits them from Object.
 
-    /**
-     * This needs to be declared here so that it is visible as a method on a
-     * derived Key.
-     *
-     * @return the hashcode
-     */
-    override fun hashCode(): Int
 }
