@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
-  <navMap>
-    <navPoint id="n1" playOrder="1"><navLabel><text>One &amp; first</text></navLabel><content src="ch1.xhtml"/></navPoint>
-    <navPoint id="n2" playOrder="2"><navLabel><text>Two</text></navLabel><content src="ch2.xhtml#s2"/></navPoint>
-    <navPoint id="n3" playOrder="3"><navLabel><text>Three</text></navLabel><content src="ch3.xhtml"/></navPoint>
-  </navMap>
-</ncx>
