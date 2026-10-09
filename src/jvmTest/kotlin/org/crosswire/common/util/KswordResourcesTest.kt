@@ -3,16 +3,17 @@ package org.crosswire.common.util
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 class KswordResourcesTest {
-    private val roots = listOf(File("src/embeddedResources"))
-    private val excluded = setOf("AnalyzerFactory.properties", "IndexMetadata.properties", "InstalledIndex.properties")
+    private val root = File("src/embeddedResources")
 
-    private fun sourceFiles(): Map<String, File> = roots.filter { it.isDirectory }.flatMap { root ->
-        root.walkTopDown().filter { it.isFile && it.name != "README.md" }.map { it.relativeTo(root).invariantSeparatorsPath to it }
-    }.filter { (p, _) -> p !in excluded && (!p.endsWith(".plugin") || p == "InstallManager.plugin") }.toMap()
+    // Mirrors the generator's rule: everything under the root except the top-level README.md.
+    private fun sourceFiles(): Map<String, File> =
+        root.walkTopDown().filter { it.isFile && it.relativeTo(root).invariantSeparatorsPath != "README.md" }
+            .associateBy { it.relativeTo(root).invariantSeparatorsPath }
 
     @Test fun everyFileRoundTripsByteExact() {
         val files = sourceFiles()
@@ -23,6 +24,8 @@ class KswordResourcesTest {
     @Test fun unknownPathIsNull() { assertNull(KswordResources.bytes("nope.properties")) }
 
     @Test fun textDecodesUtf8() {
-        assertEquals(File("src/embeddedResources/BibleNames_fi.properties").readText(), KswordResources.text("BibleNames_fi.properties"))
+        val expected = File(root, "BibleNames_fi.properties").readText()
+        assertTrue("fixture must contain non-ASCII characters", expected.any { it.code > 127 })
+        assertEquals(expected, KswordResources.text("BibleNames_fi.properties"))
     }
 }

@@ -48,9 +48,9 @@ kotlin {
 
 // --- K2 F1: embedded resources -------------------------------------------------------------------------
 // Resource files are embedded byte-exact as Base64 chunks so common code (JVM, iOS) reads them without a
-// platform resource mechanism. Lucene's classpath resources are not embedded (K6).
+// platform resource mechanism. Everything under the root is embedded except hidden files and the top-level
+// README.md. Lucene's classpath resources are not embedded (K6).
 val embeddedResourceRoots = listOf(layout.projectDirectory.dir("src/embeddedResources"))
-val notEmbedded = setOf("AnalyzerFactory.properties", "IndexMetadata.properties", "InstalledIndex.properties")
 val generatedResourcesDir = layout.buildDirectory.dir("generated/ksword/commonMain/kotlin")
 
 val generateKswordResources by tasks.registering {
@@ -60,10 +60,14 @@ val generateKswordResources by tasks.registering {
     doLast {
         val files = sortedMapOf<String, File>()
         for (root in roots.filter { it.isDirectory }) {
-            root.walkTopDown().filter { it.isFile && it.name != "README.md" }.forEach { f ->
+            root.walkTopDown().filter { it.isFile }.forEach { f ->
                 val p = f.relativeTo(root).invariantSeparatorsPath
-                val keep = p !in notEmbedded && (!p.endsWith(".plugin") || p == "InstallManager.plugin")
-                if (keep) check(files.put(p, f) == null) { "resource $p exists in two roots" }
+                if (p == "README.md" || p.split('/').any { it.startsWith(".") }) return@forEach
+                // Paths become Kotlin string literals; refuse the characters that would need escaping.
+                check(p.none { it == '$' || it == '"' || it == '\\' }) {
+                    "resource path '$p' contains \$, \" or \\; rename it (the generator does not escape paths)"
+                }
+                check(files.put(p, f) == null) { "resource $p exists in two roots" }
             }
         }
         val chunk = 60_000 // Base64 is ASCII: one byte per char, below the 65,535-byte JVM constant limit
@@ -78,7 +82,7 @@ val generateKswordResources by tasks.registering {
             w.appendLine()
             w.appendLine("/** The JSword resource files, embedded at build time (K2 F1). Paths are relative to the resource root. */")
             w.appendLine("internal object KswordResources {")
-            w.appendLine("    private val index: Map<String, () -> Array<String>> = mapOf(")
+            w.appendLine("    private val index: Map<String, () -> Array<String>> = mapOf<String, () -> Array<String>>(")
             files.keys.forEachIndexed { i, p -> w.appendLine("        \"$p\" to ::r$i,") }
             w.appendLine("    )")
             w.appendLine("    private val cache = HashMap<String, ByteArray>()")
