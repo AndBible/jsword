@@ -182,3 +182,12 @@ val parityTest by tasks.registering(Test::class) {
         listOf("-Dksword.oracle.classpath=${oracleClasspath.asPath}")
     })
 }
+
+// iOS simulator tests: stream stdout/stderr so a test process that dies mid-test (SIGSEGV) still leaves its last
+// output in the CI log; the HTML report has nothing for a crashed process.
+tasks.withType<AbstractTestTask>().matching { it.name == "iosSimulatorArm64Test" }.configureEach {
+    testLogging {
+        showStandardStreams = true
+        events("started", "passed", "failed", "skipped")
+    }
+}
