@@ -180,3 +180,7 @@ org.crosswire.common.util.MsgBase + K protected (java.lang.String) throws [] # K
 org.crosswire.common.util.Translations - <class> # K2: unused, removed (no caller in jsword or AndBible)
 org.crosswire.common.util.PluginUtil - M public static getImplementor(java.lang.Class): java.lang.Class throws [java.io.IOException,java.lang.ClassCastException,java.lang.ClassNotFoundException] # K2 cleanup: the declared unchecked ClassCastException was unreachable (the registry holds typed entries); unchecked, so source-compatible.
 org.crosswire.common.util.PluginUtil + M public static getImplementor(java.lang.Class): java.lang.Class throws [java.io.IOException,java.lang.ClassNotFoundException] # K2 cleanup: same method without the unreachable ClassCastException.
+org.crosswire.common.util.CWProject + M public final getReadableFrontendProjectDirPath(): okio.Path throws [] # K2 F4: new okio Path accessor on CWProject (additive).
+org.crosswire.common.util.CWProject + M public final getWritableFrontendProjectDirPath(): okio.Path throws [] # K2 F4: new okio Path accessor on CWProject (additive).
+org.crosswire.common.util.CWProject + M public final getWritableProjectDirPath(): okio.Path throws [] # K2 F4: new okio Path accessor on CWProject (additive).
+org.crosswire.common.util.CWProject + M public final getWritableProjectSubdirPath(java.lang.String,boolean): okio.Path throws [java.io.IOException] # K2 F4: new okio Path accessor on CWProject (additive).

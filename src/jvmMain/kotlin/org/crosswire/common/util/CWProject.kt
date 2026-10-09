@@ -22,6 +22,8 @@ package org.crosswire.common.util
 import java.io.File
 import java.io.IOException
 import java.net.URI
+import okio.Path
+import okio.Path.Companion.toPath
 
 /**
  * The Project class looks after the source of project files. These are per user
@@ -104,6 +106,29 @@ private constructor() {
             establishProjectHome()
             return writeHome
         }
+
+    /** [writableProjectDir] as an okio [Path]. */
+    val writableProjectDirPath: Path?
+        get() = writableProjectDir?.toOkioPath()
+
+    /** [writableFrontendProjectDir] as an okio [Path]. */
+    val writableFrontendProjectDirPath: Path?
+        get() = writableFrontendProjectDir?.toOkioPath()
+
+    /** [readableFrontendProjectDir] as an okio [Path]. */
+    val readableFrontendProjectDirPath: Path?
+        get() = readableFrontendProjectDir?.toOkioPath()
+
+    /**
+     * [getWritableProjectSubdir] as an okio [Path].
+     *
+     * @throws IOException if the directory is to be created and that fails
+     */
+    @Throws(IOException::class)
+    fun getWritableProjectSubdirPath(subject: String, create: Boolean): Path? =
+        getWritableProjectSubdir(subject, create)?.toOkioPath()
+
+    private fun URI.toOkioPath(): Path = path.toPath()
 
     /**
      * Get the locations where project resources can be found.
