@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the verse element. Note: the verse element surrounds
@@ -32,22 +32,14 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class VerseTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "verse";
-    }
+open class VerseTag : AbstractTag() {
+    override val tagName: String get() = "verse"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element p = OSISUtil.factory().createLG();
-
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val p = OSISUtil.factory().createLG()
         if (ele != null) {
-            ele.addContent(p);
+            ele.addContent(p)
         }
-
-        return p;
+        return p
     }
 }

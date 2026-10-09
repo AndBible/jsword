@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the div element.
@@ -31,65 +31,33 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DivTag extends AbstractTag {
-    /**
-     * Create an div tag
-     */
-    public DivTag() {
-        super();
-        this.level = 0;
-    }
-
-    /**
-     * Create an div tag of the given level
-     * 
-     * @param level
-     */
-    public DivTag(int level) {
-        super();
-        this.level = level;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        if (level == 0) {
-            return "div";
-        }
-        return "div" + level;
-    }
-
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        // See if there are variant readings e.g. WHNU Mat 1.9
-        String typeAttr = attrs.getValue("type");
-        if ("variant".equals(typeAttr)) {
-            Element seg = OSISUtil.factory().createSeg();
-            seg.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.VARIANT_TYPE);
-            String classAttr = attrs.getValue("class");
-            if (classAttr != null) {
-                seg.setAttribute(OSISUtil.OSIS_ATTR_SUBTYPE, OSISUtil.VARIANT_CLASS + '-' + classAttr);
-            }
-
-            if (ele != null) {
-                ele.addContent(seg);
-            }
-
-            return seg;
-        }
-
-        Element div = OSISUtil.factory().createDiv();
-
-        if (ele != null) {
-            ele.addContent(div);
-        }
-
-        return div;
-    }
-
+open class DivTag @JvmOverloads constructor(
     /**
      * The level of the division
      */
-    private int level;
+    private val level: Int = 0
+) : AbstractTag() {
+    override val tagName: String get() = if (level == 0) "div" else "div" + level
+
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        // See if there are variant readings e.g. WHNU Mat 1.9
+        val typeAttr = attrs!!.getValue("type")
+        if ("variant" == typeAttr) {
+            val seg = OSISUtil.factory().createSeg()
+            seg.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.VARIANT_TYPE)
+            val classAttr = attrs.getValue("class")
+            if (classAttr != null) {
+                seg.setAttribute(OSISUtil.OSIS_ATTR_SUBTYPE, OSISUtil.VARIANT_CLASS + '-' + classAttr)
+            }
+            if (ele != null) {
+                ele.addContent(seg)
+            }
+            return seg
+        }
+        val div = OSISUtil.factory().createDiv()
+        if (ele != null) {
+            ele.addContent(div)
+        }
+        return div
+    }
 }

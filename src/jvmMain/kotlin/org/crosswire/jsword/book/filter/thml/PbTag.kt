@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
 /**
  * THML Tag to process the pb (page break) element. Do nothing since pages are a
@@ -26,12 +26,6 @@ package org.crosswire.jsword.book.filter.thml;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class PbTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "pb";
-    }
-
+open class PbTag : AbstractTag() {
+    override val tagName: String get() = "pb"
 }

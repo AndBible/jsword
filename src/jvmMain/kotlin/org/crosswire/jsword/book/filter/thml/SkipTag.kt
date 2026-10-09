@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
 
 /**
  * Skip the tag and it's content.
@@ -29,20 +29,11 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class SkipTag extends AnonymousTag {
-    /**
-     * Simple ctor
-     * @param name 
-     * 
-     */
-    public SkipTag(String name) {
-        super(name);
-    }
+open class SkipTag(name: String) : AnonymousTag(name) {
 
-    @Override
-    public void processContent(Book book, Key key, Element ele) {
+    override fun processContent(book: Book?, key: Key?, ele: Element?) {
         // Remove this element and all it's children
-        Element parent = ele.getParentElement();
-        parent.removeContent(ele);
+        val parent = ele!!.parentElement
+        parent.removeContent(ele)
     }
 }

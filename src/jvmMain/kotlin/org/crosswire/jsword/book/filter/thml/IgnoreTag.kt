@@ -17,11 +17,11 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
 
 /**
  * Process the content of an element but to ignore the tag itself.
@@ -29,20 +29,12 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class IgnoreTag extends AnonymousTag {
-    /**
-     * Simple ctor
-     * @param name the name of the tag to ignore
-     */
-    public IgnoreTag(String name) {
-        super(name);
-    }
+open class IgnoreTag(name: String) : AnonymousTag(name) {
 
-    @Override
-    public void processContent(Book book, Key key, Element ele) {
+    override fun processContent(book: Book?, key: Key?, ele: Element?) {
         // Replace the parent with this element
-        Element parent = ele.getParentElement();
-        parent.removeContent(ele);
-        parent.addContent(ele.removeContent());
+        val parent = ele!!.parentElement
+        parent.removeContent(ele)
+        parent.addContent(ele.removeContent())
     }
 }

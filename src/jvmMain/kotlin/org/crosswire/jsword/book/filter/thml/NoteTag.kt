@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the note element.
@@ -31,23 +31,15 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class NoteTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "note";
-    }
+open class NoteTag : AbstractTag() {
+    override val tagName: String get() = "note"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element note = OSISUtil.factory().createNote();
-        note.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY);
-
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val note = OSISUtil.factory().createNote()
+        note.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY)
         if (ele != null) {
-            ele.addContent(note);
+            ele.addContent(note)
         }
-
-        return note;
+        return note
     }
 }

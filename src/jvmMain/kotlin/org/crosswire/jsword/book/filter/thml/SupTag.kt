@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the superscript element.
@@ -31,23 +31,15 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class SupTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "sup";
-    }
+open class SupTag : AbstractTag() {
+    override val tagName: String get() = "sup"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element hi = OSISUtil.factory().createHI();
-        hi.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_SUPER);
-
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val hi = OSISUtil.factory().createHI()
+        hi.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_SUPER)
         if (ele != null) {
-            ele.addContent(hi);
+            ele.addContent(hi)
         }
-
-        return hi;
+        return hi
     }
 }

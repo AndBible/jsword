@@ -17,14 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.jdom2.Namespace
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the foreign element.
@@ -32,28 +32,19 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ForeignTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "foreign";
-    }
+open class ForeignTag : AbstractTag() {
+    override val tagName: String get() = "foreign"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element div = OSISUtil.factory().createForeign();
-
-        String lang = attrs.getValue("lang");
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val div = OSISUtil.factory().createForeign()
+        val lang = attrs!!.getValue("lang")
         if (lang != null) {
             // OSIS defines the long attribute as the one from the xml namespace
-            div.setAttribute(OSISUtil.OSIS_ATTR_LANG, lang, Namespace.XML_NAMESPACE);
+            div.setAttribute(OSISUtil.OSIS_ATTR_LANG, lang, Namespace.XML_NAMESPACE)
         }
-
         if (ele != null) {
-            ele.addContent(div);
+            ele.addContent(div)
         }
-
-        return div;
+        return div
     }
 }

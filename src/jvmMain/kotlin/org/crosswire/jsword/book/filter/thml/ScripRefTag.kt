@@ -17,18 +17,18 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.DataPolice;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.KeyUtil;
-import org.crosswire.jsword.passage.NoSuchKeyException;
-import org.crosswire.jsword.passage.Passage;
-import org.crosswire.jsword.passage.PassageKeyFactory;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.DataPolice
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.KeyUtil
+import org.crosswire.jsword.passage.NoSuchKeyException
+import org.crosswire.jsword.passage.Passage
+import org.crosswire.jsword.passage.PassageKeyFactory
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the scripRef element.
@@ -36,54 +36,43 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class ScripRefTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "scripRef";
-    }
+open class ScripRefTag : AbstractTag() {
+    override val tagName: String get() = "scripRef"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element reference = null;
-
-        String refstr = attrs.getValue("passage");
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val refstr = attrs!!.getValue("passage")
+        val reference: Element
         if (refstr != null) {
-            Passage ref = null;
+            var ref: Passage? = null
             try {
-                ref = PassageKeyFactory.instance().getKey(KeyUtil.getVersification(key), refstr, key);
-            } catch (NoSuchKeyException ex) {
-                DataPolice.report(book, key, "Unparsable passage: (" + refstr + ") due to " + ex.getMessage());
+                ref = PassageKeyFactory.instance().getKey(KeyUtil.getVersification(key), refstr, key)
+            } catch (ex: NoSuchKeyException) {
+                DataPolice.report(book, key, "Unparsable passage: (" + refstr + ") due to " + ex.message)
             }
-
             // If we don't have a Passage then use the original string
-            String osisname = ref != null ? ref.getOsisRef() : refstr;
-            reference = OSISUtil.factory().createReference();
-            reference.setAttribute(OSISUtil.OSIS_ATTR_REF, osisname);
+            val osisname = if (ref != null) ref.getOsisRef() else refstr
+            reference = OSISUtil.factory().createReference()
+            reference.setAttribute(OSISUtil.OSIS_ATTR_REF, osisname)
         } else {
             // The reference will be filled in by processContent
-            reference = OSISUtil.factory().createReference();
+            reference = OSISUtil.factory().createReference()
         }
-
         if (ele != null) {
-            ele.addContent(reference);
+            ele.addContent(reference)
         }
-
-        return reference;
+        return reference
     }
 
-    @Override
-    public void processContent(Book book, Key key, Element ele) {
-        String refstr = ele.getValue();
+    override fun processContent(book: Book?, key: Key?, ele: Element?) {
+        val refstr = ele!!.value
         try {
             if (ele.getAttribute(OSISUtil.OSIS_ATTR_REF) == null) {
-                Passage ref = PassageKeyFactory.instance().getKey(KeyUtil.getVersification(key), refstr, key);
-                String osisname = ref.getOsisRef();
-                ele.setAttribute(OSISUtil.OSIS_ATTR_REF, osisname);
+                val ref = PassageKeyFactory.instance().getKey(KeyUtil.getVersification(key), refstr, key)
+                val osisname = ref.getOsisRef()
+                ele.setAttribute(OSISUtil.OSIS_ATTR_REF, osisname)
             }
-        } catch (NoSuchKeyException ex) {
-            DataPolice.report(book, key, "scripRef has no passage attribute, unable to guess: (" + refstr + ") due to " + ex.getMessage());
+        } catch (ex: NoSuchKeyException) {
+            DataPolice.report(book, key, "scripRef has no passage attribute, unable to guess: (" + refstr + ") due to " + ex.message)
         }
     }
 }

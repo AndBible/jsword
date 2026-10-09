@@ -17,12 +17,12 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the bold element.
@@ -30,36 +30,13 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class AliasTag extends AbstractTag {
-    /**
-     * simple ctor
-     * @param alias 
-     * @param tag 
-     */
-    public AliasTag(String alias, Tag tag) {
-        this.alias = alias;
-        this.tag = tag;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return alias;
-    }
-
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        return tag.processTag(book, key, ele, attrs);
-    }
-
-    /**
-     * The tag we are aliasing to
-     */
-    private Tag tag;
-
+open class AliasTag(alias: String, private val tag: Tag) : AbstractTag() {
     /**
      * The alias that we are using for the other tag
      */
-    private String alias;
+    override val tagName: String = alias
+
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        return tag.processTag(book, key, ele, attrs)
+    }
 }

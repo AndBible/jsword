@@ -17,15 +17,15 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.common.xml.XMLUtil;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.DataPolice;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.common.xml.XMLUtil
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.DataPolice
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the font element.
@@ -33,45 +33,34 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class FontTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "font";
-    }
+open class FontTag : AbstractTag() {
+    override val tagName: String get() = "font"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element seg = OSISUtil.factory().createSeg();
-        StringBuilder buf = new StringBuilder();
-
-        String color = attrs.getValue("color");
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val seg = OSISUtil.factory().createSeg()
+        val buf = StringBuilder()
+        val color = attrs!!.getValue("color")
         if (color != null) {
-            buf.append(OSISUtil.SEG_COLORPREFIX);
-            buf.append(color);
-            buf.append(';');
+            buf.append(OSISUtil.SEG_COLORPREFIX)
+            buf.append(color)
+            buf.append(';')
         }
-
-        String size = attrs.getValue("size");
+        val size = attrs.getValue("size")
         if (size != null) {
-            buf.append(OSISUtil.SEG_SIZEPREFIX);
-            buf.append(size);
-            buf.append(';');
+            buf.append(OSISUtil.SEG_SIZEPREFIX)
+            buf.append(size)
+            buf.append(';')
         }
-
-        String type = buf.toString();
-        if (type.length() > 0) {
-            seg.setAttribute(OSISUtil.OSIS_ATTR_TYPE, type);
+        val type = buf.toString()
+        if (type.length > 0) {
+            seg.setAttribute(OSISUtil.OSIS_ATTR_TYPE, type)
         } else {
-            DataPolice.report(book, key, "Missing color/size attribute.");
-            XMLUtil.debugSAXAttributes(attrs);
+            DataPolice.report(book, key, "Missing color/size attribute.")
+            XMLUtil.debugSAXAttributes(attrs)
         }
-
         if (ele != null) {
-            ele.addContent(seg);
+            ele.addContent(seg)
         }
-
-        return seg;
+        return seg
     }
 }

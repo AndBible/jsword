@@ -17,12 +17,12 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * The AbstractTag ignores the tag.
@@ -30,21 +30,14 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractTag implements Tag {
+abstract class AbstractTag : Tag {
 
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#processTag(org.crosswire.jsword.book.Book, org.jdom2.Element, org.xml.sax.Attributes)
-     */
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
         // Ignore the tag
-        return null;
+        return null
     }
 
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#processContent(org.crosswire.jsword.book.Book, org.jdom2.Element)
-     */
-    public void processContent(Book book, Key key, Element ele) {
+    override fun processContent(book: Book?, key: Key?, ele: Element?) {
         // By default do nothing
     }
-
 }

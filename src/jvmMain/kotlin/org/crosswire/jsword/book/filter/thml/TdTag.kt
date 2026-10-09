@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the td element.
@@ -31,33 +31,24 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class TdTag extends AbstractTag {
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "td";
-    }
+open class TdTag : AbstractTag() {
+    override val tagName: String get() = "td"
 
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element cell = OSISUtil.factory().createCell();
-
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val cell = OSISUtil.factory().createCell()
         if (attrs != null) {
-            String rows = attrs.getValue("rowspan");
+            val rows = attrs.getValue("rowspan")
             if (rows != null) {
-                cell.setAttribute(OSISUtil.ATTRIBUTE_CELL_ROWS, rows);
+                cell.setAttribute(OSISUtil.ATTRIBUTE_CELL_ROWS, rows)
             }
-            String cols = attrs.getValue("colspan");
+            val cols = attrs.getValue("colspan")
             if (cols != null) {
-                cell.setAttribute(OSISUtil.ATTRIBUTE_CELL_COLS, cols);
+                cell.setAttribute(OSISUtil.ATTRIBUTE_CELL_COLS, cols)
             }
         }
-
         if (ele != null) {
-            ele.addContent(cell);
+            ele.addContent(cell)
         }
-
-        return cell;
+        return cell
     }
 }

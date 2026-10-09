@@ -17,13 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Element;
-import org.xml.sax.Attributes;
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Element
+import org.xml.sax.Attributes
 
 /**
  * THML Tag to process the h1, h2, h3, h4, h5, and h6 elements.
@@ -31,38 +31,20 @@ import org.xml.sax.Attributes;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class HTag extends AbstractTag {
-    /**
-     * Create an H tag of the given level
-     * 
-     * @param level
-     */
-    public HTag(int level) {
-        super();
-        this.level = level;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.filter.thml.Tag#getTagName()
-     */
-    public String getTagName() {
-        return "h" + level;
-    }
-
-    @Override
-    public Element processTag(Book book, Key key, Element ele, Attributes attrs) {
-        Element title = OSISUtil.factory().createTitle();
-        title.setAttribute(OSISUtil.OSIS_ATTR_LEVEL, Integer.toString(level));
-
-        if (ele != null) {
-            ele.addContent(title);
-        }
-
-        return ele;
-    }
-
+open class HTag(
     /**
      * The level of the title
      */
-    private int level;
+    private val level: Int
+) : AbstractTag() {
+    override val tagName: String get() = "h" + level
+
+    override fun processTag(book: Book?, key: Key?, ele: Element?, attrs: Attributes?): Element? {
+        val title = OSISUtil.factory().createTitle()
+        title.setAttribute(OSISUtil.OSIS_ATTR_LEVEL, level.toString())
+        if (ele != null) {
+            ele.addContent(title)
+        }
+        return ele
+    }
 }
