@@ -59,6 +59,9 @@ object XMLUtil {
      *             if there is a problem reading the file
      * @throws JDOMException
      *             If the resource is not valid XML
+     *
+     * Note: this reads a classpath resource. The embedded resources are no longer on the main classpath, so it
+     * cannot find them; it has no callers and is left for K5 (read via KswordResources then).
      */
     @JvmStatic
     @Throws(JDOMException::class, IOException::class)

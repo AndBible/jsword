@@ -149,7 +149,12 @@ private constructor() {
          *             if the resource can not be loaded
          * @throws MissingResourceException
          *             if the resource can not be found
+         *
+         * Note: this reads the `.plugin` file from the classpath. The embedded resources (including
+         * `InstallManager.plugin`) are no longer on the main classpath, so for such classes this silently returns an
+         * empty map; read them through [KswordResources] instead.
          */
+        @Deprecated("Reads the classpath, where the embedded .plugin files no longer live; use KswordResources.")
         @JvmStatic
         @Throws(IOException::class)
         fun <T> getPlugin(clazz: Class<T>): PropertyMap {
