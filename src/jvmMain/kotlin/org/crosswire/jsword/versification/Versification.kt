@@ -770,7 +770,7 @@ open class Versification
             return null
         }
 
-        var nextBook = verse.book
+        var nextBook: BibleBook? = verse.book
         var nextChapter = verse.chapter
         var nextVerse = verse.verse + 1
         if (nextVerse > getLastVerse(nextBook, nextChapter)) {
@@ -829,9 +829,9 @@ open class Versification
      * @return The number of chapters. Always &gt;= 1.
      */
     open fun getChapterCount(start: Verse?, end: Verse?): Int {
-        var startBook = start!!.book
+        var startBook: BibleBook? = start!!.book
         val startChap = start.chapter
-        var endBook = end!!.book
+        var endBook: BibleBook? = end!!.book
         val endChap = end.chapter
 
         if (startBook == endBook) {

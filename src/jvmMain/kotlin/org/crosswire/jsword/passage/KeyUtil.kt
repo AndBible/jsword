@@ -102,7 +102,7 @@ private constructor() {
             }
 
             if (key is VerseKey<*>) {
-                val ref = PassageKeyFactory.instance().createEmptyKeyList(key.getVersification())
+                val ref = PassageKeyFactory.instance().createEmptyKeyList(key.versification)
                 ref.addAll(key)
                 return ref as Passage
             }
@@ -119,7 +119,7 @@ private constructor() {
         @JvmStatic
         fun getVersification(key: Key?): Versification {
             if (key is VerseKey<*>) {
-                return key.getVersification()
+                return key.versification
             }
             return Versifications.instance().getVersification(Versifications.DEFAULT_V11N)!!
         }

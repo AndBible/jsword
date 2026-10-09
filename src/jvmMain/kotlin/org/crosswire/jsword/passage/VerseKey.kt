@@ -17,25 +17,25 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.jsword.versification.Versification
 
 /**
  * A VerseKey indicates that a Key has a Versification reference system.
- * 
+ *
  * @param <T> The type of VerseKey that reversify returns.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface VerseKey<T extends VerseKey> extends Key {
+interface VerseKey<T : VerseKey<T>> : Key {
     /**
      * Get the Versification that defines the Verses in this VerseKey.
-     * 
+     *
      * @return this VerseKey Versification.
      */
-    Versification getVersification();
+    val versification: Versification
 
     /**
      * Check if this key is valid in a different versification.
@@ -43,36 +43,35 @@ public interface VerseKey<T extends VerseKey> extends Key {
      * @return True if all verses in this verse key map to existing verses in the given
      * versification, false otherwise.
      */
-    boolean isValidIn(Versification targetVersification);
+    fun isValidIn(targetVersification: Versification?): Boolean
 
     /**
      * Cast this VerseKey into another Versification. OSIS Sub Identifiers are ignored.
-     * 
+     *
      * <p>
      * Note: This is dangerous as it does not consider chapter boundaries
      * or whether the verses in this VerseKey are actually part of the
      * new versification.
-     * If in doubt, always check with {@link #isValidIn(Versification)} before usage.
+     * If in doubt, always check with [isValidIn] before usage.
      * </p>
-     * 
-     * @param newVersification 
+     *
+     * @param newVersification
      * @return this VerseKey Versification.
      */
-    T reversify(Versification newVersification);
+    fun reversify(newVersification: Versification?): T?
 
     /**
      * A VerseKey that does not have an OSIS sub identifier is a whole reference.
-     * 
+     *
      * @return whether this is a whole reference
      */
-     boolean isWhole();
+    val isWhole: Boolean
 
     /**
      * Convert this reference into one without a sub-identifier.
      * A Verse with an OSIS sub-identifier represents part of a reference.
-     * 
+     *
      * @return a whole reference
      */
-     T getWhole();
-
+    val whole: T
 }

@@ -17,12 +17,12 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import org.crosswire.common.icu.NumberShaper;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.versification.BibleBook;
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.common.icu.NumberShaper
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.versification.BibleBook
+import org.crosswire.jsword.versification.Versification
 
 /**
  * Types of Accuracy for verse references. For example:
@@ -66,44 +66,42 @@ import org.crosswire.jsword.versification.Versification;
  * @author Joe Walker
  * @author DM Smith
  */
-public enum AccuracyType {
+enum class AccuracyType {
     /**
      * The verse was specified as book, chapter and verse. For example, Gen 1:1,
      * Jude 3 (which only has one chapter)
      */
     BOOK_VERSE {
-        @Override
-        public boolean isVerse() {
-            return true;
-        }
+        override val isVerse: Boolean
+            get() = true
 
-        @Override
-        public Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException {
-            BibleBook book = v11n.getBook(parts[0]);
-            int chapter = 1;
-            int verse = 1;
-            final String subIdentifier = getSubIdentifier(parts);
-            final boolean hasSub = subIdentifier != null;
+        @Throws(NoSuchVerseException::class)
+        override fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse {
+            val book = v11n!!.getBook(parts[0])
+            var chapter = 1
+            var verse = 1
+            val subIdentifier = getSubIdentifier(parts)
+            val hasSub = subIdentifier != null
 
             //can be of form, BCV, BCV!sub, BV, BV!a
             //we only have a chapter and verse number if
             // a- BCV (3 parts) or b- BCV!sub (4 parts)
             // however, we have 3 parts if BV!a
-            if (hasSub && parts.length == 4 || !hasSub && parts.length == 3) {
-                chapter = getChapter(v11n, book, parts[1]);
-                verse = getVerse(v11n, book, chapter, parts[2]);
+            if (hasSub && parts.size == 4 || !hasSub && parts.size == 3) {
+                chapter = getChapter(v11n, book, parts[1])
+                verse = getVerse(v11n, book, chapter, parts[2])
             } else {
                 // Some books only have 1 chapter
-                verse = getVerse(v11n, book, chapter, parts[1]);
+                verse = getVerse(v11n, book, chapter, parts[1])
             }
-            return new Verse(v11n, book, chapter, verse, subIdentifier);
+            return Verse(v11n, book, chapter, verse, subIdentifier)
         }
 
-        @Override
-        public Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse {
             // A fully specified verse is the same regardless of whether it is a
             // start or an end to a range.
-            return createStartVerse(v11n, null, endParts);
+            return createStartVerse(v11n, null, endParts)
         }
     },
 
@@ -112,26 +110,24 @@ public enum AccuracyType {
      * Gen 1
      */
     BOOK_CHAPTER {
-        @Override
-        public boolean isChapter() {
-            return true;
+        override val isChapter: Boolean
+            get() = true
+
+        @Throws(NoSuchVerseException::class)
+        override fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse {
+            val book = v11n!!.getBook(parts[0])
+            val chapter = getChapter(v11n, book, parts[1])
+            val verse = 0 // chapter > 0 ? 1 : 0; // 0 ?
+            return Verse(v11n, book, chapter, verse)
         }
 
-        @Override
-        public Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException {
-            BibleBook book = v11n.getBook(parts[0]);
-            int chapter = getChapter(v11n, book, parts[1]);
-            int verse = 0; // chapter > 0 ? 1 : 0; // 0 ?
-            return new Verse(v11n, book, chapter, verse);
-        }
-
-        @Override
-        public Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse {
             // Very similar to the start verse but we want the end of the chapter
-            BibleBook book = v11n.getBook(endParts[0]);
-            int chapter = getChapter(v11n, book, endParts[1]);
-            int verse = v11n.getLastVerse(book, chapter);
-            return new Verse(v11n, book, chapter, verse);
+            val book = v11n!!.getBook(endParts[0])
+            val chapter = getChapter(v11n, book, endParts[1])
+            val verse = v11n.getLastVerse(book, chapter)
+            return Verse(v11n, book, chapter, verse)
         }
     },
 
@@ -140,25 +136,23 @@ public enum AccuracyType {
      * example, Gen
      */
     BOOK_ONLY {
-        @Override
-        public boolean isBook() {
-            return true;
+        override val isBook: Boolean
+            get() = true
+
+        @Throws(NoSuchVerseException::class)
+        override fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse {
+            val book = v11n!!.getBook(parts[0])
+            val chapter = 0 // v11n.getLastChapter(book) > 0 ? 1 : 0; // 0 ?
+            val verse = 0 // v11n.getLastVerse(book, chapter) > 0 ? 1 : 0; // 0 ?
+            return Verse(v11n, book, chapter, verse)
         }
 
-        @Override
-        public Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException {
-            BibleBook book = v11n.getBook(parts[0]);
-            int chapter = 0; // v11n.getLastChapter(book) > 0 ? 1 : 0; // 0 ?
-            int verse = 0; // v11n.getLastVerse(book, chapter) > 0 ? 1 : 0; // 0 ?
-            return new Verse(v11n, book, chapter, verse);
-        }
-
-        @Override
-        public Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException {
-            BibleBook book = v11n.getBook(endParts[0]);
-            int chapter = v11n.getLastChapter(book);
-            int verse = v11n.getLastVerse(book, chapter);
-            return new Verse(v11n, book, chapter, verse);
+        @Throws(NoSuchVerseException::class)
+        override fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse {
+            val book = v11n!!.getBook(endParts[0])
+            val chapter = v11n.getLastChapter(book)
+            val verse = v11n.getLastVerse(book, chapter)
+            return Verse(v11n, book, chapter, verse)
         }
     },
 
@@ -167,31 +161,29 @@ public enum AccuracyType {
      * 1:1
      */
     CHAPTER_VERSE {
-        @Override
-        public boolean isVerse() {
-            return true;
-        }
+        override val isVerse: Boolean
+            get() = true
 
-        @Override
-        public Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse {
             if (verseRangeBasis == null) {
                 // TRANSLATOR: The user supplied a verse reference but did not give the book of the Bible.
-                throw new NoSuchVerseException(JSMsg.gettext("Book is missing"));
+                throw NoSuchVerseException(JSMsg.gettext("Book is missing"))
             }
-            BibleBook book = verseRangeBasis.getEnd().getBook();
-            int chapter = getChapter(v11n, book, parts[0]);
-            int verse = getVerse(v11n, book, chapter, parts[1]);
+            val book = verseRangeBasis.end.book
+            val chapter = getChapter(v11n, book, parts[0])
+            val verse = getVerse(v11n, book, chapter, parts[1])
 
-            return new Verse(v11n, book, chapter, verse, getSubIdentifier(parts));
+            return Verse(v11n, book, chapter, verse, getSubIdentifier(parts))
         }
 
-        @Override
-        public Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse {
             // Very similar to the start verse but use the verse as a basis
-            BibleBook book = verseBasis.getBook();
-            int chapter = getChapter(v11n, book, endParts[0]);
-            int verse = getVerse(v11n, book, chapter, endParts[1]);
-            return new Verse(v11n, book, chapter, verse, getSubIdentifier(endParts));
+            val book = verseBasis!!.book
+            val chapter = getChapter(v11n, book, endParts[0])
+            val verse = getVerse(v11n, book, chapter, endParts[1])
+            return Verse(v11n, book, chapter, verse, getSubIdentifier(endParts))
         }
     },
 
@@ -199,30 +191,28 @@ public enum AccuracyType {
      * There was only a chapter number
      */
     CHAPTER_ONLY {
-        @Override
-        public boolean isChapter() {
-            return true;
-        }
+        override val isChapter: Boolean
+            get() = true
 
-        @Override
-        public Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse {
             if (verseRangeBasis == null) {
                 // TRANSLATOR: The user supplied a verse reference but did not give the book of the Bible.
-                throw new NoSuchVerseException(JSMsg.gettext("Book is missing"));
+                throw NoSuchVerseException(JSMsg.gettext("Book is missing"))
             }
-            BibleBook book = verseRangeBasis.getEnd().getBook();
-            int chapter = getChapter(v11n, book, parts[0]);
-            int verse = 0; // chapter > 0 ? 1 : 0; // 0 ?
-            return new Verse(v11n, book, chapter, verse);
+            val book = verseRangeBasis.end.book
+            val chapter = getChapter(v11n, book, parts[0])
+            val verse = 0 // chapter > 0 ? 1 : 0; // 0 ?
+            return Verse(v11n, book, chapter, verse)
         }
 
-        @Override
-        public Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse {
             // Very similar to the start verse but use the verse as a basis
             // and it gets the end of the chapter
-            BibleBook book = verseBasis.getBook();
-            int chapter = getChapter(v11n, book, endParts[0]);
-            return new Verse(v11n, book, chapter, v11n.getLastVerse(book, chapter));
+            val book = verseBasis!!.book
+            val chapter = getChapter(v11n, book, endParts[0])
+            return Verse(v11n, book, chapter, v11n!!.getLastVerse(book, chapter))
         }
     },
 
@@ -230,31 +220,29 @@ public enum AccuracyType {
      * There was only a verse number
      */
     VERSE_ONLY {
-        @Override
-        public boolean isVerse() {
-            return true;
-        }
+        override val isVerse: Boolean
+            get() = true
 
-        @Override
-        public Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse {
             if (verseRangeBasis == null) {
                 // TRANSLATOR: The user supplied a verse reference but did not give the book or chapter of the Bible.
-                throw new NoSuchVerseException(JSMsg.gettext("Book and chapter are missing"));
+                throw NoSuchVerseException(JSMsg.gettext("Book and chapter are missing"))
             }
-            BibleBook book = verseRangeBasis.getEnd().getBook();
-            int chapter = verseRangeBasis.getEnd().getChapter();
-            int verse = getVerse(v11n, book, chapter, parts[0]);
-            return new Verse(v11n, book, chapter, verse, getSubIdentifier(parts));
+            val book = verseRangeBasis.end.book
+            val chapter = verseRangeBasis.end.chapter
+            val verse = getVerse(v11n, book, chapter, parts[0])
+            return Verse(v11n, book, chapter, verse, getSubIdentifier(parts))
         }
 
-        @Override
-        public Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException {
+        @Throws(NoSuchVerseException::class)
+        override fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse {
             // Very similar to the start verse but use the verse as a basis
             // and it gets the end of the chapter
-            BibleBook book = verseBasis.getBook();
-            int chapter = verseBasis.getChapter();
-            int verse = getVerse(v11n, book, chapter, endParts[0]);
-            return new Verse(v11n, book, chapter, verse, getSubIdentifier(endParts));
+            val book = verseBasis!!.book
+            val chapter = verseBasis.chapter
+            val verse = getVerse(v11n, book, chapter, endParts[0])
+            return Verse(v11n, book, chapter, verse, getSubIdentifier(endParts))
         }
     };
 
@@ -268,7 +256,8 @@ public enum AccuracyType {
      * @return a <code>Verse</code> for the original
      * @throws NoSuchVerseException
      */
-    public abstract Verse createStartVerse(Versification v11n, VerseRange verseRangeBasis, String[] parts) throws NoSuchVerseException;
+    @Throws(NoSuchVerseException::class)
+    abstract fun createStartVerse(v11n: Versification?, verseRangeBasis: VerseRange?, parts: Array<String>): Verse
 
     /**
      * @param v11n
@@ -280,412 +269,427 @@ public enum AccuracyType {
      * @return a <code>Verse</code> for the original
      * @throws NoSuchVerseException
      */
-    public abstract Verse createEndVerse(Versification v11n, Verse verseBasis, String[] endParts) throws NoSuchVerseException;
+    @Throws(NoSuchVerseException::class)
+    abstract fun createEndVerse(v11n: Versification?, verseBasis: Verse?, endParts: Array<String>): Verse
 
     /**
      * @return true if this AccuracyType specifies down to the book but not
      *         chapter or verse.
      */
-    public boolean isBook() {
-        return false;
-    }
+    open val isBook: Boolean
+        get() = false
 
     /**
      * @return true if this AccuracyType specifies down to the chapter but not
      *         the verse.
      */
-    public boolean isChapter() {
-        return false;
-    }
+    open val isChapter: Boolean
+        get() = false
 
     /**
      * @return true if this AccuracyType specifies down to the verse.
      */
-    public boolean isVerse() {
-        return false;
-    }
-
-    /**
-     * Interprets the chapter value, which is either a number or "ff" or "$"
-     * (meaning "what follows")
-     * 
-     * @param v11n
-     *            the versification to which this reference pertains
-     * @param lbook
-     *            the book
-     * @param chapter
-     *            a string representation of the chapter. May be "ff" or "$" for
-     *            "what follows".
-     * @return the number of the chapter
-     * @throws NoSuchVerseException
-     */
-    public static final int getChapter(Versification v11n, BibleBook lbook, String chapter) throws NoSuchVerseException {
-        if (isEndMarker(chapter)) {
-            return v11n.getLastChapter(lbook);
-        }
-        return parseInt(chapter);
-    }
-
-    /**
-     * Interprets the verse value, which is either a number or "ff" or "$"
-     * (meaning "what follows")
-     * 
-     * @param v11n
-     *            the versification to which this reference pertains
-     * @param lbook
-     *            the integer representation of the book
-     * @param lchapter
-     *            the integer representation of the chapter
-     * @param verse
-     *            the string representation of the verse
-     * @return the number of the verse
-     * @throws NoSuchVerseException
-     */
-    public static final int getVerse(Versification v11n, BibleBook lbook, int lchapter, String verse) throws NoSuchVerseException {
-        if (isEndMarker(verse)) {
-            return v11n.getLastVerse(lbook, lchapter);
-        }
-        return parseInt(verse);
-    }
+    open val isVerse: Boolean
+        get() = false
 
     /**
      * Get an integer representation for this AccuracyType
      *
      * @return the ordinal representation
      */
-    public int toInteger() {
-        return ordinal();
+    fun toInteger(): Int {
+        return ordinal
     }
 
-    /**
-     * Determine how closely the string defines a verse.
-     * 
-     * @param v11n
-     *            the versification to which this reference pertains
-     * @param original
-     * @param parts
-     *            is a reference split into parts
-     * @return what is the kind of accuracy of the string reference.
-     * @throws NoSuchVerseException
-     */
-    public static AccuracyType fromText(Versification v11n, String original, String[] parts) throws NoSuchVerseException {
-        return fromText(v11n, original, parts, null, null);
-    }
-
-    /**
-     * @param v11n
-     *            the versification to which this reference pertains
-     * @param original
-     * @param parts
-     * @param verseAccuracy
-     * @return the accuracy of the parts
-     * @throws NoSuchVerseException
-     */
-    public static AccuracyType fromText(Versification v11n, String original, String[] parts, AccuracyType verseAccuracy) throws NoSuchVerseException {
-        return fromText(v11n, original, parts, verseAccuracy, null);
-    }
-
-    /**
-     * @param v11n
-     *            the versification to which this reference pertains
-     * @param original
-     * @param parts
-     * @param basis
-     * @return the accuracy of the parts
-     * @throws NoSuchVerseException
-     */
-    public static AccuracyType fromText(Versification v11n, String original, String[] parts, VerseRange basis) throws NoSuchVerseException {
-        return fromText(v11n, original, parts, null, basis);
-    }
-
-    /**
-     * Does this string exactly define a Verse. For example:
-     * <ul>
-     * <li>fromText("Gen") == AccuracyType.BOOK_ONLY;</li>
-     * <li>fromText("Gen 1:1") == AccuracyType.BOOK_VERSE;</li>
-     * <li>fromText("Gen 1") == AccuracyType.BOOK_CHAPTER;</li>
-     * <li>fromText("Jude 1") == AccuracyType.BOOK_VERSE;</li>
-     * <li>fromText("Jude 1:1") == AccuracyType.BOOK_VERSE;</li>
-     * <li>fromText("1:1") == AccuracyType.CHAPTER_VERSE;</li>
-     * <li>fromText("1") == AccuracyType.VERSE_ONLY;</li>
-     * </ul>
-     * 
-     * @param v11n
-     *            the versification to which this reference pertains
-     * @param original
-     * @param parts
-     * @param verseAccuracy
-     * @param basis
-     * @return the accuracy of the parts
-     * @throws NoSuchVerseException
-     */
-    public static AccuracyType fromText(Versification v11n, String original, String[] parts, AccuracyType verseAccuracy, VerseRange basis) throws NoSuchVerseException {
-        int partsLength = parts.length;
-        String lastPart = parts[partsLength - 1];
-        if (lastPart.length()>0 && lastPart.charAt(0) == '!') {
-            --partsLength;
-        }
-        switch (partsLength) {
-        case 1:
-            if (v11n.isBook(parts[0])) {
-                return BOOK_ONLY;
+    companion object {
+        /**
+         * Interprets the chapter value, which is either a number or "ff" or "$"
+         * (meaning "what follows")
+         *
+         * @param v11n
+         *            the versification to which this reference pertains
+         * @param lbook
+         *            the book
+         * @param chapter
+         *            a string representation of the chapter. May be "ff" or "$" for
+         *            "what follows".
+         * @return the number of the chapter
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun getChapter(v11n: Versification?, lbook: BibleBook?, chapter: String?): Int {
+            if (isEndMarker(chapter!!)) {
+                return v11n!!.getLastChapter(lbook)
             }
-
-            // At this point we should have a number.
-            // But double check it
-            checkValidChapterOrVerse(parts[0]);
-
-            // What it is depends upon what stands before it.
-            if (verseAccuracy != null) {
-                if (verseAccuracy.isVerse()) {
-                    return VERSE_ONLY;
-                }
-
-                if (verseAccuracy.isChapter()) {
-                    return CHAPTER_ONLY;
-                }
-            }
-
-            if (basis != null) {
-                if (basis.isWholeChapter()) {
-                    return CHAPTER_ONLY;
-                }
-                return VERSE_ONLY;
-            }
-
-            throw buildVersePartsException(original, parts);
-
-        case 2:
-            // Does it start with a book?
-            BibleBook pbook = v11n.getBook(parts[0]);
-            if (pbook == null) {
-                checkValidChapterOrVerse(parts[0]);
-                checkValidChapterOrVerse(parts[1]);
-                return CHAPTER_VERSE;
-            }
-
-            if (v11n.getLastChapter(pbook) == 1) {
-                return BOOK_VERSE;
-            }
-
-            return BOOK_CHAPTER;
-
-        case 3:
-            if (v11n.getBook(parts[0]) != null) {
-                checkValidChapterOrVerse(parts[1]);
-                checkValidChapterOrVerse(parts[2]);
-                return BOOK_VERSE;
-            }
-
-            throw buildVersePartsException(original, parts);
-
-        default:
-            throw buildVersePartsException(original, parts);
-        }
-    }
-
-    private static NoSuchVerseException buildVersePartsException(String original, String[] parts) {
-        StringBuilder buffer = new StringBuilder(original);
-        for (int i = 0; i < parts.length; i++) {
-            buffer.append(", ").append(parts[i]);
-        }
-        // TRANSLATOR: The user specified a verse with too many separators. {0} is a placeholder for the allowable separators.
-        return new NoSuchVerseException(JSMsg.gettext("Too many parts to the Verse. (Parts are separated by any of {0})", buffer.toString()));
-    }
-
-    /**
-     * Is this text valid in a chapter/verse context
-     * 
-     * @param text
-     *            The string to test for validity
-     * @throws NoSuchVerseException
-     *             If the text is invalid
-     */
-    private static void checkValidChapterOrVerse(String text) throws NoSuchVerseException {
-        if (!isEndMarker(text)) {
-            parseInt(text);
-        }
-    }
-
-    /**
-     * This is simply a convenience function to wrap Integer.parseInt() and give
-     * us a reasonable exception on failure. It is called by VerseRange hence
-     * protected, however I would prefer private
-     * 
-     * @param text
-     *            The string to be parsed
-     * @return The correctly parsed chapter or verse
-     * @exception NoSuchVerseException
-     *                If the reference is illegal
-     */
-    private static int parseInt(String text) throws NoSuchVerseException {
-        try {
-            return Integer.parseInt(new NumberShaper().unshape(text));
-        } catch (NumberFormatException ex) {
-            // TRANSLATOR: The chapter or verse number is actually not a number, but something else.
-            // {0} is a placeholder for what the user supplied.
-            throw new NoSuchVerseException(JSMsg.gettext("Cannot understand {0} as a chapter or verse.", text));
-        }
-    }
-
-    /**
-     * Is this string a legal marker for 'to the end of the chapter'
-     * 
-     * @param text
-     *            The string to be checked
-     * @return true if this is a legal marker
-     */
-    private static boolean isEndMarker(String text) {
-        if (text.equals(AccuracyType.VERSE_END_MARK1)) {
-            return true;
+            return parseInt(chapter)
         }
 
-        if (text.equals(AccuracyType.VERSE_END_MARK2)) {
-            return true;
+        /**
+         * Interprets the verse value, which is either a number or "ff" or "$"
+         * (meaning "what follows")
+         *
+         * @param v11n
+         *            the versification to which this reference pertains
+         * @param lbook
+         *            the integer representation of the book
+         * @param lchapter
+         *            the integer representation of the chapter
+         * @param verse
+         *            the string representation of the verse
+         * @return the number of the verse
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun getVerse(v11n: Versification?, lbook: BibleBook?, lchapter: Int, verse: String?): Int {
+            if (isEndMarker(verse!!)) {
+                return v11n!!.getLastVerse(lbook, lchapter)
+            }
+            return parseInt(verse)
         }
 
-        return false;
-    }
-
-    private static boolean hasSubIdentifier(String[] parts) {
-        String subIdentifier = parts[parts.length - 1];
-        return subIdentifier != null && subIdentifier.length() > 0 && subIdentifier.charAt(0) == '!';
-    }
-
-    protected static String getSubIdentifier(String[] parts) {
-        String subIdentifier = null;
-        if (hasSubIdentifier(parts)) {
-            subIdentifier = parts[parts.length - 1].substring(1);
+        /**
+         * Determine how closely the string defines a verse.
+         *
+         * @param v11n
+         *            the versification to which this reference pertains
+         * @param original
+         * @param parts
+         *            is a reference split into parts
+         * @return what is the kind of accuracy of the string reference.
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun fromText(v11n: Versification?, original: String?, parts: Array<String>): AccuracyType {
+            return fromText(v11n, original, parts, null, null)
         }
-        return subIdentifier;
-    }
 
-    /**
-     * Take a string representation of a verse and parse it into an Array of
-     * Strings where each part is likely to be a verse part. The goal is to
-     * allow the greatest possible variations in user input.
-     * <p>
-     * Parts can be separated by pretty much anything. No distinction is made
-     * between them. While chapter and verse need to be separated, a separator
-     * is assumed between digits and non-digits. Adjacent words, (i.e. sequences
-     * of non-digits) are understood to be a book reference. If a number runs up
-     * against a book name, it is considered to be either part of the book name
-     * (i.e. it is before it) or a chapter number (i.e. it stands after it.)
-     * </p>
-     * <p>
-     * Note: ff and $ are considered to be digits.
-     * </p>
-     * <p>
-     * Note: it is not necessary for this to be a BCV (book, chapter, verse), it
-     * may just be BC, B, C, V or CV. No distinction is needed here for a number
-     * that stands alone.
-     * </p>
-     * 
-     * @param input
-     *            The string to parse.
-     * @return The string array
-     * @throws NoSuchVerseException
-     */
-    public static String[] tokenize(String input) throws NoSuchVerseException {
-        // The results are expected to be no more than 3 parts
-        String[] args = {
-                null, null, null, null, null, null, null, null
-        };
+        /**
+         * @param v11n
+         *            the versification to which this reference pertains
+         * @param original
+         * @param parts
+         * @param verseAccuracy
+         * @return the accuracy of the parts
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun fromText(v11n: Versification?, original: String?, parts: Array<String>, verseAccuracy: AccuracyType?): AccuracyType {
+            return fromText(v11n, original, parts, verseAccuracy, null)
+        }
 
-        // Normalize the input by replacing non-digits and non-letters with
-        // spaces.
-        int length = input.length();
-        // Create an output array big enough to add ' ' where needed
-        char[] normalized = new char[length * 2];
-        char lastChar = '0'; // start with a digit so normalized won't start
-                             // with a space
-        char curChar = ' '; // can be anything
-        int tokenCount = 0;
-        int normalizedLength = 0;
-        int startIndex = 0;
-        String token = null;
-        boolean foundBoundary = false;
-        boolean foundSubIdentifier = false;
-        for (int i = 0; i < length; i++) {
-            curChar = input.charAt(i);
-            if (curChar == '!') {
-                foundSubIdentifier = true;
-                token = new String(normalized, startIndex, normalizedLength - startIndex);
-                args[tokenCount++] = token;
-                normalizedLength = 0;
+        /**
+         * @param v11n
+         *            the versification to which this reference pertains
+         * @param original
+         * @param parts
+         * @param basis
+         * @return the accuracy of the parts
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun fromText(v11n: Versification?, original: String?, parts: Array<String>, basis: VerseRange?): AccuracyType {
+            return fromText(v11n, original, parts, null, basis)
+        }
+
+        /**
+         * Does this string exactly define a Verse. For example:
+         * <ul>
+         * <li>fromText("Gen") == AccuracyType.BOOK_ONLY;</li>
+         * <li>fromText("Gen 1:1") == AccuracyType.BOOK_VERSE;</li>
+         * <li>fromText("Gen 1") == AccuracyType.BOOK_CHAPTER;</li>
+         * <li>fromText("Jude 1") == AccuracyType.BOOK_VERSE;</li>
+         * <li>fromText("Jude 1:1") == AccuracyType.BOOK_VERSE;</li>
+         * <li>fromText("1:1") == AccuracyType.CHAPTER_VERSE;</li>
+         * <li>fromText("1") == AccuracyType.VERSE_ONLY;</li>
+         * </ul>
+         *
+         * @param v11n
+         *            the versification to which this reference pertains
+         * @param original
+         * @param parts
+         * @param verseAccuracy
+         * @param basis
+         * @return the accuracy of the parts
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun fromText(v11n: Versification?, original: String?, parts: Array<String>, verseAccuracy: AccuracyType?, basis: VerseRange?): AccuracyType {
+            var partsLength = parts.size
+            val lastPart = parts[partsLength - 1]
+            if (lastPart.length > 0 && lastPart[0] == '!') {
+                --partsLength
             }
-            if (foundSubIdentifier) {
-                normalized[normalizedLength++] = curChar;
-                continue;
-            }
-            boolean charIsDigit = curChar == '$' || Character.isDigit(curChar)
-                    || (curChar == 'f' && (i + 1 < length ? input.charAt(i + 1) : ' ') == 'f' && !Character.isLetter(lastChar));
-            if (charIsDigit || Character.isLetter(curChar)) {
-                foundBoundary = true;
-                boolean charWasDigit = lastChar == '$' || Character.isDigit(lastChar) || (lastChar == 'f' && (i > 2 ? input.charAt(i - 2) : '0') == 'f');
-                if (charWasDigit || Character.isLetter(lastChar)) {
-                    foundBoundary = false;
-                    // Replace transitions between digits and letters with
-                    // spaces, but not for book names that start with digits
-                    if (normalizedLength > 0 && charWasDigit != charIsDigit) {
-                        // Don't split if this looks like a book name (digit followed by letters at start of token)
-                        boolean isBookNamePattern = charWasDigit && Character.isLetter(curChar) && tokenCount == 0;
-                        if (!isBookNamePattern) {
-                            foundBoundary = true;
-                        }
+            when (partsLength) {
+                1 -> {
+                    if (v11n!!.isBook(parts[0])) {
+                        return BOOK_ONLY
                     }
-                }
-                if (foundBoundary) {
-                    // On a boundary:
-                    // Digits always start a new token
-                    // Letters always continue a previous token
-                    if (charIsDigit) {
-                        if (tokenCount >= args.length) {
-                            // TRANSLATOR: The user specified a verse with too many separators. {0} is a placeholder for the allowable separators.
-                            throw new NoSuchVerseException(JSMsg.gettext("Too many parts to the Verse. (Parts are separated by any of {0})", input));
+
+                    // At this point we should have a number.
+                    // But double check it
+                    checkValidChapterOrVerse(parts[0])
+
+                    // What it is depends upon what stands before it.
+                    if (verseAccuracy != null) {
+                        if (verseAccuracy.isVerse) {
+                            return VERSE_ONLY
                         }
 
-                        token = new String(normalized, startIndex, normalizedLength - startIndex);
-                        args[tokenCount++] = token;
-                        normalizedLength = 0;
-                    } else {
-                        normalized[normalizedLength++] = ' ';
+                        if (verseAccuracy.isChapter) {
+                            return CHAPTER_ONLY
+                        }
                     }
-                }
-                normalized[normalizedLength++] = curChar;
-            }
 
-            // Until the first character is copied, there is no last char
-            if (normalizedLength > 0) {
-                lastChar = curChar;
+                    if (basis != null) {
+                        if (basis.isWholeChapter) {
+                            return CHAPTER_ONLY
+                        }
+                        return VERSE_ONLY
+                    }
+
+                    throw buildVersePartsException(original, parts)
+                }
+
+                2 -> {
+                    // Does it start with a book?
+                    val pbook = v11n!!.getBook(parts[0])
+                    if (pbook == null) {
+                        checkValidChapterOrVerse(parts[0])
+                        checkValidChapterOrVerse(parts[1])
+                        return CHAPTER_VERSE
+                    }
+
+                    if (v11n.getLastChapter(pbook) == 1) {
+                        return BOOK_VERSE
+                    }
+
+                    return BOOK_CHAPTER
+                }
+
+                3 -> {
+                    if (v11n!!.getBook(parts[0]) != null) {
+                        checkValidChapterOrVerse(parts[1])
+                        checkValidChapterOrVerse(parts[2])
+                        return BOOK_VERSE
+                    }
+
+                    throw buildVersePartsException(original, parts)
+                }
+
+                else -> throw buildVersePartsException(original, parts)
             }
         }
 
-        if (tokenCount >= args.length) {
+        private fun buildVersePartsException(original: String?, parts: Array<String>): NoSuchVerseException {
+            val buffer = StringBuilder(original!!)
+            for (i in parts.indices) {
+                buffer.append(", ").append(parts[i])
+            }
             // TRANSLATOR: The user specified a verse with too many separators. {0} is a placeholder for the allowable separators.
-            throw new NoSuchVerseException(JSMsg.gettext("Too many parts to the Verse. (Parts are separated by any of {0})", input));
+            return NoSuchVerseException(JSMsg.gettext("Too many parts to the Verse. (Parts are separated by any of {0})", buffer.toString()))
         }
 
-        token = new String(normalized, startIndex, normalizedLength - startIndex);
-        args[tokenCount++] = token;
+        /**
+         * Is this text valid in a chapter/verse context
+         *
+         * @param text
+         *            The string to test for validity
+         * @throws NoSuchVerseException
+         *             If the text is invalid
+         */
+        @Throws(NoSuchVerseException::class)
+        private fun checkValidChapterOrVerse(text: String) {
+            if (!isEndMarker(text)) {
+                parseInt(text)
+            }
+        }
 
-        String[] results = new String[tokenCount];
-        System.arraycopy(args, 0, results, 0, tokenCount);
-        return results;
+        /**
+         * This is simply a convenience function to wrap Integer.parseInt() and give
+         * us a reasonable exception on failure. It is called by VerseRange hence
+         * protected, however I would prefer private
+         *
+         * @param text
+         *            The string to be parsed
+         * @return The correctly parsed chapter or verse
+         * @exception NoSuchVerseException
+         *                If the reference is illegal
+         */
+        @Throws(NoSuchVerseException::class)
+        private fun parseInt(text: String): Int {
+            try {
+                return Integer.parseInt(NumberShaper().unshape(text))
+            } catch (ex: NumberFormatException) {
+                // TRANSLATOR: The chapter or verse number is actually not a number, but something else.
+                // {0} is a placeholder for what the user supplied.
+                throw NoSuchVerseException(JSMsg.gettext("Cannot understand {0} as a chapter or verse.", text))
+            }
+        }
+
+        /**
+         * Is this string a legal marker for 'to the end of the chapter'
+         *
+         * @param text
+         *            The string to be checked
+         * @return true if this is a legal marker
+         */
+        private fun isEndMarker(text: String): Boolean {
+            if (text == VERSE_END_MARK1) {
+                return true
+            }
+
+            if (text == VERSE_END_MARK2) {
+                return true
+            }
+
+            return false
+        }
+
+        private fun hasSubIdentifier(parts: Array<String>): Boolean {
+            val subIdentifier: String? = parts[parts.size - 1]
+            return subIdentifier != null && subIdentifier.length > 0 && subIdentifier[0] == '!'
+        }
+
+        @JvmStatic
+        protected fun getSubIdentifier(parts: Array<String>): String? {
+            var subIdentifier: String? = null
+            if (hasSubIdentifier(parts)) {
+                subIdentifier = parts[parts.size - 1].substring(1)
+            }
+            return subIdentifier
+        }
+
+        /**
+         * Take a string representation of a verse and parse it into an Array of
+         * Strings where each part is likely to be a verse part. The goal is to
+         * allow the greatest possible variations in user input.
+         * <p>
+         * Parts can be separated by pretty much anything. No distinction is made
+         * between them. While chapter and verse need to be separated, a separator
+         * is assumed between digits and non-digits. Adjacent words, (i.e. sequences
+         * of non-digits) are understood to be a book reference. If a number runs up
+         * against a book name, it is considered to be either part of the book name
+         * (i.e. it is before it) or a chapter number (i.e. it stands after it.)
+         * </p>
+         * <p>
+         * Note: ff and $ are considered to be digits.
+         * </p>
+         * <p>
+         * Note: it is not necessary for this to be a BCV (book, chapter, verse), it
+         * may just be BC, B, C, V or CV. No distinction is needed here for a number
+         * that stands alone.
+         * </p>
+         *
+         * @param input
+         *            The string to parse.
+         * @return The string array
+         * @throws NoSuchVerseException
+         */
+        @JvmStatic
+        @Throws(NoSuchVerseException::class)
+        fun tokenize(input: String): Array<String> {
+            // The results are expected to be no more than 3 parts
+            val args = arrayOfNulls<String>(8)
+
+            // Normalize the input by replacing non-digits and non-letters with
+            // spaces.
+            val length = input.length
+            // Create an output array big enough to add ' ' where needed
+            val normalized = CharArray(length * 2)
+            var lastChar = '0' // start with a digit so normalized won't start
+            // with a space
+            var curChar: Char // can be anything
+            var tokenCount = 0
+            var normalizedLength = 0
+            val startIndex = 0
+            var token: String?
+            var foundBoundary: Boolean
+            var foundSubIdentifier = false
+            for (i in 0 until length) {
+                curChar = input[i]
+                if (curChar == '!') {
+                    foundSubIdentifier = true
+                    token = String(normalized, startIndex, normalizedLength - startIndex)
+                    args[tokenCount++] = token
+                    normalizedLength = 0
+                }
+                if (foundSubIdentifier) {
+                    normalized[normalizedLength++] = curChar
+                    continue
+                }
+                val charIsDigit = curChar == '$' || Character.isDigit(curChar)
+                        || (curChar == 'f' && (if (i + 1 < length) input[i + 1] else ' ') == 'f' && !Character.isLetter(lastChar))
+                if (charIsDigit || Character.isLetter(curChar)) {
+                    foundBoundary = true
+                    val charWasDigit = lastChar == '$' || Character.isDigit(lastChar) || (lastChar == 'f' && (if (i > 2) input[i - 2] else '0') == 'f')
+                    if (charWasDigit || Character.isLetter(lastChar)) {
+                        foundBoundary = false
+                        // Replace transitions between digits and letters with
+                        // spaces, but not for book names that start with digits
+                        if (normalizedLength > 0 && charWasDigit != charIsDigit) {
+                            // Don't split if this looks like a book name (digit followed by letters at start of token)
+                            val isBookNamePattern = charWasDigit && Character.isLetter(curChar) && tokenCount == 0
+                            if (!isBookNamePattern) {
+                                foundBoundary = true
+                            }
+                        }
+                    }
+                    if (foundBoundary) {
+                        // On a boundary:
+                        // Digits always start a new token
+                        // Letters always continue a previous token
+                        if (charIsDigit) {
+                            if (tokenCount >= args.size) {
+                                // TRANSLATOR: The user specified a verse with too many separators. {0} is a placeholder for the allowable separators.
+                                throw NoSuchVerseException(JSMsg.gettext("Too many parts to the Verse. (Parts are separated by any of {0})", input))
+                            }
+
+                            token = String(normalized, startIndex, normalizedLength - startIndex)
+                            args[tokenCount++] = token
+                            normalizedLength = 0
+                        } else {
+                            normalized[normalizedLength++] = ' '
+                        }
+                    }
+                    normalized[normalizedLength++] = curChar
+                }
+
+                // Until the first character is copied, there is no last char
+                if (normalizedLength > 0) {
+                    lastChar = curChar
+                }
+            }
+
+            if (tokenCount >= args.size) {
+                // TRANSLATOR: The user specified a verse with too many separators. {0} is a placeholder for the allowable separators.
+                throw NoSuchVerseException(JSMsg.gettext("Too many parts to the Verse. (Parts are separated by any of {0})", input))
+            }
+
+            token = String(normalized, startIndex, normalizedLength - startIndex)
+            args[tokenCount++] = token
+
+            return Array(tokenCount) { args[it]!! }
+        }
+
+        /**
+         * What characters can we use to separate parts to a verse
+         */
+        const val VERSE_ALLOWED_DELIMS: String = " :."
+
+        /**
+         * Characters that are used to indicate end of verse/chapter, part 1
+         */
+        const val VERSE_END_MARK1: String = "$"
+
+        /**
+         * Characters that are used to indicate end of verse/chapter, part 2
+         */
+        const val VERSE_END_MARK2: String = "ff"
     }
-
-    /**
-     * What characters can we use to separate parts to a verse
-     */
-    public static final String VERSE_ALLOWED_DELIMS = " :.";
-
-    /**
-     * Characters that are used to indicate end of verse/chapter, part 1
-     */
-    public static final String VERSE_END_MARK1 = "$";
-
-    /**
-     * Characters that are used to indicate end of verse/chapter, part 2
-     */
-    public static final String VERSE_END_MARK2 = "ff";
 }

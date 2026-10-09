@@ -17,34 +17,32 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
 /**
  * Types of Passage Lists.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public enum PassageListType {
+enum class PassageListType {
     /**
      * Passage to be interpreted as a list of verses.
      */
     VERSES {
-        @Override
-        public Object getElementAt(Passage ref, int index, RestrictionType restrict) {
+        override fun getElementAt(ref: Passage?, index: Int, restrict: RestrictionType?): Any? {
             if (ref == null) {
-                return null;
+                return null
             }
-            return ref.getVerseAt(index);
+            return ref.getVerseAt(index)
         }
 
-        @Override
-        public int count(Passage ref, RestrictionType restrict) {
+        override fun count(ref: Passage?, restrict: RestrictionType?): Int {
             if (ref == null) {
-                return 0;
+                return 0
             }
-            return ref.countVerses();
+            return ref.countVerses()
         }
     },
 
@@ -52,24 +50,22 @@ public enum PassageListType {
      * Passage to be interpreted as a list of ranges.
      */
     RANGES {
-        @Override
-        public Object getElementAt(Passage ref, int index, RestrictionType restrict) {
+        override fun getElementAt(ref: Passage?, index: Int, restrict: RestrictionType?): Any? {
             if (ref == null) {
-                return null;
+                return null
             }
-            return ref.getRangeAt(index, restrict);
+            return ref.getRangeAt(index, restrict)
         }
 
-        @Override
-        public int count(Passage ref, RestrictionType restrict) {
+        override fun count(ref: Passage?, restrict: RestrictionType?): Int {
             if (ref == null) {
-                return 0;
+                return 0
             }
-            return ref.countRanges(restrict);
+            return ref.countRanges(restrict)
         }
     };
 
-    public abstract Object getElementAt(Passage ref, int index, RestrictionType restrict);
+    abstract fun getElementAt(ref: Passage?, index: Int, restrict: RestrictionType?): Any?
 
-    public abstract int count(Passage ref, RestrictionType restrict);
+    abstract fun count(ref: Passage?, restrict: RestrictionType?): Int
 }

@@ -17,32 +17,32 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.versification.Versification
 
 /**
  * Types of Passage optimizations.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public enum PassageType {
+enum class PassageType {
     /**
      * Optimize the Passage for speed
      */
     SPEED {
-        @Override
-        public Passage createPassage(Versification v11n, String passage, Key basis) throws NoSuchVerseException {
-            if (passage == null || passage.length() == 0) {
-                return createEmptyPassage(v11n);
+        @Throws(NoSuchVerseException::class)
+        override fun createPassage(v11n: Versification?, passage: String?, basis: Key?): Passage {
+            if (passage == null || passage.length == 0) {
+                return createEmptyPassage(v11n)
             }
-            return new RocketPassage(v11n, passage, basis);
+            return RocketPassage(v11n, passage, basis)
         }
 
-        @Override
-        public Passage createEmptyPassage(Versification v11n) {
-            return new RocketPassage(v11n);
+        override fun createEmptyPassage(v11n: Versification?): Passage {
+            return RocketPassage(v11n)
         }
     },
 
@@ -50,17 +50,16 @@ public enum PassageType {
      * Optimize the Passage for write speed
      */
     WRITE_SPEED {
-        @Override
-        public Passage createPassage(Versification v11n, String passage, Key basis) throws NoSuchVerseException {
-            if (passage == null || passage.length() == 0) {
-                return createEmptyPassage(v11n);
+        @Throws(NoSuchVerseException::class)
+        override fun createPassage(v11n: Versification?, passage: String?, basis: Key?): Passage {
+            if (passage == null || passage.length == 0) {
+                return createEmptyPassage(v11n)
             }
-            return new BitwisePassage(v11n, passage, basis);
+            return BitwisePassage(v11n, passage, basis)
         }
 
-        @Override
-        public Passage createEmptyPassage(Versification v11n) {
-            return new BitwisePassage(v11n);
+        override fun createEmptyPassage(v11n: Versification?): Passage {
+            return BitwisePassage(v11n)
         }
     },
 
@@ -68,40 +67,33 @@ public enum PassageType {
      * Optimize the Passage for size
      */
     SIZE {
-        @Override
-        public Passage createPassage(Versification v11n, String passage, Key basis) throws NoSuchVerseException {
-            if (passage == null || passage.length() == 0) {
-                return createEmptyPassage(v11n);
+        @Throws(NoSuchVerseException::class)
+        override fun createPassage(v11n: Versification?, passage: String?, basis: Key?): Passage {
+            if (passage == null || passage.length == 0) {
+                return createEmptyPassage(v11n)
             }
-            return new DistinctPassage(v11n, passage, basis);
+            return DistinctPassage(v11n, passage, basis)
         }
 
-        @Override
-        public Passage createEmptyPassage(Versification v11n) {
-            return new DistinctPassage(v11n);
+        override fun createEmptyPassage(v11n: Versification?): Passage {
+            return DistinctPassage(v11n)
         }
-
-        /**
-         * Serialization ID
-         */
-        private static final long serialVersionUID = -1959355535575121168L;
     },
 
     /**
      * Optimize the Passage for a mix
      */
     MIX {
-        @Override
-        public Passage createPassage(Versification v11n, String passage, Key basis) throws NoSuchVerseException {
-            if (passage == null || passage.length() == 0) {
-                return createEmptyPassage(v11n);
+        @Throws(NoSuchVerseException::class)
+        override fun createPassage(v11n: Versification?, passage: String?, basis: Key?): Passage {
+            if (passage == null || passage.length == 0) {
+                return createEmptyPassage(v11n)
             }
-            return new RangedPassage(v11n, passage, basis);
+            return RangedPassage(v11n, passage, basis)
         }
 
-        @Override
-        public Passage createEmptyPassage(Versification v11n) {
-            return new RangedPassage(v11n);
+        override fun createEmptyPassage(v11n: Versification?): Passage {
+            return RangedPassage(v11n)
         }
     },
 
@@ -109,84 +101,91 @@ public enum PassageType {
      * Optimize the Passage for tally operations
      */
     TALLY {
-        @Override
-        public Passage createPassage(Versification v11n, String passage, Key basis) throws NoSuchVerseException {
-            if (passage == null || passage.length() == 0) {
-                return createEmptyPassage(v11n);
+        @Throws(NoSuchVerseException::class)
+        override fun createPassage(v11n: Versification?, passage: String?, basis: Key?): Passage {
+            if (passage == null || passage.length == 0) {
+                return createEmptyPassage(v11n)
             }
-            return new PassageTally(v11n, passage, basis);
+            return PassageTally(v11n, passage, basis)
         }
 
-        @Override
-        public Passage createEmptyPassage(Versification v11n) {
-            return new PassageTally(v11n);
+        override fun createEmptyPassage(v11n: Versification?): Passage {
+            return PassageTally(v11n)
         }
     };
 
     /**
      * Create an optimized passage
-     * 
+     *
      * @param v11n
      *            the versification to which this reference pertains
      * @param passage
-     * @param basis 
+     * @param basis
      * @return the optimized passage
      * @throws NoSuchVerseException
      */
-    public abstract Passage createPassage(Versification v11n, String passage, Key basis) throws NoSuchVerseException;
-    public Passage createPassage(Versification v11n, String passage) throws NoSuchVerseException {
-        return createPassage(v11n, passage, null);
+    @Throws(NoSuchVerseException::class)
+    abstract fun createPassage(v11n: Versification?, passage: String?, basis: Key?): Passage
+
+    @Throws(NoSuchVerseException::class)
+    fun createPassage(v11n: Versification?, passage: String?): Passage {
+        return createPassage(v11n, passage, null)
     }
 
     /**
      * Create an empty, optimized passage
-     * 
+     *
      * @param v11n
      *            the versification to which this reference pertains
      * @return the optimized, empty passage
      */
-    public abstract Passage createEmptyPassage(Versification v11n);
+    abstract fun createEmptyPassage(v11n: Versification?): Passage
 
-    /**
-     * Lookup method to convert from a String
-     * @param name 
-     * @return the matching Passage type
-     */
-    public static PassageType fromString(String name) {
-        for (PassageType v : values()) {
-            if (v.name().equalsIgnoreCase(name)) {
-                return v;
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         * @param name
+         * @return the matching Passage type
+         */
+        @JvmStatic
+        fun fromString(name: String?): PassageType? {
+            for (v in entries) {
+                if (v.name.equals(name, ignoreCase = true)) {
+                    return v
+                }
             }
+
+            // cannot get here
+            jswordAssert(false) { "" }
+            return null
         }
 
-        // cannot get here
-        assert false;
-        return null;
-    }
-
-    /**
-     * Lookup method to convert from an integer
-     * 
-     * @param i 
-     * @return the Passage type from its ordinal value
-     */
-    public static PassageType fromInteger(int i) {
-        for (PassageType v : values()) {
-            if (v.ordinal() == i) {
-                return v;
+        /**
+         * Lookup method to convert from an integer
+         *
+         * @param i
+         * @return the Passage type from its ordinal value
+         */
+        @JvmStatic
+        fun fromInteger(i: Int): PassageType {
+            for (v in entries) {
+                if (v.ordinal == i) {
+                    return v
+                }
             }
+
+            // on error return SPEED
+            return SPEED
         }
 
-        // on error return SPEED
-        return SPEED;
-    }
-
-    /**
-     * Lookup method to convert from an integer
-     * @param type 
-     * @return the ordinal value for the passage type
-     */
-    public static int toInteger(PassageType type) {
-        return type.ordinal();
+        /**
+         * Lookup method to convert from an integer
+         * @param type
+         * @return the ordinal value for the passage type
+         */
+        @JvmStatic
+        fun toInteger(type: PassageType?): Int {
+            return type!!.ordinal
+        }
     }
 }

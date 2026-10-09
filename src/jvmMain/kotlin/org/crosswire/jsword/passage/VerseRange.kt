@@ -17,18 +17,16 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.NoSuchElementException;
-
-import org.crosswire.common.icu.NumberShaper;
-import org.crosswire.jsword.versification.BibleBook;
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.common.icu.NumberShaper
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.versification.Versification
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.util.Locale
+import java.util.NoSuchElementException
 
 /**
  * A VerseRange is one step between a Verse and a Passage - it is a Verse plus a
@@ -37,154 +35,148 @@ import org.crosswire.jsword.versification.Versification;
  * collections point of view. A VerseRange should always be valid, although some
  * versions may not return any text for verses that they consider to be
  * miss-translated in some way.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public final class VerseRange implements VerseKey<VerseRange> {
+class VerseRange : VerseKey<VerseRange>, Cloneable {
     /**
      * The default VerseRange is a single verse - Genesis 1:1. I didn't want to
      * provide this constructor however, you are supposed to provide a default
      * ctor for all beans. For this reason I suggest you don't use it.
-     * 
+     *
      * @param v11n
      *            The versification for the range
      */
-    public VerseRange(Versification v11n) {
-        this(v11n, Verse.DEFAULT, Verse.DEFAULT);
-    }
+    constructor(v11n: Versification?) : this(v11n, Verse.DEFAULT, Verse.DEFAULT)
 
     /**
      * Construct a VerseRange from a Verse. The resultant VerseRange will be 1
      * verse in verseCount.
-     * 
+     *
      * @param v11n
      *            The versification for the range
      * @param start
      *            The verse to start from
      */
-    public VerseRange(Versification v11n, Verse start) {
-        this(v11n, start, start);
-    }
+    constructor(v11n: Versification?, start: Verse?) : this(v11n, start, start)
 
-    public VerseRange(Versification v11n, Verse start, Verse end) {
-        assert v11n != null;
-        assert start != null;
-        assert end != null;
+    constructor(v11n: Versification?, start: Verse?, end: Verse?) {
+        jswordAssert(v11n != null) { "" }
+        jswordAssert(start != null) { "" }
+        jswordAssert(end != null) { "" }
 
-        this.v11n = v11n;
-        shaper = new NumberShaper();
+        this.v11n = v11n!!
+        shaper = NumberShaper()
 
-        int distance = v11n.distance(start, end);
+        val distance = this.v11n.distance(start, end)
 
         if (distance < 0) {
-            this.start = end;
-            this.end = start;
-            this.verseCount = calcVerseCount();
+            this.start = end!!
+            this.end = start!!
+            this.verseCount = calcVerseCount()
         } else if (distance == 0) {
-            this.start = start;
-            this.end = start;
-            this.verseCount = 1;
+            this.start = start!!
+            this.end = start
+            this.verseCount = 1
         } else {
-            this.start = start;
-            this.end = end;
-            this.verseCount = calcVerseCount();
+            this.start = start!!
+            this.end = end!!
+            this.verseCount = calcVerseCount()
         }
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.VerseKey#getVersification()
-     */
-    public Versification getVersification() {
-        return v11n;
-    }
-
-    @Override
-    public boolean isValidIn(Versification targetVersification) {
-        Iterator<Key> verseIterator = iterator();
-        while(verseIterator.hasNext()) {
-            if(!((Verse) verseIterator.next()).isValidIn(targetVersification)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.VerseKey#reversify(org.crosswire.jsword.versification.Versification)
-     */
-    public VerseRange reversify(Versification newVersification) {
-        if (v11n.equals(newVersification)) {
-            return this;
-        }
-        Verse newStart = start.reversify(newVersification);
-        if (newStart == null) {
-            return null;
-        }
-        Verse newEnd = end.reversify(newVersification);
-        if (newEnd == null) {
-            return null;
-        }
-        return new VerseRange(newVersification, newStart, newEnd);
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.VerseKey#isWhole()
-     */
-    public boolean isWhole() {
-        return start.isWhole() && end.isWhole();
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.VerseKey#getWhole()
-     */
-    public VerseRange getWhole() {
-        if (isWhole()) {
-            return this;
-        }
-        return new VerseRange(v11n, start.getWhole(), end.getWhole());
     }
 
     /**
      * Merge 2 VerseRanges together. The resulting range will encompass
      * Everything in-between the extremities of the 2 ranges.
-     * 
+     *
      * @param a
      *            The first verse range to be merged
      * @param b
      *            The second verse range to be merged
      */
-    public VerseRange(VerseRange a, VerseRange b) {
-        v11n = a.v11n;
-        shaper = new NumberShaper();
-        start = v11n.min(a.getStart(), b.getStart());
-        end = v11n.max(a.getEnd(), b.getEnd());
-        verseCount = calcVerseCount();
+    constructor(a: VerseRange?, b: VerseRange?) {
+        v11n = a!!.v11n
+        shaper = NumberShaper()
+        start = v11n.min(a.start, b!!.start)!!
+        end = v11n.max(a.end, b.end)!!
+        verseCount = calcVerseCount()
     }
+
+    /* (non-Javadoc)
+     * @see org.crosswire.jsword.passage.VerseKey#getVersification()
+     */
+    override val versification: Versification
+        get() = v11n
+
+    override fun isValidIn(targetVersification: Versification?): Boolean {
+        val verseIterator = iterator()
+        while (verseIterator.hasNext()) {
+            if (!(verseIterator.next() as Verse).isValidIn(targetVersification)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /* (non-Javadoc)
+     * @see org.crosswire.jsword.passage.VerseKey#reversify(org.crosswire.jsword.versification.Versification)
+     */
+    override fun reversify(newVersification: Versification?): VerseRange? {
+        if (v11n == newVersification) {
+            return this
+        }
+        val newStart = start.reversify(newVersification)
+        if (newStart == null) {
+            return null
+        }
+        val newEnd = end.reversify(newVersification)
+        if (newEnd == null) {
+            return null
+        }
+        return VerseRange(newVersification, newStart, newEnd)
+    }
+
+    /* (non-Javadoc)
+     * @see org.crosswire.jsword.passage.VerseKey#isWhole()
+     */
+    override val isWhole: Boolean
+        get() = start.isWhole && end.isWhole
+
+    /* (non-Javadoc)
+     * @see org.crosswire.jsword.passage.VerseKey#getWhole()
+     */
+    override val whole: VerseRange
+        get() {
+            if (isWhole) {
+                return this
+            }
+            return VerseRange(v11n, start.whole, end.whole)
+        }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    public String getName() {
-        return getName(null);
+    override fun getName(): String {
+        return getName(null)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    public String getName(Key base) {
+    override fun getName(base: Key?): String {
         if (PassageUtil.isPersistentNaming() && originalName != null) {
-            return originalName;
+            return originalName!!
         }
 
-        String rangeName = doGetName(base, null);
+        val rangeName = doGetName(base, null)
         // Only shape it if it can be unshaped.
         if (shaper.canUnshape()) {
-            return shaper.shape(rangeName);
+            return shaper.shape(rangeName)!!
         }
 
-        return rangeName;
+        return rangeName
     }
 
     /**
@@ -195,229 +187,225 @@ public final class VerseRange implements VerseKey<VerseRange> {
      * @param locale the desired locale of name
      * @return a String containing a description of the Key
      */
-    public String getNameInLocale(Key base, Locale locale) {
-        if (locale == null) return getName(base);
+    fun getNameInLocale(base: Key?, locale: Locale?): String {
+        if (locale == null) return getName(base)
         if (PassageUtil.isPersistentNaming() && originalName != null) {
-            return originalName;
+            return originalName!!
         }
 
-        String rangeName = doGetName(base, locale);
+        val rangeName = doGetName(base, locale)
         // Only shape it if it can be unshaped.
         if (shaper.canUnshape()) {
-            return shaper.shape(rangeName);
+            return shaper.shape(rangeName)!!
         }
 
-        return rangeName;
+        return rangeName
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    public String getRootName() {
-        return start.getRootName();
+    override fun getRootName(): String {
+        return start.getRootName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    public String getOsisRef() {
-        BibleBook startBook = start.getBook();
-        BibleBook endBook = end.getBook();
-        int startChapter = start.getChapter();
-        int endChapter = end.getChapter();
+    override fun getOsisRef(): String {
+        val startBook = start.book
+        val endBook = end.book
+        val startChapter = start.chapter
+        val endChapter = end.chapter
 
         // If this is in 2 separate books
-        if (startBook != endBook) {
-            StringBuilder buf = new StringBuilder();
+        if (startBook !== endBook) {
+            val buf = StringBuilder()
             if (v11n.isStartOfBook(start)) {
-                buf.append(startBook.getOSIS());
+                buf.append(startBook.osis)
             } else if (v11n.isStartOfChapter(start)) {
-                buf.append(startBook.getOSIS());
-                buf.append(Verse.VERSE_OSIS_DELIM);
-                buf.append(startChapter);
+                buf.append(startBook.osis)
+                buf.append(Verse.VERSE_OSIS_DELIM)
+                buf.append(startChapter)
             } else {
-                buf.append(start.getOsisRef());
+                buf.append(start.getOsisRef())
             }
 
-            buf.append(VerseRange.RANGE_PREF_DELIM);
+            buf.append(RANGE_PREF_DELIM)
 
             if (v11n.isEndOfBook(end)) {
-                buf.append(endBook.getOSIS());
+                buf.append(endBook.osis)
             } else if (v11n.isEndOfChapter(end)) {
-                buf.append(endBook.getOSIS());
-                buf.append(Verse.VERSE_OSIS_DELIM);
-                buf.append(endChapter);
+                buf.append(endBook.osis)
+                buf.append(Verse.VERSE_OSIS_DELIM)
+                buf.append(endChapter)
             } else {
-                buf.append(end.getOsisRef());
+                buf.append(end.getOsisRef())
             }
 
-            return buf.toString();
+            return buf.toString()
         }
 
         // This range is exactly a whole book
-        if (isWholeBook()) {
+        if (isWholeBook) {
             // Just report the name of the book, we don't need to worry
             // about the
             // base since we start at the start of a book, and should have
             // been
             // recently normalized()
-            return startBook.getOSIS();
+            return startBook.osis
         }
 
         // If this is 2 separate chapters in the same book
         if (startChapter != endChapter) {
-            StringBuilder buf = new StringBuilder();
+            val buf = StringBuilder()
             if (v11n.isStartOfChapter(start)) {
-                buf.append(startBook.getOSIS());
-                buf.append(Verse.VERSE_OSIS_DELIM);
-                buf.append(startChapter);
+                buf.append(startBook.osis)
+                buf.append(Verse.VERSE_OSIS_DELIM)
+                buf.append(startChapter)
             } else {
-                buf.append(start.getOsisRef());
+                buf.append(start.getOsisRef())
             }
 
-            buf.append(VerseRange.RANGE_PREF_DELIM);
+            buf.append(RANGE_PREF_DELIM)
 
             if (v11n.isEndOfChapter(end)) {
-                buf.append(endBook.getOSIS());
-                buf.append(Verse.VERSE_OSIS_DELIM);
-                buf.append(endChapter);
+                buf.append(endBook.osis)
+                buf.append(Verse.VERSE_OSIS_DELIM)
+                buf.append(endChapter)
             } else {
-                buf.append(end.getOsisRef());
+                buf.append(end.getOsisRef())
             }
 
-            return buf.toString();
+            return buf.toString()
         }
 
         // If this range is exactly a whole chapter
-        if (isWholeChapter()) {
+        if (isWholeChapter) {
             // Just report the name of the book and the chapter
-            StringBuilder buf = new StringBuilder();
-            buf.append(startBook.getOSIS());
-            buf.append(Verse.VERSE_OSIS_DELIM);
-            buf.append(startChapter);
-            return buf.toString();
+            val buf = StringBuilder()
+            buf.append(startBook.osis)
+            buf.append(Verse.VERSE_OSIS_DELIM)
+            buf.append(startChapter)
+            return buf.toString()
         }
 
         // If this is 2 separate verses
-        if (start.getVerse() != end.getVerse()) {
-            StringBuilder buf = new StringBuilder();
-            buf.append(start.getOsisRef());
-            buf.append(VerseRange.RANGE_PREF_DELIM);
-            buf.append(end.getOsisRef());
-            return buf.toString();
+        if (start.verse != end.verse) {
+            val buf = StringBuilder()
+            buf.append(start.getOsisRef())
+            buf.append(RANGE_PREF_DELIM)
+            buf.append(end.getOsisRef())
+            return buf.toString()
         }
 
         // The range is a single verse
-        return start.getOsisRef();
+        return start.getOsisRef()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    public String getOsisID() {
+    override fun getOsisID(): String {
 
         // This range is exactly a whole book
-        if (isWholeBook()) {
+        if (isWholeBook) {
             // Just report the name of the book, we don't need to worry
             // about the base since we start at the start of a book, and
             // should have been recently normalized()
-            return start.getBook().getOSIS();
+            return start.book.osis
         }
 
         // If this range is exactly a whole chapter
-        if (isWholeChapter()) {
+        if (isWholeChapter) {
             // Just report the name of the book and the chapter
-            return start.getBook().getOSIS() + Verse.VERSE_OSIS_DELIM + start.getChapter();
+            return start.book.osis + Verse.VERSE_OSIS_DELIM + start.chapter
         }
 
-        int startOrdinal = start.getOrdinal();
-        int endOrdinal = end.getOrdinal();
+        val startOrdinal = start.ordinal
+        val endOrdinal = end.ordinal
 
         // to see if it is wholly contained in the range and output it if it is.
 
         // Estimate the size of the buffer: book.dd.dd (where book is 3-5, 3 typical)
-        StringBuilder buf = new StringBuilder((endOrdinal - startOrdinal + 1) * 10);
-        buf.append(start.getOsisID());
-        for (int i = startOrdinal + 1; i < endOrdinal; i++) {
-            buf.append(AbstractPassage.REF_OSIS_DELIM);
-            buf.append(v11n.decodeOrdinal(i).getOsisID());
+        val buf = StringBuilder((endOrdinal - startOrdinal + 1) * 10)
+        buf.append(start.getOsisID())
+        for (i in startOrdinal + 1 until endOrdinal) {
+            buf.append(AbstractPassage.REF_OSIS_DELIM)
+            buf.append(v11n.decodeOrdinal(i).getOsisID())
         }
 
         // It just might be a single verse range!
         if (startOrdinal != endOrdinal) {
-            buf.append(AbstractPassage.REF_OSIS_DELIM);
-            buf.append(end.getOsisID());
+            buf.append(AbstractPassage.REF_OSIS_DELIM)
+            buf.append(end.getOsisID())
         }
 
-        return buf.toString();
+        return buf.toString()
     }
 
-    @Override
-    public String toString() {
-        return getName();
+    override fun toString(): String {
+        return getName()
     }
 
     /**
      * Fetch the first verse in this range.
-     * 
+     *
      * @return The first verse in the range
      */
-    public Verse getStart() {
-        return start;
-    }
+    var start: Verse
+        private set
 
     /**
      * Fetch the last verse in this range.
-     * 
+     *
      * @return The last verse in the range
      */
-    public Verse getEnd() {
-        return end;
-    }
+    @Transient
+    var end: Verse
+        private set
 
-    @Override
-    public VerseRange clone() {
+    override fun clone(): VerseRange {
         // This gets us a shallow copy
-        VerseRange copy = null;
+        var copy: VerseRange? = null
         try {
-            copy = (VerseRange) super.clone();
-            copy.start = start;
-            copy.end = end;
-            copy.verseCount = verseCount;
-            copy.originalName = originalName;
-            copy.shaper = new NumberShaper();
-            copy.v11n = v11n;
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            copy = super<Cloneable>.clone() as VerseRange
+            copy.start = start
+            copy.end = end
+            copy.verseCount = verseCount
+            copy.originalName = originalName
+            copy.shaper = NumberShaper()
+            copy.v11n = v11n
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
 
-        return copy;
+        return copy!!
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof VerseRange)) {
-            return false;
+    override fun equals(other: Any?): Boolean {
+        if (other !is VerseRange) {
+            return false
         }
-        VerseRange vr = (VerseRange) obj;
-        return verseCount == vr.verseCount && start.equals(vr.start) && v11n.equals(vr.v11n);
+        val vr: VerseRange = other
+        return verseCount == vr.verseCount && start == vr.start && v11n == vr.v11n
     }
 
-    @Override
-    public int hashCode() {
-        int result = start.hashCode();
-        result = 31 * result + verseCount;
-        return 31 * result + ((v11n == null) ? 0 : v11n.hashCode());
+    override fun hashCode(): Int {
+        var result = start.hashCode()
+        result = 31 * result + verseCount
+        val v11nOrNull: Versification? = v11n
+        return 31 * result + (v11nOrNull?.hashCode() ?: 0)
     }
 
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Key obj) {
-        VerseRange that = (VerseRange) obj;
+    override fun compareTo(other: Key?): Int {
+        val that = other as VerseRange
 
-        int result = start.compareTo(that.start);
-        return result == 0 ? this.verseCount - that.verseCount : result;
+        val result = start.compareTo(that.start)
+        return if (result == 0) this.verseCount - that.verseCount else result
     }
 
     /**
@@ -426,29 +414,29 @@ public final class VerseRange implements VerseKey<VerseRange> {
      * contained within the other and they would be considered adjacentTo() For
      * example Gen 1:1-2 is adjacent to Gen 1:1-5 and Gen 1:3-4 but not to Gen
      * 1:4-10. Also Gen 1:29-30 is adjacent to Gen 2:1-10
-     * 
+     *
      * @param that
      *            The VerseRange to compare to
      * @return true if the ranges are adjacent
      */
-    public boolean adjacentTo(VerseRange that) {
-        int thatStart = that.getStart().getOrdinal();
-        int thatEnd = that.getEnd().getOrdinal();
-        int thisStart = getStart().getOrdinal();
-        int thisEnd = getEnd().getOrdinal();
+    fun adjacentTo(that: VerseRange?): Boolean {
+        val thatStart = that!!.start.ordinal
+        val thatEnd = that.end.ordinal
+        val thisStart = start.ordinal
+        val thisEnd = end.ordinal
 
         // if that starts inside or is next to this we are adjacent.
         if (thatStart >= thisStart - 1 && thatStart <= thisEnd + 1) {
-            return true;
+            return true
         }
 
         // if this starts inside or is next to that we are adjacent.
         if (thisStart >= thatStart - 1 && thisStart <= thatEnd + 1) {
-            return true;
+            return true
         }
 
         // otherwise we're not adjacent
-        return false;
+        return false
     }
 
     /**
@@ -457,334 +445,261 @@ public final class VerseRange implements VerseKey<VerseRange> {
      * like Gen 1:1-2 and Gen 1:3-4. overlaps() however would return false given
      * these ranges. For example Gen 1:1-2 is adjacent to Gen 1:1-5 but not to
      * Gen 1:3-4 not to Gen 1:4-10. Also Gen 1:29-30 does not overlap Gen 2:1-10
-     * 
+     *
      * @param that
      *            The VerseRange to compare to
      * @return true if the ranges are adjacent
      */
-    public boolean overlaps(VerseRange that) {
-        int thatStart = that.getStart().getOrdinal();
-        int thatEnd = that.getEnd().getOrdinal();
-        int thisStart = getStart().getOrdinal();
-        int thisEnd = getEnd().getOrdinal();
+    fun overlaps(that: VerseRange?): Boolean {
+        val thatStart = that!!.start.ordinal
+        val thatEnd = that.end.ordinal
+        val thisStart = start.ordinal
+        val thisEnd = end.ordinal
 
         // if that starts inside this we are adjacent.
         if (thatStart >= thisStart && thatStart <= thisEnd) {
-            return true;
+            return true
         }
 
         // if this starts inside that we are adjacent.
         if (thisStart >= thatStart && thisStart <= thatEnd) {
-            return true;
+            return true
         }
 
         // otherwise we're not adjacent
-        return false;
+        return false
     }
 
     /**
      * Is the given verse entirely within our range. For example if this =
      * "Gen 1:1-31" then: <tt>contains(Verse("Gen 1:3")) == true</tt>
      * <tt>contains(Verse("Gen 2:1")) == false</tt>
-     * 
+     *
      * @param that
      *            The Verse to compare to
      * @return true if we contain it.
      */
-    public boolean contains(Verse that) {
-        return v11n.distance(start, that) >= 0 && v11n.distance(that, end) >= 0;
+    fun contains(that: Verse?): Boolean {
+        return v11n.distance(start, that) >= 0 && v11n.distance(that, end) >= 0
     }
 
     /**
      * Is the given range within our range. For example if this = "Gen 1:1-31"
      * then: <tt>this.contains(Verse("Gen 1:3-10")) == true</tt>
      * <tt>this.contains(Verse("Gen 2:1-1")) == false</tt>
-     * 
+     *
      * @param that
      *            The Verse to compare to
      * @return true if we contain it.
      */
-    public boolean contains(VerseRange that) {
-        return v11n.distance(start, that.getStart()) >= 0 && v11n.distance(that.getEnd(), end) >= 0;
+    fun contains(that: VerseRange?): Boolean {
+        return v11n.distance(start, that!!.start) >= 0 && v11n.distance(that.end, end) >= 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        if (key instanceof VerseRange) {
-            return contains((VerseRange) key);
+    override fun contains(key: Key?): Boolean {
+        if (key is VerseRange) {
+            return contains(key as VerseRange?)
         }
-        if (key instanceof Verse) {
-            return contains((Verse) key);
+        if (key is Verse) {
+            return contains(key as Verse?)
         }
-        return false;
+        return false
     }
 
     /**
      * Does this range represent exactly one chapter, no more or less.
-     * 
+     *
      * @return true if we are exactly one chapter.
      */
-    public boolean isWholeChapter() {
-        return v11n.isSameChapter(start, end) && isWholeChapters();
-    }
+    val isWholeChapter: Boolean
+        get() = v11n.isSameChapter(start, end) && isWholeChapters
 
     /**
      * Does this range represent a number of whole chapters
-     * 
+     *
      * @return true if we are a whole number of chapters.
      */
-    public boolean isWholeChapters() {
-        return v11n.isStartOfChapter(start) && v11n.isEndOfChapter(end);
-    }
+    val isWholeChapters: Boolean
+        get() = v11n.isStartOfChapter(start) && v11n.isEndOfChapter(end)
 
     /**
      * Does this range represent exactly one book, no more or less.
-     * 
+     *
      * @return true if we are exactly one book.
      */
-    public boolean isWholeBook() {
-        return v11n.isSameBook(start, end) && isWholeBooks();
-    }
+    val isWholeBook: Boolean
+        get() = v11n.isSameBook(start, end) && isWholeBooks
 
     /**
      * Does this range represent a whole number of books.
-     * 
+     *
      * @return true if we are a whole number of books.
      */
-    public boolean isWholeBooks() {
-        return v11n.isStartOfBook(start) && v11n.isEndOfBook(end);
-    }
+    val isWholeBooks: Boolean
+        get() = v11n.isStartOfBook(start) && v11n.isEndOfBook(end)
 
     /**
      * Does this range occupy more than one book;
-     * 
+     *
      * @return true if we occupy 2 or more books
      */
-    public boolean isMultipleBooks() {
-        return start.getBook() != end.getBook();
-    }
+    val isMultipleBooks: Boolean
+        get() = start.book !== end.book
 
     /**
      * Create an array of Verses
-     * 
+     *
      * @return The array of verses that this makes up
      */
-    public Verse[] toVerseArray() {
-        Verse[] retcode = new Verse[verseCount];
-        int ord = start.getOrdinal();
-        for (int i = 0; i < verseCount; i++) {
-            retcode[i] = v11n.decodeOrdinal(ord + i);
-        }
-
-        return retcode;
+    fun toVerseArray(): Array<Verse> {
+        val ord = start.ordinal
+        return Array(verseCount) { i -> v11n.decodeOrdinal(ord + i) }
     }
 
     /**
      * Enumerate the subranges in this range
-     * 
+     *
      * @param restrict
      * @return a range iterator
      */
-    public Iterator<VerseRange> rangeIterator(RestrictionType restrict) {
-        return new AbstractPassage.VerseRangeIterator(v11n, iterator(), restrict);
+    fun rangeIterator(restrict: RestrictionType?): MutableIterator<VerseRange> {
+        return AbstractPassage.VerseRangeIterator(v11n, iterator(), restrict)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return parent;
+    override fun getParent(): Key? {
+        return parent
     }
 
     /**
      * Set a parent Key. This allows us to follow the Key interface more
      * closely, although the concept of a parent for a verse is fairly alien.
-     * 
+     *
      * @param parent
      *            The parent Key for this verse
      */
-    public void setParent(Key parent) {
-        this.parent = parent;
+    fun setParent(parent: Key?) {
+        this.parent = parent
     }
 
-    /**
-     * Create a VerseRange that is the stuff left of VerseRange a when you
-     * remove the stuff in VerseRange b.
-     * 
-     * @param a
-     *            Verses at the start or end of b
-     * @param b
-     *            All the verses
-     * @return A list of the Verses outstanding
-     */
-    public static VerseRange[] remainder(VerseRange a, VerseRange b) {
-        VerseRange rstart = null;
-        VerseRange rend = null;
-
-        Versification v11n = a.getVersification();
-
-        // If a starts before b get the Range of the prequel
-        if (v11n.distance(a.getStart(), b.getStart()) > 0) {
-            rstart = new VerseRange(v11n, a.getStart(), v11n.subtract(b.getEnd(), 1));
-        }
-
-        // If a ends after b get the Range of the sequel
-        if (v11n.distance(a.getEnd(), b.getEnd()) < 0) {
-            rend = new VerseRange(v11n, v11n.add(b.getEnd(), 1), a.getEnd());
-        }
-
-        if (rstart == null) {
-            if (rend == null) {
-                return new VerseRange[] {};
-            }
-            return new VerseRange[] {
-                rend
-            };
-        }
-
-        if (rend == null) {
-            return new VerseRange[] {
-                rstart
-            };
-        }
-        return new VerseRange[] {
-                rstart, rend
-        };
-    }
-
-    /**
-     * Create a VerseRange that is the stuff in VerseRange a that is also
-     * in VerseRange b.
-     * 
-     * @param a
-     *            The verses that you might want
-     * @param b
-     *            The verses that you definitely don't
-     * @return A list of the Verses outstanding
-     */
-    public static VerseRange intersection(VerseRange a, VerseRange b) {
-        Versification v11n = a.getVersification();
-        Verse newStart = v11n.max(a.getStart(), b.getStart());
-        Verse newEnd = v11n.min(a.getEnd(), b.getEnd());
-
-        if (v11n.distance(newStart, newEnd) >= 0) {
-            return new VerseRange(a.getVersification(), newStart, newEnd);
-        }
-
-        return null;
-    }
-
-    private String doGetName(Key base, Locale locale) {
+    private fun doGetName(base: Key?, locale: Locale?): String {
         // Cache these we're going to be using them a lot.
-        BibleBook startBook = start.getBook();
-        int startChapter = start.getChapter();
-        int startVerse = start.getVerse();
-        BibleBook endBook = end.getBook();
-        int endChapter = end.getChapter();
-        int endVerse = end.getVerse();
+        val startBook = start.book
+        val startChapter = start.chapter
+        val startVerse = start.verse
+        val endBook = end.book
+        val endChapter = end.chapter
+        val endVerse = end.verse
 
         // If this is in 2 separate books
-        if (startBook != endBook) {
+        if (startBook !== endBook) {
             // This range is exactly a whole book
-            if (isWholeBooks()) {
+            if (isWholeBooks) {
                 // Just report the name of the book, we don't need to worry
                 // about the base since we start at the start of a book,
                 // and should have been recently normalized()
-                return v11n.getPreferredNameInLocale(startBook, locale) + VerseRange.RANGE_PREF_DELIM + v11n.getPreferredNameInLocale(endBook, locale);
+                return v11n.getPreferredNameInLocale(startBook, locale) + RANGE_PREF_DELIM + v11n.getPreferredNameInLocale(endBook, locale)
             }
 
             // If this range is exactly a whole chapter
-            if (isWholeChapters()) {
+            if (isWholeChapters) {
                 // Just report book and chapter names
-                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + VerseRange.RANGE_PREF_DELIM
-                        + v11n.getPreferredNameInLocale(endBook, locale) + Verse.VERSE_PREF_DELIM1 + endChapter;
+                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM +
+                        v11n.getPreferredNameInLocale(endBook, locale) + Verse.VERSE_PREF_DELIM1 + endChapter
             }
 
             if (v11n.isChapterIntro(start)) {
-                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + VerseRange.RANGE_PREF_DELIM  + end.getNameInLocale(base, locale);
+                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
             }
             if (v11n.isBookIntro(start)) {
-                return v11n.getPreferredNameInLocale(startBook, locale) + VerseRange.RANGE_PREF_DELIM + end.getNameInLocale(base, locale);
+                return v11n.getPreferredNameInLocale(startBook, locale) + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
             }
-            return start.getNameInLocale(base, locale) + VerseRange.RANGE_PREF_DELIM + end.getNameInLocale(base, locale);
+            return start.getNameInLocale(base, locale) + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
         }
 
         // This range is exactly a whole book
-        if (isWholeBook()) {
+        if (isWholeBook) {
             // Just report the name of the book, we don't need to worry about
             // the
             // base since we start at the start of a book, and should have been
             // recently normalized()
-            return v11n.getPreferredNameInLocale(startBook, locale);
+            return v11n.getPreferredNameInLocale(startBook, locale)!!
         }
 
         // If this is 2 separate chapters
         if (startChapter != endChapter) {
             // If this range is a whole number of chapters
-            if (isWholeChapters()) {
+            if (isWholeChapters) {
                 // Just report the name of the book and the chapters
-                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + VerseRange.RANGE_PREF_DELIM + endChapter;
+                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM + endChapter
             }
 
-            return start.getNameInLocale(base, locale) + VerseRange.RANGE_PREF_DELIM + endChapter + Verse.VERSE_PREF_DELIM2 + endVerse;
+            return start.getNameInLocale(base, locale) + RANGE_PREF_DELIM + endChapter + Verse.VERSE_PREF_DELIM2 + endVerse
         }
 
         // If this range is exactly a whole chapter
-        if (isWholeChapter()) {
+        if (isWholeChapter) {
             // Just report the name of the book and the chapter
-            return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter;
+            return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter
         }
 
         // If this is 2 separate verses
         if (startVerse != endVerse) {
-            return start.getNameInLocale(base, locale) + VerseRange.RANGE_PREF_DELIM + endVerse;
+            return start.getNameInLocale(base, locale) + RANGE_PREF_DELIM + endVerse
         }
 
         // The range is a single verse
-        return start.getNameInLocale(base, locale);
+        return start.getNameInLocale(base, locale)
     }
 
     /**
      * Calculate the last verse in this range.
-     * 
+     *
      * @return The last verse in the range
      */
-    private Verse calcEnd() {
+    private fun calcEnd(): Verse {
         if (verseCount == 1) {
-            return start;
+            return start
         }
-        return v11n.add(start, verseCount - 1);
+        return v11n.add(start, verseCount - 1)!!
     }
 
     /**
      * Calculate how many verses in this range
-     * 
+     *
      * @return The number of verses. Always&gt;= 1.
      */
-    private int calcVerseCount() {
-        return v11n.distance(start, end) + 1;
+    private fun calcVerseCount(): Int {
+        return v11n.distance(start, end) + 1
     }
 
     /**
      * Check to see that everything is ok with the Data
      */
-    private void verifyData() {
-        assert verseCount == calcVerseCount() : "start=" + start + ", end=" + end + ", verseCount=" + verseCount;
+    private fun verifyData() {
+        // Kotlin evaluates the condition eagerly (jswordAssert), Java `assert` only with -ea.
+        if (VerseRange::class.java.desiredAssertionStatus()) {
+            jswordAssert(verseCount == calcVerseCount()) { "start=" + start + ", end=" + end + ", verseCount=" + verseCount }
+        }
     }
 
     /**
      * Write out the object to the given ObjectOutputStream
-     * 
+     *
      * @param out
      *            The stream to write our state to
      * @throws IOException
      *             If the write fails
      * @serialData Write the ordinal number of this verse
      */
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
+    @Throws(IOException::class)
+    private fun writeObject(out: ObjectOutputStream) {
+        out.defaultWriteObject()
 
         // Ignore the original name. Is this wise?
         // I am expecting that people are not that fussed about it and
@@ -793,7 +708,7 @@ public final class VerseRange implements VerseKey<VerseRange> {
 
     /**
      * Write out the object to the given ObjectOutputStream
-     * 
+     *
      * @param in
      *            The stream to read our state from
      * @throws IOException
@@ -802,13 +717,14 @@ public final class VerseRange implements VerseKey<VerseRange> {
      *             If the read data is incorrect
      * @serialData Write the ordinal number of this verse
      */
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`in`: ObjectInputStream) {
+        `in`.defaultReadObject()
 
-        end = calcEnd();
-        shaper = new NumberShaper();
+        end = calcEnd()
+        shaper = NumberShaper()
 
-        verifyData();
+        verifyData()
 
         // We are ignoring the originalName and parent.
     }
@@ -816,191 +732,245 @@ public final class VerseRange implements VerseKey<VerseRange> {
     /**
      * Iterate over the Verses in the VerseRange
      */
-    private static final class VerseIterator implements Iterator<Key> {
-        /**
-         * Ctor
-         */
-        protected VerseIterator(VerseRange range) {
-            v11n = range.getVersification();
-            nextVerse = range.getStart();
-            total = range.getCardinality();
-            count = 0;
-        }
-
+    private class VerseIterator(range: VerseRange) : MutableIterator<Key> {
         /* (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
-        public boolean hasNext() {
-            return nextVerse != null;
+        override fun hasNext(): Boolean {
+            return nextVerse != null
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#next()
          */
-        public Key next() throws NoSuchElementException {
+        @Throws(NoSuchElementException::class)
+        override fun next(): Key {
             if (nextVerse == null) {
-                throw new NoSuchElementException();
+                throw NoSuchElementException()
             }
-            Verse currentVerse = nextVerse;
-            nextVerse = ++count < total ? v11n.next(nextVerse) : null;
-            return currentVerse;
+            val currentVerse = nextVerse
+            nextVerse = if (++count < total) v11n.next(nextVerse) else null
+            return currentVerse!!
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
-        public void remove() throws UnsupportedOperationException {
-            throw new UnsupportedOperationException();
+        @Throws(UnsupportedOperationException::class)
+        override fun remove() {
+            throw UnsupportedOperationException()
         }
 
-        private Versification v11n;
-        private Verse nextVerse;
-        private int count;
-        private int total;
+        private var v11n: Versification = range.versification
+        private var nextVerse: Verse? = range.start
+        private var count: Int = 0
+        private var total: Int = range.getCardinality()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return false;
+    override fun canHaveChildren(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return 0;
+    override fun getChildCount(): Int {
+        return 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        return verseCount;
+    override fun getCardinality(): Int {
+        return verseCount
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    public boolean isEmpty() {
-        return verseCount == 0;
+    override fun isEmpty(): Boolean {
+        return verseCount == 0
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Key#iterator()
      */
-    public Iterator<Key> iterator() {
-        return new VerseIterator(this);
+    override fun iterator(): MutableIterator<Key> {
+        return VerseIterator(this)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#addAll(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun addAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#removeAll(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun removeAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#retainAll(org.crosswire.jsword.passage.Key)
      */
-    public void retainAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun retainAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
+    override fun clear() {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        return null;
+    override fun get(index: Int): Key? {
+        return null
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage.Key)
      */
-    public int indexOf(Key that) {
-        return -1;
+    override fun indexOf(that: Key?): Int {
+        return -1
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict) {
-        blur(by, restrict, true, true);
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        blur(by, restrict, true, true)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
-        VerseRange newRange = restrict.blur(v11n, this, blurDown ? by : 0, blurUp ? by : 0);
-        start = newRange.start;
-        end = newRange.end;
-        verseCount = newRange.verseCount;
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
+        val newRange = restrict!!.blur(v11n, this, if (blurDown) by else 0, if (blurUp) by else 0)
+        start = newRange.start
+        end = newRange.end
+        verseCount = newRange.verseCount
     }
 
     /**
-     * What characters can we use to separate the 2 parts to a VerseRanges
+     * The Versification with which this range is defined. It is transient and, as in Java, never restored
+     * by deserialization, so it is null there although the type says otherwise (assigned in every
+     * constructor, hence neither lateinit nor a null check on access: a NullPointerException must be
+     * raised by the JVM on the field, as in Java).
      */
-    public static final char RANGE_OSIS_DELIM = '-';
-
-    /**
-     * What characters should we use to separate VerseRange parts on output
-     */
-    public static final char RANGE_PREF_DELIM = RANGE_OSIS_DELIM;
-
-    /**
-     * The Versification with which this range is defined.
-     */
-    private transient Versification v11n;
-
-    /**
-     * The start of the range
-     */
-    private Verse start;
+    @Transient
+    private var v11n: Versification
 
     /**
      * The number of verses in the range
      */
-    private int verseCount;
-
-    /**
-     * The last verse. Not actually needed, since it can be computed.
-     */
-    private transient Verse end;
+    private var verseCount: Int = 0
 
     /**
      * Allow the conversion to and from other number representations.
      */
-    private transient NumberShaper shaper;
+    @Transient
+    private var shaper: NumberShaper
 
     /**
      * The parent key.
      */
-    private transient Key parent;
+    @Transient
+    private var parent: Key? = null
 
     /**
      * The original string for picky users
      */
-    private transient String originalName;
+    @Transient
+    private var originalName: String? = null
 
-    /**
-     * Serialization ID
-     */
-    static final long serialVersionUID = 8307795549869653580L;
+    companion object {
+        /**
+         * Create a VerseRange that is the stuff left of VerseRange a when you
+         * remove the stuff in VerseRange b.
+         *
+         * @param a
+         *            Verses at the start or end of b
+         * @param b
+         *            All the verses
+         * @return A list of the Verses outstanding
+         */
+        @JvmStatic
+        fun remainder(a: VerseRange?, b: VerseRange?): Array<VerseRange> {
+            var rstart: VerseRange? = null
+            var rend: VerseRange? = null
+
+            val v11n = a!!.versification
+
+            // If a starts before b get the Range of the prequel
+            if (v11n.distance(a.start, b!!.start) > 0) {
+                rstart = VerseRange(v11n, a.start, v11n.subtract(b.end, 1))
+            }
+
+            // If a ends after b get the Range of the sequel
+            if (v11n.distance(a.end, b.end) < 0) {
+                rend = VerseRange(v11n, v11n.add(b.end, 1), a.end)
+            }
+
+            if (rstart == null) {
+                if (rend == null) {
+                    return arrayOf()
+                }
+                return arrayOf(rend)
+            }
+
+            if (rend == null) {
+                return arrayOf(rstart)
+            }
+            return arrayOf(rstart, rend)
+        }
+
+        /**
+         * Create a VerseRange that is the stuff in VerseRange a that is also
+         * in VerseRange b.
+         *
+         * @param a
+         *            The verses that you might want
+         * @param b
+         *            The verses that you definitely don't
+         * @return A list of the Verses outstanding
+         */
+        @JvmStatic
+        fun intersection(a: VerseRange?, b: VerseRange?): VerseRange? {
+            val v11n = a!!.versification
+            val newStart = v11n.max(a.start, b!!.start)
+            val newEnd = v11n.min(a.end, b.end)
+
+            if (v11n.distance(newStart, newEnd) >= 0) {
+                return VerseRange(a.versification, newStart, newEnd)
+            }
+
+            return null
+        }
+
+        /**
+         * What characters can we use to separate the 2 parts to a VerseRanges
+         */
+        const val RANGE_OSIS_DELIM: Char = '-'
+
+        /**
+         * What characters should we use to separate VerseRange parts on output
+         */
+        const val RANGE_PREF_DELIM: Char = RANGE_OSIS_DELIM
+
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 8307795549869653580L
+    }
 }
