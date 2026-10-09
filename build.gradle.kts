@@ -49,7 +49,7 @@ kotlin {
 // --- K2 F1: embedded resources -------------------------------------------------------------------------
 // Resource files are embedded byte-exact as Base64 chunks so common code (JVM, iOS) reads them without a
 // platform resource mechanism. Lucene's classpath resources are not embedded (K6).
-val embeddedResourceRoots = listOf(layout.projectDirectory.dir("src/embeddedResources"), layout.projectDirectory.dir("src/jvmMain/resources"))
+val embeddedResourceRoots = listOf(layout.projectDirectory.dir("src/embeddedResources"))
 val notEmbedded = setOf("AnalyzerFactory.properties", "IndexMetadata.properties", "InstalledIndex.properties")
 val generatedResourcesDir = layout.buildDirectory.dir("generated/ksword/commonMain/kotlin")
 
@@ -105,6 +105,11 @@ val generateKswordResources by tasks.registering {
 }
 
 kotlin.sourceSets.named("commonMain") { kotlin.srcDir(generateKswordResources) }
+
+// The embedded files are deliberately NOT on the main classpath (nor in the jar). The JDK-oracle differential
+// tests (ResourceBundle.getBundle, getResource, ...) still need them there as their reference, so only jvmTest
+// sees them as classpath resources.
+kotlin.sourceSets.named("jvmTest") { resources.srcDir("src/embeddedResources") }
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"

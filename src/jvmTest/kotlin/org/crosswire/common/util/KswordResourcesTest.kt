@@ -7,7 +7,7 @@ import org.junit.Test
 import java.io.File
 
 class KswordResourcesTest {
-    private val roots = listOf(File("src/embeddedResources"), File("src/jvmMain/resources"))
+    private val roots = listOf(File("src/embeddedResources"))
     private val excluded = setOf("AnalyzerFactory.properties", "IndexMetadata.properties", "InstalledIndex.properties")
 
     private fun sourceFiles(): Map<String, File> = roots.filter { it.isDirectory }.flatMap { root ->
@@ -23,6 +23,6 @@ class KswordResourcesTest {
     @Test fun unknownPathIsNull() { assertNull(KswordResources.bytes("nope.properties")) }
 
     @Test fun textDecodesUtf8() {
-        assertEquals(File("src/jvmMain/resources/BibleNames_fi.properties").readText(), KswordResources.text("BibleNames_fi.properties"))
+        assertEquals(File("src/embeddedResources/BibleNames_fi.properties").readText(), KswordResources.text("BibleNames_fi.properties"))
     }
 }

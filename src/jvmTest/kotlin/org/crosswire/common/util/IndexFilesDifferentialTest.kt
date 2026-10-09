@@ -18,9 +18,8 @@ class IndexFilesDifferentialTest {
     }
 
     @Test fun embeddedIndexFiles() {
-        for (name in listOf("readings.txt", "rtol.txt", "translations.txt")) {
-            val text = KswordResources.text(name)
-            if (text == null) continue // translations.txt is removed later in K2 F1
+        for (name in listOf("readings.txt", "rtol.txt")) {
+            val text = KswordResources.text(name)!!
             assertEquals(name, viaNetUtil(text), IndexFiles.parse(text))
         }
     }
