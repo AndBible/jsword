@@ -27,7 +27,7 @@ import org.crosswire.common.util.MsgBase
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-class JSOtherMsg : MsgBase() {
+class JSOtherMsg : MsgBase("JSOtherMsg") {
     companion object {
         /**
          * Get the internationalized text, but return key if key is unknown.

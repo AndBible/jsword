@@ -27,7 +27,7 @@ package org.crosswire.common.icu
 
 import java.io.Serializable
 
-import org.crosswire.jsword.internationalisation.LocaleProviderManager
+import org.crosswire.common.util.KswordLocale
 
 /**
  * NumberShaper changes numbers from one number system to another. That is, the
@@ -281,10 +281,10 @@ open class NumberShaper
     private fun getNine(): Char {
         if (nineShape == '\u0000') {
             nineShape = '9'
-            val locale = LocaleProviderManager.getLocale()
-            if ("fa" == locale.language) {
+            val language = KswordLocale.current().language
+            if ("fa" == language) {
                 nineShape = '۹'
-            } else if ("ar" == locale.language) {
+            } else if ("ar" == language) {
                 nineShape = '٩'
             }
         }

@@ -36,7 +36,7 @@ private constructor(
      * @return the name
      */
     val name: String
-) : MsgBase() {
+) : MsgBase("FTPMsg") {
     // was package-private: Kotlin has no package visibility, internal compiles to public
     companion object {
         @JvmField

@@ -27,7 +27,7 @@ import org.crosswire.common.util.MsgBase
  * @see gnu.gpl.License for license details.
  * @author DM Smith
  */
-internal class GPLMsg : MsgBase() {
+internal class GPLMsg : MsgBase("GPLMsg") {
     companion object {
         /**
          * Get the internationalized text, but return key if key is unknown.
