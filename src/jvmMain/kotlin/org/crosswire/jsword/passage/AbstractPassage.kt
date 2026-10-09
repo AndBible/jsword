@@ -929,7 +929,7 @@ abstract class AbstractPassage : Passage, Cloneable {
             // If we are not passed a useful basis,
             // then we treat the first as a special case because there is
             // nothing to sensibly base this reference on
-            vrBasis = VerseRangeFactory.fromString(v11n, parts[0].trim())
+            vrBasis = VerseRangeFactory.fromString(v11n, parts[0].trim { it <= ' ' })
             // We add it because it was part of the given input
             add(vrBasis)
             start = 1
@@ -938,7 +938,7 @@ abstract class AbstractPassage : Passage, Cloneable {
         // Loop for the other verses, interpreting each on the
         // basis of the one before.
         for (i in start until parts.size) {
-            val next = VerseRangeFactory.fromString(v11n, parts[i].trim(), vrBasis)
+            val next = VerseRangeFactory.fromString(v11n, parts[i].trim { it <= ' ' }, vrBasis)
             add(next)
             vrBasis = next
         }

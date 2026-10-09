@@ -38,6 +38,8 @@ the same nullability.
 ## 4. Known traps
 - Integer division and `char`/`int` arithmetic: keep the Java types (`Char.code`, `toChar()`), no implicit
   widening differences; `(int) someDouble` → `toInt()` (saturating, like Java).
+- Kotlin `trim()` != Java `String.trim()` (`isWhitespace` vs `<= ' '`): Java strips every char up to U+0020 (control
+  chars such as U+001A) and keeps NBSP; convert with `trim { it <= ' ' }`.
 - `==` in Java is identity for objects → `===`; `.equals` → `==`.
 - `switch` fall-through → explicit duplicate branches; `switch` on strings → `when`.
 - Static initialization order: companion properties initialize in declaration order when the class

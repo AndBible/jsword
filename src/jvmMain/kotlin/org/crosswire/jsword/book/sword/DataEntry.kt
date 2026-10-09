@@ -142,7 +142,7 @@ open class DataEntry {
         // 6 represents the length of "@LINK" + 1 to skip the last separator.
         val linkStart = keyEnd + 6
         val len = getLinkEnd() - linkStart + 1
-        return SwordUtil.decode(name, data, linkStart, len, charset).trim()
+        return SwordUtil.decode(name, data, linkStart, len, charset).trim { it <= ' ' }
     }
 
     /**
@@ -155,7 +155,7 @@ open class DataEntry {
     open fun getRawText(cipherKey: ByteArray?): String {
         val textStart = 0 //keyEnd + 1;
         cipher(cipherKey, textStart)
-        return SwordUtil.decode(name, data, textStart, data.size - textStart, charset).trim()
+        return SwordUtil.decode(name, data, textStart, data.size - textStart, charset).trim { it <= ' ' }
     }
 
     /**

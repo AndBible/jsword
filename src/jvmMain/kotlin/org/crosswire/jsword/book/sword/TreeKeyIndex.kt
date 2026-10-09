@@ -155,7 +155,7 @@ open class TreeKeyIndex
 
         val key: Key = DefaultKeyList(null, bmd!!.name)
         // Some of the keys have extraneous whitespace, so remove it.
-        node.name = SwordUtil.decode(key.getName(), buffer, size, bmd!!.bookCharset).trim()
+        node.name = SwordUtil.decode(key.getName(), buffer, size, bmd!!.bookCharset).trim { it <= ' ' }
 
         buffer = SwordUtil.readNextRAF(datRaf, 2)
         val userDataSize = SwordUtil.decodeLittleEndian16(buffer, 0)
