@@ -28,8 +28,6 @@ import org.crosswire.common.util.ResourceBundles
 import org.crosswire.common.util.toKLocale
 import java.util.regex.Pattern
 
-import org.crosswire.common.util.CWClassLoader
-import org.crosswire.common.util.ClassUtil
 import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.internationalisation.LocaleProviderManager

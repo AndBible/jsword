@@ -177,3 +177,4 @@ org.crosswire.jsword.book.readings.ReadingsKey + K public (java.util.Date) throw
 org.crosswire.jsword.book.install.sword.AbstractSwordInstaller - F protected static final log: org.slf4j.Logger # K2 F2: logger facade replaces org.slf4j.Logger; same calls compile.
 org.crosswire.jsword.book.install.sword.AbstractSwordInstaller + F protected static final log: org.crosswire.common.util.Logger # K2 F2: same field, new logger facade type.
 org.crosswire.common.util.MsgBase + K protected (java.lang.String) throws [] # K2 F1: bundle-name constructor added; the no-arg protected constructor stays and derives the name from the class.
+org.crosswire.common.util.Translations - <class> # K2: unused, removed (no caller in jsword or AndBible)
