@@ -22,9 +22,6 @@ package org.crosswire.common.util
 import java.io.IOException
 import java.util.HashMap
 import java.util.HashSet
-import java.util.Locale
-import java.util.MissingResourceException
-import java.util.ResourceBundle
 import org.crosswire.jsword.internationalisation.LocaleProviderManager
 
 /**
@@ -34,9 +31,7 @@ import org.crosswire.jsword.internationalisation.LocaleProviderManager
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-// An object, not a companion: initLanguages() resolves its class loader through CWClassLoader.instance(), which
-// identifies the calling class from the stack, so the caller must be Languages itself (not Languages$Companion).
-// Being an object also makes the constructor private, as the Java utility class had.
+// An object (private constructor, as the Java utility class had).
 object Languages {
     /**
      * Get the language name for the BCP-47 specification of the language.
@@ -48,13 +43,10 @@ object Languages {
     fun getName(code: String?): String? {
         // Returning the code is the fallback for lookup
         var name = code
-        try {
-            val langs = getLocalisedCommonLanguages()
-            if (langs != null) {
-                name = langs.getString(code)
-            }
-        } catch (e: MissingResourceException) {
-            // This is allowed
+        val langs = getLocalisedCommonLanguages()
+        if (langs != null) {
+            // A missing key is allowed: the code is the fallback
+            name = langs.getString(code!!) ?: code
         }
         return name
     }
@@ -66,8 +58,8 @@ object Languages {
      *
      * @return the localised common languages
      */
-    private fun getLocalisedCommonLanguages(): ResourceBundle? {
-        val locale = LocaleProviderManager.getLocale()
+    private fun getLocalisedCommonLanguages(): KBundle? {
+        val locale = LocaleProviderManager.getLocale().toKLocale()
         var langs = localisedCommonLanguages.get(locale)
         if (langs == null) {
             synchronized(Languages::class.java) {
@@ -83,13 +75,12 @@ object Languages {
         return langs
     }
 
-    private fun initLanguages(locale: Locale): ResourceBundle? {
-        try {
-            return ResourceBundle.getBundle("iso639", locale, CWClassLoader.instance())
-        } catch (e: MissingResourceException) {
-            log.info("Unable to find language in iso639 bundle", e)
+    private fun initLanguages(locale: KLocale): KBundle? {
+        val bundle = ResourceBundles.get("iso639", locale)
+        if (bundle == null) {
+            log.info("Unable to find language in iso639 bundle: no bundle for locale {}", locale)
         }
-        return null
+        return bundle
     }
 
     /**
@@ -97,8 +88,7 @@ object Languages {
      * The basic list has a few hundred languages. The full list has
      * over 7000. As a fallback, this file is not internationalized.
      */
-    // An object (private constructor, as in Java); its init block calls ResourceUtil.getProperties(String), which
-    // identifies the calling class from the stack, so the caller must be Languages$AllLanguages.
+    // An object (private constructor, as in Java).
     object AllLanguages {
         /**
          * Get the language name for the code. If the language name is not known
@@ -127,7 +117,10 @@ object Languages {
 
         init {
             try {
-                instance = ResourceUtil.getProperties("iso639full")
+                instance = PropertyMap().apply {
+                    val bytes = KswordResources.bytes("iso639full.properties")
+                    if (bytes != null) putAll(PropertiesParser.parse(bytes, PropertiesCharset.LATIN1))
+                }
                 log.debug("Loading iso639full.properties file")
             } catch (e: IOException) {
                 log.info("Unable to load iso639full.properties", e)
@@ -177,19 +170,17 @@ object Languages {
          */
         init {
             try {
-                val index = ResourceUtil.getResource(Translations::class.java, "rtol.txt")
-                val list = NetUtil.listByIndexFile(NetUtil.toURI(index)!!)
-                log.debug("Loading iso639full.properties file")
-                for (i in list.indices) {
-                    rtol.add(list[i])
-                }
+                val text = KswordResources.text("rtol.txt")
+                    ?: throw IOException("Missing resource rtol.txt")
+                log.debug("Loading rtol.txt file")
+                rtol.addAll(IndexFiles.parse(text))
             } catch (ex: IOException) {
                 log.info("Unable to load rtol.txt", ex)
             }
         }
     }
 
-    private val localisedCommonLanguages: MutableMap<Locale, ResourceBundle> = HashMap()
+    private val localisedCommonLanguages: MutableMap<KLocale, KBundle> = HashMap()
 
     /**
      * The log stream

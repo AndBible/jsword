@@ -35,7 +35,8 @@ import java.io.ObjectInputStream
 import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
 import java.text.DecimalFormat
-import java.text.MessageFormat
+import org.crosswire.common.util.KswordLocale
+import org.crosswire.common.util.MessageFormatLite
 import java.util.Calendar
 import java.util.GregorianCalendar
 import java.util.Locale
@@ -371,7 +372,7 @@ open class RawLDBackend<T : RawLDBackendState>
             val objs = arrayOf<Any>(
                 Integer.valueOf(1 + greg.get(Calendar.MONTH)), Integer.valueOf(greg.get(Calendar.DATE))
             )
-            return DATE_KEY_FORMAT.format(objs)
+            return MessageFormatLite.format(DATE_KEY_FORMAT, KswordLocale.default(), objs)
         }
 
         if (bmd.hasFeature(FeatureType.GREEK_DEFINITIONS) || bmd.hasFeature(FeatureType.HEBREW_DEFINITIONS)) {
@@ -620,7 +621,7 @@ open class RawLDBackend<T : RawLDBackendState>
         /**
          * Date formatter
          */
-        private val DATE_KEY_FORMAT = MessageFormat("{0,number,00}.{1,number,00}")
+        private const val DATE_KEY_FORMAT = "{0,number,00}.{1,number,00}"
 
         /**
          * This is the pattern of a Strong's Number. It begins with a G or H. Is

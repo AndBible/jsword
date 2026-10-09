@@ -20,7 +20,6 @@
 package org.crosswire.common.util
 
 import java.util.MissingResourceException
-import java.util.ResourceBundle
 import org.crosswire.jsword.internationalisation.LocaleProviderManager
 
 /**
@@ -30,9 +29,7 @@ import org.crosswire.jsword.internationalisation.LocaleProviderManager
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-// An object, not a companion: getLocalisedCountries() resolves its class loader through CWClassLoader.instance(),
-// which identifies the calling class from the stack, so the caller must be Countries itself.
-// Being an object also makes the constructor private, as the Java utility class had.
+// An object (private constructor, as the Java utility class had).
 object Countries {
     /**
      * Determine whether the country code is valid. The code is valid if it is
@@ -59,12 +56,7 @@ object Countries {
             return false
         }
 
-        try {
-            getLocalisedCountries().getString(lookup)
-            return true
-        } catch (e: MissingResourceException) {
-            return false
-        }
+        return getLocalisedCountries().getString(lookup) != null
     }
 
     /**
@@ -89,11 +81,7 @@ object Countries {
             return getCountry(locale[1])
         }
 
-        try {
-            return getLocalisedCountries().getString(lookup)
-        } catch (e: MissingResourceException) {
-            return getCountry(UNKNOWN_COUNTRY_CODE)
-        }
+        return getLocalisedCountries().getString(lookup) ?: getCountry(UNKNOWN_COUNTRY_CODE)
     }
 
     /**
@@ -101,8 +89,9 @@ object Countries {
      *
      * @return the localised countries
      */
-    private fun getLocalisedCountries(): ResourceBundle {
-        return ResourceBundle.getBundle("iso3166", LocaleProviderManager.getLocale(), CWClassLoader.instance())
+    private fun getLocalisedCountries(): KBundle {
+        return ResourceBundles.get("iso3166", KswordLocale.current())
+            ?: throw MissingResourceException("Can't find bundle for base name iso3166", "iso3166", "")
     }
 
     const val DEFAULT_COUNTRY_CODE: String = "US"

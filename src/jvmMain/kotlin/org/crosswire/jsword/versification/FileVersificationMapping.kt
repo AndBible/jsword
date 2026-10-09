@@ -21,13 +21,10 @@ package org.crosswire.jsword.versification
 
 import org.crosswire.common.config.ConfigException
 import org.crosswire.common.util.KeyValuePair
-import org.crosswire.common.util.ResourceUtil
+import org.crosswire.common.util.KswordResources
 
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStreamReader
 import java.util.ArrayList
-import java.util.MissingResourceException
 
 /**
  * This reads a file up front and creates the key value pairs. Because
@@ -57,28 +54,18 @@ open class FileVersificationMapping {
     @Throws(IOException::class, ConfigException::class)
     constructor(versification: Versification?) {
         // It is fine for a mapping to not exist if the Versification is a strict subset of the intermediate mapping.
-        try {
-            val s = ResourceUtil.getResourceAsStream(javaClass, versification!!.name + ".properties")
-            val lineReader = BufferedReader(InputStreamReader(s))
-            var line: String?
-            while (true) {
-                line = lineReader.readLine()
-                if (line == null) {
-                    break
-                }
-                if (line.length == 0 || line[0] == '#') {
-                    continue
-                }
-
-                val firstEqual = line.indexOf('=')
-                if (firstEqual == -1) {
-                    this.addProperty(line, null)
-                } else {
-                    this.addProperty(line.substring(0, firstEqual), line.substring(firstEqual + 1))
-                }
+        val text = KswordResources.text("org/crosswire/jsword/versification/${versification!!.name}.properties") ?: return
+        for (line in text.lines()) {
+            if (line.length == 0 || line[0] == '#') {
+                continue
             }
-        } catch (e: MissingResourceException) {
-            return
+
+            val firstEqual = line.indexOf('=')
+            if (firstEqual == -1) {
+                this.addProperty(line, null)
+            } else {
+                this.addProperty(line.substring(0, firstEqual), line.substring(firstEqual + 1))
+            }
         }
     }
 

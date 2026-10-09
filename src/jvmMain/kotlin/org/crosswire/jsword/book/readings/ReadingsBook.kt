@@ -28,10 +28,10 @@ import java.util.Collections
 import java.util.Date
 import java.util.Locale
 import java.util.MissingResourceException
-import java.util.ResourceBundle
+import org.crosswire.common.util.KswordLocale
+import org.crosswire.common.util.ResourceBundles
 import java.util.TreeMap
 
-import org.crosswire.common.util.CWClassLoader
 import org.crosswire.common.util.Language
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
@@ -83,13 +83,15 @@ open class ReadingsBook
         //although we're getting this from the LocaleProviderManager, we're still setting 
         //the language on the metadata once, so won't cope for dynamic changes
         val defaultLocale = LocaleProviderManager.getLocale()
-        val prop = ResourceBundle.getBundle(setname, defaultLocale, CWClassLoader.instance(ReadingsBookDriver::class.java))
+        val prop = ResourceBundles.get(setname!!, KswordLocale.current())
+            ?: throw MissingResourceException("Can't find bundle for base name $setname, locale $defaultLocale", setname, "")
 
         // TRANSLATOR: The default name for JSword's Reading plan.
         var bookName = JSMsg.gettext("Readings")
-        try {
-            bookName = prop.getString("title")
-        } catch (e: MissingResourceException) {
+        val title = prop.getString("title")
+        if (title != null) {
+            bookName = title
+        } else {
             log.warn("Missing resource: 'title' while parsing: {}", setname)
         }
 
@@ -108,10 +110,11 @@ open class ReadingsBook
             val internalKey = ReadingsKey.external2internal(greg)
             var readings = ""
 
-            try {
-                readings = prop.getString(internalKey)
+            val found = prop.getString(internalKey)
+            if (found != null) {
+                readings = found
                 hash.put(ReadingsKey(greg.time), readings)
-            } catch (e: MissingResourceException) {
+            } else {
                 log.warn("Missing resource: {} while parsing: {}", internalKey, setname)
             }
 

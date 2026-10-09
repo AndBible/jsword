@@ -23,7 +23,9 @@ import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.FileUtil
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.PluginRegistry
-import org.crosswire.common.util.PluginUtil
+import org.crosswire.common.util.PropertiesCharset
+import org.crosswire.common.util.PropertiesParser
+import org.crosswire.common.util.KswordResources
 import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.ReflectionUtil
 import org.crosswire.common.util.Reporter
@@ -63,7 +65,9 @@ class InstallManager {
      */
     init {
         try {
-            val sitemap: PropertyMap = preloadedSitemap ?: PluginUtil.getPlugin(javaClass)
+            val sitemap: PropertyMap = preloadedSitemap ?: PropertyMap().apply {
+                putAll(PropertiesParser.parse(KswordResources.bytes("InstallManager.plugin")!!, PropertiesCharset.LATIN1))
+            }
             @Suppress("UNCHECKED_CAST")
             factories = PluginRegistry.entries(InstallerFactory::class).associateTo(LinkedHashMap()) { it.name to (it.implClass.java as Class<InstallerFactory>) }
             var i = 0

@@ -22,8 +22,8 @@ package org.crosswire.jsword.book.readings
 import java.io.IOException
 import java.util.ArrayList
 
-import org.crosswire.common.util.NetUtil
-import org.crosswire.common.util.ResourceUtil
+import org.crosswire.common.util.IndexFiles
+import org.crosswire.common.util.KswordResources
 import org.crosswire.common.util.URIFilter
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookCategory
@@ -79,12 +79,8 @@ open class ReadingsBookDriver : AbstractBookDriver() {
      * @return all the installed reading sets
      */
     open fun getInstalledReadingsSets(): Array<String> {
-        try {
-            val index = ResourceUtil.getResource(ReadingsBookDriver::class.java, "readings.txt")
-            return NetUtil.listByIndexFile(NetUtil.toURI(index)!!, ReadingsFilter())
-        } catch (ex: IOException) {
-            return arrayOf<String>()
-        }
+        val text = KswordResources.text("readings.txt") ?: return arrayOf<String>()
+        return IndexFiles.parse(text) { ReadingsFilter().accept(it) }.toTypedArray()
     }
 
     /**

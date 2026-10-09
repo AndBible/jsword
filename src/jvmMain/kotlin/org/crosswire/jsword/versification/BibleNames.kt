@@ -23,7 +23,9 @@ import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.MissingResourceException
-import java.util.ResourceBundle
+import org.crosswire.common.util.KBundle
+import org.crosswire.common.util.ResourceBundles
+import org.crosswire.common.util.toKLocale
 import java.util.regex.Pattern
 
 import org.crosswire.common.util.CWClassLoader
@@ -407,9 +409,8 @@ private constructor() {
             // Create the book name maps
             books = LinkedHashMap(ntCount + otCount + ncCount)
 
-            val className = BibleNames::class.java.name
-            val shortClassName = ClassUtil.getShortClassName(className)
-            val resources = ResourceBundle.getBundle(shortClassName, locale, CWClassLoader.instance(BibleNames::class.java))
+            val resources = ResourceBundles.get("BibleNames", locale.toKLocale())
+                ?: throw MissingResourceException("Can't find bundle for base name BibleNames, locale $locale", "BibleNames", "")
 
             fullNT = HashMap(ntCount)
             shortNT = HashMap(ntCount)
@@ -439,7 +440,7 @@ private constructor() {
             }
         }
 
-        private fun store(resources: ResourceBundle, book: BibleBook, fullMap: MutableMap<String, BookName>, shortMap: MutableMap<String, BookName>, altMap: MutableMap<String, BookName>) {
+        private fun store(resources: KBundle, book: BibleBook, fullMap: MutableMap<String, BookName>, shortMap: MutableMap<String, BookName>, altMap: MutableMap<String, BookName>) {
             val osisName = book.osis
 
             val fullBook = getString(resources, osisName + FULL_KEY)
@@ -471,13 +472,10 @@ private constructor() {
         /*
          * Helper to make the code more readable.
          */
-        private fun getString(resources: ResourceBundle, key: String): String? {
-            try {
-                return resources.getString(key)
-            } catch (e: MissingResourceException) {
-                jswordAssert(false) { "" }
-            }
-            return null
+        private fun getString(resources: KBundle, key: String): String? {
+            val value = resources.getString(key)
+            if (value == null) jswordAssert(false) { "" }
+            return value
         }
     }
 
