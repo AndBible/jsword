@@ -17,19 +17,18 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import org.crosswire.common.util.IOUtil;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.SwordUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.IOUtil
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.SwordUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.IOException
 
 /**
  * Stores the random access files required for processing the passage request
@@ -40,38 +39,41 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class RawFileBackendState extends RawBackendState {
-    /**
-     * This is default package access for forcing the use of the
-     * OpenFileStateManager to manage the creation. Not doing so may result in
-     * new instances of OpenFileState being created for no reason, and as a
-     * result, if they are released to the OpenFileStateManager by mistake this
-     * would result in leakage
-     * 
-     * @param bookMetaData
-     *            the appropriate metadata for the book
-     */
-    RawFileBackendState(BookMetaData bookMetaData) throws BookException {
-        super(bookMetaData);
-        incfileValue = -1;
+open class RawFileBackendState
+/**
+ * This is default package access for forcing the use of the
+ * OpenFileStateManager to manage the creation. Not doing so may result in
+ * new instances of OpenFileState being created for no reason, and as a
+ * result, if they are released to the OpenFileStateManager by mistake this
+ * would result in leakage
+ * 
+ * @param bookMetaData
+ * the appropriate metadata for the book
+ */
+@Throws(BookException::class)
+internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData) {
+    private var incfile: File? = null
+    private var incfileValue = 0
+
+    init {
+        incfileValue = -1
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#isWritable()
      */
-    @Override
-    public boolean isWritable() {
-        File incFile = getIncfile();
+    override fun isWritable(): Boolean {
+        val incFile = getIncfile()
 
         if (existsAndCanReadAndWrite(otTextFile)
-                && existsAndCanReadAndWrite(ntTextFile)
-                && existsAndCanReadAndWrite(otIdxFile)
-                && existsAndCanReadAndWrite(ntIdxFile)
-                && (incFile == null || existsAndCanReadAndWrite(incFile)))
-        {
-            return true;
+            && existsAndCanReadAndWrite(ntTextFile)
+            && existsAndCanReadAndWrite(otIdxFile)
+            && existsAndCanReadAndWrite(ntIdxFile)
+            && (incFile == null || existsAndCanReadAndWrite(incFile))
+        ) {
+            return true
         }
-        return false;
+        return false
     }
 
     /**
@@ -80,96 +82,97 @@ public class RawFileBackendState extends RawBackendState {
      * @param file the file
      * @return true, if successful
      */
-    private boolean existsAndCanReadAndWrite(File file) {
-        return file.exists() && file.canRead() && file.canWrite();
+    private fun existsAndCanReadAndWrite(file: File): Boolean {
+        return file.exists() && file.canRead() && file.canWrite()
     }
 
-    private int readIncfile() throws IOException {
-        int ret = -1;
+    @Throws(IOException::class)
+    private fun readIncfile(): Int {
+        var ret = -1
 
         if (incfile == null) {
             // then attempt to initialise it
-            initIncFile();
+            initIncFile()
         }
 
         if (this.incfile != null) {
-            FileInputStream fis = null;
+            var fis: FileInputStream? = null
             try {
-                fis = new FileInputStream(this.incfile);
-                byte[] buffer = new byte[4];
+                fis = FileInputStream(this.incfile!!)
+                val buffer = ByteArray(4)
                 if (fis.read(buffer) != 4) {
-                    LOGGER.error("Read data is not of appropriate size of 4 bytes!");
-                    throw new IOException("Incfile is not 4 bytes long");
+                    LOGGER.error("Read data is not of appropriate size of 4 bytes!")
+                    throw IOException("Incfile is not 4 bytes long")
                 }
-                ret = SwordUtil.decodeLittleEndian32(buffer, 0);
+                ret = SwordUtil.decodeLittleEndian32(buffer, 0)
 
                 // also store this
-                this.incfileValue = ret;
-            } catch (FileNotFoundException e) {
-                LOGGER.error("Error on writing to incfile, file should exist already!: {}", e.getMessage(), e);
+                this.incfileValue = ret
+            } catch (e: FileNotFoundException) {
+                LOGGER.error("Error on writing to incfile, file should exist already!: {}", e.message, e)
             } finally {
-                IOUtil.close(fis);
+                IOUtil.close(fis)
             }
         }
 
-        return ret;
+        return ret
     }
 
-    private void initIncFile() {
+    private fun initIncFile() {
         try {
-            File tempIncfile = new File(SwordUtil.getExpandedDataPath(getBookMetaData()).getPath() + File.separator + INCFILE);
+            val tempIncfile = File(SwordUtil.getExpandedDataPath(getBookMetaData()).path + File.separator + INCFILE)
             if (tempIncfile.exists()) {
-                this.incfile = tempIncfile;
+                this.incfile = tempIncfile
             }
-        } catch (BookException e) {
-            LOGGER.error("Error on checking incfile: {}", e.getMessage(), e);
-            this.incfile = null;
+        } catch (e: BookException) {
+            LOGGER.error("Error on checking incfile: {}", e.message, e)
+            this.incfile = null
         }
     }
 
     /**
      * @return the incfileValue
      */
-    public int getIncfileValue() {
+    open fun getIncfileValue(): Int {
         if (incfileValue == -1) {
             try {
-                readIncfile();
-            } catch (IOException e) {
-                LOGGER.error("IO Error: {}", e.getMessage(), e);
+                readIncfile()
+            } catch (e: IOException) {
+                LOGGER.error("IO Error: {}", e.message, e)
             }
         }
 
-        return incfileValue;
+        return incfileValue
     }
 
-    public void setIncfileValue(int incValue) {
-        this.incfileValue = incValue;
+    open fun setIncfileValue(incValue: Int) {
+        this.incfileValue = incValue
     }
 
     /**
      * @return the incfile
      */
-    public File getIncfile() {
+    open fun getIncfile(): File? {
         if (incfile == null) {
-            initIncFile();
+            initIncFile()
         }
-        return incfile;
+        return incfile
     }
 
     /**
      * @param incfile
-     *            the incfile to set
+     * the incfile to set
      */
-    public void setIncfile(File incfile) {
-        this.incfile = incfile;
+    open fun setIncfile(incfile: File?) {
+        this.incfile = incfile
     }
 
-    public static final String INCFILE = "incfile";
-    private File incfile;
-    private int incfileValue;
+    companion object {
+        const val INCFILE: String = "incfile"
 
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(RawFileBackendState.class);
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawFileBackendState::class.java)
+    }
 }

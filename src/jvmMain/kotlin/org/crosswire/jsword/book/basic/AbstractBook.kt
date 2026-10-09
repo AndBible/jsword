@@ -17,35 +17,36 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.basic;
+/**
+ * The Basic package contains default and abstract implementations of the main
+ * Book classes.
+ */
+package org.crosswire.jsword.book.basic
 
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.crosswire.common.activate.Lock;
-import org.crosswire.common.util.Language;
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookCategory;
-import org.crosswire.jsword.book.BookDriver;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.FeatureType;
-import org.crosswire.jsword.book.sword.AbstractBackend;
-import org.crosswire.jsword.book.sword.Backend;
-import org.crosswire.jsword.book.sword.processing.NoOpRawTextProcessor;
-import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
-import org.crosswire.jsword.index.IndexStatus;
-import org.crosswire.jsword.index.IndexStatusEvent;
-import org.crosswire.jsword.index.IndexStatusListener;
-import org.crosswire.jsword.index.search.DefaultSearchRequest;
-import org.crosswire.jsword.index.search.SearchRequest;
-import org.crosswire.jsword.index.search.Searcher;
-import org.crosswire.jsword.index.search.SearcherFactory;
-import org.crosswire.jsword.passage.Key;
-import org.jdom2.Content;
-import org.jdom2.Document;
+import org.crosswire.common.activate.Lock
+import org.crosswire.common.util.Language
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookCategory
+import org.crosswire.jsword.book.BookDriver
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.FeatureType
+import org.crosswire.jsword.book.sword.AbstractBackend
+import org.crosswire.jsword.book.sword.Backend
+import org.crosswire.jsword.book.sword.processing.NoOpRawTextProcessor
+import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor
+import org.crosswire.jsword.index.IndexStatus
+import org.crosswire.jsword.index.IndexStatusEvent
+import org.crosswire.jsword.index.IndexStatusListener
+import org.crosswire.jsword.index.search.DefaultSearchRequest
+import org.crosswire.jsword.index.search.SearchRequest
+import org.crosswire.jsword.index.search.Searcher
+import org.crosswire.jsword.index.search.SearcherFactory
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
+import org.jdom2.Document
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * AbstractBook implements a few of the more generic methods of Book. This class
@@ -55,80 +56,92 @@ import org.jdom2.Document;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public abstract class AbstractBook implements Book {
+abstract class AbstractBook
+/**
+ * Construct an AbstractBook given the BookMetaData and the AbstractBackend.
+ * 
+ * @param bmd the metadata that describes the book
+ * @param backend the means by which the resource is accessed
+ */
+(
     /**
-     * Construct an AbstractBook given the BookMetaData and the AbstractBackend.
-     * 
-     * @param bmd the metadata that describes the book
-     * @param backend the means by which the resource is accessed
+     * The meta data for this book
      */
-    public AbstractBook(BookMetaData bmd, Backend backend) {
-        this.bmd = bmd;
-        this.backend = backend;
-        this.listeners = new CopyOnWriteArrayList<IndexStatusListener>();
-    }
+    private var bmd: BookMetaData?,
+    /**
+     * To read the data from the Book
+     */
+    private val backendValue: Backend<*>?
+) : Book {
+    /**
+     * How do we perform searches
+     */
+    private var searcher: Searcher? = null
+
+    /**
+     * The list of property change listeners
+     */
+    private var listeners: MutableList<IndexStatusListener>? = CopyOnWriteArrayList()
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getScope()
      */
-    public Key getScope() {
-        return getGlobalKeyList();
-    }
+    override val scope: Key?
+        get() = getGlobalKeyList()
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getBookMetaData()
      */
-    public final BookMetaData getBookMetaData() {
-        return bmd;
-    }
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#setBookMetaData(org.crosswire.jsword.book.BookMetaData)
      */
-    public final void setBookMetaData(BookMetaData bmd) {
-        this.bmd = bmd;
-    }
+    final override var bookMetaData: BookMetaData
+        get() = bmd!!
+        set(bmd) {
+            this.bmd = bmd
+        }
 
-    public final Backend getBackend() {
-        return backend;
-    }
+    val backend: Backend<*>?
+        get() = backendValue
 
     /* (non-Javadoc)
      * @see org.crosswire.common.activate.Activatable#activate(org.crosswire.common.activate.Lock)
      */
-    public void activate(Lock lock) {
+    override fun activate(lock: Lock?) {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.common.activate.Activatable#deactivate(org.crosswire.common.activate.Lock)
      */
-    public void deactivate(Lock lock) {
+    override fun deactivate(lock: Lock?) {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#find(java.lang.String)
      */
-    public Key find(String request) throws BookException {
-        return find(new DefaultSearchRequest(request));
+    @Throws(BookException::class)
+    override fun find(request: String?): Key? {
+        return find(DefaultSearchRequest(request))
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#find(org.crosswire.jsword.index.search.SearchRequest)
      */
-    public Key find(SearchRequest request) throws BookException {
+    @Throws(BookException::class)
+    override fun find(request: SearchRequest?): Key? {
         if (searcher == null) {
             try {
-                searcher = SearcherFactory.createSearcher(this);
-            } catch (InstantiationException ex) {
-                throw new BookException(JSOtherMsg.lookupText("Failed to initialize the search index"), ex);
+                searcher = SearcherFactory.createSearcher(this)
+            } catch (ex: InstantiationException) {
+                throw BookException(JSOtherMsg.lookupText("Failed to initialize the search index"), ex)
             }
         }
 
-        return searcher.search(request);
+        return searcher!!.search(request)
     }
 
-    public void resetSearcher() {
-        searcher = null;
+    override fun resetSearcher() {
+        searcher = null
     }
 
     /**
@@ -136,296 +149,278 @@ public abstract class AbstractBook implements Book {
      * 
      * @return this book
      */
-    public Book getBook() {
-        return this;
-    }
+    open val book: Book
+        get() = this
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getDriver()
      */
-    public BookDriver getDriver() {
-        return bmd == null ? null : bmd.getDriver();
-    }
+    override val driver: BookDriver?
+        get() = if (bmd == null) null else bmd!!.driver
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getDriverName()
      */
-    public String getDriverName() {
-        return bmd == null ? null : bmd.getDriverName();
-    }
+    override val driverName: String?
+        get() = if (bmd == null) null else bmd!!.driverName
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#match(java.lang.String)
      */
-    public boolean match(String name) {
+    override fun match(name: String?): Boolean {
         if (name == null) {
-            return false;
+            return false
         }
-        if (name.equals(getInitials())) {
-            return true;
+        if (name == initials) {
+            return true
         }
-        if (name.equals(getName())) {
-            return true;
+        if (name == this.name) {
+            return true
         }
-        if (name.equalsIgnoreCase(getInitials())) {
-            return true;
+        if (name.equals(initials, ignoreCase = true)) {
+            return true
         }
-        if (name.equalsIgnoreCase(getName())) {
-            return true;
+        if (name.equals(this.name, ignoreCase = true)) {
+            return true
         }
-        if (name.startsWith(getInitials())) {
-            return true;
+        if (name.startsWith(initials)) {
+            return true
         }
-        if (name.startsWith(getName())) {
-            return true;
+        if (name.startsWith(this.name)) {
+            return true
         }
-        return false;
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getIndexStatus()
      */
-    public IndexStatus getIndexStatus() {
-        return bmd.getIndexStatus();
-    }
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#setIndexStatus(org.crosswire.jsword.index.IndexStatus)
      */
-    public void setIndexStatus(IndexStatus newStatus) {
-        IndexStatus oldStatus = bmd.getIndexStatus();
-        bmd.setIndexStatus(newStatus);
-        firePropertyChange(oldStatus, newStatus);
-    }
+    override var indexStatus: IndexStatus
+        get() = bmd!!.indexStatus
+        set(newStatus) {
+            val oldStatus = bmd!!.indexStatus
+            bmd!!.indexStatus = newStatus
+            firePropertyChange(oldStatus, newStatus)
+        }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getAbbreviation()
      */
-    public String getAbbreviation() {
-        return bmd.getAbbreviation();
-    }
+    override val abbreviation: String
+        get() = bmd!!.abbreviation
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getInitials()
      */
-    public String getInitials() {
-        return bmd.getInitials();
-    }
+    override val initials: String
+        get() = bmd!!.initials
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getLanguage()
      */
-    public Language getLanguage() {
-        return bmd.getLanguage();
-    }
+    override val language: Language
+        get() = bmd!!.language
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getName()
      */
-    public String getName() {
-        return bmd.getName();
-    }
+    override val name: String
+        get() = bmd!!.name
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getOsisID()
      */
-    public String getOsisID() {
-        return bmd.getOsisID();
-    }
+    override val osisID: String
+        get() = bmd!!.osisID
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getPropertyKeys()
      */
-    public Set<String> getPropertyKeys() {
-        return bmd.getPropertyKeys();
-    }
+    override val propertyKeys: Set<String>?
+        get() = bmd!!.propertyKeys
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getProperty(java.lang.String)
      */
-    public String getProperty(String key) {
-        return bmd.getProperty(key);
+    override fun getProperty(key: String?): String? {
+        return bmd!!.getProperty(key)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#putProperty(java.lang.String, java.lang.Object)
      */
-    public void putProperty(String key, String value) {
-        bmd.putProperty(key, value, false);
+    override fun putProperty(key: String?, value: String?) {
+        bmd!!.putProperty(key, value, false)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#putProperty(java.lang.String, java.lang.String, boolean)
      */
-    public void putProperty(String key, String value, boolean forFrontend) {
-        bmd.putProperty(key, value, forFrontend);
+    override fun putProperty(key: String?, value: String?, forFrontend: Boolean) {
+        bmd!!.putProperty(key, value, forFrontend)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getBookCategory()
      */
-    public BookCategory getBookCategory() {
-        return bmd.getBookCategory();
-    }
+    override val bookCategory: BookCategory
+        get() = bmd!!.bookCategory
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isLeftToRight()
      */
-    public boolean isLeftToRight() {
-        return bmd.isLeftToRight();
-    }
+    override val isLeftToRight: Boolean
+        get() = bmd!!.isLeftToRight
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isSupported()
      */
-    public boolean isSupported() {
-        return bmd.isSupported();
-    }
+    override val isSupported: Boolean
+        get() = bmd!!.isSupported
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isEnciphered()
      */
-    public boolean isEnciphered() {
-        return bmd.isEnciphered();
-    }
+    override val isEnciphered: Boolean
+        get() = bmd!!.isEnciphered
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isLocked()
      */
-    public boolean isLocked() {
-        return bmd.isLocked();
-    }
+    override val isLocked: Boolean
+        get() = bmd!!.isLocked
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#unlock(java.lang.String)
      */
-    public boolean unlock(String unlockKey) {
-        boolean state = bmd.unlock(unlockKey);
+    override fun unlock(unlockKey: String?): Boolean {
+        val state = bmd!!.unlock(unlockKey)
         if (state) {
             // Double check.
-            if(isUnlockKeyValid()) {
-                return true;
+            if (isUnlockKeyValid()) {
+                return true
             } else {
-                bmd.resetLock();
-                return false;
+                bmd!!.resetLock()
+                return false
             }
         }
-        return false;
+        return false
     }
 
     /**
      * This is a heuristic that tries out the key.
      * 
      * @return true if there were no exceptions in reading the enciphered
-     *         module.
+     * module.
      */
-    private boolean isUnlockKeyValid() {
+    private fun isUnlockKeyValid(): Boolean {
         try {
-            Key keys = getGlobalKeyList();
-            Key key = keys;
+            val keys: Key? = getGlobalKeyList()
+            var key = keys
             if (keys == null) {
                 // weird key == null, assume it is valid
-                return true;
+                return true
             }
 
             if (keys.getCardinality() > 0) {
-                key = keys.get(0);
+                key = keys.get(0)
             }
-            if(backend instanceof AbstractBackend) {
-                ((AbstractBackend<?>) backend).setIgnoreReadErrors(false);
+            if (backendValue is AbstractBackend<*>) {
+                backendValue.setIgnoreReadErrors(false)
             }
-            getOsis(key, new NoOpRawTextProcessor());
-            return true;
-        } catch (BookException ex) {
-            return false;
+            getOsis(key, NoOpRawTextProcessor())
+            return true
+        } catch (ex: BookException) {
+            return false
         } finally {
-            if(backend instanceof AbstractBackend) {
-                ((AbstractBackend<?>) backend).setIgnoreReadErrors(true);
+            if (backendValue is AbstractBackend<*>) {
+                backendValue.setIgnoreReadErrors(true)
             }
         }
     }
 
-    protected abstract List<Content> getOsis(Key key, RawTextToXmlProcessor noOpRawTextProcessor) throws BookException;
+    @Throws(BookException::class)
+    protected abstract fun getOsis(key: Key?, noOpRawTextProcessor: RawTextToXmlProcessor?): List<Content>
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getUnlockKey()
      */
-    public String getUnlockKey() {
-        return bmd.getUnlockKey();
-    }
+    override val unlockKey: String?
+        get() = bmd!!.unlockKey
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#isQuestionable()
      */
-    public boolean isQuestionable() {
-        return bmd.isQuestionable();
-    }
+    override val isQuestionable: Boolean
+        get() = bmd!!.isQuestionable
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#hasFeature(org.crosswire.jsword.book.FeatureType)
      */
-    public boolean hasFeature(FeatureType feature) {
-        return bmd.hasFeature(feature);
+    override fun hasFeature(feature: FeatureType?): Boolean {
+        return bmd!!.hasFeature(feature)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#addIndexStatusListener(org.crosswire.jsword.index.IndexStatusListener)
      */
-    public void addIndexStatusListener(IndexStatusListener listener) {
+    override fun addIndexStatusListener(li: IndexStatusListener?) {
         if (listeners == null) {
-            listeners = new CopyOnWriteArrayList<IndexStatusListener>();
+            listeners = CopyOnWriteArrayList()
         }
-        listeners.add(listener);
+        listeners!!.add(li!!)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#removeIndexStatusListener(org.crosswire.jsword.index.IndexStatusListener)
      */
-    public void removeIndexStatusListener(IndexStatusListener listener) {
+    override fun removeIndexStatusListener(li: IndexStatusListener?) {
         if (listeners == null) {
-            return;
+            return
         }
 
-        listeners.remove(listener);
+        listeners!!.remove(li)
     }
 
     /**
-     * Reports bound property changes. If <code>oldValue</code> and
-     * <code>newValue</code> are not equal and the
-     * <code>PropertyChangeEvent</code> listener list isn't empty, then fire a
-     * <code>PropertyChange</code> event to each listener.
+     * Reports bound property changes. If `oldValue` and
+     * `newValue` are not equal and the
+     * `PropertyChangeEvent` listener list isn't empty, then fire a
+     * `PropertyChange` event to each listener.
      * 
      * @param oldStatus
-     *            the old value of the property (as an Object)
+     * the old value of the property (as an Object)
      * @param newStatus
-     *            the new value of the property (as an Object)
+     * the new value of the property (as an Object)
      */
-    protected void firePropertyChange(IndexStatus oldStatus, IndexStatus newStatus) {
-        if (oldStatus != null && newStatus != null && oldStatus.equals(newStatus)) {
-            return;
+    protected open fun firePropertyChange(oldStatus: IndexStatus?, newStatus: IndexStatus?) {
+        if (oldStatus != null && newStatus != null && oldStatus == newStatus) {
+            return
         }
 
-        IndexStatusEvent ev = new IndexStatusEvent(this, newStatus);
-        for (IndexStatusListener listener : listeners) {
-            listener.statusChanged(ev);
+        val ev = IndexStatusEvent(this, newStatus)
+        for (listener in listeners!!) {
+            listener.statusChanged(ev)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#toOSIS()
      */
-    public Document toOSIS() {
-        return bmd.toOSIS();
+    override fun toOSIS(): Document {
+        return bmd!!.toOSIS()
     }
 
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
-    @Override
-    public boolean equals(Object obj) {
+    override fun equals(other: Any?): Boolean {
         // Since this can not be null
-        if (obj == null) {
-            return false;
+        if (other == null) {
+            return false
         }
 
         // We might consider checking for equality against all Books?
@@ -433,57 +428,34 @@ public abstract class AbstractBook implements Book {
 
         // Check that that is the same as this
         // Don't use instanceof since that breaks inheritance
-        if (!obj.getClass().equals(this.getClass())) {
-            return false;
+        if (other.javaClass != this.javaClass) {
+            return false
         }
 
         // The real bit ...
-        Book that = (Book) obj;
+        val that = other as Book
 
-        return bmd.equals(that.getBookMetaData());
+        return bmd!! == that.bookMetaData
     }
 
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
-    @Override
-    public int hashCode() {
-        return bmd.hashCode();
+    override fun hashCode(): Int {
+        return bmd!!.hashCode()
     }
 
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Book obj) {
-        return this.bmd.compareTo(obj.getBookMetaData());
+    override fun compareTo(other: Book): Int {
+        return this.bmd!!.compareTo(other.bookMetaData)
     }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
-    @Override
-    public String toString() {
-        return bmd.toString();
+    override fun toString(): String {
+        return bmd!!.toString()
     }
-
-    /**
-     * How do we perform searches
-     */
-    private Searcher searcher;
-
-    /**
-     * The meta data for this book
-     */
-    private BookMetaData bmd;
-
-    /**
-     * To read the data from the Book
-     */
-    private Backend backend;
-
-
-    /**
-     * The list of property change listeners
-     */
-    private List<IndexStatusListener> listeners;
 }

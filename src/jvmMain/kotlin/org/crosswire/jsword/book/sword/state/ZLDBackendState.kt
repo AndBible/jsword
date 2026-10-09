@@ -17,22 +17,21 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.URI;
-
-import org.crosswire.common.util.FileUtil;
-import org.crosswire.common.util.IOUtil;
-import org.crosswire.common.util.Reporter;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.SwordUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.IOUtil
+import org.crosswire.common.util.Reporter
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.SwordUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
+import java.net.URI
 
 /**
  * Stores the random access files required for processing the passage request.
@@ -43,7 +42,37 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class ZLDBackendState extends RawLDBackendState {
+open class ZLDBackendState : RawLDBackendState {
+    /**
+     * The compressed index.
+     */
+    private var zdxFile: File? = null
+
+    /**
+     * The compressed index random access file.
+     */
+    private var zdxRaf: RandomAccessFile? = null
+
+    /**
+     * The compressed text.
+     */
+    private var zdtFile: File? = null
+
+    /**
+     * The compressed text random access file.
+     */
+    private var zdtRaf: RandomAccessFile? = null
+
+    /**
+     * The index of the block that is cached.
+     */
+    open var lastBlockNum: Long = 0
+
+    /**
+     * The cache for a read of a compressed block.
+     */
+    open var lastUncompressed: ByteArray? = null
+
     /**
      * This is default package access for forcing the use of the
      * OpenFileStateManager to manage the creation. Not doing so may result in
@@ -53,146 +82,91 @@ public class ZLDBackendState extends RawLDBackendState {
      * 
      * @param bookMetaData the appropriate metadata for the book
      */
-     ZLDBackendState(BookMetaData bookMetaData) throws BookException {
-        super(bookMetaData);
-        zdxFile = null;
-        zdtFile = null;
-        zdxRaf = null;
-        zdtRaf = null;
-        lastBlockNum = -1;
-        lastUncompressed = EMPTY_BYTES;
+    @Throws(BookException::class)
+    internal constructor(bookMetaData: BookMetaData) : super(bookMetaData) {
+        zdxFile = null
+        zdtFile = null
+        zdxRaf = null
+        zdtRaf = null
+        lastBlockNum = -1
+        lastUncompressed = EMPTY_BYTES
 
-        URI path = null;
+        val path: URI
         try {
-            path = SwordUtil.getExpandedDataPath(bookMetaData);
-        } catch (BookException e) {
-            Reporter.informUser(this, e);
-            return;
+            path = SwordUtil.getExpandedDataPath(bookMetaData)
+        } catch (e: BookException) {
+            Reporter.informUser(this, e)
+            return
         }
 
         try {
-            zdxFile = new File(path.getPath() + EXTENSION_Z_INDEX);
-            zdtFile = new File(path.getPath() + EXTENSION_Z_DATA);
+            val zdx = File(path.path + EXTENSION_Z_INDEX)
+            zdxFile = zdx
+            val zdt = File(path.path + EXTENSION_Z_DATA)
+            zdtFile = zdt
 
-            if (!zdxFile.canRead()) {
+            if (!zdx.canRead()) {
                 // TRANSLATOR: Common error condition: The file could not be read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                Reporter.informUser(this, new BookException(JSMsg.gettext("Error reading {0}", zdtFile.getAbsolutePath())));
-                return;
+                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", zdt.absolutePath)))
+                return
             }
 
-            if (!zdtFile.canRead()) {
+            if (!zdt.canRead()) {
                 // TRANSLATOR: Common error condition: The file could not be read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                Reporter.informUser(this, new BookException(JSMsg.gettext("Error reading {0}", zdtFile.getAbsolutePath())));
-                return;
+                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", zdt.absolutePath)))
+                return
             }
 
             // Open the files
-            zdxRaf = new RandomAccessFile(zdxFile, FileUtil.MODE_READ);
-            zdtRaf = new RandomAccessFile(zdtFile, FileUtil.MODE_READ);
-        } catch (IOException ex) {
+            zdxRaf = RandomAccessFile(zdx, FileUtil.MODE_READ)
+            zdtRaf = RandomAccessFile(zdt, FileUtil.MODE_READ)
+        } catch (ex: IOException) {
             //failed to open the files, so close them now
-            IOUtil.close(zdxRaf);
-            IOUtil.close(zdtRaf);
+            IOUtil.close(zdxRaf)
+            IOUtil.close(zdtRaf)
 
-            LOGGER.error("failed to open files", ex);
-            zdxRaf = null;
-            zdtRaf = null;
-            return;
+            LOGGER.error("failed to open files", ex)
+            zdxRaf = null
+            zdtRaf = null
+            return
         }
     }
 
-    @Override
-    public void releaseResources() {
-        super.releaseResources();
-        lastBlockNum = -1;
-        lastUncompressed = EMPTY_BYTES;
+    override fun releaseResources() {
+        super.releaseResources()
+        lastBlockNum = -1
+        lastUncompressed = EMPTY_BYTES
 
-        IOUtil.close(zdxRaf);
-        IOUtil.close(zdtRaf);
-            zdxRaf = null;
-            zdtRaf = null;
+        IOUtil.close(zdxRaf)
+        IOUtil.close(zdtRaf)
+        zdxRaf = null
+        zdtRaf = null
     }
 
     /**
      * @return the zdxRaf
      */
-    public RandomAccessFile getZdxRaf() {
-        return zdxRaf;
+    open fun getZdxRaf(): RandomAccessFile? {
+        return zdxRaf
     }
 
     /**
      * @return the zdtRaf
      */
-    public RandomAccessFile getZdtRaf() {
-        return zdtRaf;
+    open fun getZdtRaf(): RandomAccessFile? {
+        return zdtRaf
     }
 
-    /**
-     * @return the lastBlockNum
-     */
-    public long getLastBlockNum() {
-        return lastBlockNum;
+    private companion object {
+        private val EMPTY_BYTES = ByteArray(0)
+        private const val EXTENSION_Z_INDEX = ".zdx"
+        private const val EXTENSION_Z_DATA = ".zdt"
+
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(ZLDBackendState::class.java)
     }
-
-    /**
-     * @return the lastUncompressed
-     */
-    public byte[] getLastUncompressed() {
-        return lastUncompressed;
-    }
-
-    /**
-     * @param lastBlockNum the lastBlockNum to set
-     */
-    public void setLastBlockNum(long lastBlockNum) {
-        this.lastBlockNum = lastBlockNum;
-    }
-
-    /**
-     * @param lastUncompressed the lastUncompressed to set
-     */
-    public void setLastUncompressed(byte[] lastUncompressed) {
-        this.lastUncompressed = lastUncompressed;
-    }
-
-    private static final byte[] EMPTY_BYTES = new byte[0];
-    private static final String EXTENSION_Z_INDEX = ".zdx";
-    private static final String EXTENSION_Z_DATA = ".zdt";
-
-    /**
-     * The compressed index.
-     */
-    private File zdxFile;
-
-    /**
-     * The compressed index random access file.
-     */
-    private RandomAccessFile zdxRaf;
-
-    /**
-     * The compressed text.
-     */
-    private  File zdtFile;
-
-    /**
-     * The compressed text random access file.
-     */
-    private  RandomAccessFile zdtRaf;
-
-    /**
-     * The index of the block that is cached.
-     */
-    private  long lastBlockNum;
-
-    /**
-     * The cache for a read of a compressed block.
-     */
-    private  byte[] lastUncompressed;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZLDBackendState.class);
 }

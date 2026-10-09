@@ -17,24 +17,21 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.basic;
+package org.crosswire.jsword.book.basic
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import org.crosswire.common.util.Language;
-import org.crosswire.common.util.StringUtil;
-import org.crosswire.common.xml.XMLUtil;
-import org.crosswire.jsword.book.BookCategory;
-import org.crosswire.jsword.book.BookDriver;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.VerseKey;
-import org.jdom2.Document;
-import org.jdom2.Element;
+import org.crosswire.common.util.Language
+import org.crosswire.common.util.StringUtil
+import org.crosswire.common.xml.XMLUtil
+import org.crosswire.jsword.book.BookCategory
+import org.crosswire.jsword.book.BookDriver
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.VerseKey
+import org.jdom2.Document
+import org.jdom2.Element
+import java.util.ArrayList
+import java.util.Collections
+import java.util.HashMap
 
 /**
  * DefaultBookMetaData is an implementation of the of the BookMetaData
@@ -45,133 +42,131 @@ import org.jdom2.Element;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class DefaultBookMetaData extends AbstractBookMetaData {
-    /**
-     * Ctor with some default values. A call to setBook() is still required
-     * after this ctor is called
-     * @param driver the driver for this book
-     * @param name the name of this book
-     * @param type the type of this book
-     */
-    public DefaultBookMetaData(BookDriver driver, String name, BookCategory type) {
-        props = new HashMap<String, String>();
-        setDriver(driver);
-        setName(name);
-        setBookCategory(type);
-        setLanguage(Language.DEFAULT_LANG); // Default language
+open class DefaultBookMetaData
+/**
+ * Ctor with some default values. A call to setBook() is still required
+ * after this ctor is called
+ * @param driver the driver for this book
+ * @param name the name of this book
+ * @param type the type of this book
+ */
+(driver: BookDriver?, name: String?, type: BookCategory?) : AbstractBookMetaData() {
+    private var type: BookCategory? = null
+    private var nameValue: String? = null
+    private var initialsValue: String? = null
+    private val props: MutableMap<String, String?> = HashMap()
+
+    init {
+        setDriver(driver)
+        setName(name)
+        setBookCategory(type)
+        language = Language.DEFAULT_LANG // Default language
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getBookCharset()
      */
-    public String getBookCharset() {
-        return DEFAULT_CHARSET;
-    }
+    override val bookCharset: String?
+        get() = DEFAULT_CHARSET
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getPropertyKeys()
      */
-    public Set<String> getPropertyKeys() {
-        return Collections.unmodifiableSet(props.keySet());
-    }
+    override val propertyKeys: Set<String>?
+        get() = Collections.unmodifiableSet(props.keys)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getProperty(java.lang.String)
      */
-    public String getProperty(String key) {
-        if (KEY_LANGUAGE.equals(key)) {
-            return getLanguage().getName();
+    override fun getProperty(key: String?): String? {
+        if (BookMetaData.KEY_LANGUAGE == key) {
+            return language.name
         }
-        return props.get(key);
+        return props[key]
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getValues(java.lang.String)
      */
-    public Collection<String> getValues(String key) {
-        String value = props.get(key);
-        if(value != null) {
-            Collection<String> values = new ArrayList<>();
-            values.add(value);
-            return values;
+    override fun getValues(key: String?): Collection<String>? {
+        val value = props[key]
+        if (value != null) {
+            val values: MutableCollection<String> = ArrayList()
+            values.add(value)
+            return values
         } else {
-            return null;
+            return null
         }
     }
+
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#setProperty(java.lang.String, java.lang.String)
      */
-    public void setProperty(String key, String value) {
-        props.put(key, value);
+    override fun setProperty(key: String?, value: String?) {
+        props[key!!] = value
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#putProperty(java.lang.String, java.lang.String)
      */
-    @Override
-    public void putProperty(String key, String value) {
-        setProperty(key, value);
+    override fun putProperty(key: String?, value: String?) {
+        setProperty(key, value)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#putProperty(java.lang.String, java.lang.String, boolean)
      */
-    public void putProperty(String key, String value, boolean forFrontend) {
-        setProperty(key, value);
+    override fun putProperty(key: String?, value: String?, forFrontend: Boolean) {
+        setProperty(key, value)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getBookCategory()
      */
-    public BookCategory getBookCategory() {
-        return type;
-    }
+    override val bookCategory: BookCategory
+        get() = type!!
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getName()
      */
-    public String getName() {
-        return name;
-    }
+    override val name: String
+        get() = nameValue!!
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getAbbreviation()
      */
-    public String getAbbreviation() {
-        return initials;
-    }
+    override val abbreviation: String
+        get() = initialsValue!!
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getInitials()
      */
-    public String getInitials() {
-        return initials;
-    }
+    override val initials: String
+        get() = initialsValue!!
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#isLeftToRight()
      */
-    public boolean isLeftToRight() {
-        return getLanguage().isLeftToRight();
-    }
+    override val isLeftToRight: Boolean
+        get() = language.isLeftToRight
 
     /**
      * See note on setName() for side effect on setInitials(). If a value of
      * null is used then the initials are defaulted using the name
      * 
-     * @see DefaultBookMetaData#setName(String)
+     * @see DefaultBookMetaData.setName
      * @param initials
-     *            The initials to set.
+     * The initials to set.
      */
-    public void setInitials(String initials) {
+    open fun setInitials(initials: String?) {
         if (initials == null) {
-            if (name == null) {
-                this.initials = "";
+            if (nameValue == null) {
+                this.initialsValue = ""
             } else {
-                this.initials = StringUtil.getInitials(name);
+                this.initialsValue = StringUtil.getInitials(nameValue)
             }
         } else {
-            this.initials = initials;
+            this.initialsValue = initials
         }
     }
 
@@ -179,94 +174,92 @@ public class DefaultBookMetaData extends AbstractBookMetaData {
      * Setting the name also sets some default initials, so if you wish to set
      * some specific initials then it should be done after setting the name.
      * 
-     * @see DefaultBookMetaData#setInitials(String)
+     * @see DefaultBookMetaData.setInitials
      * @param name
-     *            The name to set.
+     * The name to set.
      */
-    public void setName(String name) {
-        this.name = name;
+    open fun setName(name: String?) {
+        this.nameValue = name
 
-        putProperty(KEY_NAME, this.name);
+        putProperty(BookMetaData.KEY_NAME, this.nameValue)
 
-        setInitials(StringUtil.getInitials(name));
+        setInitials(StringUtil.getInitials(name))
     }
 
     /**
      * @param aType
-     *            The type to set.
+     * The type to set.
      */
-    public void setBookCategory(BookCategory aType) {
-        BookCategory t = aType;
+    open fun setBookCategory(aType: BookCategory?) {
+        var t = aType
         if (t == null) {
-            t = BookCategory.BIBLE;
+            t = BookCategory.BIBLE
         }
-        type = t;
+        type = t
 
-        putProperty(KEY_CATEGORY, type.toString());
+        putProperty(BookMetaData.KEY_CATEGORY, type.toString())
     }
 
     /**
      * @param typestr
-     *            The string version of the type to set.
+     * The string version of the type to set.
      */
-    public void setType(String typestr) {
-        BookCategory newType = null;
+    open fun setType(typestr: String?) {
+        var newType: BookCategory? = null
         if (typestr != null) {
-            newType = BookCategory.fromString(typestr);
+            newType = BookCategory.fromString(typestr)
         }
 
-        setBookCategory(newType);
+        setBookCategory(newType)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.basic.AbstractBookMetaData#toOSIS()
      */
-    @Override
-    public Document toOSIS() {
-        OSISUtil.OSISFactory factory = OSISUtil.factory();
-        Element ele = factory.createTable();
-        addRow(factory, ele, "Initials", getInitials());
-        addRow(factory, ele, "Description", getName());
-        addRow(factory, ele, "Key", getBookCategory().toString());
-        addRow(factory, ele, "Language", getLanguage().getName());
-        return new Document(ele);
+    override fun toOSIS(): Document {
+        val factory = OSISUtil.factory()
+        val ele = factory.createTable()
+        addRow(factory, ele, "Initials", initials)
+        addRow(factory, ele, "Description", name)
+        addRow(factory, ele, "Key", bookCategory.toString())
+        addRow(factory, ele, "Language", language.name)
+        return Document(ele)
     }
 
     /**
      * @return The scope
      */
-    public VerseKey getScope() {
-        // The following method is only available for Sword books
-        throw new UnsupportedOperationException();
-    }
-
-    private void addRow(OSISUtil.OSISFactory factory, Element table, String key, String value) {
-        if (value == null) {
-            return;
+    open val scope: VerseKey<*>
+        get() {
+            // The following method is only available for Sword books
+            throw UnsupportedOperationException()
         }
 
-        Element rowEle = factory.createRow();
+    private fun addRow(factory: OSISUtil.OSISFactory, table: Element, key: String, value: String?) {
+        if (value == null) {
+            return
+        }
 
-        Element nameEle = factory.createCell();
-        Element hiEle = factory.createHI();
-        hiEle.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD);
-        nameEle.addContent(hiEle);
-        Element valueElement = factory.createCell();
-        rowEle.addContent(nameEle);
-        rowEle.addContent(valueElement);
+        val rowEle = factory.createRow()
+
+        val nameEle = factory.createCell()
+        val hiEle = factory.createHI()
+        hiEle.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD)
+        nameEle.addContent(hiEle)
+        val valueElement = factory.createCell()
+        rowEle.addContent(nameEle)
+        rowEle.addContent(valueElement)
 
         // I18N(DMS): use name to lookup translation.
-        hiEle.addContent(key);
+        hiEle.addContent(key)
 
-        String expandedValue = XMLUtil.escape(value);
-        valueElement.addContent(expandedValue);
+        val expandedValue = XMLUtil.escape(value)
+        valueElement.addContent(expandedValue)
 
-        table.addContent(rowEle);
+        table.addContent(rowEle)
     }
 
-    private BookCategory type;
-    private String name;
-    private String initials;
-    private Map<String, String> props;
-    private static final String DEFAULT_CHARSET = "UTF-8";
+    private companion object {
+        private const val DEFAULT_CHARSET = "UTF-8"
+    }
 }

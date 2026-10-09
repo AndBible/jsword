@@ -17,18 +17,17 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.basic;
+package org.crosswire.jsword.book.basic
 
-import java.net.URI;
-
-import org.crosswire.common.util.Language;
-import org.crosswire.jsword.book.BookDriver;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.FeatureType;
-import org.crosswire.jsword.book.KeyType;
-import org.crosswire.jsword.index.IndexStatus;
-import org.jdom2.Document;
+import org.crosswire.common.util.Language
+import org.crosswire.jsword.book.BookDriver
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.FeatureType
+import org.crosswire.jsword.book.KeyType
+import org.crosswire.jsword.index.IndexStatus
+import org.jdom2.Document
+import java.net.URI
 
 /**
  * An implementation of the Property Change methods from BookMetaData.
@@ -39,183 +38,160 @@ import org.jdom2.Document;
 
 /**
  * @author DM Smith
- * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br>
+ * @see gnu.lgpl.License The GNU Lesser General Public License for details.<br></br>
  * The copyright to this program is held by its authors.
  */
-public abstract class AbstractBookMetaData implements BookMetaData {
+abstract class AbstractBookMetaData : BookMetaData {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getKeyType()
      */
-    public KeyType getKeyType() {
-        return KeyType.LIST;
-    }
+    override val keyType: KeyType?
+        get() = KeyType.LIST
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getDriver()
      */
-    public BookDriver getDriver() {
-        return driver;
+    override val driver: BookDriver?
+        get() = driverValue
+
+    private var driverValue: BookDriver? = null
+
+    /**
+     * @param driver The driver to set.
+     */
+    open fun setDriver(driver: BookDriver?) {
+        this.driverValue = driver
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getDriverName()
      */
-    public String getDriverName() {
-        if (getDriver() == null) {
-            return null;
-        }
+    override val driverName: String?
+        get() {
+            if (driver == null) {
+                return null
+            }
 
-        return getDriver().getDriverName();
-    }
+            return driver!!.getDriverName()
+        }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#hasFeature(org.crosswire.jsword.book.FeatureType)
      */
-    public boolean hasFeature(FeatureType feature) {
-        return false;
+    override fun hasFeature(feature: FeatureType?): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getOsisID()
      */
-    public String getOsisID() {
-        return getBookCategory().getName() + '.' + getInitials();
-    }
+    override val osisID: String
+        get() = bookCategory.getName() + '.' + initials
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#isSupported()
      */
-    public boolean isSupported() {
-        return true;
-    }
+    override val isSupported: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#isEnciphered()
      */
-    public boolean isEnciphered() {
-        return false;
-    }
+    override val isEnciphered: Boolean
+        get() = false
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#isLocked()
      */
-    public boolean isLocked() {
-        return false;
-    }
+    override val isLocked: Boolean
+        get() = false
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#unlock(java.lang.String)
      */
-    public boolean unlock(String unlockKey) {
-        return false;
+    override fun unlock(unlockKey: String?): Boolean {
+        return false
     }
 
-    public void resetLock() {}
+    override fun resetLock() {}
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getUnlockKey()
      */
-    public String getUnlockKey() {
-        return null;
-    }
+    override val unlockKey: String?
+        get() = null
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#isQuestionable()
      */
-    public boolean isQuestionable() {
-        return false;
-    }
+    override val isQuestionable: Boolean
+        get() = false
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getLanguage()
      */
-    public Language getLanguage() {
-        return this.language;
-    }
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#setLanguage(org.crosswire.common.util.Language)
      */
-    public void setLanguage(Language language) {
-        this.language = language;
-    }
+    override var language: Language
+        get() = languageValue!!
+        set(language) {
+            languageValue = language
+        }
+    private var languageValue: Language? = null
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getLibrary()
      */
-    public URI getLibrary() {
-        return library;
-    }
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#setLibrary(java.net.URI)
      */
-    public void setLibrary(URI library) throws BookException {
-        this.library = library;
-    }
+    @set:Throws(BookException::class)
+    override var library: URI? = null
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#setLocation(java.net.URI)
      */
-    public void setLocation(URI location) {
-        this.location = location;
-    }
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getLocation()
      */
-    public URI getLocation() {
-        return location;
-    }
+    override var location: URI? = null
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getIndexStatus()
      */
-    public IndexStatus getIndexStatus() {
-        return indexStatus;
-    }
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#setIndexStatus(org.crosswire.jsword.index.IndexStatus)
      */
-    public void setIndexStatus(IndexStatus newValue) {
-        indexStatus = newValue;
-    }
+    override var indexStatus: IndexStatus = IndexStatus.UNDONE
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#reload()
      */
-    public void reload() throws BookException {
+    @Throws(BookException::class)
+    override fun reload() {
         // over ride this if partial loads are allowed
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#putProperty(java.lang.String, java.lang.String)
      */
-    public void putProperty(String key, String value) {
-        putProperty(key, value, false);
+    override fun putProperty(key: String?, value: String?) {
+        putProperty(key, value, false)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#toOSIS()
      */
-    public Document toOSIS() {
-        throw new UnsupportedOperationException("If you want to use this, implement it.");
+    override fun toOSIS(): Document {
+        throw UnsupportedOperationException("If you want to use this, implement it.")
     }
 
-    /**
-     * @param driver The driver to set.
-     */
-    public void setDriver(BookDriver driver) {
-        this.driver = driver;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
+    override fun equals(other: Any?): Boolean {
         // Since this can not be null
-        if (obj == null) {
-            return false;
+        if (other == null) {
+            return false
         }
 
         // We might consider checking for equality against all BookMetaDatas?
@@ -223,19 +199,18 @@ public abstract class AbstractBookMetaData implements BookMetaData {
 
         // Check that that is the same as this
         // Don't use instanceof since that breaks inheritance
-        if (!obj.getClass().equals(this.getClass())) {
-            return false;
+        if (other.javaClass != this.javaClass) {
+            return false
         }
 
         // The real bit ...
-        BookMetaData that = (BookMetaData) obj;
+        val that = other as BookMetaData
 
-        return getBookCategory().equals(that.getBookCategory()) && getName().equals(that.getName()) && getInitials().equals(that.getInitials());
+        return bookCategory == that.bookCategory && name == that.name && initials == that.initials
     }
 
-    @Override
-    public int hashCode() {
-        return getName().hashCode();
+    override fun hashCode(): Int {
+        return name.hashCode()
     }
 
     /*
@@ -243,39 +218,31 @@ public abstract class AbstractBookMetaData implements BookMetaData {
      * (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(BookMetaData obj) {
-        int result = this.getBookCategory().compareTo(obj.getBookCategory());
+    override fun compareTo(other: BookMetaData): Int {
+        var result = this.bookCategory.compareTo(other.bookCategory)
         if (result == 0) {
             // module names normally (always?) use English characters so ignore case should be fine
-            result = this.getAbbreviation().compareToIgnoreCase(obj.getAbbreviation());
+            result = this.abbreviation.compareTo(other.abbreviation, ignoreCase = true)
         }
         if (result == 0) {
-            result = this.getInitials().compareTo(obj.getInitials());
+            result = this.initials.compareTo(other.initials)
         }
         if (result == 0) {
-            result = this.getName().compareTo(obj.getName());
+            result = this.name.compareTo(other.name)
         }
-        return result;
+        return result
     }
 
-    @Override
-    public String toString() {
-        String internal = getInitials();
-        String abbreviation = getAbbreviation();
-        if (internal.equals(abbreviation)) {
-            return internal;
+    override fun toString(): String {
+        val internal = initials
+        val abbreviation = abbreviation
+        if (internal == abbreviation) {
+            return internal
         }
-        StringBuffer buf = new StringBuffer(internal);
-        buf.append('(');
-        buf.append(abbreviation);
-        buf.append(')');
-        return buf.toString();
+        val buf = StringBuffer(internal)
+        buf.append('(')
+        buf.append(abbreviation)
+        buf.append(')')
+        return buf.toString()
     }
-
-    private BookDriver driver;
-    private IndexStatus indexStatus = IndexStatus.UNDONE;
-    private Language language;
-    private URI library;
-    private URI location;
-
 }

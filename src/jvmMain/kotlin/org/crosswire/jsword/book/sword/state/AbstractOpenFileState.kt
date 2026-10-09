@@ -17,59 +17,60 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.jsword.book.BookMetaData;
+import org.crosswire.jsword.book.BookMetaData
 
 /**
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractOpenFileState implements OpenFileState {
-    /**
-     * Create an AbstractOpenFileState tied to a BookMetaData.
-     * 
-     * @param bmd the BookMetaData for this OpenFileState
-     */
-    public AbstractOpenFileState(BookMetaData bmd) {
-        bookMetaData = bmd;
-        lastAccess = System.currentTimeMillis();
-    }
+abstract class AbstractOpenFileState
+/**
+ * Create an AbstractOpenFileState tied to a BookMetaData.
+ *
+ * @param bmd the BookMetaData for this OpenFileState
+ */
+(bmd: BookMetaData) : OpenFileState {
+    private var lastAccess: Long = System.currentTimeMillis()
 
-    private long lastAccess = System.currentTimeMillis();
+    /**
+     * The BookMetaData for this OpenFileState. Used to locate files.
+     */
+    private val bookMetaData: BookMetaData = bmd
+
+    init {
+        lastAccess = System.currentTimeMillis()
+    }
 
     /**
      * Allows us to decide whether to release the resources or continue using them
      */
-    public void close() {
-        OpenFileStateManager.instance().release(this);
+    override fun close() {
+        OpenFileStateManager.instance().release(this)
     }
 
     /**
      * Get the BookMetaData for this OpenFileState.
-     * 
+     *
      * @return the BookMetaData
      */
-    public BookMetaData getBookMetaData() {
-        return bookMetaData;
+    override fun getBookMetaData(): BookMetaData {
+        return bookMetaData
     }
+
     /**
-      * @return latest access before releasing back to the pool
+     * @return latest access before releasing back to the pool
      */
-    public long getLastAccess() {
-        return this.lastAccess;
+    override fun getLastAccess(): Long {
+        return this.lastAccess
     }
 
     /**
      * @param lastAccess last time the file state was accessed
      */
-    public void setLastAccess(final long lastAccess) {
-        this.lastAccess = lastAccess;
+    override fun setLastAccess(lastAccess: Long) {
+        this.lastAccess = lastAccess
     }
-
-    /**
-     * The BookMetaData for this OpenFileState. Used to locate files.
-     */
-    private BookMetaData bookMetaData;
 }

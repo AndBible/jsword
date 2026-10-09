@@ -17,16 +17,15 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.book.basic;
+package org.crosswire.jsword.book.basic
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookData;
-import org.crosswire.jsword.book.Bookmark;
-import org.crosswire.jsword.index.search.SearchRequest;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookData
+import org.crosswire.jsword.book.Bookmark
+import org.crosswire.jsword.index.search.SearchRequest
+import java.util.ArrayList
+import java.util.Collections
 
 /**
  * A Bookmark remembers a particular view of one or more Books. What is viewed
@@ -35,93 +34,92 @@ import org.crosswire.jsword.index.search.SearchRequest;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DefaultBookmark implements Bookmark {
+open class DefaultBookmark
+/**
+ * Create an empty default bookmark
+ */
+() : Bookmark, Cloneable {
     /**
-     * Create an empty default bookmark
+     * The list of books.
      */
-    public DefaultBookmark() {
-        books = new ArrayList<Book>();
-    }
+    @Transient
+    private var bookList: MutableList<Book> = ArrayList()
+
+    /**
+     * True while one of the two request setters clears the other one: the setters of
+     * searchRequest and lookupRequest each reset the other property, and this stops the
+     * reset from bouncing back (Java assigned the other field directly).
+     */
+    @Transient
+    private var clearingOther = false
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Bookmark#addBook(org.crosswire.jsword.book.Book)
      */
-    public void addBook(Book book) {
-        books.add(book);
+    override fun addBook(book: Book?) {
+        // Java allowed adding null here; the list is typed non-null for the Bookmark.books property
+        @Suppress("UNCHECKED_CAST")
+        (bookList as MutableList<Book?>).add(book)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Bookmark#getBooks()
      */
-    public List<Book> getBooks() {
-        return Collections.unmodifiableList(books);
-    }
+    override val books: MutableList<Book>
+        get() = Collections.unmodifiableList(bookList)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Bookmark#setSearchRequest(org.crosswire.jsword.index.search.SearchRequest)
      */
-    public void setSearchRequest(SearchRequest request) {
-        searchRequest = request;
-        lookupRequest = null;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.Bookmark#getSearchRequest()
-     */
-    public SearchRequest getSearchRequest() {
-        return searchRequest;
-    }
+    override var searchRequest: SearchRequest? = null
+        /* (non-Javadoc)
+         * @see org.crosswire.jsword.book.Bookmark#getSearchRequest()
+         */
+        set(request) {
+            field = request
+            if (!clearingOther) {
+                clearingOther = true
+                lookupRequest = null
+                clearingOther = false
+            }
+        }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Bookmark#setLookupRequest(java.lang.String)
      */
-    public void setLookupRequest(String request) {
-        lookupRequest = request;
-        searchRequest = null;
-    }
-
-    /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.Bookmark#getLookupRequest()
-     */
-    public String getLookupRequest() {
-        return lookupRequest;
-    }
+    override var lookupRequest: String? = null
+        /* (non-Javadoc)
+         * @see org.crosswire.jsword.book.Bookmark#getLookupRequest()
+         */
+        set(request) {
+            field = request
+            if (!clearingOther) {
+                clearingOther = true
+                searchRequest = null
+                clearingOther = false
+            }
+        }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Bookmark#getBookData()
      */
-    public BookData getBookData() {
-        return null;
-    }
+    override val bookData: BookData?
+        get() = null
 
-    @Override
-    public DefaultBookmark clone() {
-        DefaultBookmark clone = null;
+    public override fun clone(): DefaultBookmark {
+        var clone: DefaultBookmark? = null
         try {
-            clone = (DefaultBookmark) super.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            clone = super<Cloneable>.clone() as DefaultBookmark
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 
-    /**
-     * The list of books.
-     */
-    private transient List<Book> books;
-
-    /**
-     * The lookup request.
-     */
-    private String lookupRequest;
-
-    /**
-     * The search request.
-     */
-    private SearchRequest searchRequest;
-
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 6959196267292499574L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 6959196267292499574L
+    }
 }

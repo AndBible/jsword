@@ -17,22 +17,21 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.URI;
-
-import org.crosswire.common.util.FileUtil;
-import org.crosswire.common.util.IOUtil;
-import org.crosswire.common.util.Reporter;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.SwordUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.IOUtil
+import org.crosswire.common.util.Reporter
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.SwordUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
+import java.net.URI
 
 /**
  * Stores the random access files required for processing the passage request
@@ -43,7 +42,17 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class GenBookBackendState extends AbstractOpenFileState {
+open class GenBookBackendState : AbstractOpenFileState {
+    /**
+     * The raw data file
+     */
+    private var bdtFile: File? = null
+
+    /**
+     * The random access file for the raw data
+     */
+    private var bdtRaf: RandomAccessFile? = null
+
     /**
      * This is default package access for forcing the use of the
      * OpenFileStateManager to manage the creation. Not doing so may result in
@@ -53,66 +62,58 @@ public class GenBookBackendState extends AbstractOpenFileState {
      * 
      * @param bookMetaData the appropriate metadata for the book
      */
-    GenBookBackendState(BookMetaData bookMetaData) {
-        super(bookMetaData);
-        URI path = null;
+    internal constructor(bookMetaData: BookMetaData) : super(bookMetaData) {
+        val path: URI
         try {
-            path = SwordUtil.getExpandedDataPath(bookMetaData);
-        } catch (BookException e) {
-            Reporter.informUser(this, e);
-            return;
+            path = SwordUtil.getExpandedDataPath(bookMetaData)
+        } catch (e: BookException) {
+            Reporter.informUser(this, e)
+            return
         }
 
-        bdtFile = new File(path.getPath() + EXTENSION_BDT);
+        val bdt = File(path.path + EXTENSION_BDT)
+        bdtFile = bdt
 
-        if (!bdtFile.canRead()) {
+        if (!bdt.canRead()) {
             // TRANSLATOR: Common error condition: The file could not be read.
             // There can be many reasons.
             // {0} is a placeholder for the file.
-            Reporter.informUser(this, new BookException(JSMsg.gettext("Error reading {0}", bdtFile.getAbsolutePath())));
-            return;
+            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", bdt.absolutePath)))
+            return
         }
 
         try {
-            bdtRaf  = new RandomAccessFile(bdtFile, FileUtil.MODE_READ);
-        } catch (IOException ex) {
+            bdtRaf = RandomAccessFile(bdt, FileUtil.MODE_READ)
+        } catch (ex: IOException) {
             //failed to open the files, so close them now
-            IOUtil.close(bdtRaf);
+            IOUtil.close(bdtRaf)
 
-            LOGGER.error("failed to open files", ex);
-            bdtRaf = null;
+            LOGGER.error("failed to open files", ex)
+            bdtRaf = null
         }
     }
 
-    public void releaseResources() {
-        IOUtil.close(bdtRaf);
-        bdtRaf = null;
+    override fun releaseResources() {
+        IOUtil.close(bdtRaf)
+        bdtRaf = null
     }
 
     /**
      * @return the bdtRaf
      */
-    public RandomAccessFile getBdtRaf() {
-        return bdtRaf;
+    open fun getBdtRaf(): RandomAccessFile? {
+        return bdtRaf
     }
 
-    /**
-     * Raw GenBook file extensions
-     */
-    private static final String EXTENSION_BDT = ".bdt";
+    private companion object {
+        /**
+         * Raw GenBook file extensions
+         */
+        private const val EXTENSION_BDT = ".bdt"
 
-    /**
-     * The raw data file
-     */
-    private File bdtFile;
-
-    /**
-     * The random access file for the raw data
-     */
-    private RandomAccessFile bdtRaf;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(GenBookBackendState.class);
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(GenBookBackendState::class.java)
+    }
 }

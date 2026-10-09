@@ -17,25 +17,24 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
-import java.net.URI;
-
-import org.crosswire.common.util.FileUtil;
-import org.crosswire.common.util.IOUtil;
-import org.crosswire.common.util.NetUtil;
-import org.crosswire.common.util.Reporter;
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.SwordConstants;
-import org.crosswire.jsword.book.sword.SwordUtil;
-import org.crosswire.jsword.versification.Testament;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.IOUtil
+import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.Reporter
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.SwordConstants
+import org.crosswire.jsword.book.sword.SwordUtil
+import org.crosswire.jsword.versification.Testament
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.RandomAccessFile
 
 /**
  * Stores the random access files required for processing the passage request
@@ -46,70 +45,88 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class RawBackendState extends AbstractOpenFileState {
-    /**
-     * This is default package access for forcing the use of the
-     * OpenFileStateManager to manage the creation. Not doing so may result in
-     * new instances of OpenFileState being created for no reason, and as a
-     * result, if they are released to the OpenFileStateManager by mistake this
-     * would result in leakage.
-     * 
-     * @param bookMetaData
-     *            the appropriate metadata for the book
-     */
-    RawBackendState(BookMetaData bookMetaData) throws BookException {
-        super(bookMetaData);
-        URI path = SwordUtil.getExpandedDataPath(bookMetaData);
+open class RawBackendState
+/**
+ * This is default package access for forcing the use of the
+ * OpenFileStateManager to manage the creation. Not doing so may result in
+ * new instances of OpenFileState being created for no reason, and as a
+ * result, if they are released to the OpenFileStateManager by mistake this
+ * would result in leakage.
+ * 
+ * @param bookMetaData
+ * the appropriate metadata for the book
+ */
+@Throws(BookException::class)
+internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMetaData) {
+    @JvmField
+    protected var otIdxRaf: RandomAccessFile? = null
+    @JvmField
+    protected var ntIdxRaf: RandomAccessFile? = null
+    @JvmField
+    protected var otTextRaf: RandomAccessFile? = null
+    @JvmField
+    protected var ntTextRaf: RandomAccessFile? = null
+    @JvmField
+    protected var ntIdxFile: File
+    @JvmField
+    protected var ntTextFile: File
+    @JvmField
+    protected var otIdxFile: File
+    @JvmField
+    protected var otTextFile: File
 
-        URI otPath = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_OT);
-        otTextFile = new File(otPath.getPath());
-        otIdxFile = new File(otPath.getPath() + SwordConstants.EXTENSION_VSS);
+    init {
+        val path = SwordUtil.getExpandedDataPath(bookMetaData)
 
-        URI ntPath = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_NT);
-        ntTextFile = new File(ntPath.getPath());
-        ntIdxFile = new File(ntPath.getPath() + SwordConstants.EXTENSION_VSS);
+        val otPath = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_OT)!!
+        otTextFile = File(otPath.path)
+        otIdxFile = File(otPath.path + SwordConstants.EXTENSION_VSS)
+
+        val ntPath = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_NT)!!
+        ntTextFile = File(ntPath.path)
+        ntIdxFile = File(ntPath.path + SwordConstants.EXTENSION_VSS)
 
         // It is an error to be neither OT nor NT
         // Throwing exception, as if we can't read either the ot or nt file,
         // then we might as well give up
         if (!otTextFile.canRead() && !ntTextFile.canRead()) {
-            BookException prob = new BookException(JSOtherMsg.lookupText("Missing data files for old and new testaments in {0}.", path));
-            Reporter.informUser(this, prob);
-            throw prob;
+            val prob = BookException(JSOtherMsg.lookupText("Missing data files for old and new testaments in {0}.", path))
+            Reporter.informUser(this, prob)
+            throw prob
         }
 
-        String fileMode = isWritable() ? FileUtil.MODE_WRITE : FileUtil.MODE_READ;
+        val fileMode = if (isWritable()) FileUtil.MODE_WRITE else FileUtil.MODE_READ
 
         if (otIdxFile.canRead()) {
             try {
-                otIdxRaf = new RandomAccessFile(otIdxFile, fileMode);
-                otTextRaf = new RandomAccessFile(otTextFile, fileMode);
-            } catch (FileNotFoundException ex) {
+                otIdxRaf = RandomAccessFile(otIdxFile, fileMode)
+                otTextRaf = RandomAccessFile(otTextFile, fileMode)
+            } catch (ex: FileNotFoundException) {
                 //failed to open the files, so close them now
-                IOUtil.close(otIdxRaf);
-                IOUtil.close(otTextRaf);
+                IOUtil.close(otIdxRaf)
+                IOUtil.close(otTextRaf)
 
-                assert false : ex;
+                jswordAssert(false) { ex }
 
-                LOGGER.error("Could not open OT", ex);
-                ntIdxRaf = null;
-                ntTextRaf = null;
+                LOGGER.error("Could not open OT", ex)
+                ntIdxRaf = null
+                ntTextRaf = null
             }
         }
 
         if (ntIdxFile.canRead()) {
             try {
-                ntIdxRaf = new RandomAccessFile(ntIdxFile, fileMode);
-                ntTextRaf = new RandomAccessFile(ntTextFile, fileMode);
-            } catch (FileNotFoundException ex) {
+                ntIdxRaf = RandomAccessFile(ntIdxFile, fileMode)
+                ntTextRaf = RandomAccessFile(ntTextFile, fileMode)
+            } catch (ex: FileNotFoundException) {
                 //failed to open the files, so close them now
-                IOUtil.close(ntIdxRaf);
-                IOUtil.close(ntTextRaf);
+                IOUtil.close(ntIdxRaf)
+                IOUtil.close(ntTextRaf)
 
-                assert false : ex;
-                LOGGER.error("Could not open NT", ex);
-                ntIdxRaf = null;
-                ntTextRaf = null;
+                jswordAssert(false) { ex }
+                LOGGER.error("Could not open NT", ex)
+                ntIdxRaf = null
+                ntTextRaf = null
             }
         }
     }
@@ -117,29 +134,29 @@ public class RawBackendState extends AbstractOpenFileState {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#isWritable()
      */
-    public boolean isWritable() {
+    open fun isWritable(): Boolean {
         // For the module to be writable either the old testament or the new
         // testament needs to be present
         // (i.e. readable) and both the index and the data files need to be
         // writable
         if (otIdxFile.canRead() && (otIdxFile.canWrite() || !otTextFile.canWrite())) {
-            return false;
+            return false
         }
         if (ntIdxFile.canRead() && (ntIdxFile.canWrite() || !ntTextFile.canWrite())) {
-            return false;
+            return false
         }
-        return otIdxFile.canRead() || ntIdxFile.canRead();
+        return otIdxFile.canRead() || ntIdxFile.canRead()
     }
 
-    public void releaseResources() {
-        IOUtil.close(ntIdxRaf);
-        IOUtil.close(ntTextRaf);
-        IOUtil.close(otIdxRaf);
-        IOUtil.close(otTextRaf);
-        ntIdxRaf = null;
-        ntTextRaf = null;
-        otIdxRaf = null;
-        otTextRaf = null;
+    override fun releaseResources() {
+        IOUtil.close(ntIdxRaf)
+        IOUtil.close(ntTextRaf)
+        IOUtil.close(otIdxRaf)
+        IOUtil.close(otTextRaf)
+        ntIdxRaf = null
+        ntTextRaf = null
+        otIdxRaf = null
+        otTextRaf = null
     }
 
     /**
@@ -148,8 +165,8 @@ public class RawBackendState extends AbstractOpenFileState {
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    public RandomAccessFile getIdxRaf(Testament testament) {
-        return testament == Testament.NEW ? ntIdxRaf : otIdxRaf;
+    open fun getIdxRaf(testament: Testament?): RandomAccessFile? {
+        return if (testament == Testament.NEW) ntIdxRaf else otIdxRaf
     }
 
     /**
@@ -158,22 +175,22 @@ public class RawBackendState extends AbstractOpenFileState {
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    public RandomAccessFile getTextRaf(Testament testament) {
-        return testament == Testament.NEW ? ntTextRaf : otTextRaf;
+    open fun getTextRaf(testament: Testament?): RandomAccessFile? {
+        return if (testament == Testament.NEW) ntTextRaf else otTextRaf
     }
 
     /**
      * @return the otTextRaf
      */
-    public RandomAccessFile getOtTextRaf() {
-        return otTextRaf;
+    open fun getOtTextRaf(): RandomAccessFile? {
+        return otTextRaf
     }
 
     /**
      * @return the ntTextRaf
      */
-    public RandomAccessFile getNtTextRaf() {
-        return ntTextRaf;
+    open fun getNtTextRaf(): RandomAccessFile? {
+        return ntTextRaf
     }
 
     /**
@@ -182,8 +199,8 @@ public class RawBackendState extends AbstractOpenFileState {
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    public File getTextFile(Testament testament) {
-        return testament == Testament.NEW ? ntTextFile : otTextFile;
+    open fun getTextFile(testament: Testament?): File {
+        return if (testament == Testament.NEW) ntTextFile else otTextFile
     }
 
     /**
@@ -192,21 +209,14 @@ public class RawBackendState extends AbstractOpenFileState {
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    public File getIdxFile(Testament testament) {
-        return testament == Testament.NEW ? ntIdxFile : otIdxFile;
+    open fun getIdxFile(testament: Testament?): File {
+        return if (testament == Testament.NEW) ntIdxFile else otIdxFile
     }
 
-    protected RandomAccessFile otIdxRaf;
-    protected RandomAccessFile ntIdxRaf;
-    protected RandomAccessFile otTextRaf;
-    protected RandomAccessFile ntTextRaf;
-    protected File ntIdxFile;
-    protected File ntTextFile;
-    protected File otIdxFile;
-    protected File otTextFile;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(RawBackendState.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawBackendState::class.java)
+    }
 }

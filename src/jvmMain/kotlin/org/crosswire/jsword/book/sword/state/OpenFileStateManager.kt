@@ -17,23 +17,23 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+/**
+ * File management of SWORD Books.
+ */
+package org.crosswire.jsword.book.sword.state
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.BlockType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.BlockType
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.util.HashMap
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
 
 /**
  * Manages the creation and re-distribution of open file states. This increases
@@ -41,11 +41,11 @@ import org.slf4j.LoggerFactory;
  * example we may be carrying out a contains() operation followed by a read to
  * disk for a particular key
  * 
- * Each {@link BookMetaData} has a corresponding a file state which is
+ * Each [BookMetaData] has a corresponding a file state which is
  * different to another. Furthermore, concurrent accesses cannot share this file
- * state as the {@link OpenFileState} records where in the file it is, for
+ * state as the [OpenFileState] records where in the file it is, for
  * reading several verses together for example. As a result, we want to key a
- * lookup by {@link BookMetaData}, which then gives us a pool of available
+ * lookup by [BookMetaData], which then gives us a pool of available
  * file states... We create some more if none are available.
  * 
  * In order to prevent memory leaks (OpenFileStates might be quite heavy as they do some internal caching of file data..
@@ -59,221 +59,233 @@ import org.slf4j.LoggerFactory;
  * @author DM Smith
  * @author Chris Burrell
  */
-public final class OpenFileStateManager {
-    /**
-     * prevent instantiation
-     */
-    private OpenFileStateManager(final int cleanupIntervalSeconds, final int maxExpiry) {
-        // no op
-        this.monitoringThread = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-                Thread t = new Thread(r);
-                t.setDaemon(true);
-                return t;
-            }
+class OpenFileStateManager
+/**
+ * prevent instantiation
+ */
+private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
+    private val metaToStates: MutableMap<BookMetaData, Queue<OpenFileState>> = HashMap()
 
-        }).scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                // check the state of the maps and queues... The queues may have too much in them and that will in turn max out
-                // the heap.
-                long currentTime = System.currentTimeMillis();
+    @Volatile
+    private var shuttingDown = false
 
-                for (Queue<OpenFileState> e : OpenFileStateManager.this.metaToStates.values()) {
-                    for (Iterator<OpenFileState> iterator = e.iterator(); iterator.hasNext(); ) {
-                        final OpenFileState state = iterator.next();
-                        if (state.getLastAccess() + maxExpiry * 1000 < currentTime) {
-                            //release resources
-                            state.releaseResources();
+    private val monitoringThread: ScheduledFuture<*> = Executors.newScheduledThreadPool(1, object : ThreadFactory {
+        override fun newThread(r: Runnable): Thread {
+            val t = Thread(r)
+            t.isDaemon = true
+            return t
+        }
+    }).scheduleWithFixedDelay(object : Runnable {
+        override fun run() {
+            // check the state of the maps and queues... The queues may have too much in them and that will in turn max out
+            // the heap.
+            val currentTime = System.currentTimeMillis()
 
-                            //remove from the queues
-                            iterator.remove();
-                        }
+            for (e in this@OpenFileStateManager.metaToStates.values) {
+                val iterator = e.iterator()
+                while (iterator.hasNext()) {
+                    val state = iterator.next()
+                    if (state.getLastAccess() + maxExpiry * 1000 < currentTime) {
+                        //release resources
+                        state.releaseResources()
+
+                        //remove from the queues
+                        iterator.remove()
                     }
                 }
             }
-        }, 0, cleanupIntervalSeconds, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Allow the caller to initialize with their own settings. Should the OpenFileStateManager already be initialized
-     * a no-op will occur. No need for double-checked locking here
-     * 
-     * @param cleanupIntervalSeconds seconds before cleanup
-     * @param maxExpiry 
-     */
-    public static synchronized void init(final int cleanupIntervalSeconds, final int maxExpiry) {
-        if (manager == null) {
-            manager = new OpenFileStateManager(cleanupIntervalSeconds, maxExpiry);
-        } else {
-            // already initialized
-            LOGGER.warn("The OpenFileStateManager has already been initialised, potentially with its default settings. The following values were ignored: cleanUpInterval [{}], maxExpiry=[{}]", Integer.toString(cleanupIntervalSeconds), Integer.toString(maxExpiry));
         }
+    }, 0, cleanupIntervalSeconds.toLong(), TimeUnit.SECONDS)
 
-    }
+    @Throws(BookException::class)
+    fun getRawBackendState(metadata: BookMetaData): RawBackendState {
+        ensureNotShuttingDown()
 
-    /**
-     * Singleton instance method to return the one and only Open File State Manager
-     * @return the singleton
-     */
-    public static OpenFileStateManager instance() {
-        if (manager == null) {
-            synchronized (OpenFileStateManager.class) {
-                init(60, 60);
-            }
-        }
-        return manager;
-    }
-
-    public RawBackendState getRawBackendState(BookMetaData metadata) throws BookException {
-        ensureNotShuttingDown();
-
-        RawBackendState state = getInstance(metadata);
+        val state: RawBackendState? = getInstance(metadata)
         if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.getInitials());
-            return new RawBackendState(metadata);
+            LOGGER.trace("Initializing: {}", metadata.initials)
+            return RawBackendState(metadata)
         }
 
-        LOGGER.trace("Reusing: {}", metadata.getInitials());
-        return state;
+        LOGGER.trace("Reusing: {}", metadata.initials)
+        return state
     }
 
-    public RawFileBackendState getRawFileBackendState(BookMetaData metadata) throws BookException {
-        ensureNotShuttingDown();
+    @Throws(BookException::class)
+    fun getRawFileBackendState(metadata: BookMetaData): RawFileBackendState {
+        ensureNotShuttingDown()
 
-        RawFileBackendState state = getInstance(metadata);
+        val state: RawFileBackendState? = getInstance(metadata)
         if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.getInitials());
-            return new RawFileBackendState(metadata);
+            LOGGER.trace("Initializing: {}", metadata.initials)
+            return RawFileBackendState(metadata)
         }
 
-        LOGGER.trace("Reusing: {}", metadata.getInitials());
-        return state;
+        LOGGER.trace("Reusing: {}", metadata.initials)
+        return state
     }
 
-    public GenBookBackendState getGenBookBackendState(BookMetaData metadata) throws BookException {
-        ensureNotShuttingDown();
+    @Throws(BookException::class)
+    fun getGenBookBackendState(metadata: BookMetaData): GenBookBackendState {
+        ensureNotShuttingDown()
 
-        GenBookBackendState state = getInstance(metadata);
+        val state: GenBookBackendState? = getInstance(metadata)
         if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.getInitials());
-            return new GenBookBackendState(metadata);
+            LOGGER.trace("Initializing: {}", metadata.initials)
+            return GenBookBackendState(metadata)
         }
 
-        LOGGER.trace("Reusing: {}", metadata.getInitials());
-        return state;
+        LOGGER.trace("Reusing: {}", metadata.initials)
+        return state
     }
 
-    public RawLDBackendState getRawLDBackendState(BookMetaData metadata) throws BookException {
-        ensureNotShuttingDown();
+    @Throws(BookException::class)
+    fun getRawLDBackendState(metadata: BookMetaData): RawLDBackendState {
+        ensureNotShuttingDown()
 
-        RawLDBackendState state = getInstance(metadata);
+        val state: RawLDBackendState? = getInstance(metadata)
         if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.getInitials());
-            return new RawLDBackendState(metadata);
+            LOGGER.trace("Initializing: {}", metadata.initials)
+            return RawLDBackendState(metadata)
         }
 
-        LOGGER.trace("Reusing: {}", metadata.getInitials());
-        return state;
+        LOGGER.trace("Reusing: {}", metadata.initials)
+        return state
     }
 
-    public ZLDBackendState getZLDBackendState(BookMetaData metadata) throws BookException {
-        ensureNotShuttingDown();
+    @Throws(BookException::class)
+    fun getZLDBackendState(metadata: BookMetaData): ZLDBackendState {
+        ensureNotShuttingDown()
 
-        ZLDBackendState state = getInstance(metadata);
+        val state: ZLDBackendState? = getInstance(metadata)
         if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.getInitials());
-            return new ZLDBackendState(metadata);
+            LOGGER.trace("Initializing: {}", metadata.initials)
+            return ZLDBackendState(metadata)
         }
 
-        LOGGER.trace("Reusing: {}", metadata.getInitials());
-        return state;
+        LOGGER.trace("Reusing: {}", metadata.initials)
+        return state
     }
 
-    public ZVerseBackendState getZVerseBackendState(BookMetaData metadata, BlockType blockType) throws BookException {
-        ensureNotShuttingDown();
+    @Throws(BookException::class)
+    fun getZVerseBackendState(metadata: BookMetaData, blockType: BlockType): ZVerseBackendState {
+        ensureNotShuttingDown()
 
-        ZVerseBackendState state = getInstance(metadata);
+        val state: ZVerseBackendState? = getInstance(metadata)
         if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.getInitials());
-            return new ZVerseBackendState(metadata, blockType);
+            LOGGER.trace("Initializing: {}", metadata.initials)
+            return ZVerseBackendState(metadata, blockType)
         }
 
-        LOGGER.trace("Reusing: {}", metadata.getInitials());
-        return state;
+        LOGGER.trace("Reusing: {}", metadata.initials)
+        return state
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends OpenFileState> T getInstance(BookMetaData metadata) {
-        Queue<OpenFileState> availableStates = getQueueForMeta(metadata);
-        final T state = (T) availableStates.poll();
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : OpenFileState> getInstance(metadata: BookMetaData): T? {
+        val availableStates = getQueueForMeta(metadata)
+        val state = availableStates.poll() as T?
 
         //while not strictly necessary, the documentation suggests that iterating through the collection
         //gives you a snapshot at some point in time, though not necessarily consistent, so just in case this remains
         //in access of the iterator() functionality, we update the last access date to avoid it being destroyed while we
         //use it
         if (state != null) {
-            state.setLastAccess(System.currentTimeMillis());
+            state.setLastAccess(System.currentTimeMillis())
         }
-        return state;
+        return state
     }
 
-    private Queue<OpenFileState> getQueueForMeta(BookMetaData metadata) {
-        Queue<OpenFileState> availableStates = metaToStates.get(metadata);
+    private fun getQueueForMeta(metadata: BookMetaData): Queue<OpenFileState> {
+        var availableStates = metaToStates[metadata]
         if (availableStates == null) {
-            synchronized (OpenFileState.class) {
-                availableStates = new ConcurrentLinkedQueue<OpenFileState>();
-                metaToStates.put(metadata, availableStates);
+            synchronized(OpenFileState::class.java) {
+                availableStates = ConcurrentLinkedQueue()
+                metaToStates[metadata] = availableStates!!
             }
         }
-        return availableStates;
+        return availableStates!!
     }
 
-    public void release(OpenFileState fileState) {
+    fun release(fileState: OpenFileState?) {
         if (fileState == null) {
             // can't release anything. JSword has failed to open a file state,
             // and a finally block is trying to close this
-            return;
+            return
         }
 
-        fileState.setLastAccess(System.currentTimeMillis());
+        fileState.setLastAccess(System.currentTimeMillis())
 
         // instead of releasing, we add to our queue
-        BookMetaData bmd = fileState.getBookMetaData();
-        Queue<OpenFileState> queueForMeta = getQueueForMeta(bmd);
-        LOGGER.trace("Offering to releasing: {}", bmd.getInitials());
-        boolean offered = queueForMeta.offer(fileState);
+        val bmd = fileState.getBookMetaData()
+        val queueForMeta = getQueueForMeta(bmd)
+        LOGGER.trace("Offering to releasing: {}", bmd.initials)
+        val offered = queueForMeta.offer(fileState)
 
         // ignore if we couldn't offer to the queue
         if (!offered) {
-            LOGGER.trace("Released: {}", bmd.getInitials());
-            fileState.releaseResources();
+            LOGGER.trace("Released: {}", bmd.initials)
+            fileState.releaseResources()
         }
     }
 
     /**
      * Shuts down all open files
      */
-    public void shutDown() {
-        shuttingDown = true;
-        this.monitoringThread.cancel(true);
-        for (Queue<OpenFileState> e : metaToStates.values()) {
-            OpenFileState state = null;
-            while ((state = e.poll()) != null) {
-                state.releaseResources();
+    fun shutDown() {
+        shuttingDown = true
+        this.monitoringThread.cancel(true)
+        for (e in metaToStates.values) {
+            var state: OpenFileState? = null
+            while (e.poll().also { state = it } != null) {
+                state!!.releaseResources()
             }
         }
     }
 
-    private void ensureNotShuttingDown() throws BookException {
+    @Throws(BookException::class)
+    private fun ensureNotShuttingDown() {
         if (shuttingDown) {
-            throw new BookException("Unable to read book, application is shutting down.");
+            throw BookException("Unable to read book, application is shutting down.")
         }
     }
 
-    private final ScheduledFuture<?> monitoringThread;
-    private final Map<BookMetaData, Queue<OpenFileState>> metaToStates = new HashMap<BookMetaData, Queue<OpenFileState>>();
-    private volatile boolean shuttingDown;
+    companion object {
+        @Volatile
+        private var manager: OpenFileStateManager? = null
+        private val LOGGER: Logger = LoggerFactory.getLogger(OpenFileStateManager::class.java)
 
-    private static volatile OpenFileStateManager manager;
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenFileStateManager.class);
+        /**
+         * Allow the caller to initialize with their own settings. Should the OpenFileStateManager already be initialized
+         * a no-op will occur. No need for double-checked locking here
+         * 
+         * @param cleanupIntervalSeconds seconds before cleanup
+         * @param maxExpiry 
+         */
+        @JvmStatic
+        fun init(cleanupIntervalSeconds: Int, maxExpiry: Int) {
+            synchronized(OpenFileStateManager::class.java) {
+                if (manager == null) {
+                    manager = OpenFileStateManager(cleanupIntervalSeconds, maxExpiry)
+                } else {
+                    // already initialized
+                    LOGGER.warn("The OpenFileStateManager has already been initialised, potentially with its default settings. The following values were ignored: cleanUpInterval [{}], maxExpiry=[{}]", cleanupIntervalSeconds.toString(), maxExpiry.toString())
+                }
+            }
+        }
+
+        /**
+         * Singleton instance method to return the one and only Open File State Manager
+         * @return the singleton
+         */
+        @JvmStatic
+        fun instance(): OpenFileStateManager {
+            if (manager == null) {
+                synchronized(OpenFileStateManager::class.java) {
+                    init(60, 60)
+                }
+            }
+            return manager!!
+        }
+    }
 }

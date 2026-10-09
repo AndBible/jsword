@@ -17,12 +17,12 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.basic;
+package org.crosswire.jsword.book.basic
 
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookDriver;
-import org.crosswire.jsword.book.BookException;
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookDriver
+import org.crosswire.jsword.book.BookException
 
 /**
  * The AbstractBookDriver class implements some BibleDriver methods, making a
@@ -31,15 +31,14 @@ import org.crosswire.jsword.book.BookException;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public abstract class AbstractBookDriver implements BookDriver {
+abstract class AbstractBookDriver : BookDriver {
     /*
      * (non-Javadoc)
      * 
      * @see org.crosswire.jsword.book.BookDriver#isWritable()
      */
-    public boolean isWritable() {
-        return false;
-    }
+    override val isWritable: Boolean
+        get() = false
 
     /*
      * (non-Javadoc)
@@ -48,8 +47,9 @@ public abstract class AbstractBookDriver implements BookDriver {
      * org.crosswire.jsword.book.BookDriver#create(org.crosswire.jsword.book
      * .Book, org.crosswire.jsword.book.events.WorkListener)
      */
-    public Book create(Book source) throws BookException {
-        throw new BookException(JSOtherMsg.lookupText("This Book is read-only."));
+    @Throws(BookException::class)
+    override fun create(source: Book?): Book {
+        throw BookException(JSOtherMsg.lookupText("This Book is read-only."))
     }
 
     /*
@@ -59,19 +59,20 @@ public abstract class AbstractBookDriver implements BookDriver {
      * org.crosswire.jsword.book.BookDriver#isDeletable(org.crosswire.jsword
      * .book.Book)
      */
-    public boolean isDeletable(Book dead) {
-        return false;
+    override fun isDeletable(dead: Book): Boolean {
+        return false
     }
 
     /*
      * (non-Javadoc)
      * 
      * @see
-     * org.crosswire.jsword.book.BookDriver#delete(org.crosswire.jsword.book
-     * .Book)
+     * org.crosswire.jsword.book.BookDriver#delete(org.crosswire.jsword
+     * .book.Book)
      */
-    public void delete(Book dead) throws BookException {
-        throw new BookException(JSOtherMsg.lookupText("This Book is read-only."));
+    @Throws(BookException::class)
+    override fun delete(dead: Book) {
+        throw BookException(JSOtherMsg.lookupText("This Book is read-only."))
     }
 
     /*
@@ -79,8 +80,9 @@ public abstract class AbstractBookDriver implements BookDriver {
      * 
      * @see org.crosswire.jsword.book.BookProvider#getFirstBook()
      */
-    public Book getFirstBook() {
-        Book[] books = getBooks();
-        return books == null || books.length == 0 ? null : books[0];
-    }
+    override val firstBook: Book?
+        get() {
+            val books: Array<Book>? = getBooks()
+            return if (books == null || books.size == 0) null else books[0]
+        }
 }

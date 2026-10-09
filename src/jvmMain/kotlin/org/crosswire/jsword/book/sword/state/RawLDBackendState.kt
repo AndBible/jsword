@@ -17,33 +17,57 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.net.URI;
-
-import org.crosswire.common.util.FileUtil;
-import org.crosswire.common.util.IOUtil;
-import org.crosswire.common.util.Reporter;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.RawLDBackend;
-import org.crosswire.jsword.book.sword.SwordConstants;
-import org.crosswire.jsword.book.sword.SwordUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.IOUtil
+import org.crosswire.common.util.Reporter
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.RawLDBackend
+import org.crosswire.jsword.book.sword.SwordConstants
+import org.crosswire.jsword.book.sword.SwordUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
+import java.net.URI
 
 /**
- * State for {@link RawLDBackend}
+ * State for [RawLDBackend]
  * 
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class RawLDBackendState extends AbstractOpenFileState  {
+open class RawLDBackendState : AbstractOpenFileState {
+    /**
+     * The number of entries in the book.
+     */
+    open var size: Int = -1
+
+    /**
+     * The index file
+     */
+    private var idxFile: File? = null
+
+    /**
+     * The index random access file
+     */
+    private var idxRaf: RandomAccessFile? = null
+
+    /**
+     * The data file
+     */
+    private var datFile: File? = null
+
+    /**
+     * The data random access file
+     */
+    private var datRaf: RandomAccessFile? = null
+
     /**
      * This is default package access for forcing the use of the
      * OpenFileStateManager to manage the creation. Not doing so may result in
@@ -53,130 +77,94 @@ public class RawLDBackendState extends AbstractOpenFileState  {
      * 
      * @param bookMetaData the appropriate metadata for the book
      */
-    RawLDBackendState(BookMetaData bookMetaData) throws BookException {
-        super(bookMetaData);
-        URI path = null;
+    @Throws(BookException::class)
+    internal constructor(bookMetaData: BookMetaData) : super(bookMetaData) {
+        val path: URI
         try {
-            path = SwordUtil.getExpandedDataPath(bookMetaData);
-        } catch (BookException e) {
-            Reporter.informUser(this, e);
-            throw e;
+            path = SwordUtil.getExpandedDataPath(bookMetaData)
+        } catch (e: BookException) {
+            Reporter.informUser(this, e)
+            throw e
         }
 
         try {
-            idxFile = new File(path.getPath() + SwordConstants.EXTENSION_INDEX);
-            datFile = new File(path.getPath() + SwordConstants.EXTENSION_DATA);
+            val idx = File(path.path + SwordConstants.EXTENSION_INDEX)
+            idxFile = idx
+            val dat = File(path.path + SwordConstants.EXTENSION_DATA)
+            datFile = dat
 
-            if (!idxFile.canRead()) {
+            if (!idx.canRead()) {
                 // TRANSLATOR: Common error condition: The file could not be
                 // read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                Reporter.informUser(this, new BookException(JSMsg.gettext("Error reading {0}", idxFile.getAbsolutePath())));
+                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", idx.absolutePath)))
 
                 // As per previous behaviour, we continue with state half made, having informed the user of the error
-                return;
+                return
             }
 
-            if (!datFile.canRead()) {
+            if (!dat.canRead()) {
                 // Throwing exception, as if we can't read our data file, then we might as well give up
 
                 // TRANSLATOR: Common error condition: The file could not be
                 // read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                BookException prob = new BookException(JSMsg.gettext("Error reading {0}", datFile.getAbsolutePath()));
-                Reporter.informUser(this, prob);
-                throw prob;
+                val prob = BookException(JSMsg.gettext("Error reading {0}", dat.absolutePath))
+                Reporter.informUser(this, prob)
+                throw prob
             }
 
             // Open the files
-            idxRaf = new RandomAccessFile(idxFile, FileUtil.MODE_READ);
-            datRaf = new RandomAccessFile(datFile, FileUtil.MODE_READ);
-        } catch (IOException ex) {
+            idxRaf = RandomAccessFile(idx, FileUtil.MODE_READ)
+            datRaf = RandomAccessFile(dat, FileUtil.MODE_READ)
+        } catch (ex: IOException) {
             //failed to open the files, so close them now
-            IOUtil.close(idxRaf);
-            IOUtil.close(datRaf);
+            IOUtil.close(idxRaf)
+            IOUtil.close(datRaf)
 
-            LOGGER.error("failed to open files", ex);
-            idxRaf = null;
-            datRaf = null;
+            LOGGER.error("failed to open files", ex)
+            idxRaf = null
+            datRaf = null
             // TRANSLATOR: Common error condition: The file could not be read.
             // There can be many reasons.
             // {0} is a placeholder for the file.
-            throw new BookException(JSMsg.gettext("Error reading {0}", datFile.getAbsolutePath()), ex);
+            throw BookException(JSMsg.gettext("Error reading {0}", datFile!!.absolutePath), ex)
         }
     }
 
-    public void releaseResources() {
-        size = -1;
-        IOUtil.close(idxRaf);
-        IOUtil.close(datRaf);
-        idxRaf = null;
-        datRaf = null;
-    }
-
-    /**
-     * @return the size
-     */
-    public int getSize() {
-        return size;
+    override fun releaseResources() {
+        size = -1
+        IOUtil.close(idxRaf)
+        IOUtil.close(datRaf)
+        idxRaf = null
+        datRaf = null
     }
 
     /**
      * @return the idxFile
      */
-    public File getIdxFile() {
-        return idxFile;
+    open fun getIdxFile(): File? {
+        return idxFile
     }
 
     /**
      * @return the idxRaf
      */
-    public RandomAccessFile getIdxRaf() {
-        return idxRaf;
+    open fun getIdxRaf(): RandomAccessFile? {
+        return idxRaf
     }
 
     /**
      * @return the datRaf
      */
-    public RandomAccessFile getDatRaf() {
-        return datRaf;
+    open fun getDatRaf(): RandomAccessFile? {
+        return datRaf
     }
 
-    /**
-     * @param size
-     *            the size to set
-     */
-    public void setSize(int size) {
-        this.size = size;
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawLDBackendState::class.java)
     }
-
-    /**
-     * The number of entries in the book.
-     */
-    private int size = -1;
-
-    /**
-     * The index file
-     */
-    private File idxFile;
-
-    /**
-     * The index random access file
-     */
-    private RandomAccessFile idxRaf;
-
-    /**
-     * The data file
-     */
-    private File datFile;
-
-    /**
-     * The data random access file
-     */
-    private RandomAccessFile datRaf;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(RawLDBackendState.class);
 }

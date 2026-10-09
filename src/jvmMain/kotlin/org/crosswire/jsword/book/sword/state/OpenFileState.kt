@@ -17,11 +17,10 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.book.sword.state;
+package org.crosswire.jsword.book.sword.state
 
-import java.io.Closeable;
-
-import org.crosswire.jsword.book.BookMetaData;
+import org.crosswire.jsword.book.BookMetaData
+import java.io.Closeable
 
 /**
  * Marker interface for objects holding open files that should be freed up upon finishing
@@ -30,20 +29,20 @@ import org.crosswire.jsword.book.BookMetaData;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface OpenFileState extends Closeable {
+interface OpenFileState : Closeable {
 
-    BookMetaData getBookMetaData();
+    fun getBookMetaData(): BookMetaData
 
-    void releaseResources();
+    fun releaseResources()
 
     /**
      * @return latest access before releasing back to the pool
      */
-    long getLastAccess();
+    fun getLastAccess(): Long
 
     /**
      * Sets the last access time
      * @param lastAccess the time at which this instance was last accessed
      */
-    void setLastAccess(long lastAccess);
+    fun setLastAccess(lastAccess: Long)
 }
