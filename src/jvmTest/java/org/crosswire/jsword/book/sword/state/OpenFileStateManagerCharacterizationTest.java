@@ -21,6 +21,8 @@ package org.crosswire.jsword.book.sword.state;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.BookException;
@@ -46,6 +48,37 @@ public class OpenFileStateManagerCharacterizationTest {
         return book.getBookMetaData();
     }
 
+    /** Checks a state out of the manager. */
+    private interface Checkout<T extends OpenFileState> {
+        T get() throws BookException;
+    }
+
+    /**
+     * Checks states out until {@code target} comes back (the pool may already hold states released
+     * by earlier tests, which are served first because the pool is a FIFO queue). The other states
+     * seen on the way are not put back. Returns the states in the order they were served.
+     */
+    private static <T extends OpenFileState> List<T> checkoutUntil(Checkout<T> source, T target) throws BookException {
+        List<T> seen = new ArrayList<T>();
+        for (int i = 0; i < 500; i++) {
+            T state = source.get();
+            seen.add(state);
+            if (state == target) {
+                return seen;
+            }
+        }
+        Assert.fail("the released state was never served again");
+        return seen;
+    }
+
+    private static Checkout<ZVerseBackendState> zVerse(final OpenFileStateManager manager, final BookMetaData meta) {
+        return new Checkout<ZVerseBackendState>() {
+            public ZVerseBackendState get() throws BookException {
+                return manager.getZVerseBackendState(meta, BlockType.BLOCK_BOOK);
+            }
+        };
+    }
+
     @Test
     public void testInstanceIsSingleton() {
         Assert.assertSame(OpenFileStateManager.instance(), OpenFileStateManager.instance());
@@ -55,32 +88,31 @@ public class OpenFileStateManagerCharacterizationTest {
     public void testZVerseStateIsReusedAfterRelease() throws BookException {
         BookMetaData kjv = meta("KJV");
         OpenFileStateManager manager = OpenFileStateManager.instance();
+        Checkout<ZVerseBackendState> source = zVerse(manager, kjv);
 
-        ZVerseBackendState first = manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
+        ZVerseBackendState first = source.get();
         Assert.assertSame(kjv, first.getBookMetaData());
 
-        // while the first is checked out, the pool is empty: a distinct state is created
-        ZVerseBackendState second = manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
+        // while the first is checked out it cannot be served again: a distinct state is returned
+        ZVerseBackendState second = source.get();
         Assert.assertNotSame(first, second);
 
         manager.release(first);
         manager.release(second);
 
-        // the pool is a FIFO queue
-        Assert.assertSame(first, manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK));
-        Assert.assertSame(second, manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK));
+        // the pool is a FIFO queue: first was released first, so it is served first
+        List<ZVerseBackendState> seen = checkoutUntil(source, second);
+        Assert.assertTrue(seen.contains(first));
+        Assert.assertTrue(seen.indexOf(first) < seen.indexOf(second));
         manager.release(first);
         manager.release(second);
-        // drain so that other tests start from a known pool
-        manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
-        manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
     }
 
     @Test
     public void testReleaseAndReuseStampLastAccess() throws BookException {
         BookMetaData kjv = meta("KJV");
         OpenFileStateManager manager = OpenFileStateManager.instance();
-        ZVerseBackendState state = manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
+        ZVerseBackendState state = zVerse(manager, kjv).get();
 
         state.setLastAccess(0L);
         Assert.assertEquals(0L, state.getLastAccess());
@@ -94,8 +126,9 @@ public class OpenFileStateManagerCharacterizationTest {
         // checking the state out again refreshes the stamp as well
         state.setLastAccess(0L);
         long beforeReuse = System.currentTimeMillis();
-        Assert.assertSame(state, manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK));
+        checkoutUntil(zVerse(manager, kjv), state);
         Assert.assertTrue(state.getLastAccess() >= beforeReuse);
+        manager.release(state);
     }
 
     @Test
@@ -107,9 +140,10 @@ public class OpenFileStateManagerCharacterizationTest {
     public void testCloseReleasesBackToThePool() throws BookException {
         BookMetaData kjv = meta("KJV");
         OpenFileStateManager manager = OpenFileStateManager.instance();
-        ZVerseBackendState state = manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
+        ZVerseBackendState state = zVerse(manager, kjv).get();
         state.close();
-        Assert.assertSame(state, manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK));
+        checkoutUntil(zVerse(manager, kjv), state);
+        manager.release(state);
     }
 
     @Test
@@ -117,26 +151,34 @@ public class OpenFileStateManagerCharacterizationTest {
         BookMetaData kjv = meta("KJV");
         BookMetaData esv = meta("ESV2011");
         OpenFileStateManager manager = OpenFileStateManager.instance();
-        ZVerseBackendState kjvState = manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK);
+        ZVerseBackendState kjvState = zVerse(manager, kjv).get();
         manager.release(kjvState);
-        ZVerseBackendState esvState = manager.getZVerseBackendState(esv, BlockType.BLOCK_BOOK);
-        Assert.assertNotSame(kjvState, esvState);
-        Assert.assertSame(esv, esvState.getBookMetaData());
-        Assert.assertSame(kjvState, manager.getZVerseBackendState(kjv, BlockType.BLOCK_BOOK));
+
+        // the esv pool never serves a kjv state, however many are asked for
+        for (int i = 0; i < 20; i++) {
+            ZVerseBackendState esvState = zVerse(manager, esv).get();
+            Assert.assertNotSame(kjvState, esvState);
+            Assert.assertSame(esv, esvState.getBookMetaData());
+            esvState.releaseResources();
+        }
+        checkoutUntil(zVerse(manager, kjv), kjvState);
         manager.release(kjvState);
-        manager.release(esvState);
     }
 
     @Test
     public void testStrongsGreekRawLDStateIsReused() throws BookException {
-        BookMetaData strongs = meta("StrongsGreek");
+        final BookMetaData strongs = meta("StrongsGreek");
         Assert.assertEquals("RawLD", strongs.getProperty(SwordBookMetaData.KEY_MOD_DRV));
-        OpenFileStateManager manager = OpenFileStateManager.instance();
+        final OpenFileStateManager manager = OpenFileStateManager.instance();
 
         RawLDBackendState state = manager.getRawLDBackendState(strongs);
         Assert.assertSame(strongs, state.getBookMetaData());
         manager.release(state);
-        Assert.assertSame(state, manager.getRawLDBackendState(strongs));
+        checkoutUntil(new Checkout<RawLDBackendState>() {
+            public RawLDBackendState get() throws BookException {
+                return manager.getRawLDBackendState(strongs);
+            }
+        }, state);
         manager.release(state);
     }
 
@@ -144,12 +186,17 @@ public class OpenFileStateManagerCharacterizationTest {
     public void testGenBookStateIsReused() throws BookException {
         BookMetaData josephus = meta("Josephus");
         Assume.assumeTrue("RawGenBook".equals(josephus.getProperty(SwordBookMetaData.KEY_MOD_DRV)));
-        OpenFileStateManager manager = OpenFileStateManager.instance();
+        final OpenFileStateManager manager = OpenFileStateManager.instance();
 
+        final BookMetaData meta = josephus;
         GenBookBackendState state = manager.getGenBookBackendState(josephus);
         Assert.assertSame(josephus, state.getBookMetaData());
         manager.release(state);
-        Assert.assertSame(state, manager.getGenBookBackendState(josephus));
+        checkoutUntil(new Checkout<GenBookBackendState>() {
+            public GenBookBackendState get() throws BookException {
+                return manager.getGenBookBackendState(meta);
+            }
+        }, state);
         manager.release(state);
     }
 
