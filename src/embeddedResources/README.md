@@ -1,0 +1,1 @@
+This directory holds JSword resource files (properties, key lists, texts) that are embedded into Kotlin source by the `generateKswordResources` task in `build.gradle.kts` and read through `KswordResources` from common code. The files here are deliberately not on the JVM classpath; consumers must go through `KswordResources`.
