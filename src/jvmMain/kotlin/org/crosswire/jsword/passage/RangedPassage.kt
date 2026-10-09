@@ -17,17 +17,16 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.util.NoSuchElementException
+import java.util.TreeSet
 
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.versification.Versification
 
 /**
  * A Passage that is implemented using a TreeSet of VerseRanges. The attributes
@@ -37,7 +36,7 @@ import org.crosswire.jsword.versification.Versification;
  * <li>Fast getName()
  * <li>Slow manipulation
  * </ul>
- * 
+ *
  * <p>
  * When to normalize()? This is a slow process, but one that is perhaps done
  * bit-by-bit instead of killing everything just to do getName(). The options
@@ -50,21 +49,20 @@ import org.crosswire.jsword.versification.Versification;
  * </ul>
  * I'm not sure which will be best. So I'm starting with 1 and optimizing later
  * ... Maybe the best is to allow the user to choose?
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class RangedPassage extends AbstractPassage {
+open class RangedPassage : AbstractPassage {
     /**
      * Create an empty RangedPassage. There are no ctors from either Verse or
      * VerseRange so you need to do new <code>RangedPassage().add(...);</code>
-     * 
+     *
      * @param refSystem
      *            The Versification to which this Passage belongs.
      */
-    public RangedPassage(Versification refSystem) {
-        super(refSystem);
-        store = new TreeSet<VerseRange>();
+    constructor(refSystem: Versification?) : super(refSystem) {
+        store = TreeSet<VerseRange>()
     }
 
     /**
@@ -76,7 +74,7 @@ public class RangedPassage extends AbstractPassage {
      * of: <code>v1.getName().equals(v2.getName())</code> could be false.
      * However since getName() is standardized this will be true. We don't need
      * to worry about thread safety in a ctor since we don't exist yet.
-     * 
+     *
      * @param v11n
      *            The Versification to which this Passage belongs.
      * @param refs
@@ -86,204 +84,196 @@ public class RangedPassage extends AbstractPassage {
      * @throws NoSuchVerseException
      *             if refs is invalid
      */
-    protected RangedPassage(Versification v11n, String refs, Key basis) throws NoSuchVerseException {
-        super(v11n, refs);
-
-        store = new TreeSet<VerseRange>();
-        addVerses(refs, basis);
-        normalize();
+    // was protected: PassageType (same package) needs it, and Kotlin protected has no package access
+    @Throws(NoSuchVerseException::class)
+    internal constructor(v11n: Versification?, refs: String?, basis: Key?) : super(v11n, refs) {
+        store = TreeSet<VerseRange>()
+        addVerses(refs, basis)
+        normalize()
     }
 
-    protected RangedPassage(Versification v11n, String refs) throws NoSuchVerseException {
-        this(v11n, refs, null);
-    }
+    // was protected: see above
+    @Throws(NoSuchVerseException::class)
+    internal constructor(v11n: Versification?, refs: String?) : this(v11n, refs, null)
 
-    @Override
-    public RangedPassage clone() {
+    override fun clone(): RangedPassage {
         // This gets us a shallow copy
-        RangedPassage copy = (RangedPassage) super.clone();
+        val copy = super.clone() as RangedPassage
 
         // I want to just do the following
         // copy.store = (SortedSet) store.clone();
         // However SortedSet is not Cloneable so I can't
         // Watch out for this, I'm not sure if it breaks anything.
-        copy.store = new TreeSet<VerseRange>();
-        copy.store.addAll(store);
+        copy.store = TreeSet<VerseRange>()
+        copy.store.addAll(store)
 
-        return copy;
+        return copy
     }
 
-    @Override
-    public int countRanges(RestrictionType restrict) {
-        if (restrict.equals(RestrictionType.NONE)) {
-            return store.size();
+    override fun countRanges(restrict: RestrictionType?): Int {
+        if (restrict!!.equals(RestrictionType.NONE)) {
+            return store.size
         }
 
-        return super.countRanges(restrict);
+        return super.countRanges(restrict)
     }
 
-    @Override
-    public int countVerses() {
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
-        int count = 0;
+    override fun countVerses(): Int {
+        val it = rangeIterator(RestrictionType.NONE)
+        var count = 0
 
         while (it.hasNext()) {
-            VerseRange range = it.next();
-            count += range.getCardinality();
+            val range = it.next()
+            count += range.getCardinality()
         }
 
-        return count;
+        return count
     }
 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
-    public Iterator<Key> iterator() {
-        return new VerseIterator(getVersification(), rangeIterator(RestrictionType.NONE));
+    override fun iterator(): MutableIterator<Key> {
+        return VerseIterator(versification, rangeIterator(RestrictionType.NONE))
     }
 
-    @Override
-    public final Iterator<VerseRange> rangeIterator(RestrictionType restrict) {
-        if (restrict.equals(RestrictionType.NONE)) {
-            return store.iterator();
+    final override fun rangeIterator(restrict: RestrictionType?): MutableIterator<VerseRange> {
+        if (restrict!!.equals(RestrictionType.NONE)) {
+            return store.iterator()
         }
 
-        return new VerseRangeIterator(store.iterator(), restrict);
+        return VerseRangeIterator(store.iterator(), restrict)
     }
 
-    @Override
-    public boolean isEmpty() {
-        return store.isEmpty();
+    override fun isEmpty(): Boolean {
+        return store.isEmpty()
     }
 
-    @Override
-    public boolean contains(Key obj) {
+    override fun contains(that: Key?): Boolean {
         // Even for the contains(VerseRange) case, the simple
         // 'return store.contains(that);' will not work because
         // VerseRanges can contain others but not be equal to them.
 
-        VerseRange thatRange = toVerseRange(getVersification(), obj);
+        val thatRange = toVerseRange(versification, that)
 
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
+        val it = rangeIterator(RestrictionType.NONE)
         while (it.hasNext()) {
-            VerseRange thisRange = it.next();
+            val thisRange = it.next()
             if (thisRange.contains(thatRange)) {
-                return true;
+                return true
             }
         }
 
         // If it is not a Verse or a VerseRange then it's not here,
         // this also copes with the searches failing.
-        return false;
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#add(org.crosswire.jsword.passage.Key)
      */
-    public void add(Key obj) {
-        optimizeWrites();
+    override fun add(that: Key?) {
+        optimizeWrites()
 
-        VerseRange thatRange = toVerseRange(getVersification(), obj);
-        store.add(thatRange);
+        val thatRange = toVerseRange(versification, that)
+        store.add(thatRange)
 
-        normalize();
+        normalize()
 
         // we do an extra check here because the cost of calculating the
         // params is non-zero an may be wasted
         if (suppressEvents == 0) {
-            fireIntervalAdded(this, thatRange.getStart(), thatRange.getEnd());
+            fireIntervalAdded(this, thatRange.start, thatRange.end)
         }
     }
 
-    @Override
-    public void clear() {
-        optimizeWrites();
+    override fun clear() {
+        optimizeWrites()
 
-        store.clear();
-        fireIntervalRemoved(this, null, null);
+        store.clear()
+        fireIntervalRemoved(this, null, null)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#remove(org.crosswire.jsword.passage.Key)
      */
-    public void remove(Key obj) {
-        optimizeWrites();
+    override fun remove(that: Key?) {
+        optimizeWrites()
 
-        VerseRange thatRange = toVerseRange(getVersification(), obj);
-        boolean removed = false;
+        val thatRange = toVerseRange(versification, that)
+        var removed = false
 
         // This allows us to modify store which iterating through a copy
-        Set<Key> newStore = new TreeSet<Key>();
-        newStore.addAll(store);
+        val newStore: MutableSet<Key> = TreeSet<Key>()
+        newStore.addAll(store)
 
         // go through all the VerseRanges
-        for (Key aKey : newStore) {
+        for (aKey in newStore) {
             // if this range touches the range to be removed ...
-            VerseRange thisRange = (VerseRange) aKey;
+            val thisRange = aKey as VerseRange
             if (thisRange.overlaps(thatRange)) {
                 // ... remove it and add the remainder
-                store.remove(thisRange);
-                VerseRange[] vra = VerseRange.remainder(thisRange, thatRange);
+                store.remove(thisRange)
+                val vra = VerseRange.remainder(thisRange, thatRange)
 
-                for (int i = 0; i < vra.length; i++) {
-                    store.add(vra[i]);
+                for (i in 0 until vra.size) {
+                    store.add(vra[i])
                 }
 
-                removed = true;
+                removed = true
             }
         }
 
         if (removed) {
-            normalize();
+            normalize()
         }
 
         // we do an extra check here because the cost of calculating the
         // params is non-zero an may be wasted
         if (suppressEvents == 0) {
-            fireIntervalRemoved(this, thatRange.getStart(), thatRange.getEnd());
+            fireIntervalRemoved(this, thatRange.start, thatRange.end)
         }
     }
 
-    @Override
-    public void retainAll(Key key) {
-        optimizeWrites();
+    override fun retainAll(key: Key?) {
+        optimizeWrites()
 
-        Set<VerseRange> newStore = new TreeSet<VerseRange>();
+        val newStore: MutableSet<VerseRange> = TreeSet<VerseRange>()
 
-        if (key instanceof RangedPassage) {
-            Iterator<VerseRange> thatIter = ((RangedPassage) key).rangeIterator(RestrictionType.CHAPTER);
+        if (key is RangedPassage) {
+            val thatIter = key.rangeIterator(RestrictionType.CHAPTER)
             while (thatIter.hasNext()) {
-                VerseRange thatRange = thatIter.next();
+                val thatRange = thatIter.next()
 
                 // go through all the VerseRanges
-                Iterator<VerseRange> thisIter = rangeIterator(RestrictionType.NONE);
+                val thisIter = rangeIterator(RestrictionType.NONE)
                 while (thisIter.hasNext()) {
                     // if this range touches the range to be removed ...
-                    VerseRange thisRange = thisIter.next();
+                    val thisRange = thisIter.next()
                     if (thisRange.overlaps(thatRange)) {
                         // ... remove it and add the remainder
-                        VerseRange interstect = VerseRange.intersection(thisRange, thatRange);
+                        val interstect = VerseRange.intersection(thisRange, thatRange)
                         if (interstect != null) {
-                            newStore.add(interstect);
+                            newStore.add(interstect)
                         }
                     }
                 }
             }
         } else {
-            Iterator<Key> thatIter = key.iterator();
+            val thatIter = key!!.iterator()
             while (thatIter.hasNext()) {
-                VerseRange thatRange = toVerseRange(getVersification(), thatIter.next());
+                val thatRange = toVerseRange(versification, thatIter.next())
 
                 // go through all the VerseRanges
-                Iterator<VerseRange> thisIter = rangeIterator(RestrictionType.NONE);
+                val thisIter = rangeIterator(RestrictionType.NONE)
                 while (thisIter.hasNext()) {
                     // if this range touches the range to be removed ...
-                    VerseRange thisRange = thisIter.next();
+                    val thisRange = thisIter.next()
                     if (thisRange.overlaps(thatRange)) {
                         // ... remove it and add the remainder
-                        VerseRange interstect = VerseRange.intersection(thisRange, thatRange);
+                        val interstect = VerseRange.intersection(thisRange, thatRange)
                         if (interstect != null) {
-                            newStore.add(interstect);
+                            newStore.add(interstect)
                         }
                     }
                 }
@@ -291,10 +281,10 @@ public class RangedPassage extends AbstractPassage {
         }
 
 
-        store = newStore;
-        normalize();
+        store = newStore
+        normalize()
 
-        fireIntervalRemoved(this, null, null);
+        fireIntervalRemoved(this, null, null)
     }
 
     /**
@@ -305,34 +295,34 @@ public class RangedPassage extends AbstractPassage {
      * however this is safe, and I don't think there is a cost associated with a
      * double synchronize. (?)
      */
-    @Override
-    /* protected */final void normalize() {
+    /* protected */ // was package-private
+    internal final override fun normalize() {
         if (skipNormalization != 0) {
-            return;
+            return
         }
 
-        VerseRange last = null;
-        VerseRange next = null;
-        Set<VerseRange> newStore = new TreeSet<VerseRange>();
+        var last: VerseRange? = null
+        var next: VerseRange? = null
+        val newStore: MutableSet<VerseRange> = TreeSet<VerseRange>()
 
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
+        val it = rangeIterator(RestrictionType.NONE)
         while (it.hasNext()) {
-            next = it.next();
+            next = it.next()
 
             if (last != null && next.adjacentTo(last)) {
-                VerseRange merge = new VerseRange(last, next);
+                val merge = VerseRange(last, next)
 
-                newStore.remove(last);
-                newStore.add(merge);
+                newStore.remove(last)
+                newStore.add(merge)
 
-                last = merge;
+                last = merge
             } else {
-                newStore.add(next);
-                last = next;
+                newStore.add(next)
+                last = next
             }
         }
 
-        store = newStore;
+        store = newStore
     }
 
     /**
@@ -344,147 +334,151 @@ public class RangedPassage extends AbstractPassage {
      * synchronization. Everything is final so to save the proxying performace
      * hit.
      */
-    private static final class VerseIterator implements Iterator<Key> {
+    private class VerseIterator
+    /**
+     * Create a basic iterator that is a proxy for the RangedPassage
+     * Passages iterator, with remove() overridden.
+     * @param v11n
+     *            the versification to which this reference pertains
+     * @param it
+     */
+    constructor(v11n: Versification, it: MutableIterator<VerseRange>) : MutableIterator<Key> {
         /**
-         * Create a basic iterator that is a proxy for the RangedPassage
-         * Passages iterator, with remove() overridden.
-         * @param v11n
-         *            the versification to which this reference pertains
-         * @param it 
+         * The Iterator that we are proxying to
          */
-        protected VerseIterator(Versification v11n, Iterator<VerseRange> it) {
-            Set<Key> temp = new TreeSet<Key>();
+        private var real: MutableIterator<Key>
+
+        init {
+            val temp: MutableSet<Key> = TreeSet<Key>()
 
             while (it.hasNext()) {
-                VerseRange range = it.next();
-                int start = range.getStart().getOrdinal();
-                int end = range.getCardinality();
+                val range = it.next()
+                val start = range.start.ordinal
+                val end = range.getCardinality()
 
-                for (int i = 0; i < end; i++) {
-                    temp.add(v11n.decodeOrdinal(start + i));
+                for (i in 0 until end) {
+                    temp.add(v11n.decodeOrdinal(start + i))
                 }
             }
 
-            real = temp.iterator();
+            real = temp.iterator()
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
-        public boolean hasNext() {
-            return real.hasNext();
+        override fun hasNext(): Boolean {
+            return real.hasNext()
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#next()
          */
-        public Key next() throws NoSuchElementException {
-            return real.next();
+        @Throws(NoSuchElementException::class)
+        override fun next(): Key {
+            return real.next()
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
-        public void remove() throws UnsupportedOperationException {
-            throw new UnsupportedOperationException();
+        @Throws(UnsupportedOperationException::class)
+        override fun remove() {
+            throw UnsupportedOperationException()
         }
-
-        /**
-         * The Iterator that we are proxying to
-         */
-        private Iterator<Key> real;
     }
 
     /**
      * Loop over the VerseRanges and check that they do not require digging into
      */
-    private static final class VerseRangeIterator implements Iterator<VerseRange> {
+    private class VerseRangeIterator
+    /**
+     * Simple ctor
+     * @param it
+     * @param restrict
+     */
+    constructor(it: MutableIterator<VerseRange>, restrict: RestrictionType?) : MutableIterator<VerseRange> {
         /**
-         * Simple ctor
-         * @param it 
-         * @param restrict 
+         * What are we going to reply with next?
          */
-        protected VerseRangeIterator(Iterator<VerseRange> it, RestrictionType restrict) {
-            this.restrict = restrict;
-            this.real = it;
+        private var next: VerseRange? = null
+
+        /**
+         * Where do we break ranges
+         */
+        private var restrict: RestrictionType?
+
+        /**
+         * Where we read our base ranges from
+         */
+        private var real: MutableIterator<VerseRange>
+
+        init {
+            this.restrict = restrict
+            this.real = it
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
-        public void remove() {
-            throw new UnsupportedOperationException();
+        override fun remove() {
+            throw UnsupportedOperationException()
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
-        public boolean hasNext() {
-            return next != null || real.hasNext();
+        override fun hasNext(): Boolean {
+            return next != null || real.hasNext()
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#next()
          */
-        public VerseRange next() {
+        override fun next(): VerseRange {
             if (next == null) {
-                next = real.next();
+                next = real.next()
             }
 
             if (next == null) {
-                throw new NoSuchElementException();
+                throw NoSuchElementException()
             }
 
             // So we know what is broadly next, however the range might need
             // splitting according to restrict
-            if (restrict.isSameScope(next.getVersification(), next.getStart(), next.getEnd())) {
-                return replyNext();
+            if (restrict!!.isSameScope(next!!.versification, next!!.start, next!!.end)) {
+                return replyNext()
             }
-            return splitNext();
+            return splitNext()
         }
 
         /**
          * The next object is correct, use that one
          */
-        private VerseRange replyNext() {
-            VerseRange reply = next;
-            next = null;
-            return reply;
+        private fun replyNext(): VerseRange {
+            val reply = next
+            next = null
+            return reply!!
         }
 
         /**
          * The next object is too big, so cut it up
          */
-        private VerseRange splitNext() {
-            Iterator<VerseRange> chop = next.rangeIterator(restrict);
-            VerseRange first = chop.next();
-            VerseRange[] ranges = VerseRange.remainder(next, first);
+        private fun splitNext(): VerseRange {
+            val chop = next!!.rangeIterator(restrict)
+            val first = chop.next()
+            val ranges = VerseRange.remainder(next, first)
 
-            assert ranges.length == 1;
-            next = ranges[0];
+            jswordAssert(ranges.size == 1) { "" }
+            next = ranges[0]
 
-            return first;
+            return first
         }
-
-        /**
-         * What are we going to reply with next?
-         */
-        private VerseRange next;
-
-        /**
-         * Where do we break ranges
-         */
-        private RestrictionType restrict;
-
-        /**
-         * Where we read our base ranges from
-         */
-        private Iterator<VerseRange> real;
     }
 
     /**
      * Call the support mechanism in AbstractPassage
-     * 
+     *
      * @param out
      *            The stream to write our state to
      * @serialData Write the ordinal number of this verse
@@ -492,15 +486,16 @@ public class RangedPassage extends AbstractPassage {
      *             if the read fails
      * @see AbstractPassage#writeObjectSupport(ObjectOutputStream)
      */
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
+    @Throws(IOException::class)
+    private fun writeObject(out: ObjectOutputStream) {
+        out.defaultWriteObject()
 
-        writeObjectSupport(out);
+        writeObjectSupport(out)
     }
 
     /**
      * Call the support mechanism in AbstractPassage
-     * 
+     *
      * @param in
      *            The stream to read our state from
      * @serialData Write the ordinal number of this verse
@@ -510,23 +505,27 @@ public class RangedPassage extends AbstractPassage {
      *             If the read data is incorrect
      * @see AbstractPassage#readObjectSupport(ObjectInputStream)
      */
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        optimizeWrites();
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`in`: ObjectInputStream) {
+        optimizeWrites()
 
-        store = new TreeSet<VerseRange>();
+        store = TreeSet<VerseRange>()
 
-        in.defaultReadObject();
+        `in`.defaultReadObject()
 
-        readObjectSupport(in);
+        readObjectSupport(`in`)
     }
-
-    /**
-     * To make serialization work across new versions
-     */
-    private static final long serialVersionUID = 955115811339960826L;
 
     /**
      * The place the real data is stored
      */
-    private transient Set<VerseRange> store;
+    @Transient
+    private var store: MutableSet<VerseRange>
+
+    private companion object {
+        /**
+         * To make serialization work across new versions
+         */
+        private const val serialVersionUID: Long = 955115811339960826L
+    }
 }

@@ -17,33 +17,30 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.Iterator;
+import java.io.IOException
+import java.io.ObjectInputStream
 
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.jsword.versification.Versification
 
 /**
  * A RocketPassage is a bit and heavy implementation of Passage that goes fairly
  * quickly once let of the leash. It manages its speed by creating contained
  * instances of DistinctPassage and RangedPassage and selects the fastest
  * implementation for each of its methods from the 3 available.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class RocketPassage extends BitwisePassage {
+open class RocketPassage : BitwisePassage {
     /**
      * Create a new RocketPassage
-     * 
+     *
      * @param v11n
      *            The Versification to which this Passage belongs.
      */
-    public RocketPassage(Versification v11n) {
-        super(v11n);
-    }
+    constructor(v11n: Versification?) : super(v11n)
 
     /**
      * Create a Verse from a human readable string. The opposite of getName(),
@@ -54,8 +51,8 @@ public class RocketPassage extends BitwisePassage {
      * of: <code>v1.getName().equals(v2.getName())</code> could be false.
      * However since getName() is standardized this will be true. We don't need
      * to worry about thread safety in a ctor since we don't exist yet.
-     * 
-     * 
+     *
+     *
      * @param v11n
      *            The Versification to which this Passage belongs.
      * @param refs
@@ -65,9 +62,9 @@ public class RocketPassage extends BitwisePassage {
      * @throws NoSuchVerseException
      *           if refs is invalid
      */
-    protected RocketPassage(Versification v11n, String refs, Key basis) throws NoSuchVerseException {
-        super(v11n, refs, basis);
-    }
+    // was protected: PassageType (same package) needs it, and Kotlin protected has no package access
+    @Throws(NoSuchVerseException::class)
+    internal constructor(v11n: Versification?, refs: String?, basis: Key?) : super(v11n, refs, basis)
 
     /**
      * Create a Verse from a human readable string. The opposite of getName(),
@@ -78,8 +75,8 @@ public class RocketPassage extends BitwisePassage {
      * of: <code>v1.getName().equals(v2.getName())</code> could be false.
      * However since getName() is standardized this will be true. We don't need
      * to worry about thread safety in a ctor since we don't exist yet.
-     * 
-     * 
+     *
+     *
      * @param v11n
      *            The Versification to which this Passage belongs.
      * @param refs
@@ -87,18 +84,17 @@ public class RocketPassage extends BitwisePassage {
      * @throws NoSuchVerseException
      *            if refs is invalid
      */
-    protected RocketPassage(Versification v11n, String refs) throws NoSuchVerseException {
-        this(v11n, refs, null);
-    }
+    // was protected: see above
+    @Throws(NoSuchVerseException::class)
+    internal constructor(v11n: Versification?, refs: String?) : this(v11n, refs, null)
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.AbstractPassage#optimizeReads()
      */
-    @Override
-    public void optimizeReads() {
-        raiseEventSuppresion();
+    override fun optimizeReads() {
+        raiseEventSuppresion()
 
         // We have to create the cached versions of these separately
         // so that the calculations made by addAll(this) can
@@ -106,165 +102,166 @@ public class RocketPassage extends BitwisePassage {
         // danger of them being optimized before the optimizations
         // are ready for use.
 
-        DistinctPassage dtemp = new DistinctPassage(getVersification());
-        dtemp.raiseEventSuppresion();
-        dtemp.addAll(this);
-        dtemp.lowerEventSuppressionAndTest();
+        val dtemp = DistinctPassage(versification)
+        dtemp.raiseEventSuppresion()
+        dtemp.addAll(this)
+        dtemp.lowerEventSuppressionAndTest()
 
-        RangedPassage rtemp = new RangedPassage(getVersification());
-        rtemp.raiseEventSuppresion();
-        rtemp.addAll(this);
-        rtemp.lowerEventSuppressionAndTest();
+        val rtemp = RangedPassage(versification)
+        rtemp.raiseEventSuppresion()
+        rtemp.addAll(this)
+        rtemp.lowerEventSuppressionAndTest()
 
-        distinct = dtemp;
-        ranged = rtemp;
+        distinct = dtemp
+        ranged = rtemp
 
         // This is just an optimization so we dont need to fire any events
-        lowerEventSuppressionAndTest();
+        lowerEventSuppressionAndTest()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.AbstractPassage#optimizeWrites()
      */
-    @Override
-    protected void optimizeWrites() {
-        distinct = null;
-        ranged = null;
+    override fun optimizeWrites() {
+        distinct = null
+        ranged = null
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#countRanges(int)
      */
-    @Override
-    public int countRanges(RestrictionType restrict) {
+    override fun countRanges(restrict: RestrictionType?): Int {
+        val ranged = ranged
         if (ranged != null) {
-            return ranged.countRanges(restrict);
+            return ranged.countRanges(restrict)
         }
 
-        return super.countRanges(restrict);
+        return super.countRanges(restrict)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#countVerses()
      */
-    @Override
-    public int countVerses() {
+    override fun countVerses(): Int {
+        val distinct = distinct
         if (distinct != null) {
-            return distinct.countVerses();
+            return distinct.countVerses()
         }
 
-        return super.countVerses();
+        return super.countVerses()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Iterable#iterator()
      */
-    @Override
-    public Iterator<Key> iterator() {
+    override fun iterator(): MutableIterator<Key> {
+        val distinct = distinct
         if (distinct != null) {
-            return distinct.iterator();
+            return distinct.iterator()
         }
 
-        return super.iterator();
+        return super.iterator()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#rangeIterator(int)
      */
-    @Override
-    public Iterator<VerseRange> rangeIterator(RestrictionType restrict) {
+    override fun rangeIterator(restrict: RestrictionType?): MutableIterator<VerseRange> {
+        val ranged = ranged
         if (ranged != null) {
-            return ranged.rangeIterator(restrict);
+            return ranged.rangeIterator(restrict)
         }
 
-        return super.rangeIterator(restrict);
+        return super.rangeIterator(restrict)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#isEmpty()
      */
-    @Override
-    public boolean isEmpty() {
+    override fun isEmpty(): Boolean {
+        val distinct = distinct
         if (distinct != null) {
-            return distinct.isEmpty();
+            return distinct.isEmpty()
         }
 
-        return super.isEmpty();
+        return super.isEmpty()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#getVerseAt(int)
      */
-    @Override
-    public Verse getVerseAt(int offset) throws ArrayIndexOutOfBoundsException {
+    @Throws(ArrayIndexOutOfBoundsException::class)
+    override fun getVerseAt(offset: Int): Verse {
+        val distinct = distinct
         if (distinct != null) {
-            return distinct.getVerseAt(offset);
+            return distinct.getVerseAt(offset)
         }
 
-        return super.getVerseAt(offset);
+        return super.getVerseAt(offset)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#getVerseRangeAt(int, int)
      */
-    @Override
-    public VerseRange getRangeAt(int offset, RestrictionType restrict) throws ArrayIndexOutOfBoundsException {
+    @Throws(ArrayIndexOutOfBoundsException::class)
+    override fun getRangeAt(offset: Int, restrict: RestrictionType?): VerseRange {
+        val ranged = ranged
         if (ranged != null) {
-            return ranged.getRangeAt(offset, restrict);
+            return ranged.getRangeAt(offset, restrict)
         }
 
-        return super.getRangeAt(offset, restrict);
+        return super.getRangeAt(offset, restrict)
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.crosswire.jsword.passage.Passage#booksInPassage()
      */
-    @Override
-    public int booksInPassage() {
+    override fun booksInPassage(): Int {
+        val distinct = distinct
         if (distinct != null) {
-            return distinct.booksInPassage();
+            return distinct.booksInPassage()
         }
 
-        return super.booksInPassage();
+        return super.booksInPassage()
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.crosswire.jsword.passage.Passage#containsAll(org.crosswire.jsword
      * .passage.Passage)
      */
-    @Override
-    public boolean containsAll(Passage that) {
+    override fun containsAll(that: Passage?): Boolean {
+        val ranged = ranged
         if (ranged != null) {
-            return ranged.containsAll(that);
+            return ranged.containsAll(that)
         }
 
-        return super.containsAll(that);
+        return super.containsAll(that)
     }
 
     /**
      * Serialization support
-     * 
+     *
      * @param is
      *            The stream to read our state from
      * @throws IOException
@@ -272,23 +269,28 @@ public class RocketPassage extends BitwisePassage {
      * @throws ClassNotFoundException
      *             If the read data is incorrect
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
-        optimizeWrites();
-        is.defaultReadObject();
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
+        optimizeWrites()
+        `is`.defaultReadObject()
     }
 
     /**
      * The contained DistinctPassage
      */
-    private transient DistinctPassage distinct;
+    @Transient
+    private var distinct: DistinctPassage? = null
 
     /**
      * The contained RangedPassage
      */
-    private transient RangedPassage ranged;
+    @Transient
+    private var ranged: RangedPassage? = null
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 3258125864771401268L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID: Long = 3258125864771401268L
+    }
 }

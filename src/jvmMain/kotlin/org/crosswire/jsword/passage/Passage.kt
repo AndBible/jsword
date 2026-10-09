@@ -17,14 +17,110 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+/**
+ * <p>
+ *   The core responsibility of the passage package is to store and collate
+ *   information about the structure of the Bible - The most important classes are
+ *   <code>Passage</code>, <code>PassageTally</code> and <code>Strongs</code>. A
+ *   <code>Passage</code> stores lists of verses, for example
+ *   &quot;<em>Gen 1:1-5, 10</em>&quot;. <code>PassageTally</code> is similar but
+ *   stores verses ordered by a tally against each verse. A <code>Strongs</code>
+ *   represents a Greek or Hebrew word as categorized by James Strong.
+ * </p>
+ *
+ *
+ * <h1>Passage</h1>
+ * <p>
+ *   A <code>Passage</code> is modeled after the JDK 2.0 <code>Collections</code>
+ *   interface - so all the usual <code>add()</code>, <code>remove()</code> type
+ *   actions are available. (A <code>PassageCollection</code> proxy class is
+ *   available in order to treat a <code>Passage</code> exactly like a
+ *   <code>Collection</code>)
+ * </p>
+ *
+ * <p>In addition to this a <code>Passage</code> will do:
+ * <ul>
+ *   <li>List blurring (for find X within 5 verses of Y type requests)</li>
+ *   <li>
+ *     List change notification, so you can register to receive notification of
+ *     changes to a <code>Passage</code>. This will be of most use with a
+ *     multi-threaded search engine.
+ *   </li>
+ *   <li>
+ *     An understanding of VerseRanges (see below) for range counting and iteration
+ *     (in addition to Verse counting etc)
+ *   </li>
+ * </ul>
+ *
+ * <p>
+ *   The <code>Passage</code> interface uses <code>Verse</code> and
+ *   <code>VerseRange</code> in many of its methods. A <code>Verse</code> is
+ *   obvious - a single Bible verse e.g. &quot;<em>Exo 2:4</em>&quot;, or
+ *   &quot;<em>Jude 4</em>&quot;. A <code>VerseRange</code> has a start Verse and
+ *   an end Verse e.g. &quot;<em>Exo 3:5-7</em>&quot;, or
+ *   &quot;<em>Mat 25:1-Mar 2:4</em>&quot;.
+ * </p>
+ *
+ * <p>
+ *   <code>Verse</code> and <code>VerseRange</code> have a superclass interface of
+ *   <code>VerseBase</code>, and this interface is collected and sorted by
+ *   <code>Passage</code> .So an example <code>Passage</code> is
+ *   &quot;<em>Exo 2:4, 3:5-7, Mat 25:1-Mar 2:4, Jude 4</em>&quot;.
+ * </p>
+ *
+ * <p>
+ *   The <code>Passage</code> interface is implemented by 3 concrete classes -
+ *   <code>DistinctPassage</code> is a simple sorted collection of
+ *   <code>Verse</code>s, <code>RangedPassage</code> is a sorted collection of
+ *   <code>VerseRange</code>s, and <code>BitwisePassage</code> uses an array -
+ *   essentially <code>boolean[31104]</code> to specify whether a verse is a member
+ *   of the <code>Passage</code>. Obviously each of these implementations has
+ *   different strengths, which the user should not need to be bothered with. So
+ *   the <code>PassageFactory</code> class is responsible for creating
+ *   <code>Passages</code> of a suitable type.
+ * </p>
+ *
+ * <h2>PassageTally</h2>
+ *
+ * <p>
+ *   The <code>PassageTally</code> class is-a to <code>Passage</code> however it's
+ *   job is to store a rank to a <code>Verse</code>. This is for a best-match type
+ *   application - &quot;find the verse that best matches these words&quot;. It is
+ *   the intent to marry this with a Thesarus interface, because a gripe with the
+ *   OLB is that I search for &quot;God &amp; loves &amp; world&quot; and expect to
+ *   find John 3:16, but the search fails because John 3:16 uses the word
+ *   &quot;loved&quot; and not &quot;loves&quot;.
+ * </p>
+ *
+ * <p>
+ *   The final aim is a fuzzy matching scheme to I can search for
+ *   &quot;God loves us and gave Jesus to save us&quot; and correctly be told
+ *   John 3:16.
+ * </p>
+ *
+ * <h2>Strongs</h2>
+ *
+ * <p>
+ *   The <code>Strongs</code> class represents a Hebrew or Greek word, or a
+ *   parsing number indicating the way the verse is aimed.
+ * </p>
+ *
+ * <h2>Other Stuff</h2>
+ *
+ * <p>
+ *   This package has a <code>SelfTest</code> class that is designed to stress
+ *   every line of code in the rest of the package to make it bug-free. Otherwise
+ *   this package is largely complete. I still need to inspect
+ *   [Bitwise|Distinct|Ranged]Passage and PassageTally.
+ * </p>
+ */
+package org.crosswire.jsword.passage
 
-import org.crosswire.jsword.versification.Versification;
+import org.crosswire.jsword.versification.Versification
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.Iterator;
+import java.io.IOException
+import java.io.Reader
+import java.io.Writer
 
 /**
  * A Passage is a specialized Collection of Verses. The additions are:
@@ -37,13 +133,13 @@ import java.util.Iterator;
  * <li>Human readable serialization. So we can read and write to and from OLB
  * style Passage files.
  * </ul>
- * 
+ *
  * <p>
  * Passage no longer extends the Collection interface to avoid J2SE 1.1/1.2
  * portability problems, and because many of the things that a Passage does rely
  * on consecutive Verses which are an alien concept to Collections. So users
  * would have to use the Passage interface anyway.
- * 
+ *
  * <p>
  * Other arguments for and against.
  * <ul>
@@ -62,58 +158,58 @@ import java.util.Iterator;
  * if the Collection was changed. Given ranges and the like this can get very
  * time consuming and complex.
  * </ul>
- * 
+ *
  * <p>
  * The upshot of all this is that I am removing the Collections interface from
  * Passage.
- * 
+ *
  * <p>
  * I considered giving Passages names to allow for a CLI that could use named
  * RangedPassages, however that is perhaps better left to another class.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public interface Passage extends VerseKey<Passage> {
+interface Passage : VerseKey<Passage> {
     /**
      * A summary of the verses in this Passage For example
      * "10 verses in 4 books"
-     * 
+     *
      * @return a String containing an overview of the verses
      */
-    String getOverview();
+    val overview: String
 
     /**
      * Returns the number of verses in this collection. Like Collection.size()
      * This does not mean the Passage needs to use Verses, just that it
      * understands the concept.
-     * 
+     *
      * @return the number of Verses in this collection
      * @see Verse
      */
-    int countVerses();
+    fun countVerses(): Int
 
     /**
      * Determine whether there are two or more ranges.
-     * 
+     *
      * @param restrict
      *            Do we break ranges at chapter/book boundaries
      * @return whether there are two or more ranges
      * @see VerseRange
      */
-    boolean hasRanges(RestrictionType restrict);
+    fun hasRanges(restrict: RestrictionType?): Boolean
 
     /**
      * Like countVerses() that counts VerseRanges instead of Verses Returns the
      * number of fragments in this collection. This does not mean the Passage
      * needs to use VerseRanges, just that it understands the concept.
-     * 
+     *
      * @param restrict
      *            Do we break ranges at chapter/book boundaries
      * @return the number of VerseRanges in this collection
      * @see VerseRange
      */
-    int countRanges(RestrictionType restrict);
+    fun countRanges(restrict: RestrictionType?): Int
 
     /**
      * Ensures that there are a maximum of <code>count</code> Verses in this
@@ -121,13 +217,13 @@ public interface Passage extends VerseKey<Passage> {
      * Passage is created containing the Verses from <code>count</code>+1
      * onwards. If there was not greater than <code>count</code> in the Passage,
      * then the passage remains unchanged, and null is returned.
-     * 
+     *
      * @param count
      *            The maximum number of Verses to allow in this collection
      * @return A new Passage containing the remaining verses or null
      * @see Verse
      */
-    Passage trimVerses(int count);
+    fun trimVerses(count: Int): Passage?
 
     /**
      * Ensures that there are a maximum of <code>count</code> VerseRanges in
@@ -136,7 +232,7 @@ public interface Passage extends VerseKey<Passage> {
      * <code>count</code>+1 onwards. If there was not greater than
      * <code>count</code> in the Passage, then the passage remains unchanged,
      * and null is returned.
-     * 
+     *
      * @param count
      *            The maximum number of VerseRanges to allow in this collection
      * @param restrict
@@ -144,29 +240,30 @@ public interface Passage extends VerseKey<Passage> {
      * @return A new Passage containing the remaining verses or null
      * @see VerseRange
      */
-    Passage trimRanges(int count, RestrictionType restrict);
+    fun trimRanges(count: Int, restrict: RestrictionType?): Passage?
 
     /**
      * How many books are there in this Passage
-     * 
+     *
      * @return The number of distinct books
      */
-    int booksInPassage();
+    fun booksInPassage(): Int
 
     /**
      * Get a specific Verse from this collection
-     * 
+     *
      * @param offset
      *            The verse offset (legal values are 0 to countVerses()-1)
      * @return The Verse
      * @throws ArrayIndexOutOfBoundsException
      *             If the offset is out of range
      */
-    Verse getVerseAt(int offset) throws ArrayIndexOutOfBoundsException;
+    @Throws(ArrayIndexOutOfBoundsException::class)
+    fun getVerseAt(offset: Int): Verse
 
     /**
      * Get a specific VerseRange from this collection
-     * 
+     *
      * @param offset
      *            The verse range offset (legal values are 0 to countRanges()-1)
      * @param restrict
@@ -175,70 +272,70 @@ public interface Passage extends VerseKey<Passage> {
      * @throws ArrayIndexOutOfBoundsException
      *             If the offset is out of range
      */
-    VerseRange getRangeAt(int offset, RestrictionType restrict) throws ArrayIndexOutOfBoundsException;
+    @Throws(ArrayIndexOutOfBoundsException::class)
+    fun getRangeAt(offset: Int, restrict: RestrictionType?): VerseRange
 
     /**
      * Like iterator() that iterates over VerseRanges instead of Verses.
      * Exactly the same data will be traversed, however using rangeIterator()
      * will usually give fewer iterations (and never more)
-     * 
+     *
      * @param restrict
      *            Do we break ranges over chapters
      * @return A list enumerator
      */
-    Iterator<VerseRange> rangeIterator(RestrictionType restrict);
+    fun rangeIterator(restrict: RestrictionType?): MutableIterator<VerseRange>
 
-    @Override
-    default boolean isValidIn(Versification targetVersification) {
-        Iterator<VerseRange> rangeIterator = rangeIterator(RestrictionType.NONE);
-        while(rangeIterator.hasNext()) {
-            if(!rangeIterator.next().isValidIn(targetVersification)) {
+    override fun isValidIn(targetVersification: Versification?): Boolean {
+        val rangeIterator = rangeIterator(RestrictionType.NONE)
+        while (rangeIterator.hasNext()) {
+            if (!rangeIterator.next().isValidIn(targetVersification)) {
                 // If any of the included ranges is invalid, this passage is invalid.
-                return false;
+                return false
             }
         }
-        return true;
+        return true
     }
 
     /**
      * Returns true if this collection contains all the specified Verse
-     * 
+     *
      * @param that
      *            Verse or VerseRange that may exist in this Passage
      * @return true if this collection contains that
      */
-    boolean contains(Key that);
+    override fun contains(that: Key?): Boolean
 
     /**
      * Add this Verse/VerseRange to this Passage
-     * 
+     *
      * @param that
      *            The Verses to be added from this Passage
      */
-    void add(Key that);
+    fun add(that: Key?)
 
     /**
      * Remove this Verse/VerseRange from this Passage
-     * 
+     *
      * @param that
      *            The Verses to be removed from this Passage
      */
-    void remove(Key that);
+    fun remove(that: Key?)
 
     /**
      * Returns true if this Passage contains all of the verses in that Passage
-     * 
+     *
      * @param that
      *            Passage to be checked for containment in this collection.
      * @return true if this reference contains all of the Verses in that Passage
      */
-    boolean containsAll(Passage that);
+    fun containsAll(that: Passage?): Boolean
 
     /**
      * To be compatible with humans we read/write ourselves to a file that a
      * human can read and even edit. OLB verse.lst integration is a good goal
      * here.
-     * 
+     *
      * @param in
      *            The stream to read from
      * @exception java.io.IOException
@@ -246,19 +343,21 @@ public interface Passage extends VerseKey<Passage> {
      * @exception NoSuchVerseException
      *                If the file was invalid
      */
-    void readDescription(Reader in) throws IOException, NoSuchVerseException;
+    @Throws(IOException::class, NoSuchVerseException::class)
+    fun readDescription(`in`: Reader?)
 
     /**
      * To be compatible with humans we read/write ourselves to a file that a
      * human can read and even edit. OLB verse.lst integration is a good goal
      * here.
-     * 
+     *
      * @param out
      *            The stream to write to
      * @exception java.io.IOException
      *                If the file/network etc breaks
      */
-    void writeDescription(Writer out) throws IOException;
+    @Throws(IOException::class)
+    fun writeDescription(out: Writer?)
 
     /**
      * For performance reasons we may well want to hint to the Passage that we
@@ -268,21 +367,21 @@ public interface Passage extends VerseKey<Passage> {
      * optimizeReads() is a loss of time if you then persist in writing to the
      * Passage.
      */
-    void optimizeReads();
+    fun optimizeReads()
 
     /**
      * Event Listeners - Add Listener
-     * 
+     *
      * @param li
      *            The listener to add
      */
-    void addPassageListener(PassageListener li);
+    fun addPassageListener(li: PassageListener?)
 
     /**
      * Event Listeners - Remove Listener
-     * 
+     *
      * @param li
      *            The listener to remove
      */
-    void removePassageListener(PassageListener li);
+    fun removePassageListener(li: PassageListener?)
 }

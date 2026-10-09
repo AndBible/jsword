@@ -17,29 +17,28 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.Reader
+import java.io.Writer
+import java.util.ArrayList
+import java.util.BitSet
+import java.util.NoSuchElementException
 
-import org.crosswire.common.util.StringUtil;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.JSOtherMsg;
-import org.crosswire.jsword.versification.BibleBook;
-import org.crosswire.jsword.versification.Versification;
-import org.crosswire.jsword.versification.system.Versifications;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.StringUtil
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.versification.BibleBook
+import org.crosswire.jsword.versification.Versification
+import org.crosswire.jsword.versification.system.Versifications
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * This is a base class to help with some of the common implementation details
@@ -52,16 +51,14 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public abstract class AbstractPassage implements Passage {
+abstract class AbstractPassage : Passage, Cloneable {
     /**
      * Setup that leaves original name being null
      *
      * @param v11n
      *            The Versification to which this Passage belongs.
      */
-    protected AbstractPassage(Versification v11n) {
-        this(v11n, null);
-    }
+    protected constructor(v11n: Versification?) : this(v11n, null)
 
     /**
      * Setup the original name of this reference
@@ -71,473 +68,470 @@ public abstract class AbstractPassage implements Passage {
      * @param passageName
      *            The text originally used to create this Passage.
      */
-    protected AbstractPassage(Versification v11n, String passageName) {
-        this.v11n = v11n;
-        this.originalName = passageName;
-        this.listeners = new ArrayList<PassageListener>();
+    protected constructor(v11n: Versification?, passageName: String?) {
+        this.v11n = v11n
+        this.originalName = passageName
+        this.listeners = ArrayList<PassageListener?>()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#getVersification()
      */
-    public Versification getVersification() {
-        return v11n;
-    }
+    override val versification: Versification
+        get() = v11n!!
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.VerseKey#reversify(org.crosswire.jsword.versification.Versification)
      */
-    public Passage reversify(Versification newVersification) {
-        if (v11n.equals(newVersification)) {
-            return this;
+    override fun reversify(newVersification: Versification?): Passage? {
+        if (v11n!!.equals(newVersification)) {
+            return this
         }
-        throw new UnsupportedOperationException();
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.VerseKey#isWhole()
      */
-    public boolean isWhole() {
-        throw new UnsupportedOperationException();
-    }
+    override val isWhole: Boolean
+        get() = throw UnsupportedOperationException()
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.VerseKey#getWhole()
      */
-    public Passage getWhole() {
-        throw new UnsupportedOperationException();
-    }
+    override val whole: Passage
+        get() = throw UnsupportedOperationException()
 
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Key obj) {
-        Passage thatref = (Passage) obj;
+    override fun compareTo(other: Key?): Int {
+        val thatref = other as Passage
         if (thatref.countVerses() == 0) {
             if (countVerses() == 0) {
-                return 0;
+                return 0
             }
             // that is empty so he should come before me
-            return -1;
+            return -1
         }
 
         if (countVerses() == 0) {
             // we are empty be he isn't so we are first
-            return 1;
+            return 1
         }
 
-        Verse thatfirst = thatref.getVerseAt(0);
-        Verse thisfirst = getVerseAt(0);
+        val thatfirst = thatref.getVerseAt(0)
+        val thisfirst = getVerseAt(0)
 
-        return getVersification().distance(thatfirst, thisfirst);
+        return versification.distance(thatfirst, thisfirst)
     }
 
-    @Override
-    public AbstractPassage clone() {
+    override fun clone(): AbstractPassage {
         // This gets us a shallow copy
-        AbstractPassage copy = null;
+        var copy: AbstractPassage? = null
 
         try {
-            copy = (AbstractPassage) super.clone();
-            copy.listeners = new ArrayList<PassageListener>();
-            copy.listeners.addAll(listeners);
+            copy = super<Cloneable>.clone() as AbstractPassage
+            copy.listeners = ArrayList<PassageListener?>()
+            copy.listeners.addAll(listeners)
 
-            copy.originalName = originalName;
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            copy.originalName = originalName
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
 
-        return copy;
+        return copy!!
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    override fun equals(other: Any?): Boolean {
         // This is cheating because I am supposed to say:
         // <code>!obj.getClass().equals(this.getClass())</code>
         // However I think it is entirely valid for a RangedPassage
         // to equal a DistinctPassage since the point of the Factory
         // is that the user does not need to know the actual type of the
         // Object he is using.
-        if (!(obj instanceof Passage)) {
-            return false;
+        if (other !is Passage) {
+            return false
         }
-        Passage that = (Passage) obj;
+        val that: Passage = other
         // The real test
         // FIXME: this is not really true since the versification any longer.
-        return that.getOsisRef().equals(getOsisRef());
+        return that.getOsisRef() == getOsisRef()
     }
 
-    @Override
-    public int hashCode() {
-        return getOsisRef().hashCode();
+    override fun hashCode(): Int {
+        return getOsisRef().hashCode()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    public String getName() {
+    override fun getName(): String {
+        val originalName = originalName
         if (PassageUtil.isPersistentNaming() && originalName != null) {
-            return originalName;
+            return originalName
         }
 
-        StringBuilder retcode = new StringBuilder();
+        val retcode = StringBuilder()
 
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
-        Verse current = null;
+        val it = rangeIterator(RestrictionType.NONE)
+        var current: Verse? = null
         while (it.hasNext()) {
-            VerseRange range = it.next();
-            retcode.append(range.getName(current));
+            val range = it.next()
+            retcode.append(range.getName(current))
 
             // FIXME: Potential bug. According to iterator contract hasNext and
             // next must be paired.
             if (it.hasNext()) {
-                retcode.append(AbstractPassage.REF_PREF_DELIM);
+                retcode.append(REF_PREF_DELIM)
             }
 
-            current = range.getStart();
+            current = range.start
         }
 
-        return retcode.toString();
+        return retcode.toString()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    public String getName(Key base) {
-        return getName();
+    override fun getName(base: Key?): String {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    public String getRootName() {
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
+    override fun getRootName(): String {
+        val it = rangeIterator(RestrictionType.NONE)
         while (it.hasNext()) {
-            VerseRange range = it.next();
-            return range.getRootName();
+            val range = it.next()
+            return range.getRootName()
         }
 
-        return getName();
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    public String getOsisRef() {
-        StringBuilder retcode = new StringBuilder();
+    override fun getOsisRef(): String {
+        val retcode = StringBuilder()
 
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
-        boolean hasNext = it.hasNext();
+        val it = rangeIterator(RestrictionType.NONE)
+        var hasNext = it.hasNext()
         while (hasNext) {
-            Key range = it.next();
-            retcode.append(range.getOsisRef());
+            val range: Key = it.next()
+            retcode.append(range.getOsisRef())
 
-            hasNext = it.hasNext();
+            hasNext = it.hasNext()
             if (hasNext) {
-                retcode.append(AbstractPassage.REF_OSIS_DELIM);
+                retcode.append(REF_OSIS_DELIM)
             }
         }
 
-        return retcode.toString();
+        return retcode.toString()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    public String getOsisID() {
-        StringBuilder retcode = new StringBuilder();
+    override fun getOsisID(): String {
+        val retcode = StringBuilder()
 
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
-        boolean hasNext = it.hasNext();
+        val it = rangeIterator(RestrictionType.NONE)
+        var hasNext = it.hasNext()
         while (hasNext) {
-            Key range = it.next();
-            retcode.append(range.getOsisID());
+            val range: Key = it.next()
+            retcode.append(range.getOsisID())
 
-            hasNext = it.hasNext();
+            hasNext = it.hasNext()
             if (hasNext) {
-                retcode.append(AbstractPassage.REF_OSIS_DELIM);
+                retcode.append(REF_OSIS_DELIM)
             }
         }
 
-        return retcode.toString();
+        return retcode.toString()
     }
 
-    @Override
-    public String toString() {
-        return getName();
+    override fun toString(): String {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#getOverview()
      */
-    public String getOverview() {
-        // TRANSLATOR: This provides an overview of the verses in one or more books. The placeholders here deserve extra comment.
-        // {0,number,integer} is a placeholder for the count of verses. It will be displayed as an integer using the number system of the user's locale.
-        // {0,choice,0#verses|1#verse|1<verses} uses the value of the number of verses to display the correct singular or plural form for the word "verse"
-        //    Choices are separated by |. And each choice consists of a number, a comparison and the value to use when the comparison is met.
-        //    Choices are ordered from smallest to largest. The numbers represent boundaries that determine when a choice is used.
-        //    The comparison # means to match exactly.
-        //    The comparison < means that the number on the left is less than the number being evaluated.
-        //    Here, 0 is the first boundary specified by a #. So every number less than or equal to 0 get the first choice.
-        //    In this situation, we are dealing with counting numbers, so we'll never have negative numbers.
-        //    Next choice is 1 with a boundary specified by #. So all numbers greater than 0 (the first choice) but less than or equal to 1 get the second choice.
-        //    In this situation, the only number that will match is 1.
-        //    The final choice is 1<. This means that every number greater than 1 will get this choice.
-        // Putting the first two placeholders together we get "0 verses", "1 verse" or "n verses" (where n is 2 or more)
-        // The reason to go into this is that this pattern works for English. Other languages might have different ways of representing singular and plurals.
-        // {1,number,integer} is a placeholder for the count of Bible books. It works the same way as the count of verses.
-        // {1,choice,0#books|1#book|1<books} is the placeholder for the singular or plural of "book"
-        return JSMsg.gettext("{0,number,integer} {0,choice,0#verses|1#verse|1<verses} in {1,number,integer} {1,choice,0#books|1#book|1<books}",
-                Integer.valueOf(countVerses()), Integer.valueOf(booksInPassage()
-                ));
-    }
+    override val overview: String
+        get() {
+            // TRANSLATOR: This provides an overview of the verses in one or more books. The placeholders here deserve extra comment.
+            // {0,number,integer} is a placeholder for the count of verses. It will be displayed as an integer using the number system of the user's locale.
+            // {0,choice,0#verses|1#verse|1<verses} uses the value of the number of verses to display the correct singular or plural form for the word "verse"
+            //    Choices are separated by |. And each choice consists of a number, a comparison and the value to use when the comparison is met.
+            //    Choices are ordered from smallest to largest. The numbers represent boundaries that determine when a choice is used.
+            //    The comparison # means to match exactly.
+            //    The comparison < means that the number on the left is less than the number being evaluated.
+            //    Here, 0 is the first boundary specified by a #. So every number less than or equal to 0 get the first choice.
+            //    In this situation, we are dealing with counting numbers, so we'll never have negative numbers.
+            //    Next choice is 1 with a boundary specified by #. So all numbers greater than 0 (the first choice) but less than or equal to 1 get the second choice.
+            //    In this situation, the only number that will match is 1.
+            //    The final choice is 1<. This means that every number greater than 1 will get this choice.
+            // Putting the first two placeholders together we get "0 verses", "1 verse" or "n verses" (where n is 2 or more)
+            // The reason to go into this is that this pattern works for English. Other languages might have different ways of representing singular and plurals.
+            // {1,number,integer} is a placeholder for the count of Bible books. It works the same way as the count of verses.
+            // {1,choice,0#books|1#book|1<books} is the placeholder for the singular or plural of "book"
+            return JSMsg.gettext("{0,number,integer} {0,choice,0#verses|1#verse|1<verses} in {1,number,integer} {1,choice,0#books|1#book|1<books}",
+                    Integer.valueOf(countVerses()), Integer.valueOf(booksInPassage()
+                    ))
+        }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    public boolean isEmpty() {
+    override fun isEmpty(): Boolean {
         // Is there any content?
-        return !iterator().hasNext();
+        return !iterator().hasNext()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#countVerses()
      */
-    public int countVerses() {
-        int count = 0;
+    override fun countVerses(): Int {
+        var count = 0
 
-        for (Iterator<?> iter = iterator(); iter.hasNext(); iter.next()) {
-            count++;
+        val iter = iterator()
+        while (iter.hasNext()) {
+            count++
+            iter.next()
         }
 
-        return count;
+        return count
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#hasRanges(org.crosswire.jsword.passage.RestrictionType)
      */
-    public boolean hasRanges(RestrictionType restrict) {
-        int count = 0;
+    override fun hasRanges(restrict: RestrictionType?): Boolean {
+        var count = 0
 
-        Iterator<VerseRange> it = rangeIterator(restrict);
+        val it = rangeIterator(restrict)
         while (it.hasNext()) {
-            it.next();
-            count++;
+            it.next()
+            count++
             if (count == 2) {
-                return true;
+                return true
             }
         }
 
-        return false;
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#countRanges(org.crosswire.jsword.passage.RestrictionType)
      */
-    public int countRanges(RestrictionType restrict) {
-        int count = 0;
+    override fun countRanges(restrict: RestrictionType?): Int {
+        var count = 0
 
-        Iterator<VerseRange> it = rangeIterator(restrict);
+        val it = rangeIterator(restrict)
         while (it.hasNext()) {
-            it.next();
-            count++;
+            it.next()
+            count++
         }
 
-        return count;
+        return count
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#booksInPassage()
      */
-    public int booksInPassage() {
+    override fun booksInPassage(): Int {
         // FIXME(DMS): a passage does not have to be ordered, for example PassageTally.
-        BibleBook currentBook = null;
-        int bookCount = 0;
+        var currentBook: BibleBook? = null
+        var bookCount = 0
 
-        for (Key aKey : this) {
-            Verse verse = (Verse) aKey;
-            if (currentBook != verse.getBook()) {
-                currentBook = verse.getBook();
-                bookCount++;
+        for (aKey in this) {
+            val verse = aKey as Verse
+            if (currentBook !== verse.book) {
+                currentBook = verse.book
+                bookCount++
             }
         }
 
-        return bookCount;
+        return bookCount
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#getVerseAt(int)
      */
-    public Verse getVerseAt(int offset) throws ArrayIndexOutOfBoundsException {
-        Iterator<Key> it = iterator();
-        Object retcode = null;
+    @Throws(ArrayIndexOutOfBoundsException::class)
+    override fun getVerseAt(offset: Int): Verse {
+        val it = iterator()
+        var retcode: Any? = null
 
-        for (int i = 0; i <= offset; i++) {
+        for (i in 0..offset) {
             if (!it.hasNext()) {
-                throw new ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", Integer.valueOf(offset), Integer.valueOf(countVerses())));
+                throw ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", Integer.valueOf(offset), Integer.valueOf(countVerses())))
             }
 
-            retcode = it.next();
+            retcode = it.next()
         }
 
-        return (Verse) retcode;
+        return retcode as Verse
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#getRangeAt(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public VerseRange getRangeAt(int offset, RestrictionType restrict) throws ArrayIndexOutOfBoundsException {
-        Iterator<VerseRange> it = rangeIterator(restrict);
-        Object retcode = null;
+    @Throws(ArrayIndexOutOfBoundsException::class)
+    override fun getRangeAt(offset: Int, restrict: RestrictionType?): VerseRange {
+        val it = rangeIterator(restrict)
+        var retcode: Any? = null
 
-        for (int i = 0; i <= offset; i++) {
+        for (i in 0..offset) {
             if (!it.hasNext()) {
-                throw new ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", Integer.valueOf(offset), Integer.valueOf(countVerses())));
+                throw ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", Integer.valueOf(offset), Integer.valueOf(countVerses())))
             }
 
-            retcode = it.next();
+            retcode = it.next()
         }
 
-        return (VerseRange) retcode;
+        return retcode as VerseRange
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#rangeIterator(org.crosswire.jsword.passage.RestrictionType)
      */
-    public Iterator<VerseRange> rangeIterator(RestrictionType restrict) {
-        return new VerseRangeIterator(getVersification(), iterator(), restrict);
+    override fun rangeIterator(restrict: RestrictionType?): MutableIterator<VerseRange> {
+        return VerseRangeIterator(versification, iterator(), restrict)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#containsAll(org.crosswire.jsword.passage.Passage)
      */
-    public boolean containsAll(Passage that) {
-        if (that instanceof RangedPassage) {
-            Iterator<VerseRange> iter = null;
-
-            iter = ((RangedPassage) that).rangeIterator(RestrictionType.NONE);
+    override fun containsAll(that: Passage?): Boolean {
+        if (that is RangedPassage) {
+            val iter = that.rangeIterator(RestrictionType.NONE)
             while (iter.hasNext()) {
                 if (!contains(iter.next())) {
-                    return false;
+                    return false
                 }
             }
         } else {
-            Iterator<Key> iter = that.iterator();
+            val iter = that!!.iterator()
             while (iter.hasNext()) {
                 if (!contains(iter.next())) {
-                    return false;
+                    return false
                 }
             }
 
         }
 
-        return true;
+        return true
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#trimVerses(int)
      */
-    public Passage trimVerses(int count) {
-        optimizeWrites();
-        raiseNormalizeProtection();
+    override fun trimVerses(count: Int): Passage? {
+        optimizeWrites()
+        raiseNormalizeProtection()
 
-        int i = 0;
-        boolean overflow = false;
+        var i = 0
+        var overflow = false
 
-        Passage remainder = this.clone();
+        val remainder: Passage = this.clone()
 
-        for (Key verse : this) {
-            i++;
+        for (verse in this) {
+            i++
             if (i > count) {
-                remove(verse);
-                overflow = true;
+                remove(verse)
+                overflow = true
             } else {
-                remainder.remove(verse);
+                remainder.remove(verse)
             }
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         // The event notification is done by the remove above
 
         if (overflow) {
-            return remainder;
+            return remainder
         }
-        return null;
+        return null
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#trimRanges(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public Passage trimRanges(int count, RestrictionType restrict) {
-        optimizeWrites();
-        raiseNormalizeProtection();
+    override fun trimRanges(count: Int, restrict: RestrictionType?): Passage? {
+        optimizeWrites()
+        raiseNormalizeProtection()
 
-        int i = 0;
-        boolean overflow = false;
+        var i = 0
+        var overflow = false
 
-        Passage remainder = this.clone();
+        val remainder: Passage = this.clone()
 
-        Iterator<VerseRange> it = rangeIterator(restrict);
+        val it = rangeIterator(restrict)
         while (it.hasNext()) {
-            i++;
-            Key range = it.next();
+            i++
+            val range: Key = it.next()
 
             if (i > count) {
-                remove(range);
-                overflow = true;
+                remove(range)
+                overflow = true
             } else {
-                remainder.remove(range);
+                remainder.remove(range)
             }
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         // The event notification is done by the remove above
 
         if (overflow) {
-            return remainder;
+            return remainder
         }
-        return null;
+        return null
     }
 
     /* Now supports adding keys from different versifications.
      * (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#addAll(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
+    override fun addAll(key: Key?) {
         //check for key empty. This avoids the AIOBounds with that.getVerseAt, during event firing
-        if (key.isEmpty()) {
+        if (key!!.isEmpty()) {
             //nothing to add
-            return;
+            return
         }
 
-        optimizeWrites();
-        raiseEventSuppresion();
-        raiseNormalizeProtection();
+        optimizeWrites()
+        raiseEventSuppresion()
+        raiseNormalizeProtection()
 
 
-        if (key instanceof RangedPassage) {
-            Iterator<VerseRange> it = ((RangedPassage) key).rangeIterator(RestrictionType.NONE);
+        if (key is RangedPassage) {
+            val it = key.rangeIterator(RestrictionType.NONE)
             while (it.hasNext()) {
                 // Avoid touching store to make thread safety easier.
-                add(it.next());
+                add(it.next())
             }
         } else {
-            for (Key subkey : key) {
-                add(subkey);
+            for (subkey in key) {
+                add(subkey)
             }
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         if (lowerEventSuppressionAndTest()) {
-            if (key instanceof Passage) {
-                Passage that = (Passage) key;
-                fireIntervalAdded(this, that.getVerseAt(0), that.getVerseAt(that.countVerses() - 1));
-            } else if (key instanceof VerseRange) {
-                VerseRange that = (VerseRange) key;
-                fireIntervalAdded(this, that.getStart(), that.getEnd());
-            } else if (key instanceof Verse) {
-                Verse that = (Verse) key;
-                fireIntervalAdded(this, that, that);
+            if (key is Passage) {
+                val that: Passage = key
+                fireIntervalAdded(this, that.getVerseAt(0), that.getVerseAt(that.countVerses() - 1))
+            } else if (key is VerseRange) {
+                val that: VerseRange = key
+                fireIntervalAdded(this, that.start, that.end)
+            } else if (key is Verse) {
+                val that: Verse = key
+                fireIntervalAdded(this, that, that)
             }
         }
     }
@@ -545,36 +539,36 @@ public abstract class AbstractPassage implements Passage {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#removeAll(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        optimizeWrites();
-        raiseEventSuppresion();
-        raiseNormalizeProtection();
+    override fun removeAll(key: Key?) {
+        optimizeWrites()
+        raiseEventSuppresion()
+        raiseNormalizeProtection()
 
-        if (key instanceof RangedPassage) {
-            Iterator<VerseRange> it = ((RangedPassage) key).rangeIterator(RestrictionType.NONE);
+        if (key is RangedPassage) {
+            val it = key.rangeIterator(RestrictionType.NONE)
             while (it.hasNext()) {
                 // Avoid touching store to make thread safety easier.
-                remove(it.next());
+                remove(it.next())
             }
         } else {
-            Iterator<Key> it = key.iterator();
+            val it = key!!.iterator()
             while (it.hasNext()) {
                 // Avoid touching store to make thread safety easier.
-                remove(it.next());
+                remove(it.next())
             }
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         if (lowerEventSuppressionAndTest()) {
-            if (key instanceof Passage) {
-                Passage that = (Passage) key;
-                fireIntervalRemoved(this, that.getVerseAt(0), that.getVerseAt(that.countVerses() - 1));
-            } else if (key instanceof VerseRange) {
-                VerseRange that = (VerseRange) key;
-                fireIntervalRemoved(this, that.getStart(), that.getEnd());
-            } else if (key instanceof Verse) {
-                Verse that = (Verse) key;
-                fireIntervalRemoved(this, that, that);
+            if (key is Passage) {
+                val that: Passage = key
+                fireIntervalRemoved(this, that.getVerseAt(0), that.getVerseAt(that.countVerses() - 1))
+            } else if (key is VerseRange) {
+                val that: VerseRange = key
+                fireIntervalRemoved(this, that.start, that.end)
+            } else if (key is Verse) {
+                val that: Verse = key
+                fireIntervalRemoved(this, that, that)
             }
         }
     }
@@ -582,57 +576,57 @@ public abstract class AbstractPassage implements Passage {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#retainAll(org.crosswire.jsword.passage.Key)
      */
-    public void retainAll(Key key) {
-        optimizeWrites();
-        raiseEventSuppresion();
-        raiseNormalizeProtection();
+    override fun retainAll(key: Key?) {
+        optimizeWrites()
+        raiseEventSuppresion()
+        raiseNormalizeProtection()
 
-        Passage temp = this.clone();
-        for (Key verse : temp) {
-            if (!key.contains(verse)) {
-                remove(verse);
+        val temp: Passage = this.clone()
+        for (verse in temp) {
+            if (!key!!.contains(verse)) {
+                remove(verse)
             }
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         if (lowerEventSuppressionAndTest()) {
-            fireIntervalRemoved(this, null, null);
+            fireIntervalRemoved(this, null, null)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
-        optimizeWrites();
-        raiseNormalizeProtection();
+    override fun clear() {
+        optimizeWrites()
+        raiseNormalizeProtection()
 
-        remove(getVersification().getAllVerses());
+        remove(versification.allVerses)
 
         if (lowerEventSuppressionAndTest()) {
-            fireIntervalRemoved(this, null, null);
+            fireIntervalRemoved(this, null, null)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    public void blur(int verses, RestrictionType restrict, boolean blurDown, boolean blurUp) {
-        optimizeWrites();
-        raiseEventSuppresion();
-        raiseNormalizeProtection();
+    override fun blur(verses: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
+        optimizeWrites()
+        raiseEventSuppresion()
+        raiseNormalizeProtection()
 
-        Passage temp = this.clone();
-        Iterator<VerseRange> it = temp.rangeIterator(RestrictionType.NONE);
+        val temp: Passage = this.clone()
+        val it = temp.rangeIterator(RestrictionType.NONE)
 
         while (it.hasNext()) {
-            VerseRange range = restrict.blur(getVersification(), it.next(), blurDown ? verses : 0, blurUp ? verses : 0);
-            add(range);
+            val range = restrict!!.blur(versification, it.next(), if (blurDown) verses else 0, if (blurUp) verses else 0)
+            add(range)
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         if (lowerEventSuppressionAndTest()) {
-            fireIntervalAdded(this, null, null);
+            fireIntervalAdded(this, null, null)
         }
     }
 
@@ -640,152 +634,151 @@ public abstract class AbstractPassage implements Passage {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int verses, RestrictionType restrict) {
-        blur(verses, restrict, true, true);
+    override fun blur(verses: Int, restrict: RestrictionType?) {
+        blur(verses, restrict, true, true)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#writeDescription(java.io.Writer)
      */
-    public void writeDescription(Writer out) throws IOException {
-        BufferedWriter bout = new BufferedWriter(out);
-        bout.write(v11n.getName());
-        bout.newLine();
+    @Throws(IOException::class)
+    override fun writeDescription(out: Writer?) {
+        val bout = BufferedWriter(out)
+        bout.write(v11n!!.name)
+        bout.newLine()
 
-        Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
+        val it = rangeIterator(RestrictionType.NONE)
 
         while (it.hasNext()) {
-            Key range = it.next();
-            bout.write(range.getName());
-            bout.newLine();
+            val range: Key = it.next()
+            bout.write(range.getName())
+            bout.newLine()
         }
 
-        bout.flush();
+        bout.flush()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#readDescription(java.io.Reader)
      */
-    public void readDescription(Reader in) throws IOException, NoSuchVerseException {
-        raiseEventSuppresion();
-        raiseNormalizeProtection();
+    @Throws(IOException::class, NoSuchVerseException::class)
+    override fun readDescription(`in`: Reader?) {
+        raiseEventSuppresion()
+        raiseNormalizeProtection()
 
-        int count = 0; // number of lines read
+        var count = 0 // number of lines read
         // Quiet Android from complaining about using the default BufferReader buffer size.
         // The actual buffer size is undocumented. So this is a good idea any way.
-        BufferedReader bin = new BufferedReader(in, 8192);
+        val bin = BufferedReader(`in`, 8192)
 
-        String v11nName = bin.readLine();
-        v11n = Versifications.instance().getVersification(v11nName);
+        val v11nName = bin.readLine()
+        v11n = Versifications.instance().getVersification(v11nName)
 
         while (true) {
-            String line = bin.readLine();
-            if (line == null) {
-                break;
-            }
+            val line = bin.readLine() ?: break
 
-            count++;
-            addVerses(line, null);
+            count++
+            addVerses(line, null)
         }
 
         // If the file was empty then there is nothing to do
         if (count == 0) {
-            return;
+            return
         }
 
-        lowerNormalizeProtection();
+        lowerNormalizeProtection()
         if (lowerEventSuppressionAndTest()) {
-            fireIntervalAdded(this, getVerseAt(0), getVerseAt(countVerses() - 1));
+            fireIntervalAdded(this, getVerseAt(0), getVerseAt(countVerses() - 1))
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#optimizeReads()
      */
-    public void optimizeReads() {
+    override fun optimizeReads() {
     }
 
     /**
      * Simple method to instruct children to stop caching results
      */
-    protected void optimizeWrites() {
+    protected open fun optimizeWrites() {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#addPassageListener(org.crosswire.jsword.passage.PassageListener)
      */
-    public void addPassageListener(PassageListener li) {
-        synchronized (listeners) {
-            listeners.add(li);
+    override fun addPassageListener(li: PassageListener?) {
+        synchronized(listeners) {
+            listeners.add(li)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#removePassageListener(org.crosswire.jsword.passage.PassageListener)
      */
-    public void removePassageListener(PassageListener li) {
-        synchronized (listeners) {
-            listeners.remove(li);
+    override fun removePassageListener(li: PassageListener?) {
+        synchronized(listeners) {
+            listeners.remove(li)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Passage#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        Passage ref = KeyUtil.getPassage(key);
-        return containsAll(ref);
+    override fun contains(that: Key?): Boolean {
+        val ref = KeyUtil.getPassage(that)
+        return containsAll(ref)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        return countVerses();
+    override fun getCardinality(): Int {
+        return countVerses()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage.Key)
      */
-    public int indexOf(Key that) {
-        int index = 0;
-        for (Key key : this) {
-            if (key.equals(that)) {
-                return index;
+    override fun indexOf(that: Key?): Int {
+        var index = 0
+        for (key in this) {
+            if (key == that) {
+                return index
             }
 
-            index++;
+            index++
         }
 
-        return -1;
+        return -1
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return false;
+    override fun canHaveChildren(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return 0;
+    override fun getChildCount(): Int {
+        return 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        return getVerseAt(index);
+    override fun get(index: Int): Key? {
+        return getVerseAt(index)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return parent;
+    override fun getParent(): Key? {
+        return parent
     }
 
     /**
@@ -795,8 +788,8 @@ public abstract class AbstractPassage implements Passage {
      * @param parent
      *            The parent Key for this verse
      */
-    public void setParent(Key parent) {
-        this.parent = parent;
+    open fun setParent(parent: Key?) {
+        this.parent = parent
     }
 
     /**
@@ -812,25 +805,25 @@ public abstract class AbstractPassage implements Passage {
      *            The other end of the new interval.
      * @see PassageListener
      */
-    protected void fireIntervalAdded(Object source, Verse start, Verse end) {
+    protected open fun fireIntervalAdded(source: Any?, start: Verse?, end: Verse?) {
         if (suppressEvents != 0) {
-            return;
+            return
         }
 
         // Create Event
-        PassageEvent ev = new PassageEvent(source, PassageEvent.EventType.ADDED, start, end);
+        val ev = PassageEvent(source, PassageEvent.EventType.ADDED, start, end)
 
         // Copy listener vector so it won't change while firing
-        List<PassageListener> temp;
-        synchronized (listeners) {
-            temp = new ArrayList<PassageListener>();
-            temp.addAll(listeners);
+        val temp: MutableList<PassageListener?>
+        synchronized(listeners) {
+            temp = ArrayList<PassageListener?>()
+            temp.addAll(listeners)
         }
 
         // And run through the list shouting
-        for (int i = 0; i < temp.size(); i++) {
-            PassageListener rl = temp.get(i);
-            rl.versesAdded(ev);
+        for (i in 0 until temp.size) {
+            val rl = temp[i]
+            rl!!.versesAdded(ev)
         }
     }
 
@@ -847,25 +840,25 @@ public abstract class AbstractPassage implements Passage {
      *            The other end of the new interval.
      * @see PassageListener
      */
-    protected void fireIntervalRemoved(Object source, Verse start, Verse end) {
+    protected open fun fireIntervalRemoved(source: Any?, start: Verse?, end: Verse?) {
         if (suppressEvents != 0) {
-            return;
+            return
         }
 
         // Create Event
-        PassageEvent ev = new PassageEvent(source, PassageEvent.EventType.REMOVED, start, end);
+        val ev = PassageEvent(source, PassageEvent.EventType.REMOVED, start, end)
 
         // Copy listener vector so it won't change while firing
-        List<PassageListener> temp;
-        synchronized (listeners) {
-            temp = new ArrayList<PassageListener>();
-            temp.addAll(listeners);
+        val temp: MutableList<PassageListener?>
+        synchronized(listeners) {
+            temp = ArrayList<PassageListener?>()
+            temp.addAll(listeners)
         }
 
         // And run through the list shouting
-        for (int i = 0; i < temp.size(); i++) {
-            PassageListener rl = temp.get(i);
-            rl.versesRemoved(ev);
+        for (i in 0 until temp.size) {
+            val rl = temp[i]
+            rl!!.versesRemoved(ev)
         }
     }
 
@@ -882,25 +875,25 @@ public abstract class AbstractPassage implements Passage {
      *            The other end of the new interval.
      * @see PassageListener
      */
-    protected void fireContentsChanged(Object source, Verse start, Verse end) {
+    protected open fun fireContentsChanged(source: Any?, start: Verse?, end: Verse?) {
         if (suppressEvents != 0) {
-            return;
+            return
         }
 
         // Create Event
-        PassageEvent ev = new PassageEvent(source, PassageEvent.EventType.CHANGED, start, end);
+        val ev = PassageEvent(source, PassageEvent.EventType.CHANGED, start, end)
 
         // Copy listener vector so it won't change while firing
-        List<PassageListener> temp;
-        synchronized (listeners) {
-            temp = new ArrayList<PassageListener>();
-            temp.addAll(listeners);
+        val temp: MutableList<PassageListener?>
+        synchronized(listeners) {
+            temp = ArrayList<PassageListener?>()
+            temp.addAll(listeners)
         }
 
         // And run through the list shouting
-        for (int i = 0; i < temp.size(); i++) {
-            PassageListener rl = temp.get(i);
-            rl.versesChanged(ev);
+        for (i in 0 until temp.size) {
+            val rl = temp[i]
+            rl!!.versesChanged(ev)
         }
     }
 
@@ -917,36 +910,37 @@ public abstract class AbstractPassage implements Passage {
      * @throws NoSuchVerseException
      *             if the string is invalid
      */
-    protected void addVerses(String refs, Key basis) throws NoSuchVerseException {
-        optimizeWrites();
+    @Throws(NoSuchVerseException::class)
+    protected open fun addVerses(refs: String?, basis: Key?) {
+        optimizeWrites()
 
-        String[] parts = StringUtil.split(refs, AbstractPassage.REF_ALLOWED_DELIMS);
-        if (parts.length == 0) {
-            return;
+        val parts = StringUtil.split(refs, REF_ALLOWED_DELIMS)
+        if (parts.size == 0) {
+            return
         }
 
-        int start = 0;
-        VerseRange vrBasis = null;
-        if (basis instanceof Verse) {
-            vrBasis = new VerseRange(v11n, (Verse) basis);
-        } else if (basis instanceof VerseRange) {
-            vrBasis = (VerseRange) basis;
+        var start = 0
+        var vrBasis: VerseRange? = null
+        if (basis is Verse) {
+            vrBasis = VerseRange(v11n, basis)
+        } else if (basis is VerseRange) {
+            vrBasis = basis
         } else {
             // If we are not passed a useful basis,
             // then we treat the first as a special case because there is
             // nothing to sensibly base this reference on
-            vrBasis = VerseRangeFactory.fromString(v11n, parts[0].trim());
+            vrBasis = VerseRangeFactory.fromString(v11n, parts[0].trim())
             // We add it because it was part of the given input
-            add(vrBasis);
-            start = 1;
+            add(vrBasis)
+            start = 1
         }
 
         // Loop for the other verses, interpreting each on the
         // basis of the one before.
-        for (int i = start; i < parts.length; i++) {
-            VerseRange next = VerseRangeFactory.fromString(v11n, parts[i].trim(), vrBasis);
-            add(next);
-            vrBasis = next;
+        for (i in start until parts.size) {
+            val next = VerseRangeFactory.fromString(v11n, parts[i].trim(), vrBasis)
+            add(next)
+            vrBasis = next
         }
     }
 
@@ -956,7 +950,8 @@ public abstract class AbstractPassage implements Passage {
      * calling of normalize() are synchronized, however this is safe, and I
      * don't think there is a cost associated with a double synchronize. (?)
      */
-    /* protected */void normalize() {
+    /* protected */ // was package-private
+    internal open fun normalize() {
         // before doing any normalization we should be checking that
         // skip_normalization == 0, and just returning if so.
     }
@@ -966,15 +961,15 @@ public abstract class AbstractPassage implements Passage {
      * changes that should be normalized in one go, this is what to call. Be
      * sure to call lowerNormalizeProtection() when you are done.
      */
-    public void raiseNormalizeProtection() {
-        skipNormalization++;
+    open fun raiseNormalizeProtection() {
+        skipNormalization++
 
         if (skipNormalization > 10) {
             // This is a bit drastic and does not give us much
             // chance to fix the error
             // throw new LogicError();
 
-            log.warn("skip_normalization={}", Integer.toString(skipNormalization));
+            log.warn("skip_normalization={}", Integer.toString(skipNormalization))
         }
     }
 
@@ -984,14 +979,14 @@ public abstract class AbstractPassage implements Passage {
      * raiseNormalizeProtection() and when done call this. This also calls
      * normalize() if the count reaches zero.
      */
-    public void lowerNormalizeProtection() {
-        skipNormalization--;
+    open fun lowerNormalizeProtection() {
+        skipNormalization--
 
         if (skipNormalization == 0) {
-            normalize();
+            normalize()
         }
 
-        assert skipNormalization >= 0;
+        jswordAssert(skipNormalization >= 0) { "" }
     }
 
     /**
@@ -999,15 +994,15 @@ public abstract class AbstractPassage implements Passage {
      * changes that should be notified in one go, this is what to call. Be sure
      * to call lowerEventSuppression() when you are done.
      */
-    public void raiseEventSuppresion() {
-        suppressEvents++;
+    open fun raiseEventSuppresion() {
+        suppressEvents++
 
         if (suppressEvents > 10) {
             // This is a bit drastic and does not give us much
             // chance to fix the error
             // throw new LogicError();
 
-            log.warn("suppress_events={}", Integer.toString(suppressEvents));
+            log.warn("suppress_events={}", Integer.toString(suppressEvents))
         }
     }
 
@@ -1018,143 +1013,125 @@ public abstract class AbstractPassage implements Passage {
      *
      * @return true if it is then safe to fire an event.
      */
-    public boolean lowerEventSuppressionAndTest() {
-        suppressEvents--;
-        assert suppressEvents >= 0;
+    open fun lowerEventSuppressionAndTest(): Boolean {
+        suppressEvents--
+        jswordAssert(suppressEvents >= 0) { "" }
 
-        return suppressEvents == 0;
-    }
-
-    /**
-     * Convert the Object to a VerseRange. If base is a Verse then return a
-     * VerseRange of zero length.
-     *
-     * @param base
-     *            The object to be cast
-     * @return The VerseRange
-     * @exception java.lang.ClassCastException
-     *                If this is not a Verse or a VerseRange
-     */
-    protected static VerseRange toVerseRange(Versification v11n, Object base) throws ClassCastException {
-        assert base != null;
-
-        if (base instanceof VerseRange) {
-            return (VerseRange) base;
-        } else if (base instanceof Verse) {
-            return new VerseRange(v11n, (Verse) base);
-        }
-
-        throw new ClassCastException(JSOtherMsg.lookupText("Can only use Verses and VerseRanges in this Collection"));
+        return suppressEvents == 0
     }
 
     /**
      * Skip over verses that are part of a range
      */
-    protected static final class VerseRangeIterator implements Iterator<VerseRange> {
+    // was protected: VerseRange (same package, not a subclass) creates it, and Kotlin protected has no package access
+    internal class VerseRangeIterator
+    /**
+     * iterate, amalgamating Verses into VerseRanges
+     */
+    internal constructor(v11n: Versification, it: MutableIterator<Key>, restrict: RestrictionType?) : MutableIterator<VerseRange> {
         /**
-         * iterate, amalgamating Verses into VerseRanges
+         * The Versification to which these verses belong.
          */
-        protected VerseRangeIterator(Versification v11n, Iterator<Key> it, RestrictionType restrict) {
-            this.v11n = v11n;
-            this.it = it;
-            this.restrict = restrict;
+        private var v11n: Versification
+
+        /**
+         * The Iterator that we are proxying to
+         */
+        private var it: MutableIterator<Key>
+
+        /**
+         * What is the next VerseRange to be considered
+         */
+        private var nextRange: VerseRange? = null
+
+        /**
+         * What is the next Verse to be considered
+         */
+        private var nextVerse: Verse? = null
+
+        /**
+         * Do we restrict ranges to not crossing chapter boundaries
+         */
+        private var restrict: RestrictionType?
+
+        init {
+            this.v11n = v11n
+            this.it = it
+            this.restrict = restrict
 
             if (it.hasNext()) {
-                nextVerse = (Verse) it.next();
+                nextVerse = it.next() as Verse
             }
 
-            calculateNext();
+            calculateNext()
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#hasNext()
          */
-        public boolean hasNext() {
-            return nextRange != null;
+        override fun hasNext(): Boolean {
+            return nextRange != null
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#next()
          */
-        public VerseRange next() throws NoSuchElementException {
-            VerseRange retcode = nextRange;
+        @Throws(NoSuchElementException::class)
+        override fun next(): VerseRange {
+            val retcode = nextRange
 
             if (retcode == null) {
-                throw new NoSuchElementException();
+                throw NoSuchElementException()
             }
 
-            calculateNext();
-            return retcode;
+            calculateNext()
+            return retcode
         }
 
         /* (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
-        public void remove() throws UnsupportedOperationException {
-            throw new UnsupportedOperationException();
+        @Throws(UnsupportedOperationException::class)
+        override fun remove() {
+            throw UnsupportedOperationException()
         }
 
         /**
          * Find the next VerseRange
          */
-        private void calculateNext() {
+        private fun calculateNext() {
             if (nextVerse == null) {
-                nextRange = null;
-                return;
+                nextRange = null
+                return
             }
 
-            Verse start = nextVerse;
-            Verse end = nextVerse;
+            val start = nextVerse
+            var end = nextVerse
 
-            findnext: while (true) {
+            findnext@ while (true) {
                 if (!it.hasNext()) {
-                    nextVerse = null;
-                    break;
+                    nextVerse = null
+                    break
                 }
 
-                nextVerse = (Verse) it.next();
+                nextVerse = it.next() as Verse
 
                 // If the next verse adjacent
                 if (!v11n.isAdjacentVerse(end, nextVerse)) {
-                    break;
+                    break
                 }
 
                 // Even if the next verse is adjacent we might want to break
                 // if we have moved into a new chapter/book
-                if (!restrict.isSameScope(v11n, end, nextVerse)) {
-                    break findnext;
+                if (!restrict!!.isSameScope(v11n, end, nextVerse)) {
+                    break@findnext
                 }
 
-                end = nextVerse;
+                end = nextVerse
             }
 
-            nextRange = new VerseRange(v11n, start, end);
+            nextRange = VerseRange(v11n, start, end)
         }
-
-        /**
-         * The Versification to which these verses belong.
-         */
-        private Versification v11n;
-
-        /**
-         * The Iterator that we are proxying to
-         */
-        private Iterator<Key> it;
-
-        /**
-         * What is the next VerseRange to be considered
-         */
-        private VerseRange nextRange;
-
-        /**
-         * What is the next Verse to be considered
-         */
-        private Verse nextVerse;
-
-        /**
-         * Do we restrict ranges to not crossing chapter boundaries
-         */
-        private RestrictionType restrict;
     }
 
     /**
@@ -1179,50 +1156,51 @@ public abstract class AbstractPassage implements Passage {
      * @throws IOException
      *             if the read fails
      */
-    protected void writeObjectSupport(ObjectOutputStream out) throws IOException {
+    @Throws(IOException::class)
+    protected open fun writeObjectSupport(out: ObjectOutputStream) {
         // Save off the versification by name
-        out.writeUTF(v11n.getName());
+        out.writeUTF(v11n!!.name)
 
         // the size in bits of teach storage method
-        int bitwiseSize = v11n.maximumOrdinal();
-        int rangedSize = 8 * countRanges(RestrictionType.NONE);
-        int distinctSize = 4 * countVerses();
+        val bitwiseSize = v11n!!.maximumOrdinal()
+        val rangedSize = 8 * countRanges(RestrictionType.NONE)
+        val distinctSize = 4 * countVerses()
 
         // if bitwise is equal smallest
         if (bitwiseSize <= rangedSize && bitwiseSize <= distinctSize) {
-            out.writeInt(BITWISE);
+            out.writeInt(BITWISE)
 
-            BitSet store = new BitSet(bitwiseSize);
-            Iterator<Key> iter = iterator();
+            val store = BitSet(bitwiseSize)
+            val iter = iterator()
             while (iter.hasNext()) {
-                Verse verse = (Verse) iter.next();
-                store.set(verse.getOrdinal());
+                val verse = iter.next() as Verse
+                store.set(verse.ordinal)
             }
 
-            out.writeObject(store);
+            out.writeObject(store)
         } else if (distinctSize <= rangedSize) {
             // if distinct is not bigger than ranged
             // write the Passage type and the number of verses
-            out.writeInt(DISTINCT);
-            out.writeInt(countVerses());
+            out.writeInt(DISTINCT)
+            out.writeInt(countVerses())
 
             // write the verse ordinals in a loop
-            for (Key aKey : this) {
-                Verse verse = (Verse) aKey;
-                out.writeInt(verse.getOrdinal());
+            for (aKey in this) {
+                val verse = aKey as Verse
+                out.writeInt(verse.ordinal)
             }
         } else {
             // otherwise use ranges
             // write the Passage type and the number of ranges
-            out.writeInt(RANGED);
-            out.writeInt(countRanges(RestrictionType.NONE));
+            out.writeInt(RANGED)
+            out.writeInt(countRanges(RestrictionType.NONE))
 
             // write the verse ordinals in a loop
-            Iterator<VerseRange> it = rangeIterator(RestrictionType.NONE);
+            val it = rangeIterator(RestrictionType.NONE)
             while (it.hasNext()) {
-                VerseRange range = it.next();
-                out.writeInt(range.getStart().getOrdinal());
-                out.writeInt(range.getCardinality());
+                val range = it.next()
+                out.writeInt(range.start.ordinal)
+                out.writeInt(range.getCardinality())
             }
         }
 
@@ -1238,14 +1216,15 @@ public abstract class AbstractPassage implements Passage {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
-        listeners = new ArrayList<PassageListener>();
-        originalName = null;
-        parent = null;
-        skipNormalization = 0;
-        suppressEvents = 0;
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
+        listeners = ArrayList<PassageListener?>()
+        originalName = null
+        parent = null
+        skipNormalization = 0
+        suppressEvents = 0
 
-        is.defaultReadObject();
+        `is`.defaultReadObject()
     }
 
     /**
@@ -1258,44 +1237,46 @@ public abstract class AbstractPassage implements Passage {
      * @throws ClassNotFoundException
      *             If the read data is incorrect
      */
-    protected void readObjectSupport(ObjectInputStream is) throws IOException, ClassNotFoundException {
-        raiseEventSuppresion();
-        raiseNormalizeProtection();
+    @Throws(IOException::class, ClassNotFoundException::class)
+    protected open fun readObjectSupport(`is`: ObjectInputStream) {
+        raiseEventSuppresion()
+        raiseNormalizeProtection()
 
         // Read the versification by name
-        String v11nName = is.readUTF();
-        v11n = Versifications.instance().getVersification(v11nName);
+        val v11nName = `is`.readUTF()
+        v11n = Versifications.instance().getVersification(v11nName)
 
-        int type = is.readInt();
-        switch (type) {
-        case BITWISE:
-            BitSet store = (BitSet) is.readObject();
-            for (int i = 0; i < v11n.maximumOrdinal(); i++) {
-                if (store.get(i)) {
-                    add(v11n.decodeOrdinal(i));
+        val type = `is`.readInt()
+        when (type) {
+            BITWISE -> {
+                val store = `is`.readObject() as BitSet
+                var i = 0
+                while (i < v11n!!.maximumOrdinal()) {
+                    if (store.get(i)) {
+                        add(v11n!!.decodeOrdinal(i))
+                    }
+                    i++
                 }
             }
-            break;
 
-        case DISTINCT:
-            int verses = is.readInt();
-            for (int i = 0; i < verses; i++) {
-                int ord = is.readInt();
-                add(v11n.decodeOrdinal(ord));
+            DISTINCT -> {
+                val verses = `is`.readInt()
+                for (i in 0 until verses) {
+                    val ord = `is`.readInt()
+                    add(v11n!!.decodeOrdinal(ord))
+                }
             }
-            break;
 
-        case RANGED:
-            int ranges = is.readInt();
-            for (int i = 0; i < ranges; i++) {
-                int ord = is.readInt();
-                int count = is.readInt();
-                add(RestrictionType.NONE.toRange(getVersification(), v11n.decodeOrdinal(ord), count));
+            RANGED -> {
+                val ranges = `is`.readInt()
+                for (i in 0 until ranges) {
+                    val ord = `is`.readInt()
+                    val count = `is`.readInt()
+                    add(RestrictionType.NONE.toRange(versification, v11n!!.decodeOrdinal(ord), count))
+                }
             }
-            break;
 
-        default:
-            throw new ClassCastException(JSOtherMsg.lookupText("Can only use Verses and VerseRanges in this Collection"));
+            else -> throw ClassCastException(JSOtherMsg.lookupText("Can only use Verses and VerseRanges in this Collection"))
         }
 
         // We are ignoring the originalName. It was set to null in the
@@ -1303,39 +1284,15 @@ public abstract class AbstractPassage implements Passage {
 
         // We don't bother to call fireContentsChanged(...) because
         // nothing can have registered at this point
-        lowerEventSuppressionAndTest();
-        lowerNormalizeProtection();
+        lowerEventSuppressionAndTest()
+        lowerNormalizeProtection()
     }
-
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(AbstractPassage.class);
-
-    /**
-     * Serialization type constant for a BitWise layout
-     */
-    protected static final int BITWISE = 0;
-
-    /**
-     * Serialization type constant for a Distinct layout
-     */
-    protected static final int DISTINCT = 1;
-
-    /**
-     * Serialization type constant for a Ranged layout
-     */
-    protected static final int RANGED = 2;
-
-    /**
-     * Count of serializations methods
-     */
-    protected static final int METHOD_COUNT = 3;
 
     /**
      * The Versification to which this passage belongs.
      */
-    private transient Versification v11n;
+    @Transient
+    private var v11n: Versification?
 
     /**
      * The parent key. See the key interface for more information. NOTE(joe):
@@ -1343,17 +1300,22 @@ public abstract class AbstractPassage implements Passage {
      *
      * @see Key
      */
-    private transient Key parent;
+    @Transient
+    private var parent: Key? = null
 
     /**
      * Support for change notification
      */
-    protected transient List<PassageListener> listeners;
+    @JvmField
+    @Transient
+    protected var listeners: MutableList<PassageListener?>
 
     /**
      * The original string for picky users
      */
-    protected transient String originalName;
+    @JvmField
+    @Transient
+    protected var originalName: String?
 
     /**
      * If we have several changes to make then we increment this and then
@@ -1361,31 +1323,90 @@ public abstract class AbstractPassage implements Passage {
      * calculating the parameters to the fire is high then we can check that
      * this is 0 before doing the calculation.
      */
-    protected transient int suppressEvents;
+    @JvmField
+    @Transient
+    protected var suppressEvents: Int = 0
 
     /**
      * Do we skip normalization for now - if we want to skip then we increment
      * this, and the decrement it when done.
      */
-    protected transient int skipNormalization;
+    @JvmField
+    @Transient
+    protected var skipNormalization: Int = 0
 
-    /**
-     * What characters can we use to separate VerseRanges in a Passage
-     */
-    public static final String REF_ALLOWED_DELIMS = ",;\n\r\t";
+    companion object {
+        /**
+         * Convert the Object to a VerseRange. If base is a Verse then return a
+         * VerseRange of zero length.
+         *
+         * @param base
+         *            The object to be cast
+         * @return The VerseRange
+         * @exception java.lang.ClassCastException
+         *                If this is not a Verse or a VerseRange
+         */
+        @JvmStatic
+        @Throws(ClassCastException::class)
+        protected fun toVerseRange(v11n: Versification?, base: Any?): VerseRange {
+            jswordAssert(base != null) { "" }
 
-    /**
-     * What characters should we use to separate VerseRanges in a Passage
-     */
-    public static final String REF_PREF_DELIM = ", ";
+            if (base is VerseRange) {
+                return base
+            } else if (base is Verse) {
+                return VerseRange(v11n, base)
+            }
 
-    /**
-     * What characters should we use to separate VerseRanges in a Passage
-     */
-    public static final String REF_OSIS_DELIM = " ";
+            throw ClassCastException(JSOtherMsg.lookupText("Can only use Verses and VerseRanges in this Collection"))
+        }
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -5931560451407396276L;
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(AbstractPassage::class.java)
+
+        /**
+         * Serialization type constant for a BitWise layout
+         */
+        // was protected
+        const val BITWISE: Int = 0
+
+        /**
+         * Serialization type constant for a Distinct layout
+         */
+        // was protected
+        const val DISTINCT: Int = 1
+
+        /**
+         * Serialization type constant for a Ranged layout
+         */
+        // was protected
+        const val RANGED: Int = 2
+
+        /**
+         * Count of serializations methods
+         */
+        // was protected
+        const val METHOD_COUNT: Int = 3
+
+        /**
+         * What characters can we use to separate VerseRanges in a Passage
+         */
+        const val REF_ALLOWED_DELIMS: String = ",;\n\r\t"
+
+        /**
+         * What characters should we use to separate VerseRanges in a Passage
+         */
+        const val REF_PREF_DELIM: String = ", "
+
+        /**
+         * What characters should we use to separate VerseRanges in a Passage
+         */
+        const val REF_OSIS_DELIM: String = " "
+
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID: Long = -5931560451407396276L
+    }
 }
