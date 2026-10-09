@@ -98,3 +98,21 @@ Protected fields that subclasses read stay fields: `@JvmField protected var x`.
 members of each baseline class with the current code. Removed/changed = failure; additions only for
 `Companion`, enum `getEntries` and `$`-mangled `internal` methods, or via `oracle/api-allowlist.txt` with a reason. Read
 `build/reports/ksword/api-generic.txt` (generic signature differences) at review.
+
+## 11. K1 outcome
+- 18 batches (B1-B18, Tasks 3-23) converted every JSword Java source except the Lucene packages
+  (`index.lucene`, `index.lucene.analysis`: 35 files, left for a later phase).
+- Consumer (`:app`) edits forced by Kotlin syntax: 15 and-bible commits touching `app/src`
+  (`git log --oneline dd03ff696..HEAD -- app/src`), 142 files, +422/-418 lines; mostly `!!` on honest
+  nullable returns, `getX()`/`setX()` for overridden getters, `Companion` constant imports.
+- API parity allowlist: 173 entries (`grep -vc '^#' jsword/oracle/api-allowlist.txt`), all Kotlin
+  artefacts (Cloneable direct supertype, protected -> public constructors of `internal` classes,
+  `INSTANCE` fields, removed `equals`/`hashCode` redeclarations, `readObject` finality).
+- Gate numbers at M4: `jvmTest` 279 classes / 3411 tests / 0 failures; `parityTest` 5 classes / 27 tests /
+  0 failures; `:app` suite 561 classes / 3808 tests / 0 failures.
+- Bugs noticed and left as is are listed in the commit bodies:
+  `git -C jsword log b9490121..HEAD --grep="left as is"`.
+- Lessons that became rules: ruling R7 (non-null returns where every path provably returns non-null,
+  parameters conservative), R8 (`:app` overrides decide parameter types), caller-frame counting
+  (`object` + `@JvmStatic` for `CallContext`/`ResourceUtil`/`CWClassLoader`), `getOsis` must return a
+  mutable list, differential parity probes for hand-rewritten loops.
