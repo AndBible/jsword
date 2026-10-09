@@ -30,6 +30,9 @@ private class NSLogLogger(override val name: String) : Logger {
         }
         // NSLog is variadic: a Kotlin String passed for %@ is not an Objective-C object there and crashes the
         // process (SIGSEGV); `as NSString` passes a real NSString (%s would garble non-ASCII text).
+        // The compiler calls the cast impossible, but Kotlin/Native bridges String to NSString at runtime
+        // (verified on the iOS simulator: and-bible CI run 37995718911, probe 3).
+        @Suppress("CAST_NEVER_SUCCEEDS")
         NSLog("%@", text as NSString)
     }
 }
