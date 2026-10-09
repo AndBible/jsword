@@ -16,16 +16,16 @@
  *
  * © CrossWire Bible Society, 2014 - 2016
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
-import org.crosswire.jsword.passage.DefaultKeyList;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor
+import org.crosswire.jsword.book.sword.state.OpenFileState
+import org.crosswire.jsword.passage.DefaultKeyList
+import org.crosswire.jsword.passage.Key
+import org.jdom2.Content
+import java.io.IOException
+import java.util.ArrayList
 
 /**
  * A NullBackend is not attached to resources.
@@ -33,96 +33,96 @@ import org.crosswire.jsword.passage.Key;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class NullBackend implements Backend {
-
-    public NullBackend() {
-    }
+open class NullBackend : Backend<OpenFileState> {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#getBookMetaData()
      */
-    public SwordBookMetaData getBookMetaData() {
-        return null;
-    }
+    override val bookMetaData: SwordBookMetaData?
+        get() = null
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#decipher(byte[])
      */
-    public void decipher(byte[] data) {
+    override fun decipher(data: ByteArray) {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#encipher(byte[])
      */
-    public void encipher(byte[] data) {
+    override fun encipher(data: ByteArray) {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#readIndex()
      */
-    public Key readIndex() {
-        return new DefaultKeyList();
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun readIndex(): Key {
+        return DefaultKeyList()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#contains(org.crosswire.jsword.passage.Key)
      */
-    public boolean contains(Key key) {
-        return false;
+    override fun contains(key: Key?): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#getRawText(org.crosswire.jsword.passage.Key)
      */
-    public String getRawText(Key key) throws BookException {
-        return "";
+    @Throws(BookException::class)
+    override fun getRawText(key: Key?): String {
+        return ""
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#setAliasKey(org.crosswire.jsword.passage.Key, org.crosswire.jsword.passage.Key)
      */
-    public void setAliasKey(Key alias, Key source) throws BookException {
+    @Throws(BookException::class)
+    override fun setAliasKey(alias: Key?, source: Key?) {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#size(org.crosswire.jsword.passage.Key)
      */
-    public int getRawTextLength(Key key) {
-        return 0;
+    override fun getRawTextLength(key: Key?): Int {
+        return 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#getGlobalKeyList()
      */
-    public Key getGlobalKeyList() throws BookException {
-        return new DefaultKeyList();
+    @Throws(BookException::class)
+    override fun getGlobalKeyList(): Key {
+        return DefaultKeyList()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#readToOsis(org.crosswire.jsword.passage.Key, org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor)
      */
-    public List readToOsis(Key key, RawTextToXmlProcessor processor) throws BookException {
-        return new ArrayList();
+    @Throws(BookException::class)
+    override fun readToOsis(key: Key?, processor: RawTextToXmlProcessor?): MutableList<Content> {
+        return ArrayList()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#create()
      */
-    public void create() throws IOException, BookException {
+    @Throws(IOException::class, BookException::class)
+    override fun create() {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#isSupported()
      */
-    public boolean isSupported() {
-        return true;
-    }
+    override val isSupported: Boolean
+        get() = true
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.Backend#isWritable()
      */
-    public boolean isWritable() {
-        return false;
-    }
+    override val isWritable: Boolean
+        get() = false
 
 }

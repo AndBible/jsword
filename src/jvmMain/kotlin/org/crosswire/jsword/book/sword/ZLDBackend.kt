@@ -17,18 +17,17 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
-import org.crosswire.common.compress.CompressorType;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
-import org.crosswire.jsword.book.sword.state.RawLDBackendState;
-import org.crosswire.jsword.book.sword.state.ZLDBackendState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.compress.CompressorType
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
+import org.crosswire.jsword.book.sword.state.RawLDBackendState
+import org.crosswire.jsword.book.sword.state.ZLDBackendState
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.io.ObjectInputStream
 
 /**
  * An extension of RawLDBackend to read Z format files.
@@ -37,90 +36,87 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public class ZLDBackend extends RawLDBackend<ZLDBackendState> {
-    /**
-     * Simple ctor
-     * @param sbmd 
-     */
-    public ZLDBackend(SwordBookMetaData sbmd) {
-        super(sbmd, 4);
-    }
+open class ZLDBackend
+/**
+ * Simple ctor
+ * @param sbmd 
+ */
+(sbmd: SwordBookMetaData?) : RawLDBackend<ZLDBackendState>(sbmd, 4) {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.RawLDBackend#initState()
      */
-    @Override
-    public ZLDBackendState initState() throws BookException {
-        return OpenFileStateManager.instance().getZLDBackendState(getBookMetaData());
+    @Throws(BookException::class)
+    override fun initState(): ZLDBackendState {
+        return OpenFileStateManager.instance().getZLDBackendState(bookMetaData)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.RawLDBackend#getEntry(org.crosswire.jsword.book.sword.state.RawLDBackendState, org.crosswire.jsword.book.sword.DataEntry)
      */
-    @Override
-    protected DataEntry getEntry(RawLDBackendState fileState, DataEntry entry) {
-        ZLDBackendState state = null;
-        if (fileState instanceof ZLDBackendState) {
-            state = (ZLDBackendState) fileState;
+    override fun getEntry(fileState: RawLDBackendState?, entry: DataEntry): DataEntry {
+        val state: ZLDBackendState
+        if (fileState is ZLDBackendState) {
+            state = fileState
         } else {
             //something went terribly wrong
-            log.error("Backend State was not of type ZLDBackendState. Ignoring this entry and exiting.");
-            return new DataEntry(entry.getName(), new byte[0], entry.getCharset());
+            log.error("Backend State was not of type ZLDBackendState. Ignoring this entry and exiting.")
+            return DataEntry(entry.getName(), ByteArray(0), entry.getCharset())
         }
 
-        DataIndex blockIndex = entry.getBlockIndex();
-        long blockNum = blockIndex.getOffset();
-        int blockEntry = blockIndex.getSize();
+        val blockIndex = entry.getBlockIndex()
+        val blockNum: Long = blockIndex.getOffset().toLong()
+        val blockEntry = blockIndex.getSize()
 
         // Can we get the data from the cache
-        byte[] uncompressed = null;
-        if (blockNum == state.getLastBlockNum()) {
-            uncompressed = state.getLastUncompressed();
+        var uncompressed: ByteArray? = null
+        if (blockNum == state.lastBlockNum) {
+            uncompressed = state.lastUncompressed
         } else {
-            byte[] temp;
+            var temp: ByteArray
             try {
-                temp = SwordUtil.readRAF(state.getZdxRaf(), blockNum * ZDX_ENTRY_SIZE, ZDX_ENTRY_SIZE);
-                if (temp == null || temp.length == 0) {
-                    return new DataEntry(entry.getName(), new byte[0], entry.getCharset());
+                temp = SwordUtil.readRAF(state.getZdxRaf(), blockNum * ZDX_ENTRY_SIZE, ZDX_ENTRY_SIZE)
+                if (temp.size == 0) {
+                    return DataEntry(entry.getName(), ByteArray(0), entry.getCharset())
                 }
 
-                int blockStart = SwordUtil.decodeLittleEndian32(temp, 0);
-                int blockSize = SwordUtil.decodeLittleEndian32(temp, 4);
+                val blockStart = SwordUtil.decodeLittleEndian32(temp, 0)
+                val blockSize = SwordUtil.decodeLittleEndian32(temp, 4)
 
-                temp = SwordUtil.readRAF(state.getZdtRaf(), blockStart, blockSize);
+                temp = SwordUtil.readRAF(state.getZdtRaf(), blockStart.toLong(), blockSize)
 
-                decipher(temp);
+                decipher(temp)
 
-                String compressType = getBookMetaData().getProperty(SwordBookMetaData.KEY_COMPRESS_TYPE);
-                uncompressed = CompressorType.fromString(compressType).getCompressor(temp).uncompress().toByteArray();
+                val compressType = bookMetaData.getProperty(SwordBookMetaData.KEY_COMPRESS_TYPE)
+                uncompressed = CompressorType.fromString(compressType)!!.getCompressor(temp).uncompress().toByteArray()
 
                 // cache the uncompressed data for next time
-                state.setLastBlockNum(blockNum);
-                state.setLastUncompressed(uncompressed);
-            } catch (IOException e) {
-                return new DataEntry(entry.getName(), new byte[0], entry.getCharset());
+                state.lastBlockNum = blockNum
+                state.lastUncompressed = uncompressed
+            } catch (e: IOException) {
+                return DataEntry(entry.getName(), ByteArray(0), entry.getCharset())
             }
         }
 
         // get the "entry" from this block.
-        int entryCount = SwordUtil.decodeLittleEndian32(uncompressed, 0);
+        val entryCount = SwordUtil.decodeLittleEndian32(uncompressed!!, 0)
         if (blockEntry >= entryCount) {
-            return new DataEntry(entry.getName(), new byte[0], entry.getCharset());
+            return DataEntry(entry.getName(), ByteArray(0), entry.getCharset())
         }
 
-        int entryOffset = BLOCK_ENTRY_COUNT + (BLOCK_ENTRY_SIZE * blockEntry);
-        int entryStart = SwordUtil.decodeLittleEndian32(uncompressed, entryOffset);
-        int entrySize = SwordUtil.decodeLittleEndian32(uncompressed, entryOffset + 4);
+        val entryOffset = BLOCK_ENTRY_COUNT + (BLOCK_ENTRY_SIZE * blockEntry)
+        val entryStart = SwordUtil.decodeLittleEndian32(uncompressed, entryOffset)
+        var entrySize = SwordUtil.decodeLittleEndian32(uncompressed, entryOffset + 4)
         // Note: the actual entry is '\0' terminated
-        int nullTerminator = SwordUtil.findByte(uncompressed, entryStart, (byte) 0x00);
+        val nullTerminator = SwordUtil.findByte(uncompressed, entryStart, 0x00.toByte())
         if (nullTerminator - entryStart + 1 == entrySize) {
-            entrySize -= 1;
+            entrySize -= 1
         }
-        byte[] entryBytes = new byte[entrySize];
-        System.arraycopy(uncompressed, entryStart, entryBytes, 0, entrySize);
-        DataEntry finalEntry = new DataEntry(entry.getName(), entryBytes, getBookMetaData().getBookCharset());
+        val entryBytes = ByteArray(entrySize)
+        System.arraycopy(uncompressed, entryStart, entryBytes, 0, entrySize)
+        val finalEntry = DataEntry(entry.getName(), entryBytes, bookMetaData.bookCharset)
 
-        return finalEntry;
+        return finalEntry
     }
 
     /**
@@ -130,79 +126,84 @@ public class ZLDBackend extends RawLDBackend<ZLDBackendState> {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
-        is.defaultReadObject();
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
+        `is`.defaultReadObject()
     }
+
     /** 
      * Experimental code.
      */
-    @Override
-    public void dumpIdxRaf() {
-        RawLDBackendState state = null;
-        long end = -1;
+    override fun dumpIdxRaf() {
+        var state: RawLDBackendState? = null
+        var end: Long = -1
         try {
-            state = initState();
-            end = getCardinality();
-            StringBuilder buf = new StringBuilder();
-            System.out.println("index\toffset\tsize\tkey\tvalue");
-            for (long i = 0; i < end; ++i) {
-                DataIndex index = getIndex(state, i);
-                int offset = index.getOffset();
-                int size   = index.getSize();
-                buf.setLength(0);
-                buf.append(i);
-                buf.append('\t');
-                buf.append(offset);
-                buf.append('\t');
-                buf.append(size);
+            state = initState()
+            end = getCardinality().toLong()
+            val buf = StringBuilder()
+            System.out.println("index\toffset\tsize\tkey\tvalue")
+            var i: Long = 0
+            while (i < end) {
+                val index = getIndex(state, i)
+                val offset = index.getOffset()
+                val size = index.getSize()
+                buf.setLength(0)
+                buf.append(i)
+                buf.append('\t')
+                buf.append(offset)
+                buf.append('\t')
+                buf.append(size)
                 if (size > 0) {
                     // Now read the data file for this key using the offset and size
-                    byte[] data = SwordUtil.readRAF(state.getDatRaf(), offset, size);
-                    DataEntry blockEntry = new DataEntry(Long.toString(i), data, getBookMetaData().getBookCharset());
-                    DataIndex block = blockEntry.getBlockIndex();
-                    DataEntry dataEntry = getEntry(state, blockEntry);
-                    String key = blockEntry.getKey();
-                    buf.append('\t');
-                    buf.append(key);
-                    buf.append('\t');
-                    buf.append(block.getOffset());
-                    buf.append('\t');
-                    buf.append(block.getSize());
-                    String raw;
-                    buf.append('\t');
+                    val data = SwordUtil.readRAF(state.getDatRaf(), offset.toLong(), size)
+                    val blockEntry = DataEntry(i.toString(), data, bookMetaData.bookCharset)
+                    val block = blockEntry.getBlockIndex()
+                    val dataEntry = getEntry(state, blockEntry)
+                    val key = blockEntry.getKey()
+                    buf.append('\t')
+                    buf.append(key)
+                    buf.append('\t')
+                    buf.append(block.getOffset())
+                    buf.append('\t')
+                    buf.append(block.getSize())
+                    val raw: String
+                    buf.append('\t')
                     if (dataEntry.isLinkEntry()) {
-                        raw = dataEntry.getLinkTarget();
-                        buf.append("Linked to: ").append(raw.replace('\n', ' '));
+                        raw = dataEntry.getLinkTarget()
+                        buf.append("Linked to: ").append(raw.replace('\n', ' '))
                     } else {
-                        raw = getRawText(dataEntry);
-                        if (raw.length() > 43) {
-                            buf.append(raw.substring(0, 40).replace('\n', ' '));
-                            buf.append("...");
+                        raw = getRawText(dataEntry)
+                        if (raw.length > 43) {
+                            buf.append(raw.substring(0, 40).replace('\n', ' '))
+                            buf.append("...")
                         } else {
-                            buf.append(raw);
+                            buf.append(raw)
                         }
                     }
                 }
-                System.out.println(buf.toString());
+                System.out.println(buf.toString())
+                ++i
             }
-        } catch (IOException e) {
+        } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (BookException e) {
+            e.printStackTrace()
+        } catch (e: BookException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace()
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
     }
 
-    private static final int ZDX_ENTRY_SIZE = 8;
-    private static final int BLOCK_ENTRY_COUNT = 4;
-    private static final int BLOCK_ENTRY_SIZE = 8;
+    private companion object {
+        private const val ZDX_ENTRY_SIZE = 8
+        private const val BLOCK_ENTRY_COUNT = 4
+        private const val BLOCK_ENTRY_SIZE = 8
 
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(ZLDBackend.class);
-    private static final long serialVersionUID = 3536098410391064446L;
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(ZLDBackend::class.java)
+        private const val serialVersionUID = 3536098410391064446L
+    }
 }

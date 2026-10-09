@@ -17,31 +17,29 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.UnsupportedEncodingException;
-import java.text.DecimalFormat;
-import java.text.MessageFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.crosswire.common.icu.DateFormatter;
-import org.crosswire.common.util.StringUtil;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookCategory;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.FeatureType;
-import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
-import org.crosswire.jsword.book.sword.state.RawLDBackendState;
-import org.crosswire.jsword.passage.DefaultLeafKeyList;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.common.icu.DateFormatter
+import org.crosswire.common.util.StringUtil
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookCategory
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.FeatureType
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
+import org.crosswire.jsword.book.sword.state.RawLDBackendState
+import org.crosswire.jsword.passage.DefaultLeafKeyList
+import org.crosswire.jsword.passage.Key
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.UnsupportedEncodingException
+import java.nio.charset.Charset
+import java.text.DecimalFormat
+import java.text.MessageFormat
+import java.util.Calendar
+import java.util.GregorianCalendar
+import java.util.Locale
+import java.util.regex.Pattern
 
 /**
  * An implementation AbstractKeyBackend to read RAW format files.
@@ -51,156 +49,159 @@ import org.crosswire.jsword.passage.Key;
  * @author Joe Walker
  * @author DM Smith
  */
-public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBackend<RawLDBackendState> {
+open class RawLDBackend<T : RawLDBackendState>
+/**
+ * Simple ctor
+ * 
+ * @param sbmd 
+ * @param datasize
+ * We need to know how many bytes in the size portion of the
+ * index
+ */
+(sbmd: SwordBookMetaData?, datasize: Int) : AbstractKeyBackend<RawLDBackendState>(sbmd) {
     /**
-     * Simple ctor
-     * 
-     * @param sbmd 
-     * @param datasize
-     *            We need to know how many bytes in the size portion of the
-     *            index
+     * The number of bytes in the size count in the index
      */
-    public RawLDBackend(SwordBookMetaData sbmd, int datasize) {
-        super(sbmd);
-        this.datasize = datasize;
-        this.entrysize = OFFSETSIZE + datasize;
+    private val datasize: Int = datasize
+
+    /**
+     * The number of bytes for each entry in the index: either 6 or 8
+     */
+    private val entrysize: Int = OFFSETSIZE + datasize
+
+    @Throws(IOException::class)
+    override fun readRawContent(state: RawLDBackendState, key: Key?): String {
+        return doReadRawContent(state, key!!.getName())
     }
 
-    public String readRawContent(RawLDBackendState state, Key key) throws IOException {
-        return doReadRawContent(state, key.getName());
+    @Throws(BookException::class)
+    override fun initState(): RawLDBackendState {
+        return OpenFileStateManager.instance().getRawLDBackendState(bookMetaData)
     }
 
-    public RawLDBackendState initState() throws BookException {
-        return OpenFileStateManager.instance().getRawLDBackendState(getBookMetaData());
-    }
-
-    private String doReadRawContent(RawLDBackendState state, String key) throws IOException {
-        if (key == null || key.length() == 0) {
-            return "";
+    @Throws(IOException::class)
+    private fun doReadRawContent(state: RawLDBackendState, key: String?): String {
+        if (key == null || key.length == 0) {
+            return ""
         }
-        int pos = search(state, key);
+        val pos = search(state, key)
         if (pos >= 0) {
-            DataIndex index = getIndex(state, pos);
-            DataEntry entry = getEntry(state, key, index);
-            entry = getEntry(state, entry);
+            val index = getIndex(state, pos.toLong())
+            var entry = getEntry(state, key, index)
+            entry = getEntry(state, entry)
             if (entry.isLinkEntry()) {
-                return doReadRawContent(state, entry.getLinkTarget());
+                return doReadRawContent(state, entry.getLinkTarget())
             }
-            return getRawText(entry);
+            return getRawText(entry)
         }
 
         // TRANSLATOR: Error condition: Indicates that something could not
         // be found in the book. {0} is a placeholder for the unknown key.
-        throw new IOException(JSMsg.gettext("Key not found {0}", key));
+        throw IOException(JSMsg.gettext("Key not found {0}", key))
     }
 
-    protected String getRawText(DataEntry entry) {
-        String cipherKeyString = getBookMetaData().getProperty(SwordBookMetaData.KEY_CIPHER_KEY);
-        byte[] cipherKeyBytes = null;
+    protected open fun getRawText(entry: DataEntry): String {
+        val cipherKeyString = bookMetaData.getProperty(SwordBookMetaData.KEY_CIPHER_KEY)
+        var cipherKeyBytes: ByteArray? = null
         if (cipherKeyString != null) {
             try {
-                cipherKeyBytes = cipherKeyString.getBytes(getBookMetaData().getBookCharset());
-            } catch (UnsupportedEncodingException e) {
-                cipherKeyBytes = cipherKeyString.getBytes();
+                // charset NAME on purpose (UnsupportedEncodingException, as in Java)
+                cipherKeyBytes = (cipherKeyString as java.lang.String).getBytes(bookMetaData.bookCharset)
+            } catch (e: UnsupportedEncodingException) {
+                cipherKeyBytes = cipherKeyString.toByteArray(Charset.defaultCharset())
             }
         }
-        return entry.getRawText(cipherKeyBytes);
+        return entry.getRawText(cipherKeyBytes)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
-    public int getCardinality() {
-        RawLDBackendState state = null;
+    override fun getCardinality(): Int {
+        var state: RawLDBackendState? = null
         try {
-            state = initState();
+            state = initState()
 
-            if (state.getSize() == -1) {
-                state.setSize((int) (state.getIdxRaf().length() / entrysize));
+            if (state.size == -1) {
+                state.size = (state.getIdxRaf()!!.length() / entrysize).toInt()
             }
-            return state.getSize();
-        } catch (BookException e) {
-            return 0;
-        } catch (IOException e) {
-            return 0;
+            return state.size
+        } catch (e: BookException) {
+            return 0
+        } catch (e: IOException) {
+            return 0
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#get(int)
      */
-    public Key get(int index) {
-        RawLDBackendState state = null;
+    override fun get(index: Int): Key {
+        var state: RawLDBackendState? = null
         try {
-            state = initState();
+            state = initState()
 
             if (index < getCardinality()) {
-                DataIndex dataIndex = getIndex(state, index);
-                DataEntry entry = getEntry(state, getBookMetaData().getInitials(), dataIndex);
-                String keytitle = internal2external(entry.getKey());
-                return new DefaultLeafKeyList(keytitle);
+                val dataIndex = getIndex(state, index.toLong())
+                val entry = getEntry(state, bookMetaData.initials, dataIndex)
+                val keytitle = internal2external(entry.getKey())
+                return DefaultLeafKeyList(keytitle)
             }
-        } catch (BookException e) {
+        } catch (e: BookException) {
             // This is allowed
             // Fall through to throw an AIOOBE.
-        } catch (IOException e) {
+        } catch (e: IOException) {
             // This is allowed
             // Fall through to throw an AIOOBE.
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
-        throw new ArrayIndexOutOfBoundsException(index);
+        throw ArrayIndexOutOfBoundsException(index)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#indexOf(org.crosswire.jsword.passage.Key)
      */
-    public int indexOf(Key that) {
-        RawLDBackendState state = null;
+    override fun indexOf(that: Key?): Int {
+        var state: RawLDBackendState? = null
         try {
-            state = initState();
-            return search(state, that.getName());
-        } catch (IOException e) {
-            return -getCardinality() - 1;
-        } catch (BookException e) {
-            return -getCardinality() - 1;
+            state = initState()
+            return search(state, that!!.getName())
+        } catch (e: IOException) {
+            return -getCardinality() - 1
+        } catch (e: BookException) {
+            return -getCardinality() - 1
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#size(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public int getRawTextLength(Key key) {
-        RawLDBackendState state = null;
+    override fun getRawTextLength(key: Key?): Int {
+        var state: RawLDBackendState? = null
         try {
-            state = initState();
-            int entry = search(state, key.getName());
+            state = initState()
+            val entry = search(state, key!!.getName())
             // Read the offset and size for this key from the index
-            byte[] buffer = SwordUtil.readRAF(state.getIdxRaf(), entry * entrysize, entrysize);
-            int entrySize = 0;
-            switch (datasize) {
-            case 2:
-                entrySize = SwordUtil.decodeLittleEndian16(buffer, 4);
-                break;
-            case 4:
-                entrySize = SwordUtil.decodeLittleEndian32(buffer, 4);
-                break;
-            default:
-                assert false : datasize;
+            val buffer = SwordUtil.readRAF(state.getIdxRaf(), (entry * entrysize).toLong(), entrysize)
+            var entrySize = 0
+            when (datasize) {
+                2 -> entrySize = SwordUtil.decodeLittleEndian16(buffer, 4)
+                4 -> entrySize = SwordUtil.decodeLittleEndian32(buffer, 4)
+                else -> jswordAssert(false) { datasize }
             }
 
-            return entrySize;
-        } catch (IOException e) {
-            return 0;
-        } catch (BookException e) {
-            return 0;
+            return entrySize
+        } catch (e: IOException) {
+            return 0
+        } catch (e: BookException) {
+            return 0
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
     }
 
@@ -211,41 +212,38 @@ public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBacken
      * @return the index of the entry
      * @throws IOException
      */
-    protected DataIndex getIndex(RawLDBackendState state, long entry) throws IOException {
+    @Throws(IOException::class)
+    protected open fun getIndex(state: RawLDBackendState, entry: Long): DataIndex {
         // Read the offset and size for this key from the index
-        byte[] buffer = SwordUtil.readRAF(state.getIdxRaf(), entry * entrysize, entrysize);
-        int entryOffset = SwordUtil.decodeLittleEndian32(buffer, 0);
-        int entrySize = -1;
-        switch (datasize) {
-        case 2:
-            entrySize = SwordUtil.decodeLittleEndian16(buffer, 4);
-            break;
-        case 4:
-            entrySize = SwordUtil.decodeLittleEndian32(buffer, 4);
-            break;
-        default:
-            assert false : datasize;
+        val buffer = SwordUtil.readRAF(state.getIdxRaf(), entry * entrysize, entrysize)
+        val entryOffset = SwordUtil.decodeLittleEndian32(buffer, 0)
+        var entrySize = -1
+        when (datasize) {
+            2 -> entrySize = SwordUtil.decodeLittleEndian16(buffer, 4)
+            4 -> entrySize = SwordUtil.decodeLittleEndian32(buffer, 4)
+            else -> jswordAssert(false) { datasize }
         }
-        return new DataIndex(entryOffset, entrySize);
+        return DataIndex(entryOffset, entrySize)
     }
 
     /**
      * Get the text for an indexed entry in the book.
      * 
      * @param state
-     *            the state object for the storage
+     * the state object for the storage
      * @param reply
-     *            the context for this dataIndex, used for debugging
+     * the context for this dataIndex, used for debugging
      * @param dataIndex
-     *            the entry to get
+     * the entry to get
      * @return the text for the entry.
      * @throws IOException
      */
-    private DataEntry getEntry(RawLDBackendState state, String reply, DataIndex dataIndex) throws IOException {
+    @Throws(IOException::class)
+    private fun getEntry(state: RawLDBackendState, reply: String?, dataIndex: DataIndex): DataEntry {
 //        DataIndex dataIndex = getIndex(state, index);
         // Now read the data file for this key using the offset and size
-        byte[] data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset(), dataIndex.getSize());
-        return new DataEntry(reply, data, getBookMetaData().getBookCharset());
+        val data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), dataIndex.getSize())
+        return DataEntry(reply, data, bookMetaData.bookCharset)
     }
 
     /**
@@ -256,8 +254,8 @@ public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBacken
      * @param entry the entry that might indicate a deeper entry
      * @return the final entry
      */
-    protected DataEntry getEntry(RawLDBackendState state, DataEntry entry) {
-        return entry;
+    protected open fun getEntry(state: RawLDBackendState?, entry: DataEntry): DataEntry {
+        return entry
     }
 
     /**
@@ -268,7 +266,8 @@ public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBacken
      * @return the match
      * @throws IOException
      */
-    private int search(RawLDBackendState state, String key) throws IOException {
+    @Throws(IOException::class)
+    private fun search(state: RawLDBackendState, key: String): Int {
         // Note: In some dictionaries, the first element is out of order and
         // represents the title of the work.
         // So, do the bin search from 1 to end and if not found, check the
@@ -276,72 +275,72 @@ public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBacken
         // If that does not match return the position found otherwise.
 
         // Initialize to one beyond both ends.
-        int total = getCardinality();
-        int low = 0;
-        int high = total;
-        int match = -1;
-        DataIndex dataIndex = null;
+        val total = getCardinality()
+        var low = 0
+        var high = total
+        var match = -1
+        var dataIndex: DataIndex
 
-        String suppliedKey = null;
+        var suppliedKey: String? = null
         while (high - low > 1) {
             // use >>> to keep mid always in range
-            int mid = (low + high) >>> 1;
+            var mid = (low + high) ushr 1
 
             // Get the key for the item at "mid"
-            dataIndex = getIndex(state, mid);
+            dataIndex = getIndex(state, mid.toLong())
             // Occasionally there's a bogus index entry (size == 0)
             // in the middle of the index. It needs to be skipped.
             while (dataIndex.getSize() == 0) {
                 // reset mid toward the longer end
-                mid += high - mid > mid - low ? 1 : -1;
+                mid += if (high - mid > mid - low) 1 else -1
                 // ensure that we are in bounds.
                 if (mid < low || mid > high) {
-                    break;
+                    break
                 }
-                dataIndex = getIndex(state, mid);
+                dataIndex = getIndex(state, mid.toLong())
             }
-            String entryKey = normalizeForSearch(getEntry(state, key, dataIndex).getKey());
+            val entryKey = normalizeForSearch(getEntry(state, key, dataIndex).getKey())
             // Normalize the key based upon the first entry looked at.
             if (suppliedKey == null) {
-                suppliedKey = normalizeForSearch(external2internal(key, entryKey));
+                suppliedKey = normalizeForSearch(external2internal(key, entryKey))
             }
-            int cmp = entryKey.compareTo(suppliedKey);
+            val cmp = entryKey.compareTo(suppliedKey)
             if (cmp < 0) {
-                low = mid;
+                low = mid
             } else if (cmp > 0) {
-                high = mid;
+                high = mid
             } else {
-                match = mid;
-                break;
+                match = mid
+                break
             }
         }
 
         // Do we have an exact match?
         if (match >= 0) {
-            return match;
+            return match
         }
 
         // Many dictionaries have an introductory entry, so check it for a match.
-        dataIndex = getIndex(state, 0);
-        String entryKey = normalizeForSearch(getEntry(state, key, dataIndex).getKey());
+        dataIndex = getIndex(state, 0)
+        val entryKey = normalizeForSearch(getEntry(state, key, dataIndex).getKey())
         if (suppliedKey == null) {
-            suppliedKey = normalizeForSearch(external2internal(key, entryKey));
+            suppliedKey = normalizeForSearch(external2internal(key, entryKey))
         }
         if (entryKey.compareTo(suppliedKey) == 0) {
-            return 0;
+            return 0
         }
 
         // It wasn't found so see if it is present in a linear search if case sensitive keys are used.
-        if ("true".equalsIgnoreCase(getBookMetaData().getProperty(SwordBookMetaData.KEY_CASE_SENSITIVE_KEYS))) {
-           for (int i = 0; i < total; i++) {
-               dataIndex = getIndex(state, i);
-               if (getEntry(state, key, dataIndex).getKey().compareTo(key) == 0) {
-                   return i;
-               }
-           }
+        if ("true".equals(bookMetaData.getProperty(SwordBookMetaData.KEY_CASE_SENSITIVE_KEYS), ignoreCase = true)) {
+            for (i in 0 until total) {
+                dataIndex = getIndex(state, i.toLong())
+                if (getEntry(state, key, dataIndex).getKey().compareTo(key) == 0) {
+                    return i
+                }
+            }
         }
 
-        return -(high + 1);
+        return -(high + 1)
     }
 
     /**
@@ -352,162 +351,162 @@ public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBacken
      * @param pattern The first non-introduction key in the module.
      * @return the internal representation of the key.
      */
-    private String external2internal(String externalKey, String pattern) {
-        if (externalKey.length() == 0) {
-            return externalKey;
+    private fun external2internal(externalKey: String, pattern: String): String {
+        if (externalKey.length == 0) {
+            return externalKey
         }
-        BookMetaData bmd = getBookMetaData();
-        String keytitle = externalKey;
-        if (BookCategory.DAILY_DEVOTIONS.equals(bmd.getBookCategory())) {
+        val bmd = bookMetaData
+        var keytitle = externalKey
+        if (BookCategory.DAILY_DEVOTIONS == bmd.bookCategory) {
             // Is it already in internal format? If so, just return it.
-            Matcher m = DEVOTION_PATTERN.matcher(keytitle);
+            val m = DEVOTION_PATTERN.matcher(keytitle)
             if (m.matches()) {
-                return keytitle;
+                return keytitle
             }
-            Calendar greg = new GregorianCalendar();
-            DateFormatter nameDF = DateFormatter.getDateInstance();
-            nameDF.setLenient(true);
-            Date date = nameDF.parse(keytitle);
-            greg.setTime(date);
-            Object[] objs = {
-                    Integer.valueOf(1 + greg.get(Calendar.MONTH)), Integer.valueOf(greg.get(Calendar.DATE))
-            };
-            return DATE_KEY_FORMAT.format(objs);
+            val greg = GregorianCalendar()
+            val nameDF = DateFormatter.getDateInstance()
+            nameDF.setLenient(true)
+            val date = nameDF.parse(keytitle)
+            greg.setTime(date)
+            val objs = arrayOf<Any>(
+                Integer.valueOf(1 + greg.get(Calendar.MONTH)), Integer.valueOf(greg.get(Calendar.DATE))
+            )
+            return DATE_KEY_FORMAT.format(objs)
         }
 
         if (bmd.hasFeature(FeatureType.GREEK_DEFINITIONS) || bmd.hasFeature(FeatureType.HEBREW_DEFINITIONS)) {
             // Is the string valid?
-            Matcher m = STRONGS_PATTERN.matcher(keytitle);
+            var m = STRONGS_PATTERN.matcher(keytitle)
             if (!m.matches()) {
-                return keytitle;
+                return keytitle
             }
-            if ("true".equalsIgnoreCase(bmd.getProperty(SwordBookMetaData.KEY_STRONGS_PADDING))) {
+            if ("true".equals(bmd.getProperty(SwordBookMetaData.KEY_STRONGS_PADDING), ignoreCase = true)) {
                 // pad to 4 digits
                 // NASB has trailing letters!
-                int pos = keytitle.length() - 1;
-                char lastLetter = keytitle.charAt(pos);
-                boolean hasTrailingLetter = Character.isLetter(lastLetter);
+                var pos = keytitle.length - 1
+                val lastLetter = keytitle[pos]
+                val hasTrailingLetter = Character.isLetter(lastLetter)
                 if (hasTrailingLetter) {
-                    keytitle = keytitle.substring(0, pos);
+                    keytitle = keytitle.substring(0, pos)
                     // And it might be preceded by a !
-                    pos--;
-                    if (pos > 0 && keytitle.charAt(pos) == '!') {
-                        keytitle = keytitle.substring(0, pos);
+                    pos--
+                    if (pos > 0 && keytitle[pos] == '!') {
+                        keytitle = keytitle.substring(0, pos)
                     }
                 }
 
                 // Get the G or the H.
-                char type = keytitle.charAt(0);
+                val type = keytitle[0]
 
                 // Get the number after the G or H
-                int strongsNumber = Integer.parseInt(keytitle.substring(1));
+                val strongsNumber = Integer.parseInt(keytitle.substring(1))
                 // If it has both Greek and Hebrew, then the G and H are needed.
-                StringBuilder buf = new StringBuilder();
+                val buf = StringBuilder()
                 if (bmd.hasFeature(FeatureType.GREEK_DEFINITIONS) && bmd.hasFeature(FeatureType.HEBREW_DEFINITIONS)) {
                     // The convention is that a Strong's dictionary with both Greek
                     // and Hebrew have G or H prefix
-                    buf.append(type);
-                    buf.append(getZero4Pad().format(strongsNumber));
+                    buf.append(type)
+                    buf.append(getZero4Pad().format(strongsNumber.toLong()))
 
                     // The NAS lexicon has some entries that end in A-Z, but it is
                     // not preceded by a !
-                    if (hasTrailingLetter && "naslex".equalsIgnoreCase(bmd.getInitials())) {
-                        buf.append(lastLetter);
+                    if (hasTrailingLetter && "naslex".equals(bmd.initials, ignoreCase = true)) {
+                        buf.append(lastLetter)
                     }
-                    return buf.toString();
+                    return buf.toString()
                 }
 
-                m = STRONGS_PATTERN.matcher(pattern);
+                m = STRONGS_PATTERN.matcher(pattern)
                 if (m.matches()) {
-                    buf.append(type);
-                    int numLength = m.group(2).length();
+                    buf.append(type)
+                    val numLength = m.group(2).length
                     if (numLength == 4) {
-                        buf.append(getZero4Pad().format(strongsNumber));
+                        buf.append(getZero4Pad().format(strongsNumber.toLong()))
                     } else {
-                        buf.append(getZero5Pad().format(strongsNumber));
+                        buf.append(getZero5Pad().format(strongsNumber.toLong()))
                     }
                     // The NAS lexicon has some entries that end in A-Z, but it is
                     // not preceded by a !
-                    if (hasTrailingLetter && "naslex".equalsIgnoreCase(bmd.getInitials())) {
-                        buf.append(lastLetter);
+                    if (hasTrailingLetter && "naslex".equals(bmd.initials, ignoreCase = true)) {
+                        buf.append(lastLetter)
                     }
-                    return buf.toString();
+                    return buf.toString()
                 }
 
                 // It is just the number
-                return getZero5Pad().format(strongsNumber);
+                return getZero5Pad().format(strongsNumber.toLong())
             }
             // else unpad, E.g. G0001 to G1
             // This test is merely an optimization to prevent unnecessary work.
-            if (keytitle.charAt(1) == '0') {
-                char type = keytitle.charAt(0);
+            if (keytitle[1] == '0') {
+                val type = keytitle[0]
                 // NASB has trailing letters!
-                int pos = keytitle.length() - 1;
-                char lastLetter = keytitle.charAt(pos);
-                boolean hasTrailingLetter = Character.isLetter(lastLetter);
+                var pos = keytitle.length - 1
+                val lastLetter = keytitle[pos]
+                val hasTrailingLetter = Character.isLetter(lastLetter)
                 if (hasTrailingLetter) {
-                    keytitle = keytitle.substring(0, pos);
+                    keytitle = keytitle.substring(0, pos)
                     // And it might be preceded by a !
-                    pos--;
-                    if (pos > 0 && keytitle.charAt(pos) == '!') {
-                        keytitle = keytitle.substring(0, pos);
+                    pos--
+                    if (pos > 0 && keytitle[pos] == '!') {
+                        keytitle = keytitle.substring(0, pos)
                     }
                 }
                 // Get the number after the G or H
-                int strongsNumber = Integer.parseInt(keytitle.substring(1));
+                val strongsNumber = Integer.parseInt(keytitle.substring(1))
                 // The convention is that a Strong's dictionary with both Greek
                 // and Hebrew have G or H prefix
-                StringBuilder buf = new StringBuilder();
-                buf.append(type);
-                buf.append(strongsNumber);
+                val buf = StringBuilder()
+                buf.append(type)
+                buf.append(strongsNumber)
 
                 // The NAS lexicon has some entries that end in A-Z, but it is
                 // not preceded by a !
-                if (hasTrailingLetter && "naslex".equalsIgnoreCase(bmd.getInitials())) {
-                    buf.append(lastLetter);
+                if (hasTrailingLetter && "naslex".equals(bmd.initials, ignoreCase = true)) {
+                    buf.append(lastLetter)
                 }
             }
         }
-        return keytitle;
+        return keytitle
     }
 
-    private String internal2external(String internalKey) {
-        BookMetaData bmd = getBookMetaData();
-        String keytitle = internalKey;
-        if (BookCategory.DAILY_DEVOTIONS.equals(bmd.getBookCategory()) && keytitle.length() >= 3) {
-            Calendar greg = new GregorianCalendar();
-            DateFormatter nameDF = DateFormatter.getDateInstance();
-            String[] spec = StringUtil.splitAll(keytitle, '.');
-            greg.set(Calendar.MONTH, Integer.parseInt(spec[0]) - 1);
-            greg.set(Calendar.DATE, Integer.parseInt(spec[1]));
-            keytitle = nameDF.format(greg.getTime());
+    private fun internal2external(internalKey: String): String? {
+        val bmd = bookMetaData
+        var keytitle: String? = internalKey
+        if (BookCategory.DAILY_DEVOTIONS == bmd.bookCategory && internalKey.length >= 3) {
+            val greg = GregorianCalendar()
+            val nameDF = DateFormatter.getDateInstance()
+            val spec = StringUtil.splitAll(internalKey, '.')
+            greg.set(Calendar.MONTH, Integer.parseInt(spec[0]) - 1)
+            greg.set(Calendar.DATE, Integer.parseInt(spec[1]))
+            keytitle = nameDF.format(greg.time)
         }
-        return keytitle;
+        return keytitle
     }
 
-    private String normalizeForSearch(String internalKey) {
-        BookMetaData bmd = getBookMetaData();
-        String keytitle = internalKey;
-        String caseSensitive = bmd.getProperty(SwordBookMetaData.KEY_CASE_SENSITIVE_KEYS);
-        if (!"true".equalsIgnoreCase(caseSensitive) && !BookCategory.DAILY_DEVOTIONS.equals(bmd.getBookCategory())) {
-            return keytitle.toUpperCase(Locale.US);
+    private fun normalizeForSearch(internalKey: String): String {
+        val bmd = bookMetaData
+        val keytitle = internalKey
+        val caseSensitive = bmd.getProperty(SwordBookMetaData.KEY_CASE_SENSITIVE_KEYS)
+        if (!"true".equals(caseSensitive, ignoreCase = true) && BookCategory.DAILY_DEVOTIONS != bmd.bookCategory) {
+            return keytitle.uppercase(Locale.US)
         }
 
-        return keytitle;
+        return keytitle
     }
 
     /**
      * A means to normalize Strong's Numbers.
      */
-    private DecimalFormat getZero5Pad() {
-        return new DecimalFormat("00000");
+    private fun getZero5Pad(): DecimalFormat {
+        return DecimalFormat("00000")
     }
 
     /**
      * A means to normalize Strong's Numbers.
      */
-    private DecimalFormat getZero4Pad() {
-        return new DecimalFormat("0000");
+    private fun getZero4Pad(): DecimalFormat {
+        return DecimalFormat("0000")
     }
 
     /**
@@ -517,133 +516,132 @@ public class RawLDBackend<T extends RawLDBackendState> extends AbstractKeyBacken
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
-        is.defaultReadObject();
+    @Throws(IOException::class, ClassNotFoundException::class)
+    private fun readObject(`is`: ObjectInputStream) {
+        `is`.defaultReadObject()
     }
 
     /** 
      * Experimental code.
      */
-    public void dumpIdxRaf() {
-        RawLDBackendState state = null;
-        long end = -1;
+    open fun dumpIdxRaf() {
+        var state: RawLDBackendState? = null
+        var end: Long = -1
         try {
-            state = initState();
-            end = getCardinality();
-            StringBuilder buf = new StringBuilder();
-            System.out.println("index\toffset\tsize\tkey\tvalue");
-            for (long i = 0; i < end; ++i) {
-                DataIndex index = getIndex(state, i);
-                int offset = index.getOffset();
-                int size   = index.getSize();
-                buf.setLength(0);
-                buf.append(i);
-                buf.append('\t');
-                buf.append(offset);
-                buf.append('\t');
-                buf.append(size);
+            state = initState()
+            end = getCardinality().toLong()
+            val buf = StringBuilder()
+            System.out.println("index\toffset\tsize\tkey\tvalue")
+            var i: Long = 0
+            while (i < end) {
+                val index = getIndex(state, i)
+                val offset = index.getOffset()
+                val size = index.getSize()
+                buf.setLength(0)
+                buf.append(i)
+                buf.append('\t')
+                buf.append(offset)
+                buf.append('\t')
+                buf.append(size)
                 if (size > 0) {
                     // Now read the data file for this key using the offset and size
-                    byte[] data = SwordUtil.readRAF(state.getDatRaf(), offset, size);
-                    DataEntry entry = new DataEntry(Long.toString(i), data, getBookMetaData().getBookCharset());
-                    String key = entry.getKey();
-                    String raw = getRawText(entry);
-                    buf.append('\t');
-                    buf.append(key);
-                    buf.append('\t');
-                    if (raw.length() > 43) {
-                        buf.append(raw.substring(0, 40).replace('\n', ' '));
-                        buf.append("...");
+                    val data = SwordUtil.readRAF(state.getDatRaf(), offset.toLong(), size)
+                    val entry = DataEntry(i.toString(), data, bookMetaData.bookCharset)
+                    val key = entry.getKey()
+                    val raw = getRawText(entry)
+                    buf.append('\t')
+                    buf.append(key)
+                    buf.append('\t')
+                    if (raw.length > 43) {
+                        buf.append(raw.substring(0, 40).replace('\n', ' '))
+                        buf.append("...")
                     } else {
-                        buf.append(raw.replace('\n', ' '));
+                        buf.append(raw.replace('\n', ' '))
                     }
                 } else {
-                    buf.append("\t\t");
+                    buf.append("\t\t")
                 }
-                System.out.println(buf.toString());
+                System.out.println(buf.toString())
+                ++i
             }
-        } catch (IOException e) {
+        } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (BookException e) {
+            e.printStackTrace()
+        } catch (e: BookException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace()
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
     }
 
     /** 
      * Experimental code.
      */
-    public void toIMP() {
-        RawLDBackendState state = null;
-        long end = -1;
+    open fun toIMP() {
+        var state: RawLDBackendState? = null
+        var end: Long = -1
         try {
-            state = initState();
-            end = getCardinality();
-            StringBuilder buf = new StringBuilder();
-            for (long i = 0; i < end; ++i) {
-                DataIndex index = getIndex(state, i);
-                int offset = index.getOffset();
-                int size   = index.getSize();
-                buf.setLength(0);
-                buf.append("$$$");
+            state = initState()
+            end = getCardinality().toLong()
+            val buf = StringBuilder()
+            var i: Long = 0
+            while (i < end) {
+                val index = getIndex(state, i)
+                val offset = index.getOffset()
+                val size = index.getSize()
+                buf.setLength(0)
+                buf.append("$$$")
                 if (size > 0) {
                     // Now read the data file for this key using the offset and size
-                    byte[] data = SwordUtil.readRAF(state.getDatRaf(), offset, size);
-                    DataEntry entry = new DataEntry(Long.toString(i), data, getBookMetaData().getBookCharset());
-                    String key = entry.getKey();
-                    String raw = getRawText(entry);
-                    buf.append(key);
-                    buf.append("\n");
-                    buf.append(raw);
+                    val data = SwordUtil.readRAF(state.getDatRaf(), offset.toLong(), size)
+                    val entry = DataEntry(i.toString(), data, bookMetaData.bookCharset)
+                    val key = entry.getKey()
+                    val raw = getRawText(entry)
+                    buf.append(key)
+                    buf.append("\n")
+                    buf.append(raw)
                 }
-                System.out.println(buf.toString());
+                System.out.println(buf.toString())
+                ++i
             }
-        } catch (IOException e) {
+        } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (BookException e) {
+            e.printStackTrace()
+        } catch (e: BookException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace()
         } finally {
-            OpenFileStateManager.instance().release(state);
+            OpenFileStateManager.instance().release(state)
         }
     }
-    /**
-     * Date formatter
-     */
-    private static final MessageFormat DATE_KEY_FORMAT = new MessageFormat("{0,number,00}.{1,number,00}");
 
-    /**
-     * This is the pattern of a Strong's Number. It begins with a G or H. Is
-     * followed by a number. It can be followed by a ! and a letter or just a
-     * letter.
-     */
-    private static final Pattern STRONGS_PATTERN = Pattern.compile("^([GH])(\\d+)((!)?([a-z])?)$");
-    /**
-     * This is the pattern of a date for a DailyDevotion, DD.MM
-     */
-    private static final Pattern DEVOTION_PATTERN = Pattern.compile("^\\d\\d\\.\\d\\d$");
+    private companion object {
+        /**
+         * Date formatter
+         */
+        private val DATE_KEY_FORMAT = MessageFormat("{0,number,00}.{1,number,00}")
 
-    /**
-     * The number of bytes in the size count in the index
-     */
-    private final int datasize;
+        /**
+         * This is the pattern of a Strong's Number. It begins with a G or H. Is
+         * followed by a number. It can be followed by a ! and a letter or just a
+         * letter.
+         */
+        private val STRONGS_PATTERN: Pattern = Pattern.compile("^([GH])(\\d+)((!)?([a-z])?)$")
 
-    /**
-     * The number of bytes for each entry in the index: either 6 or 8
-     */
-    private final int entrysize;
+        /**
+         * This is the pattern of a date for a DailyDevotion, DD.MM
+         */
+        private val DEVOTION_PATTERN: Pattern = Pattern.compile("^\\d\\d\\.\\d\\d$")
 
-    /**
-     * How many bytes in the offset pointers in the index
-     */
-    private static final int OFFSETSIZE = 4;
+        /**
+         * How many bytes in the offset pointers in the index
+         */
+        private const val OFFSETSIZE = 4
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = 818089833394450383L;
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = 818089833394450383L
+    }
 }

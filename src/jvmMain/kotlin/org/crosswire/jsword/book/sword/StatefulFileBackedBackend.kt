@@ -17,13 +17,12 @@
  * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.sword.state.OpenFileState;
-import org.crosswire.jsword.passage.Key;
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.sword.state.OpenFileState
+import org.crosswire.jsword.passage.Key
+import java.io.IOException
 
 /**
  * Indicates that there is a stateful backend
@@ -33,7 +32,7 @@ import org.crosswire.jsword.passage.Key;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public interface StatefulFileBackedBackend<T extends OpenFileState> {
+interface StatefulFileBackedBackend<T : OpenFileState> {
     /**
      * Initialises the state required to read from files, specific to each
      * different backend
@@ -41,51 +40,55 @@ public interface StatefulFileBackedBackend<T extends OpenFileState> {
      * @return the state that has been initialised
      * @throws BookException
      */
-     T initState() throws BookException;
+    @Throws(BookException::class)
+    fun initState(): T
 
     /**
      * 
      * @param state
-     *            the state object containing all the open random access files
+     * the state object containing all the open random access files
      * @param key
-     *            the verse that is sought
+     * the verse that is sought
      * @return the raw text
      * @throws BookException 
      * @throws IOException
-     *             something went wrong when reading the verse
+     * something went wrong when reading the verse
      */
-     String readRawContent(T state, Key key) throws BookException, IOException;
+    @Throws(BookException::class, IOException::class)
+    fun readRawContent(state: T, key: Key?): String
 
-     /**
-      * Set the text allotted for the given verse
-      * 
-      * @param state
-      *            TODO
-      * @param key
-      *            The key to set text to
-      * @param text
-      *            The text to be set for key
-      * 
-      * @throws BookException
-      *             If the data can not be set.
-      * @throws IOException
-      *             If the module data path could not be created.
-      */
-     void setRawText(T state, Key key, String text) throws BookException, IOException;
+    /**
+     * Set the text allotted for the given verse
+     * 
+     * @param state
+     * TODO
+     * @param key
+     * The key to set text to
+     * @param text
+     * The text to be set for key
+     * 
+     * @throws BookException
+     * If the data can not be set.
+     * @throws IOException
+     * If the module data path could not be created.
+     */
+    @Throws(BookException::class, IOException::class)
+    fun setRawText(state: T, key: Key?, text: String?)
 
-     /**
-      * Sets alias for a comment on a verse range I.e. setRawText() was for verse
-      * range Gen.1.1-3 then setAliasKey should be called for Gen.1.1.2 and
-      * Gen.1.1.3
-      * 
-      * @param state 
-      *            the open file state
-      * @param alias
-      *            Alias Key
-      * @param source
-      *            Source Key
-      * @throws IOException
-      *             Exception when anything goes wrong on writing the alias
-      */
-     void setAliasKey(T state, Key alias, Key source) throws IOException;
+    /**
+     * Sets alias for a comment on a verse range I.e. setRawText() was for verse
+     * range Gen.1.1-3 then setAliasKey should be called for Gen.1.1.2 and
+     * Gen.1.1.3
+     * 
+     * @param state 
+     * the open file state
+     * @param alias
+     * Alias Key
+     * @param source
+     * Source Key
+     * @throws IOException
+     * Exception when anything goes wrong on writing the alias
+     */
+    @Throws(IOException::class)
+    fun setAliasKey(state: T, alias: Key?, source: Key?)
 }

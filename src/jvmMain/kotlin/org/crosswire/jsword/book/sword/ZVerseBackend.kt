@@ -17,27 +17,26 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-
-import org.crosswire.common.compress.CompressorType;
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
-import org.crosswire.jsword.book.sword.state.ZVerseBackendState;
-import org.crosswire.jsword.passage.BitwisePassage;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.KeyUtil;
-import org.crosswire.jsword.passage.RocketPassage;
-import org.crosswire.jsword.passage.Verse;
-import org.crosswire.jsword.versification.Testament;
-import org.crosswire.jsword.versification.Versification;
-import org.crosswire.jsword.versification.system.Versifications;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.compress.CompressorType
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
+import org.crosswire.jsword.book.sword.state.ZVerseBackendState
+import org.crosswire.jsword.passage.BitwisePassage
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.KeyUtil
+import org.crosswire.jsword.passage.RocketPassage
+import org.crosswire.jsword.versification.Testament
+import org.crosswire.jsword.versification.Versification
+import org.crosswire.jsword.versification.system.Versifications
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.io.RandomAccessFile
 
 /**
  * A backend to read compressed data verse based files. While the text file
@@ -129,20 +128,33 @@ import org.slf4j.LoggerFactory;
  * @author Joe Walker
  * @author DM Smith
  */
-public class ZVerseBackend extends AbstractBackend<ZVerseBackendState> {
+open class ZVerseBackend
+/**
+ * Simple ctor
+ * @param sbmd 
+ * @param blockType
+ * @param datasize 
+ */
+(sbmd: SwordBookMetaData?, blockType: BlockType, datasize: Int) : AbstractBackend<ZVerseBackendState>(sbmd) {
     /**
-     * Simple ctor
-     * @param sbmd 
-     * @param blockType
-     * @param datasize 
+     * Whether the book is blocked by Book, Chapter or Verse.
      */
-    public ZVerseBackend(SwordBookMetaData sbmd, BlockType blockType, int datasize) {
-        super(sbmd);
-        this.blockType = blockType;
-        this.datasize = datasize;
-        this.entrysize = OFFSETSIZE + datasize;
+    private val blockType: BlockType = blockType
 
-        assert datasize == 2 || datasize == 4;
+    /**
+     * How many bytes in the size count in the index
+     */
+    @JvmField
+    protected val datasize: Int = datasize
+
+    /**
+     * The number of bytes for each entry in the index: either 6 or 8
+     */
+    @JvmField
+    protected val entrysize: Int = OFFSETSIZE + datasize
+
+    init {
+        jswordAssert(datasize == 2 || datasize == 4) { datasize }
     }
 
     /* This method assumes single keys. It is the responsibility of the caller to provide the iteration. 
@@ -151,246 +163,252 @@ public class ZVerseBackend extends AbstractBackend<ZVerseBackendState> {
      * (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#contains(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public boolean contains(Key key) {
-        return getRawTextLength(key) > 0;
+    override fun contains(key: Key?): Boolean {
+        return getRawTextLength(key) > 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#size(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public int getRawTextLength(Key key) {
-        ZVerseBackendState rafBook = null;
+    override fun getRawTextLength(key: Key?): Int {
+        var rafBook: ZVerseBackendState? = null
         try {
-            rafBook = initState();
+            rafBook = initState()
 
-            String v11nName = getBookMetaData().getProperty(BookMetaData.KEY_VERSIFICATION);
-            Versification v11n = Versifications.instance().getVersification(v11nName);
-            Verse verse = KeyUtil.getVerse(key);
+            val v11nName = bookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION)
+            val v11n = Versifications.instance().getVersification(v11nName)!!
+            val verse = KeyUtil.getVerse(key)
 
-            int index = verse.getOrdinal();
-            Testament testament = v11n.getTestament(index);
-            index = v11n.getTestamentOrdinal(index);
+            var index = verse.ordinal
+            val testament = v11n.getTestament(index)
+            index = v11n.getTestamentOrdinal(index)
 
-            RandomAccessFile idxRaf = rafBook.getIdxRaf(testament);
+            val idxRaf = rafBook.getIdxRaf(testament)
 
             // If Bible does not contain the desired testament, then false
             if (idxRaf == null) {
-                return 0;
+                return 0
             }
 
             // entrysize because the index is entrysize bytes long for each verse
-            byte[] temp = SwordUtil.readRAF(idxRaf, 1L * index * entrysize, entrysize);
+            val temp = SwordUtil.readRAF(idxRaf, 1L * index * entrysize, entrysize)
 
             // If the Bible does not contain the desired verse, return nothing.
             // Some Bibles have different versification, so the requested verse
             // may not exist.
-            if (temp == null || temp.length == 0) {
-                return 0;
+            if (temp.size == 0) {
+                return 0
             }
 
             // The data is little endian - extract the verseSize
             if (datasize == 2) {
-                return SwordUtil.decodeLittleEndian16(temp, 8);
+                return SwordUtil.decodeLittleEndian16(temp, 8)
             }
             // datasize == 4:
-            return SwordUtil.decodeLittleEndian32(temp, 8);
-
-        } catch (IOException e) {
-            return 0;
-        } catch (BookException e) {
+            return SwordUtil.decodeLittleEndian32(temp, 8)
+        } catch (e: IOException) {
+            return 0
+        } catch (e: BookException) {
             // FIXME(CJB): fail silently as before, but i don't think this is
             // correct behaviour - would cause API changes
-            LOGGER.error("Unable to ascertain key validity", e);
-            return 0;
+            LOGGER.error("Unable to ascertain key validity", e)
+            return 0
         } finally {
-            OpenFileStateManager.instance().release(rafBook);
+            OpenFileStateManager.instance().release(rafBook)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#getGlobalKeyList()
      */
-    @Override
-    public Key getGlobalKeyList() throws BookException {
-        ZVerseBackendState rafBook = null;
+    @Throws(BookException::class)
+    override fun getGlobalKeyList(): Key {
+        var rafBook: ZVerseBackendState? = null
         try {
-            rafBook = initState();
+            rafBook = initState()
 
-            String v11nName = getBookMetaData().getProperty(BookMetaData.KEY_VERSIFICATION);
-            Versification v11n = Versifications.instance().getVersification(v11nName);
+            val v11nName = bookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION)
+            val v11n = Versifications.instance().getVersification(v11nName)!!
 
-            Testament[] testaments = new Testament[] {
-                    Testament.OLD, Testament.NEW
-            };
+            val testaments = arrayOf(
+                Testament.OLD, Testament.NEW
+            )
 
-            BitwisePassage passage = new RocketPassage(v11n);
-            passage.raiseEventSuppresion();
-            passage.raiseNormalizeProtection();
+            val passage: BitwisePassage = RocketPassage(v11n)
+            passage.raiseEventSuppresion()
+            passage.raiseNormalizeProtection()
 
-            for (Testament currentTestament : testaments) {
-                RandomAccessFile idxRaf = rafBook.getIdxRaf(currentTestament);
+            for (currentTestament in testaments) {
+                val idxRaf = rafBook.getIdxRaf(currentTestament)
 
                 // If Bible does not contain the desired testament, then false
                 if (idxRaf == null) {
                     // no keys in this testament
-                    continue;
+                    continue
                 }
 
                 // The first index in each testament is ignored.
                 // We need to include it here in order to read in the entire index.
-                int maxCount = v11n.getCount(currentTestament)  + 1;
+                val maxCount = v11n.getCount(currentTestament) + 1
 
                 // Read in the whole index, a few hundred Kb at most.
-                byte[] temp = SwordUtil.readRAF(idxRaf, 0, entrysize * maxCount);
+                val temp = SwordUtil.readRAF(idxRaf, 0, entrysize * maxCount)
 
                 // For each entry of entrysize bytes, the length of the verse in bytes
                 // is in the last datasize bytes. If both bytes are 0, then there is no content.
                 // For each entry of entrysize bytes, the length of the verse in bytes
                 // is in the last datasize bytes. If all bytes are 0, then there is no content.
                 if (datasize == 2) {
-                    for (int ii = 0; ii < temp.length; ii += entrysize) {
+                    var ii = 0
+                    while (ii < temp.size) {
                         // This can be simplified to temp[ii + 8] == 0 && temp[ii + 8] == 0.
                         // int verseSize = SwordUtil.decodeLittleEndian16(temp, ii + 8);
                         // if (verseSize > 0) {
-                        if (temp[ii + 8] != 0 || temp[ii + 9] != 0) {
-                            int ordinal = ii / entrysize;
-                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal));
+                        if (temp[ii + 8].toInt() != 0 || temp[ii + 9].toInt() != 0) {
+                            val ordinal = ii / entrysize
+                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal))
                         }
+                        ii += entrysize
                     }
                 } else { // datasize == 4
-                    for (int ii = 0; ii < temp.length; ii += entrysize) {
+                    var ii = 0
+                    while (ii < temp.size) {
                         // This can be simplified to temp[ii + 8] == 0 && temp[ii + 8] == 0 && temp[ii + 10] == 0 && temp[ii + 11] == 0.
                         // int verseSize = SwordUtil.decodeLittleEndian32(temp, ii + 8);
                         // if (verseSize > 0) {
-                        if (temp[ii + 8] != 0 || temp[ii + 9] != 0 || temp[ii + 10] != 0 || temp[ii + 11] != 0) {
-                            int ordinal = ii / entrysize;
-                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal));
+                        if (temp[ii + 8].toInt() != 0 || temp[ii + 9].toInt() != 0 || temp[ii + 10].toInt() != 0 || temp[ii + 11].toInt() != 0) {
+                            val ordinal = ii / entrysize
+                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal))
                         }
+                        ii += entrysize
                     }
                 }
             }
 
-            passage.lowerNormalizeProtection();
-            passage.lowerEventSuppressionAndTest();
+            passage.lowerNormalizeProtection()
+            passage.lowerEventSuppressionAndTest()
 
-            return passage;
-        } catch (IOException e) {
-            throw new BookException(JSMsg.gettext("Unable to read key list from book."));
+            return passage
+        } catch (e: IOException) {
+            throw BookException(JSMsg.gettext("Unable to read key list from book."))
         } finally {
-            OpenFileStateManager.instance().release(rafBook);
+            OpenFileStateManager.instance().release(rafBook)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.StatefulFileBackedBackend#initState()
      */
-    public ZVerseBackendState initState() throws BookException {
-        return OpenFileStateManager.instance().getZVerseBackendState(getBookMetaData(), blockType);
+    @Throws(BookException::class)
+    override fun initState(): ZVerseBackendState {
+        return OpenFileStateManager.instance().getZVerseBackendState(bookMetaData, blockType)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.StatefulFileBackedBackend#readRawContent(org.crosswire.jsword.book.sword.state.OpenFileState, org.crosswire.jsword.passage.Key)
      */
-    public String readRawContent(ZVerseBackendState rafBook, Key key) throws IOException {
+    @Throws(IOException::class)
+    override fun readRawContent(state: ZVerseBackendState, key: Key?): String {
+        val rafBook = state
 
-        BookMetaData bookMetaData = getBookMetaData();
-        final String charset = bookMetaData.getBookCharset();
-        final String compressType = bookMetaData.getProperty(SwordBookMetaData.KEY_COMPRESS_TYPE);
+        val bookMetaData = this.bookMetaData
+        val charset = bookMetaData.bookCharset
+        val compressType = bookMetaData.getProperty(SwordBookMetaData.KEY_COMPRESS_TYPE)
 
-        final String v11nName = getBookMetaData().getProperty(BookMetaData.KEY_VERSIFICATION);
-        final Versification v11n = Versifications.instance().getVersification(v11nName);
-        Verse verse = KeyUtil.getVerse(key);
+        val v11nName = this.bookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION)
+        val v11n = Versifications.instance().getVersification(v11nName)!!
+        val verse = KeyUtil.getVerse(key)
 
-        int index = verse.getOrdinal();
-        final Testament testament = v11n.getTestament(index);
-        index = v11n.getTestamentOrdinal(index);
-        final RandomAccessFile idxRaf;
-        final RandomAccessFile compRaf;
-        final RandomAccessFile textRaf;
+        var index = verse.ordinal
+        val testament = v11n.getTestament(index)
+        index = v11n.getTestamentOrdinal(index)
+        val idxRaf: RandomAccessFile?
+        val compRaf: RandomAccessFile?
+        val textRaf: RandomAccessFile?
 
-        idxRaf = rafBook.getIdxRaf(testament);
-        compRaf = rafBook.getCompRaf(testament);
-        textRaf = rafBook.getTextRaf(testament);
+        idxRaf = rafBook.getIdxRaf(testament)
+        compRaf = rafBook.getCompRaf(testament)
+        textRaf = rafBook.getTextRaf(testament)
 
         // If Bible does not contain the desired testament, return nothing.
         if (idxRaf == null) {
-            return "";
+            return ""
         }
 
         //dumpIdxRaf(v11n, 0, compRaf);
         //dumpCompRaf(idxRaf);
         // entrysize because the index is entrysize bytes long for each verse
-        byte[] temp = SwordUtil.readRAF(idxRaf, 1L * index * entrysize, entrysize);
+        var temp = SwordUtil.readRAF(idxRaf, 1L * index * entrysize, entrysize)
 
         // If the Bible does not contain the desired verse, return nothing.
         // Some Bibles have different versification, so the requested verse
         // may not exist.
-        if (temp == null || temp.length == 0) {
-            return "";
+        if (temp.size == 0) {
+            return ""
         }
 
         // The data is little endian - extract the blockNum, verseStart
         // and
         // verseSize
-        final long blockNum = SwordUtil.decodeLittleEndian32(temp, 0);
-        final int verseStart = SwordUtil.decodeLittleEndian32(temp, 4);
-        final int verseSize;
+        val blockNum: Long = SwordUtil.decodeLittleEndian32(temp, 0).toLong()
+        val verseStart = SwordUtil.decodeLittleEndian32(temp, 4)
+        val verseSize: Int
         if (datasize == 2) {
-            verseSize = SwordUtil.decodeLittleEndian16(temp, 8);
+            verseSize = SwordUtil.decodeLittleEndian16(temp, 8)
         } else { // datasize == 4:
-            verseSize = SwordUtil.decodeLittleEndian32(temp, 8);
+            verseSize = SwordUtil.decodeLittleEndian32(temp, 8)
         }
 
         // Can we get the data from the cache
-        byte[] uncompressed = null;
-        if (blockNum == rafBook.getLastBlockNum() && testament == rafBook.getLastTestament()) {
-            uncompressed = rafBook.getLastUncompressed();
+        var uncompressed: ByteArray? = null
+        if (blockNum == rafBook.lastBlockNum && testament == rafBook.lastTestament) {
+            uncompressed = rafBook.lastUncompressed
         } else {
             // Then seek using this index into the idx file
-            temp = SwordUtil.readRAF(compRaf, blockNum * COMP_ENTRY_SIZE, COMP_ENTRY_SIZE);
-            if (temp == null || temp.length == 0) {
-                return "";
+            temp = SwordUtil.readRAF(compRaf, blockNum * COMP_ENTRY_SIZE, COMP_ENTRY_SIZE)
+            if (temp.size == 0) {
+                return ""
             }
 
-            final int blockStart = SwordUtil.decodeLittleEndian32(temp, 0);
-            final int blockSize = SwordUtil.decodeLittleEndian32(temp, 4);
-            final int uncompressedSize = SwordUtil.decodeLittleEndian32(temp, 8);
+            val blockStart = SwordUtil.decodeLittleEndian32(temp, 0)
+            val blockSize = SwordUtil.decodeLittleEndian32(temp, 4)
+            val uncompressedSize = SwordUtil.decodeLittleEndian32(temp, 8)
 
             // Read from the data file.
-            final byte[] data = SwordUtil.readRAF(textRaf, blockStart, blockSize);
+            val data = SwordUtil.readRAF(textRaf, blockStart.toLong(), blockSize)
 
-            decipher(data);
+            decipher(data)
 
-            uncompressed = CompressorType.fromString(compressType).getCompressor(data).uncompress(uncompressedSize).toByteArray();
+            uncompressed = CompressorType.fromString(compressType)!!.getCompressor(data).uncompress(uncompressedSize).toByteArray()
 
             // cache the uncompressed data for next time
-            rafBook.setLastBlockNum(blockNum);
-            rafBook.setLastTestament(testament);
-            rafBook.setLastUncompressed(uncompressed);
+            rafBook.lastBlockNum = blockNum
+            rafBook.lastTestament = testament
+            rafBook.lastUncompressed = uncompressed
         }
 
         // and cut out the required section.
-        final byte[] chopped = new byte[verseSize];
-        System.arraycopy(uncompressed, verseStart, chopped, 0, verseSize);
+        val chopped = ByteArray(verseSize)
+        System.arraycopy(uncompressed, verseStart, chopped, 0, verseSize)
 
-        return SwordUtil.decode(key.getName(), chopped, charset);
+        return SwordUtil.decode(key!!.getName(), chopped, charset)
 
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#setAliasKey(org.crosswire.jsword.passage.Key, org.crosswire.jsword.passage.Key)
      */
-    public void setAliasKey(ZVerseBackendState rafBook, Key alias, Key source) throws IOException {
-        throw new UnsupportedOperationException();
+    @Throws(IOException::class)
+    override fun setAliasKey(state: ZVerseBackendState, alias: Key?, source: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#setRawText(org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public void setRawText(ZVerseBackendState rafBook, Key key, String text) throws BookException, IOException {
-        throw new UnsupportedOperationException();
+    @Throws(BookException::class, IOException::class)
+    override fun setRawText(state: ZVerseBackendState, key: Key?, text: String?) {
+        throw UnsupportedOperationException()
     }
 
     /** 
@@ -400,52 +418,54 @@ public class ZVerseBackend extends AbstractBackend<ZVerseBackendState> {
      * @param ordinalStart
      * @param raf
      */
-    public void dumpIdxRaf(Versification v11n, int ordinalStart, RandomAccessFile raf) {
-        long end = -1;
+    open fun dumpIdxRaf(v11n: Versification, ordinalStart: Int, raf: RandomAccessFile) {
+        var end: Long = -1
         try {
-            end = raf.length();
-        } catch (IOException e) {
+            end = raf.length()
+        } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace()
         }
 
-        int i = ordinalStart;
-        StringBuilder buf = new StringBuilder();
-        System.out.println("osisID\tblock\tstart\tsize");
-        for (long offset = 0; offset < end; offset += entrysize) {
+        var i = ordinalStart
+        val buf = StringBuilder()
+        System.out.println("osisID\tblock\tstart\tsize")
+        var offset: Long = 0
+        while (offset < end) {
             // entrysize because the index is entrysize bytes long for each verse
-            byte[] temp = null;
+            var temp: ByteArray? = null
             try {
-                temp = SwordUtil.readRAF(raf, offset, entrysize);
-            } catch (IOException e) {
-                e.printStackTrace();
+                temp = SwordUtil.readRAF(raf, offset, entrysize)
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
 
             // If the Bible does not contain the desired verse, return nothing.
             // Some Bibles have different versification, so the requested verse
             // may not exist.
-            long blockNum = -1;
-            int verseStart = -1;
-            int verseSize = -1;
-            if (temp != null && temp.length > 0) {
+            var blockNum: Long = -1
+            var verseStart = -1
+            var verseSize = -1
+            if (temp != null && temp.size > 0) {
                 // The data is little endian - extract the blockNum, verseStart and verseSize
-                blockNum = SwordUtil.decodeLittleEndian32(temp, 0);
-                verseStart = SwordUtil.decodeLittleEndian32(temp, 4);
+                blockNum = SwordUtil.decodeLittleEndian32(temp, 0).toLong()
+                verseStart = SwordUtil.decodeLittleEndian32(temp, 4)
                 if (datasize == 2) {
-                    verseSize = SwordUtil.decodeLittleEndian16(temp, 8);
+                    verseSize = SwordUtil.decodeLittleEndian16(temp, 8)
                 } else { // datasize == 4:
-                    verseSize = SwordUtil.decodeLittleEndian32(temp, 8);
+                    verseSize = SwordUtil.decodeLittleEndian32(temp, 8)
                 }
             }
-            buf.setLength(0);
-            buf.append(v11n.decodeOrdinal(i++).getOsisID());
-            buf.append('\t');
-            buf.append(blockNum);
-            buf.append('\t');
-            buf.append(verseStart);
-            buf.append('\t');
-            buf.append(verseSize);
-            System.out.println(buf.toString());
+            buf.setLength(0)
+            buf.append(v11n.decodeOrdinal(i++).getOsisID())
+            buf.append('\t')
+            buf.append(blockNum)
+            buf.append('\t')
+            buf.append(verseStart)
+            buf.append('\t')
+            buf.append(verseSize)
+            System.out.println(buf.toString())
+            offset += entrysize
         }
     }
 
@@ -454,78 +474,67 @@ public class ZVerseBackend extends AbstractBackend<ZVerseBackendState> {
      * 
      * @param raf
      */
-    public void dumpCompRaf(RandomAccessFile raf) {
-        long end = -1;
+    open fun dumpCompRaf(raf: RandomAccessFile) {
+        var end: Long = -1
         try {
-            end = raf.length();
-        } catch (IOException e) {
+            end = raf.length()
+        } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace()
         }
 
-        int blockNum = 0;
-        StringBuilder buf = new StringBuilder();
-        System.out.println("block\tstart\tsize\tuncompressed");
-        for (long offset = 0; offset < end; offset += COMP_ENTRY_SIZE) {
+        val blockNum = 0
+        val buf = StringBuilder()
+        System.out.println("block\tstart\tsize\tuncompressed")
+        var offset: Long = 0
+        while (offset < end) {
             // 12 because the index is 12 bytes long for each verse
-            byte[] temp = null;
+            var temp: ByteArray? = null
             try {
-                temp = SwordUtil.readRAF(raf, offset, COMP_ENTRY_SIZE);
-            } catch (IOException e) {
-                e.printStackTrace();
+                temp = SwordUtil.readRAF(raf, offset, COMP_ENTRY_SIZE)
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
 
             // If the Bible does not contain the desired verse, return nothing.
             // Some Bibles have different versification, so the requested verse
             // may not exist.
-            int blockStart = -1;
-            int blockSize = -1;
-            int uncompressedSize = -1;
-            if (temp != null && temp.length > 0) {
+            var blockStart = -1
+            var blockSize = -1
+            var uncompressedSize = -1
+            if (temp != null && temp.size > 0) {
                 // The data is little endian - extract the blockNum, verseStar and verseSize
-                 blockStart = SwordUtil.decodeLittleEndian32(temp, 0);
-                 blockSize = SwordUtil.decodeLittleEndian32(temp, 4);
-                 uncompressedSize = SwordUtil.decodeLittleEndian32(temp, 8);
+                blockStart = SwordUtil.decodeLittleEndian32(temp, 0)
+                blockSize = SwordUtil.decodeLittleEndian32(temp, 4)
+                uncompressedSize = SwordUtil.decodeLittleEndian32(temp, 8)
             }
-            buf.setLength(0);
-            buf.append(blockNum);
-            buf.append('\t');
-            buf.append(blockStart);
-            buf.append('\t');
-            buf.append(blockSize);
-            buf.append('\t');
-            buf.append(uncompressedSize);
-            System.out.println(buf.toString());
+            buf.setLength(0)
+            buf.append(blockNum)
+            buf.append('\t')
+            buf.append(blockStart)
+            buf.append('\t')
+            buf.append(blockSize)
+            buf.append('\t')
+            buf.append(uncompressedSize)
+            System.out.println(buf.toString())
+            offset += COMP_ENTRY_SIZE
         }
     }
 
-    /**
-     * Whether the book is blocked by Book, Chapter or Verse.
-     */
-    private final BlockType blockType;
-    /**
-     * How many bytes in the size count in the index
-     */
-    protected final int datasize;
+    companion object {
+        /**
+         * How many bytes in the offset pointers in the index
+         */
+        protected const val OFFSETSIZE: Int = 8
 
-    /**
-     * The number of bytes for each entry in the index: either 6 or 8
-     */
-    protected final int entrysize;
+        /**
+         * How many bytes in the comp index?
+         */
+        private const val COMP_ENTRY_SIZE = 12
 
-    /**
-     * How many bytes in the offset pointers in the index
-     */
-    protected static final int OFFSETSIZE = 8;
-
-
-    /**
-     * How many bytes in the comp index?
-     */
-    private static final int COMP_ENTRY_SIZE = 12;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZVerseBackend.class);
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(ZVerseBackend::class.java)
+    }
 }

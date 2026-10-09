@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
 /**
  * A Constants to help the SwordBookDriver to read Sword format data.
@@ -27,55 +27,53 @@ package org.crosswire.jsword.book.sword;
  * @author Joe Walker
  * @author The SWORD Project (don't know who - no credits in original files (canon.h))
  */
-public final class SwordConstants {
-    /**
-     * Prevent instantiation
-     */
-    private SwordConstants() {
+class SwordConstants private constructor() {
+    // Prevent instantiation
+
+    companion object {
+        /**
+         * New testament data files
+         */
+        const val FILE_NT: String = "nt"
+
+        /**
+         * Old testament data files
+         */
+        const val FILE_OT: String = "ot"
+
+        /**
+         * Index file extensions
+         */
+        const val EXTENSION_VSS: String = ".vss"
+
+        /**
+         * Extension for index files
+         */
+        const val EXTENSION_INDEX: String = ".idx"
+
+        /**
+         * Extension for data files
+         */
+        const val EXTENSION_DATA: String = ".dat"
+
+        /**
+         * Extension for config files
+         */
+        const val EXTENSION_CONF: String = ".conf"
+
+        /**
+         * The data directory
+         */
+        const val DIR_DATA: String = "modules"
+
+        /**
+         * The configuration directory
+         */
+        const val DIR_CONF: String = "mods.d"
+
+        /**
+         * The configuration directory with a trailing /
+         */
+        const val PATH_CONF: String = "mods.d/"
     }
-
-    /**
-     * New testament data files
-     */
-    public static final String FILE_NT = "nt";
-
-    /**
-     * Old testament data files
-     */
-    public static final String FILE_OT = "ot";
-
-    /**
-     * Index file extensions
-     */
-    public static final String EXTENSION_VSS = ".vss";
-
-    /**
-     * Extension for index files
-     */
-    public static final String EXTENSION_INDEX = ".idx";
-
-    /**
-     * Extension for data files
-     */
-    public static final String EXTENSION_DATA = ".dat";
-
-    /**
-     * Extension for config files
-     */
-    public static final String EXTENSION_CONF = ".conf";
-
-    /**
-     * The data directory
-     */
-    public static final String DIR_DATA = "modules";
-
-    /**
-     * The configuration directory
-     */
-    public static final String DIR_CONF = "mods.d";
-
-    /**
-     * The configuration directory with a trailing /
-     */
-    public static final String PATH_CONF = "mods.d/";
 }

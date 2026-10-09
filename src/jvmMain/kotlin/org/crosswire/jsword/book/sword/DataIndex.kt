@@ -17,7 +17,7 @@
  * © CrossWire Bible Society, 2007 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
 /**
  * Data files are indexed by offset and size.
@@ -25,35 +25,31 @@ package org.crosswire.jsword.book.sword;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DataIndex {
-    /**
-     * This data index is defined by an offset into a file and the size of the
-     * data to retrieve.
-     * 
-     * @param offset
-     *            The position in the file to which to seek
-     * @param size
-     *            The number of bytes to read from the file.
-     */
-    public DataIndex(int offset, int size) {
-        this.offset = offset;
-        this.size = size;
-    }
+open class DataIndex
+/**
+ * This data index is defined by an offset into a file and the size of the
+ * data to retrieve.
+ * 
+ * @param offset
+ * The position in the file to which to seek
+ * @param size
+ * The number of bytes to read from the file.
+ */
+(offset: Int, size: Int) {
+    private var offset: Int = offset
+    private var size: Int = size
 
     /**
      * @return the offset
      */
-    public int getOffset() {
-        return offset;
+    open fun getOffset(): Int {
+        return offset
     }
 
     /**
      * @return the size
      */
-    public int getSize() {
-        return size;
+    open fun getSize(): Int {
+        return size
     }
-
-    private int offset;
-    private int size;
 }

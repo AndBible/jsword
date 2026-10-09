@@ -17,9 +17,10 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.Serializable;
+import org.crosswire.common.util.jswordAssert
+import java.io.Serializable
 
 /**
  * A node that knows where the data is in the real file and where it is in
@@ -28,183 +29,132 @@ import java.io.Serializable;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-class TreeNode implements Cloneable, Serializable {
+// was package-private; public because the public TreeKeyIndex methods return it (a Kotlin public member cannot expose an internal type)
+open class TreeNode
+/**
+ * Setup with the positions of data in the file
+ * 
+ * @param theOffset
+ */
+// was package-private
+internal constructor(theOffset: Int) : Cloneable, Serializable {
     /**
      * TreeNode default ctor.
      */
-    TreeNode() {
-        this(-1);
-    }
-
-    /**
-     * Setup with the positions of data in the file
-     * 
-     * @param theOffset
-     */
-    TreeNode(int theOffset) {
-        offset = theOffset;
-        name = "";
-        parent = -1;
-        nextSibling = -1;
-        firstChild = -1;
-        userData = new byte[0];
-    }
-
-    /**
-     * @return the offset
-     */
-    public int getOffset() {
-        return offset;
-    }
-
-    /**
-     * @param newOffset
-     *            the offset to set
-     */
-    public void setOffset(int newOffset) {
-        offset = newOffset;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param newName
-     *            the name to set
-     */
-    public void setName(String newName) {
-        name = newName;
-    }
-
-    /**
-     * @return the userData
-     */
-    public byte[] getUserData() {
-        return userData.clone();
-    }
-
-    /**
-     * @param theUserData
-     *            the userData to set
-     */
-    public void setUserData(byte[] theUserData) {
-        userData = theUserData.clone();
-    }
-
-    /**
-     * @return the firstChild
-     */
-    public int getFirstChild() {
-        return firstChild;
-    }
-
-    /**
-     * @return whether there are children
-     */
-    public boolean hasChildren() {
-        return firstChild != -1;
-    }
-
-    /**
-     * @param firstChild
-     *            the firstChild to set
-     */
-    public void setFirstChild(int firstChild) {
-        this.firstChild = firstChild;
-    }
-
-    /**
-     * @return the nextSibling
-     */
-    public int getNextSibling() {
-        return nextSibling;
-    }
-
-    /**
-     * @return if there are more siblings
-     */
-    public boolean hasNextSibling() {
-        return nextSibling != -1;
-    }
-
-    /**
-     * @param nextSibling
-     *            the nextSibling to set
-     */
-    public void setNextSibling(int nextSibling) {
-        this.nextSibling = nextSibling;
-    }
-
-    /**
-     * @return the parent
-     */
-    public int getParent() {
-        return parent;
-    }
-
-    /**
-     * @param parent
-     *            the parent to set
-     */
-    public void setParent(int parent) {
-        this.parent = parent;
-    }
-
-    @Override
-    public TreeNode clone() {
-        TreeNode clone = null;
-        try {
-            clone = (TreeNode) super.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
-        }
-        return clone;
-    }
+    // was package-private
+    internal constructor() : this(-1)
 
     /**
      * The offset of this TreeNode in the offset.
      */
-    private int offset;
+    /**
+     * @return the offset
+     */
+    /**
+     * @param newOffset
+     * the offset to set
+     */
+    open var offset: Int = theOffset
 
     /**
      * The name of this TreeNode. Note, this is not the path. To get the path,
      * one needs to traverse to the parent to construct the path.
      */
-    private String name;
+    /**
+     * @return the name
+     */
+    /**
+     * @param newName
+     * the name to set
+     */
+    open var name: String = ""
 
     /**
      * Optional, extra data associated with this TreeNode. For example, this is
      * used to store offset and length for a raw genbook.
      */
-    private byte[] userData;
-
     /**
-     * The offset of the parent record in the offset. Root nodes are indicated
-     * with a value of -1. That is, this TreeNode does not have a parent.
+     * @return the userData
      */
-    private int parent;
-
     /**
-     * The offset of the next sibling record in the offset. Final siblings are
-     * indicated with a value of -1. That is, this TreeNode does not have a next
-     * sibling.
+     * @param theUserData
+     * the userData to set
      */
-    private int nextSibling;
+    open var userData: ByteArray = ByteArray(0)
+        get() = field.clone()
+        set(value) {
+            field = value.clone()
+        }
 
     /**
      * The offset of the first child record in the offset. Leaf nodes are
      * indicated with a value of -1. That is, this TreeNode does not have any
      * children.
      */
-    private int firstChild;
+    /**
+     * @return the firstChild
+     */
+    /**
+     * @param firstChild
+     * the firstChild to set
+     */
+    open var firstChild: Int = -1
 
     /**
-     * Serialization ID
+     * @return whether there are children
      */
-    private static final long serialVersionUID = -2472601787934480762L;
+    open fun hasChildren(): Boolean {
+        return firstChild != -1
+    }
 
+    /**
+     * The offset of the next sibling record in the offset. Final siblings are
+     * indicated with a value of -1. That is, this TreeNode does not have a next
+     * sibling.
+     */
+    /**
+     * @return the nextSibling
+     */
+    /**
+     * @param nextSibling
+     * the nextSibling to set
+     */
+    open var nextSibling: Int = -1
+
+    /**
+     * @return if there are more siblings
+     */
+    open fun hasNextSibling(): Boolean {
+        return nextSibling != -1
+    }
+
+    /**
+     * The offset of the parent record in the offset. Root nodes are indicated
+     * with a value of -1. That is, this TreeNode does not have a parent.
+     */
+    /**
+     * @return the parent
+     */
+    /**
+     * @param parent
+     * the parent to set
+     */
+    open var parent: Int = -1
+
+    public override fun clone(): TreeNode {
+        var clone: TreeNode? = null
+        try {
+            clone = super.clone() as TreeNode
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
+        }
+        return clone!!
+    }
+
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -2472601787934480762L
+    }
 }

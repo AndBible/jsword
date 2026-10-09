@@ -17,26 +17,24 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
-import org.crosswire.jsword.book.sword.state.RawBackendState;
-import org.crosswire.jsword.passage.BitwisePassage;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.KeyUtil;
-import org.crosswire.jsword.passage.RocketPassage;
-import org.crosswire.jsword.passage.Verse;
-import org.crosswire.jsword.versification.Testament;
-import org.crosswire.jsword.versification.Versification;
-import org.crosswire.jsword.versification.system.Versifications;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
+import org.crosswire.jsword.book.sword.state.RawBackendState
+import org.crosswire.jsword.passage.BitwisePassage
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.KeyUtil
+import org.crosswire.jsword.passage.RocketPassage
+import org.crosswire.jsword.versification.Testament
+import org.crosswire.jsword.versification.system.Versifications
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.io.RandomAccessFile
 
 /**
  * Both Books and Commentaries seem to use the same format so this class
@@ -46,191 +44,208 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class RawBackend<T extends RawBackendState> extends AbstractBackend<RawBackendState> {
+open class RawBackend<T : RawBackendState>
+/**
+ * Simple ctor
+ * 
+ * @param sbmd 
+ * @param datasize 
+ */
+(sbmd: SwordBookMetaData?, datasize: Int) : AbstractBackend<RawBackendState>(sbmd) {
 
     /**
-     * Simple ctor
-     * 
-     * @param sbmd 
-     * @param datasize 
+     * How many bytes in the size count in the index
      */
-    public RawBackend(SwordBookMetaData sbmd, int datasize) {
-        super(sbmd);
-        this.datasize = datasize;
-        this.entrysize = OFFSETSIZE + datasize;
+    @JvmField
+    protected val datasize: Int = datasize
 
-        assert datasize == 2 || datasize == 4;
+    /**
+     * The number of bytes for each entry in the index: either 6 or 8
+     */
+    @JvmField
+    protected val entrysize: Int = OFFSETSIZE + datasize
+
+    init {
+        jswordAssert(datasize == 2 || datasize == 4) { datasize }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#contains(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public boolean contains(Key key) {
-        return getRawTextLength(key) > 0;
+    override fun contains(key: Key?): Boolean {
+        return getRawTextLength(key) > 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#size(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public int getRawTextLength(Key key) {
-        String v11nName = getBookMetaData().getProperty(BookMetaData.KEY_VERSIFICATION);
-        Versification v11n = Versifications.instance().getVersification(v11nName);
-        Verse verse = KeyUtil.getVerse(key);
+    override fun getRawTextLength(key: Key?): Int {
+        val v11nName = bookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION)
+        val v11n = Versifications.instance().getVersification(v11nName)!!
+        val verse = KeyUtil.getVerse(key)
 
-        RawBackendState initState = null;
+        var initState: RawBackendState? = null
         try {
-            int index = verse.getOrdinal();
-            Testament testament = v11n.getTestament(index);
-            index = v11n.getTestamentOrdinal(index);
-            initState = initState();
-            RandomAccessFile idxRaf = initState.getIdxRaf(testament);
+            var index = verse.ordinal
+            val testament = v11n.getTestament(index)
+            index = v11n.getTestamentOrdinal(index)
+            initState = initState()
+            val idxRaf = initState.getIdxRaf(testament)
 
             // If this is a single testament Bible, return nothing.
             if (idxRaf == null) {
-                return 0;
+                return 0
             }
 
-            DataIndex dataIndex = getIndex(idxRaf, index);
+            val dataIndex = getIndex(idxRaf, index.toLong())
 
-            return dataIndex.getSize();
-        } catch (IOException ex) {
-            return 0;
-        } catch (BookException e) {
-            return 0;
+            return dataIndex.getSize()
+        } catch (ex: IOException) {
+            return 0
+        } catch (e: BookException) {
+            return 0
         } finally {
-            OpenFileStateManager.instance().release(initState);
+            OpenFileStateManager.instance().release(initState)
         }
     }
 
-    @Override
-    public Key getGlobalKeyList() throws BookException {
-        RawBackendState rafBook = null;
+    @Throws(BookException::class)
+    override fun getGlobalKeyList(): Key {
+        var rafBook: RawBackendState? = null
         try {
-            rafBook = initState();
+            rafBook = initState()
 
-            String v11nName = getBookMetaData().getProperty(BookMetaData.KEY_VERSIFICATION);
-            Versification v11n = Versifications.instance().getVersification(v11nName);
+            val v11nName = bookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION)
+            val v11n = Versifications.instance().getVersification(v11nName)!!
 
-            Testament[] testaments = new Testament[] {
-                    Testament.OLD, Testament.NEW
-            };
+            val testaments = arrayOf(
+                Testament.OLD, Testament.NEW
+            )
 
-            BitwisePassage passage = new RocketPassage(v11n);
-            passage.raiseEventSuppresion();
-            passage.raiseNormalizeProtection();
+            val passage: BitwisePassage = RocketPassage(v11n)
+            passage.raiseEventSuppresion()
+            passage.raiseNormalizeProtection()
 
-            for (Testament currentTestament : testaments) {
-                RandomAccessFile idxRaf = rafBook.getIdxRaf(currentTestament);
+            for (currentTestament in testaments) {
+                val idxRaf = rafBook.getIdxRaf(currentTestament)
 
                 // If Bible does not contain the desired testament, then false
                 if (idxRaf == null) {
                     // no keys in this testament
-                    continue;
+                    continue
                 }
 
                 // The first index in each testament is ignored.
                 // We need to include it here in order to read in the entire index.
-                int maxCount = v11n.getCount(currentTestament) + 1;
+                val maxCount = v11n.getCount(currentTestament) + 1
 
                 // Read in the whole index, a few hundred Kb at most.
-                byte[] temp = SwordUtil.readRAF(idxRaf, 0, entrysize * maxCount);
+                val temp = SwordUtil.readRAF(idxRaf, 0, entrysize * maxCount)
 
                 // For each entry of entrysize bytes, the length of the verse in bytes
                 // is in the last datasize bytes. If all bytes are 0, then there is no content.
                 if (datasize == 2) {
-                    for (int ii = 0; ii < temp.length; ii += entrysize) {
+                    var ii = 0
+                    while (ii < temp.size) {
                         // This can be simplified to temp[ii + 4] == 0 && temp[ii + 5] == 0.
                         // int verseSize = SwordUtil.decodeLittleEndian16(temp, ii + 4);
                         // if (verseSize > 0) {
-                        if (temp[ii + 4] != 0 || temp[ii + 5] != 0) {
-                            int ordinal = ii / entrysize;
-                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal));
+                        if (temp[ii + 4].toInt() != 0 || temp[ii + 5].toInt() != 0) {
+                            val ordinal = ii / entrysize
+                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal))
                         }
+                        ii += entrysize
                     }
                 } else { // datasize == 4
-                    for (int ii = 0; ii < temp.length; ii += entrysize) {
+                    var ii = 0
+                    while (ii < temp.size) {
                         // This can be simplified to temp[ii + 4] == 0 && temp[ii + 5] == 0 && temp[ii + 6] == 0 && temp[ii + 7] == 0.
                         // int verseSize = SwordUtil.decodeLittleEndian32(temp, ii + 4);
                         // if (verseSize > 0) {
-                        if (temp[ii + 4] != 0 || temp[ii + 5] != 0 || temp[ii + 6] != 0 || temp[ii + 7] != 0) {
-                            int ordinal = ii / entrysize;
-                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal));
+                        if (temp[ii + 4].toInt() != 0 || temp[ii + 5].toInt() != 0 || temp[ii + 6].toInt() != 0 || temp[ii + 7].toInt() != 0) {
+                            val ordinal = ii / entrysize
+                            passage.addVersifiedOrdinal(v11n.getOrdinal(currentTestament, ordinal))
                         }
+                        ii += entrysize
                     }
                 }
             }
 
-            passage.lowerNormalizeProtection();
-            passage.lowerEventSuppressionAndTest();
+            passage.lowerNormalizeProtection()
+            passage.lowerEventSuppressionAndTest()
 
-            return passage;
-        } catch (IOException e) {
-            throw new BookException(JSMsg.gettext("Unable to read key list from book."));
+            return passage
+        } catch (e: IOException) {
+            throw BookException(JSMsg.gettext("Unable to read key list from book."))
         } finally {
-            OpenFileStateManager.instance().release(rafBook);
+            OpenFileStateManager.instance().release(rafBook)
         }
     }
 
-    public T initState() throws BookException {
-        return (T) OpenFileStateManager.instance().getRawBackendState(getBookMetaData());
+    @Suppress("UNCHECKED_CAST")
+    @Throws(BookException::class)
+    override fun initState(): T {
+        return OpenFileStateManager.instance().getRawBackendState(bookMetaData) as T
     }
 
-    public String getRawText(RawBackendState state, Key key) throws IOException {
-        return readRawContent(state, key);
+    @Throws(IOException::class)
+    open fun getRawText(state: RawBackendState, key: Key?): String {
+        return readRawContent(state, key)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#getRawText(org.crosswire.jsword.passage.Key)
      */
-    public String readRawContent(RawBackendState state, Key key) throws IOException {
-        String v11nName = getBookMetaData().getProperty(BookMetaData.KEY_VERSIFICATION);
-        Versification v11n = Versifications.instance().getVersification(v11nName);
-        Verse verse = KeyUtil.getVerse(key);
+    @Throws(IOException::class)
+    override fun readRawContent(state: RawBackendState, key: Key?): String {
+        val v11nName = bookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION)
+        val v11n = Versifications.instance().getVersification(v11nName)!!
+        val verse = KeyUtil.getVerse(key)
 
-        int index = verse.getOrdinal();
+        var index = verse.ordinal
 
-        Testament testament = v11n.getTestament(index);
-        index = v11n.getTestamentOrdinal(index);
-        RawBackendState initState = null;
+        val testament = v11n.getTestament(index)
+        index = v11n.getTestamentOrdinal(index)
+        var initState: RawBackendState? = null
         try {
-            initState = initState();
-            return getEntry(state, verse.getName(), testament, index);
-        } catch (BookException e) {
-            return "";
+            initState = initState()
+            return getEntry(state, verse.getName(), testament, index.toLong())
+        } catch (e: BookException) {
+            return ""
         } finally {
-            OpenFileStateManager.instance().release(initState);
+            OpenFileStateManager.instance().release(initState)
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#setRawText(org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public void setRawText(RawBackendState state, Key key, String text) throws BookException, IOException {
+    @Throws(BookException::class, IOException::class)
+    override fun setRawText(state: RawBackendState, key: Key?, text: String?) {
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#isWritable()
      */
-    @Override
-    public boolean isWritable() {
-        RawBackendState rawBackendState = null;
-        try {
-        rawBackendState = initState();
-        return rawBackendState.isWritable();
-        } catch (BookException e) {
-            return false;
-        } finally {
-            OpenFileStateManager.instance().release(rawBackendState);
+    override val isWritable: Boolean
+        get() {
+            var rawBackendState: RawBackendState? = null
+            try {
+                rawBackendState = initState()
+                return rawBackendState.isWritable()
+            } catch (e: BookException) {
+                return false
+            } finally {
+                OpenFileStateManager.instance().release(rawBackendState)
+            }
         }
-    }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#setAliasKey(org.crosswire.jsword.passage.Key, org.crosswire.jsword.passage.Key)
      */
-    public void setAliasKey(RawBackendState state, Key alias, Key source) throws IOException {
-        throw new UnsupportedOperationException();
+    @Throws(IOException::class)
+    override fun setAliasKey(state: RawBackendState, alias: Key?, source: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /**
@@ -240,26 +255,22 @@ public class RawBackend<T extends RawBackendState> extends AbstractBackend<RawBa
      * @return the index for the entry
      * @throws IOException
      */
-    protected DataIndex getIndex(RandomAccessFile raf, long entry) throws IOException {
+    @Throws(IOException::class)
+    protected open fun getIndex(raf: RandomAccessFile?, entry: Long): DataIndex {
         // Read the offset and size for this key from the index
-        byte[] buffer = SwordUtil.readRAF(raf, entry * entrysize, entrysize);
-        if (buffer == null || buffer.length == 0) {
-            return new DataIndex(0, 0);
+        val buffer = SwordUtil.readRAF(raf, entry * entrysize, entrysize)
+        if (buffer.size == 0) {
+            return DataIndex(0, 0)
         }
 
-        int entryOffset = SwordUtil.decodeLittleEndian32(buffer, 0);
-        int entrySize = -1;
-        switch (datasize) {
-        case 2:
-            entrySize = SwordUtil.decodeLittleEndian16(buffer, 4);
-            break;
-        case 4:
-            entrySize = SwordUtil.decodeLittleEndian32(buffer, 4);
-            break;
-        default:
-            assert false : datasize;
+        val entryOffset = SwordUtil.decodeLittleEndian32(buffer, 0)
+        var entrySize = -1
+        when (datasize) {
+            2 -> entrySize = SwordUtil.decodeLittleEndian16(buffer, 4)
+            4 -> entrySize = SwordUtil.decodeLittleEndian32(buffer, 4)
+            else -> jswordAssert(false) { datasize }
         }
-        return new DataIndex(entryOffset, entrySize);
+        return DataIndex(entryOffset, entrySize)
     }
 
     /**
@@ -267,64 +278,55 @@ public class RawBackend<T extends RawBackendState> extends AbstractBackend<RawBa
      * @param state 
      * 
      * @param index
-     *            the entry to get
+     * the entry to get
      * @param name
-     *            name of the entry
+     * name of the entry
      * @param testament
-     *            the testament for the entry
+     * the testament for the entry
      * @return the text for the entry.
      * @throws IOException
-     *             on a IO problem
+     * on a IO problem
      */
-    protected String getEntry(RawBackendState state, String name, Testament testament, long index) throws IOException {
-        final RandomAccessFile idxRaf;
-        final RandomAccessFile txtRaf;
-        idxRaf = state.getIdxRaf(testament);
-        txtRaf = state.getTextRaf(testament);
+    @Throws(IOException::class)
+    protected open fun getEntry(state: RawBackendState, name: String?, testament: Testament?, index: Long): String {
+        val idxRaf: RandomAccessFile?
+        val txtRaf: RandomAccessFile?
+        idxRaf = state.getIdxRaf(testament)
+        txtRaf = state.getTextRaf(testament)
 
         // It may be that this is a single testament Bible
         if (idxRaf == null) {
-            return "";
+            return ""
         }
 
-        DataIndex dataIndex = getIndex(idxRaf, index);
+        val dataIndex = getIndex(idxRaf, index)
 
-        int size = dataIndex.getSize();
+        val size = dataIndex.getSize()
         if (size == 0) {
-            return "";
+            return ""
         }
 
         if (size < 0) {
-            LOGGER.error("In {}: Verse {} has a bad index size of {}", getBookMetaData().getInitials(), name, Integer.toString(size));
-            return "";
+            LOGGER.error("In {}: Verse {} has a bad index size of {}", bookMetaData.initials, name, size.toString())
+            return ""
         }
 
-        byte[] data = SwordUtil.readRAF(txtRaf, dataIndex.getOffset(), size);
+        val data = SwordUtil.readRAF(txtRaf, dataIndex.getOffset().toLong(), size)
 
-        decipher(data);
+        decipher(data)
 
-        return SwordUtil.decode(name, data, getBookMetaData().getBookCharset());
+        return SwordUtil.decode(name, data, bookMetaData.bookCharset)
     }
 
-    /**
-     * How many bytes in the size count in the index
-     */
-    protected final int datasize;
+    companion object {
+        /**
+         * How many bytes in the offset pointers in the index
+         */
+        protected const val OFFSETSIZE: Int = 4
 
-    /**
-     * The number of bytes for each entry in the index: either 6 or 8
-     */
-    protected final int entrysize;
-
-    /**
-     * How many bytes in the offset pointers in the index
-     */
-    protected static final int OFFSETSIZE = 4;
-
-    /**
-     * The log stream
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(RawBackend.class);
-
-
+        /**
+         * The log stream
+         */
+        private val LOGGER: Logger = LoggerFactory.getLogger(RawBackend::class.java)
+    }
 }

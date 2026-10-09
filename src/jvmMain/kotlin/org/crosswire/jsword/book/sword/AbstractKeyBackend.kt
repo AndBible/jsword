@@ -17,16 +17,15 @@
  * © CrossWire Bible Society, 2008 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.sword.state.OpenFileState;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.RestrictionType;
+import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.sword.state.OpenFileState
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.RestrictionType
+import java.io.IOException
+import java.util.NoSuchElementException
 
 /**
  * A Backend that can be used as a global key list.
@@ -35,260 +34,260 @@ import org.crosswire.jsword.passage.RestrictionType;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public abstract class AbstractKeyBackend<T extends OpenFileState> extends AbstractBackend<T> implements Key {
-    /**
-     * Simple ctor
-     * 
-     * @param sbmd
-     *            the book's metadata
-     */
-    public AbstractKeyBackend(SwordBookMetaData sbmd) {
-        super(sbmd);
-    }
+abstract class AbstractKeyBackend<T : OpenFileState>
+/**
+ * Simple ctor
+ * 
+ * @param sbmd
+ * the book's metadata
+ */
+(sbmd: SwordBookMetaData?) : AbstractBackend<T>(sbmd), Key, Cloneable {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
      */
-    public boolean canHaveChildren() {
-        return false;
+    override fun canHaveChildren(): Boolean {
+        return false
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getChildCount()
      */
-    public int getChildCount() {
-        return 0;
+    override fun getChildCount(): Int {
+        return 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#isEmpty()
      */
-    public boolean isEmpty() {
-        return getCardinality() == 0;
+    override fun isEmpty(): Boolean {
+        return getCardinality() == 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#contains(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public boolean contains(Key key) {
-        return indexOf(key) >= 0;
+    override fun contains(key: Key?): Boolean {
+        return indexOf(key) >= 0
     }
 
     /* (non-Javadoc)
      * @see java.lang.Iterable#iterator()
      */
-    public Iterator<Key> iterator() {
-        return new Iterator<Key>() {
+    override fun iterator(): MutableIterator<Key> {
+        return object : MutableIterator<Key> {
 
             /* (non-Javadoc)
              * @see java.util.Iterator#hasNext()
              */
-            public boolean hasNext() {
-                return here < count;
+            override fun hasNext(): Boolean {
+                return here < count
             }
 
             /* (non-Javadoc)
              * @see java.util.Iterator#next()
              */
-            public Key next() throws NoSuchElementException {
+            @Throws(NoSuchElementException::class)
+            override fun next(): Key {
                 if (here >= count) {
-                    throw new NoSuchElementException();
+                    throw NoSuchElementException()
                 }
-                return get(here++);
+                return get(here++)!!
             }
 
             /* (non-Javadoc)
              * @see java.util.Iterator#remove()
              */
-            public void remove() {
-                throw new UnsupportedOperationException();
+            override fun remove() {
+                throw UnsupportedOperationException()
             }
 
-            private int here;
-            private int count = getCardinality();
-        };
+            private var here = 0
+            private val count = getCardinality()
+        }
     }
 
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#addAll(org.crosswire.jsword.passage.Key)
      */
-    public void addAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun addAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#removeAll(org.crosswire.jsword.passage.Key)
      */
-    public void removeAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun removeAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#clear()
      */
-    public void clear() {
-        throw new UnsupportedOperationException();
+    override fun clear() {
+        throw UnsupportedOperationException()
     }
 
-    public void setAliasKey(T state, Key alias, Key source) throws IOException {
-        throw new UnsupportedOperationException();
+    @Throws(IOException::class)
+    override fun setAliasKey(state: T, alias: Key?, source: Key?) {
+        throw UnsupportedOperationException()
     }
 
-    public void setRawText(T state, Key key, String text) throws BookException, IOException {
-        throw new UnsupportedOperationException();
+    @Throws(BookException::class, IOException::class)
+    override fun setRawText(state: T, key: Key?, text: String?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getParent()
      */
-    public Key getParent() {
-        return null;
+    override fun getParent(): Key? {
+        return null
     }
 
-    @Override
-    public AbstractKeyBackend<T> clone() {
-        AbstractKeyBackend<T> clone = null;
+    override fun clone(): AbstractKeyBackend<T> {
+        var clone: AbstractKeyBackend<T>? = null
         try {
-            clone = (AbstractKeyBackend<T>) super.clone();
-        } catch (CloneNotSupportedException e) {
-            assert false : e;
+            @Suppress("UNCHECKED_CAST")
+            clone = super<Cloneable>.clone() as AbstractKeyBackend<T>
+        } catch (e: CloneNotSupportedException) {
+            jswordAssert(false) { e }
         }
-        return clone;
+        return clone!!
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()
      */
-    public String getName() {
-        return getBookMetaData().getInitials();
+    override fun getName(): String {
+        return bookMetaData.initials
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName(org.crosswire.jsword.passage.Key)
      */
-    public String getName(Key base) {
-        return getName();
+    override fun getName(base: Key?): String {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisID()
      */
-    public String getOsisID() {
-        return getName();
+    override fun getOsisID(): String {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getOsisRef()
      */
-    public String getOsisRef() {
-        return getName();
+    override fun getOsisRef(): String {
+        return getName()
     }
 
-   /* (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getRootName()
      */
-    public String getRootName() {
-        return getName();
+    override fun getRootName(): String {
+        return getName()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#retainAll(org.crosswire.jsword.passage.Key)
      */
-    public void retainAll(Key key) {
-        throw new UnsupportedOperationException();
+    override fun retainAll(key: Key?) {
+        throw UnsupportedOperationException()
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    override fun equals(other: Any?): Boolean {
         // Since this can not be null
-        if (obj == null) {
-            return false;
+        if (other == null) {
+            return false
         }
 
         // Check that that is the same as this
         // Don't use instanceOf since that breaks inheritance
-        if (!obj.getClass().equals(this.getClass())) {
-            return false;
+        if (other.javaClass != this.javaClass) {
+            return false
         }
 
-        return compareTo((Key) obj) == 0;
+        return compareTo(other as Key) == 0
     }
 
-    @Override
-    public int hashCode() {
-        return getName().hashCode();
+    override fun hashCode(): Int {
+        return getName().hashCode()
     }
 
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Key that) {
+    override fun compareTo(other: Key?): Int {
 
-        if (this == that) {
-            return 0;
+        if (this === other) {
+            return 0
         }
 
-        if (that == null) {
+        if (other == null) {
             // he is empty, we are not so he is greater
-            return -1;
+            return -1
         }
 
-        int ret = this.getName().compareTo(that.getName());
+        val ret = this.getName().compareTo(other.getName())
 
         if (ret != 0) {
-            return ret;
+            return ret
         }
 
         // Compare the contents.
-        Iterator<Key> thisIter = this.iterator();
-        Iterator<Key> thatIter = that.iterator();
+        val thisIter = this.iterator()
+        val thatIter = other.iterator()
 
-        Key thisfirst = null;
-        Key thatfirst = null;
+        var thisfirst: Key? = null
+        var thatfirst: Key? = null
 
         if (thisIter.hasNext()) {
-            thisfirst = thisIter.next();
+            thisfirst = thisIter.next()
         }
 
         if (thatIter.hasNext()) {
-            thatfirst = thatIter.next();
+            thatfirst = thatIter.next()
         }
 
         if (thisfirst == null) {
             if (thatfirst == null) {
                 // we are both empty, and rank the same
-                return 0;
+                return 0
             }
             // i am empty, he is not so we are greater
-            return 1;
+            return 1
         }
 
         if (thatfirst == null) {
             // he is empty, we are not so he is greater
-            return -1;
+            return -1
         }
 
-        return thisfirst.getName().compareTo(thatfirst.getName());
+        return thisfirst.getName().compareTo(thatfirst.getName())
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    public void blur(int by, RestrictionType restrict, boolean blurDown, boolean blurUp) {
+    override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
     }
 
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
      */
-    public void blur(int by, RestrictionType restrict) {
-        blur(by, restrict, true, true);
+    override fun blur(by: Int, restrict: RestrictionType?) {
+        blur(by, restrict, true, true)
     }
 
-    /**
-     * Serialization ID
-     */
-    private static final long serialVersionUID = -2782112117361556089L;
+    private companion object {
+        /**
+         * Serialization ID
+         */
+        private const val serialVersionUID = -2782112117361556089L
+    }
 }

@@ -17,22 +17,19 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.crosswire.jsword.JSMsg;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.sword.state.GenBookBackendState;
-import org.crosswire.jsword.book.sword.state.OpenFileStateManager;
-import org.crosswire.jsword.passage.DefaultKeyList;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.TreeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.crosswire.jsword.JSMsg
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.sword.state.GenBookBackendState
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
+import org.crosswire.jsword.passage.DefaultKeyList
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.TreeKey
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.util.ArrayList
 
 /**
  * Backend for General Books.
@@ -40,197 +37,200 @@ import org.slf4j.LoggerFactory;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class GenBookBackend extends AbstractBackend<GenBookBackendState> {
+open class GenBookBackend
+/**
+ * Simple ctor
+ * 
+ * @param sbmd 
+ */
+(sbmd: SwordBookMetaData?) : AbstractBackend<GenBookBackendState>(sbmd) {
     /**
-     * Simple ctor
-     * 
-     * @param sbmd 
+     * The raw index file
      */
-    public GenBookBackend(SwordBookMetaData sbmd) {
-        super(sbmd);
-        index = new TreeKeyIndex(sbmd);
-    }
+    private val index: TreeKeyIndex = TreeKeyIndex(sbmd)
 
-    public GenBookBackendState initState() throws BookException {
-        return OpenFileStateManager.instance().getGenBookBackendState(getBookMetaData());
+    @Throws(BookException::class)
+    override fun initState(): GenBookBackendState {
+        return OpenFileStateManager.instance().getGenBookBackendState(bookMetaData)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#contains(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public boolean contains(Key key) {
-        return getRawTextLength(key) > 0;
+    override fun contains(key: Key?): Boolean {
+        return getRawTextLength(key) > 0
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#size(org.crosswire.jsword.passage.Key)
      */
-    @Override
-    public int getRawTextLength(Key key) {
+    override fun getRawTextLength(key: Key?): Int {
         try {
-            TreeNode node = find(key);
+            val node = find(key)
 
             if (node == null) {
-                return 0;
+                return 0
             }
 
-            byte[] userData = node.getUserData();
+            val userData = node.userData
 
             // Some entries may be empty.
-            if (userData.length == 8) {
-                return SwordUtil.decodeLittleEndian32(userData, 4);
+            if (userData.size == 8) {
+                return SwordUtil.decodeLittleEndian32(userData, 4)
             }
 
-            return 0;
-
-        } catch (IOException e) {
-            return 0;
+            return 0
+        } catch (e: IOException) {
+            return 0
         }
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.StatefulFileBackedBackend#readRawContent(org.crosswire.jsword.book.sword.state.OpenFileState, org.crosswire.jsword.passage.Key)
      */
-    public String readRawContent(GenBookBackendState state, Key key) throws IOException, BookException {
-        TreeNode node = find(key);
+    @Throws(IOException::class, BookException::class)
+    override fun readRawContent(state: GenBookBackendState, key: Key?): String {
+        val node = find(key)
 
         if (node == null) {
             // TRANSLATOR: Error condition: Indicates that something could
             // not be found in the book.
             // {0} is a placeholder for the unknown key.
             // {1} is the short name of the book
-            throw new BookException(JSMsg.gettext("No entry for '{0}' in {1}.", key.getName(), getBookMetaData().getInitials()));
+            throw BookException(JSMsg.gettext("No entry for '{0}' in {1}.", key!!.getName(), bookMetaData.initials))
         }
 
-        byte[] userData = node.getUserData();
+        val userData = node.userData
 
         // Some entries may be empty.
-        if (userData.length == 8) {
-            int start = SwordUtil.decodeLittleEndian32(userData, 0);
-            int size = SwordUtil.decodeLittleEndian32(userData, 4);
-            byte[] data = SwordUtil.readRAF(state.getBdtRaf(), start, size);
-            decipher(data);
-            return SwordUtil.decode(key.getName(), data, getBookMetaData().getBookCharset());
+        if (userData.size == 8) {
+            val start = SwordUtil.decodeLittleEndian32(userData, 0)
+            val size = SwordUtil.decodeLittleEndian32(userData, 4)
+            val data = SwordUtil.readRAF(state.getBdtRaf(), start.toLong(), size)
+            decipher(data)
+            return SwordUtil.decode(key!!.getName(), data, bookMetaData.bookCharset)
         }
 
-        return "";
+        return ""
     }
 
     /**
      * Given a Key, find the TreeNode for it.
      * 
      * @param key
-     *            The key to use for searching
+     * The key to use for searching
      * @return the found node, null otherwise
      * @throws IOException
      */
-    private TreeNode find(Key key) throws IOException {
+    @Throws(IOException::class)
+    private fun find(key: Key?): TreeNode? {
         // We need to search from the root, so navigate to the root, saving as
         // we go.
-        List<String> path = new ArrayList<String>();
-        for (Key parentKey = key; parentKey != null && parentKey.getName().length() > 0; parentKey = parentKey.getParent()) {
-            path.add(parentKey.getName());
+        val path: MutableList<String> = ArrayList()
+        var parentKey: Key? = key
+        while (parentKey != null && parentKey.getName().length > 0) {
+            path.add(parentKey.getName())
+            parentKey = parentKey.getParent()
         }
 
-        TreeNode node = index.getRoot();
+        var node: TreeNode? = index.getRoot()
 
-        node = index.getFirstChild(node);
+        node = index.getFirstChild(node!!)
 
-        for (int i = path.size() - 1; i >= 0; i--) {
-            String name = path.get(i);
+        for (i in path.size - 1 downTo 0) {
+            val name = path[i]
 
             // Search among the siblings for the current level.
-            while (node != null && !name.equals(node.getName())) {
+            while (node != null && name != node.name) {
                 if (node.hasNextSibling()) {
-                    node = index.getNextSibling(node);
+                    node = index.getNextSibling(node)
                 } else {
-                    log.error("Could not find {}", name);
-                    node = null;
+                    log.error("Could not find {}", name)
+                    node = null
                 }
             }
 
             // If we have found it but have not exhausted the path
             // we need to get more
-            if (node != null && name.equals(node.getName()) && i > 0) {
-                node = index.getFirstChild(node);
+            if (node != null && name == node.name && i > 0) {
+                node = index.getFirstChild(node)
             }
         }
 
         // At this point we have either found it, returning it or have not,
         // returning null
-        if (node != null && node.getName().equals(key.getName())) {
-            return node;
+        if (node != null && node.name == key!!.getName()) {
+            return node
         }
 
-        return null;
+        return null
     }
 
-    @Override
-    public Key readIndex() {
-        BookMetaData bmd = getBookMetaData();
-        Key reply = new DefaultKeyList(null, bmd.getName());
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun readIndex(): Key {
+        val bmd = bookMetaData
+        var reply: Key = DefaultKeyList(null, bmd.name)
 
         try {
-            TreeNode node = index.getRoot();
-            reply = new TreeKey(node.getName(), null);
-            doReadIndex(node, reply);
-        } catch (IOException e) {
-            log.error("Could not get read GenBook index", e);
+            val node = index.getRoot()
+            reply = TreeKey(node.name, null)
+            doReadIndex(node, reply)
+        } catch (e: IOException) {
+            log.error("Could not get read GenBook index", e)
         }
 
-        return reply;
+        return reply
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#setAliasKey(org.crosswire.jsword.passage.Key, org.crosswire.jsword.passage.Key)
      */
-    public void setAliasKey(GenBookBackendState state, Key alias, Key source) throws IOException {
-        throw new UnsupportedOperationException();
+    @Throws(IOException::class)
+    override fun setAliasKey(state: GenBookBackendState, alias: Key?, source: Key?) {
+        throw UnsupportedOperationException()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#setRawText(org.crosswire.jsword.passage.Key, java.lang.String)
      */
-    public void setRawText(GenBookBackendState rafBook, Key key, String text) throws BookException, IOException {
-        throw new UnsupportedOperationException();
+    @Throws(BookException::class, IOException::class)
+    override fun setRawText(state: GenBookBackendState, key: Key?, text: String?) {
+        throw UnsupportedOperationException()
     }
 
     /**
      * A helper function to recursively read the entire tree.
      * 
      * @param parentNode
-     *            the current node whose children are being sought
+     * the current node whose children are being sought
      * @param parentKey
      * @throws IOException
      */
-    private void doReadIndex(TreeNode parentNode, Key parentKey) throws IOException {
-        TreeNode currentNode = parentNode;
+    @Throws(IOException::class)
+    private fun doReadIndex(parentNode: TreeNode, parentKey: Key) {
+        val currentNode = parentNode
         if (currentNode.hasChildren()) {
-            TreeNode childNode = index.getFirstChild(currentNode);
+            var childNode = index.getFirstChild(currentNode)
             do {
-                TreeKey childKey = new TreeKey(childNode.getName(), parentKey);
-                parentKey.addAll(childKey);
+                val childKey = TreeKey(childNode.name, parentKey)
+                parentKey.addAll(childKey)
 
                 // Build the tree as deep as possible
-                doReadIndex(childNode, childKey);
+                doReadIndex(childNode, childKey)
 
                 if (!childNode.hasNextSibling()) {
-                    break;
+                    break
                 }
 
-                childNode = index.getNextSibling(childNode);
-            } while (true);
+                childNode = index.getNextSibling(childNode)
+            } while (true)
         }
     }
 
-    /**
-     * The raw index file
-     */
-    private final TreeKeyIndex index;
-
-    /**
-     * The log stream
-     */
-    private static final Logger log = LoggerFactory.getLogger(GenBookBackend.class);
+    private companion object {
+        /**
+         * The log stream
+         */
+        private val log: Logger = LoggerFactory.getLogger(GenBookBackend::class.java)
+    }
 }

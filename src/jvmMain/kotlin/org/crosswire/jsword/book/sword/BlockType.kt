@@ -17,10 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import org.crosswire.jsword.JSOtherMsg;
-
+import org.crosswire.jsword.JSOtherMsg
 
 /**
  * Block types indicates the grain of compression.
@@ -29,70 +28,60 @@ import org.crosswire.jsword.JSOtherMsg;
  * @author Joe Walker
  * @author DM Smith
  */
-public enum BlockType {
+enum class BlockType
+/**
+ * Simple ctor
+ */
+(
     /**
-     * The level of compression is the Book
+     * The name of the BlockType (the Java field was called `name`, which an enum cannot declare in Kotlin)
      */
-    BLOCK_BOOK ("BOOK", 'b'),
-
+    private val blockName: String,
     /**
-     * The level of compression is the Book
-     */
-    BLOCK_CHAPTER ("CHAPTER", 'c'),
-
-    /**
-     * The level of compression is the Book
-     */
-    BLOCK_VERSE ("VERSE", 'v');
-
-    /**
-     * Simple ctor
-     */
-    BlockType(String name, char indicator) {
-        this.name = name;
-        this.indicator = indicator;
-    }
-
-    /**
+     * The indicator for the BlockType
      * Return a character indicating the grain of compression. This is used in
      * the names of compressed sword books.
-     * 
-     * @return the indicator
      */
-    public char getIndicator() {
-        return indicator;
-    }
+    val indicator: Char
+) {
+    /**
+     * The level of compression is the Book
+     */
+    BLOCK_BOOK("BOOK", 'b'),
 
     /**
-     * Lookup method to convert from a String
-     * 
-     * @param name the string representation of the block type
-     * @return the matching block type
+     * The level of compression is the Book
      */
-    public static BlockType fromString(String name) {
-        for (BlockType v : values()) {
-            if (v.name.equalsIgnoreCase(name)) {
-                return v;
-            }
-        }
+    BLOCK_CHAPTER("CHAPTER", 'c'),
 
-        throw new ClassCastException(JSOtherMsg.lookupText("BlockType {0} is not defined!", name));
-    }
+    /**
+     * The level of compression is the Book
+     */
+    BLOCK_VERSE("VERSE", 'v');
 
     /* (non-Javadoc)
      * @see java.lang.Enum#toString()
      */
-    @Override
-    public String toString() {
-        return name;
+    override fun toString(): String {
+        return blockName
     }
 
-    /**
-     * The name of the BlockType
-     */
-    private String name;
-    /**
-     * The indicator for the BlockType
-     */
-    private char indicator;
+    companion object {
+        /**
+         * Lookup method to convert from a String
+         * 
+         * @param name the string representation of the block type
+         * @return the matching block type
+         */
+        @JvmStatic
+        fun fromString(name: String?): BlockType {
+            for (v in entries) {
+                if (v.blockName.equals(name, ignoreCase = true)) {
+                    return v
+                }
+            }
+
+            throw ClassCastException(JSOtherMsg.lookupText("BlockType {0} is not defined!", name))
+        }
+    }
 }

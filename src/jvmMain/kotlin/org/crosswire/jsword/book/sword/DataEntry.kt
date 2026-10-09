@@ -17,9 +17,9 @@
  * © CrossWire Bible Society, 2008 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import org.crosswire.common.crypt.Sapphire;
+import org.crosswire.common.crypt.Sapphire
 
 /**
  * Data entry represents an entry in a Data file. The entry consists of a key
@@ -34,23 +34,23 @@ import org.crosswire.common.crypt.Sapphire;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DataEntry {
+open class DataEntry {
     /**
      * Construct a data entry.
      * 
      * @param name
-     *            A name used for diagnostics.
+     * A name used for diagnostics.
      * @param data
-     *            The data for this entry.
+     * The data for this entry.
      * @param charset
-     *            The character encoding for this entry.
+     * The character encoding for this entry.
      */
-    public DataEntry(String name, byte[] data, String charset) {
-        this.name = name;
-        this.data = data.clone();
-        this.charset = charset;
+    constructor(name: String?, data: ByteArray, charset: String?) {
+        this.name = name
+        this.data = data.clone()
+        this.charset = charset
         // The key always ends with \n, typically \r\n
-        this.keyEnd = SwordUtil.findByte(this.data, SEP_NL);
+        this.keyEnd = SwordUtil.findByte(this.data, SEP_NL)
     }
 
     /**
@@ -58,16 +58,16 @@ public class DataEntry {
      * 
      * @return the diagnostic name.
      */
-    public String getName() {
-        return name;
+    open fun getName(): String? {
+        return name
     }
 
     /**
      * Get the charset in which the data is encoded.
      * @return this entry's charset
      */
-    public String getCharset() {
-        return charset;
+    open fun getCharset(): String? {
+        return charset
     }
 
     /**
@@ -75,43 +75,45 @@ public class DataEntry {
      * 
      * @return the key
      */
-    public String getKey() {
+    open fun getKey(): String {
+        var key = this.key
         if (key == null) {
             // Some entries are empty
-            if (data.length == 0) {
-                key = "";
-                return key;
+            if (data.size == 0) {
+                this.key = ""
+                return ""
             }
 
             if (keyEnd < 0) {
-                key = "";
-                return key;
+                this.key = ""
+                return ""
             }
 
-            int end = keyEnd;
+            var end = keyEnd
             // remove trailing \r if present
             if (end > 0 && data[end - 1] == SEP_CR) {
-                --end;
+                --end
             }
 
             // for some weird reason plain text dictionaries
             // all get \ added to the ends of the index entries.
             if (end > 0 && data[end - 1] == SEP_BSLASH) {
-                --end;
+                --end
             }
 
             // If the end is 0 then we have an empty key.
             if (end == 0) {
-                key = "";
-                return key;
+                this.key = ""
+                return ""
             }
 
             // The key may have whitespace, including \r on the end,
             // that is not actually part of the key.
-            key = SwordUtil.decode(name, data, end, charset);
+            key = SwordUtil.decode(name, data, end, charset)
+            this.key = key
         }
 
-        return key;
+        return key
     }
 
     /**
@@ -119,14 +121,14 @@ public class DataEntry {
      * 
      * @return whether this is an alias entry
      */
-    public boolean isLinkEntry() {
+    open fun isLinkEntry(): Boolean {
         // 6 represents the length of "@LINK" when keyEnd is -1
-        return keyEnd + 6 < data.length
-                && data[keyEnd + 1] == '@'
-                && data[keyEnd + 2] == 'L'
-                && data[keyEnd + 3] == 'I'
-                && data[keyEnd + 4] == 'N'
-                && data[keyEnd + 5] == 'K';
+        return keyEnd + 6 < data.size
+                && data[keyEnd + 1] == '@'.code.toByte()
+                && data[keyEnd + 2] == 'L'.code.toByte()
+                && data[keyEnd + 3] == 'I'.code.toByte()
+                && data[keyEnd + 4] == 'N'.code.toByte()
+                && data[keyEnd + 5] == 'K'.code.toByte()
     }
 
     /**
@@ -136,24 +138,24 @@ public class DataEntry {
      * @return the key to look up
      * @see #isLinkEntry()
      */
-    public String getLinkTarget() {
+    open fun getLinkTarget(): String {
         // 6 represents the length of "@LINK" + 1 to skip the last separator.
-        int linkStart = keyEnd + 6;
-        int len = getLinkEnd() - linkStart + 1;
-        return SwordUtil.decode(name, data, linkStart, len, charset).trim();
+        val linkStart = keyEnd + 6
+        val len = getLinkEnd() - linkStart + 1
+        return SwordUtil.decode(name, data, linkStart, len, charset).trim()
     }
 
     /**
      * Get the raw text from this entry.
      * 
      * @param cipherKey
-     *            the key, if any, to (un)lock the text
+     * the key, if any, to (un)lock the text
      * @return the raw text
      */
-    public String getRawText(byte[] cipherKey) {
-        int textStart = 0; //keyEnd + 1;
-        cipher(cipherKey, textStart);
-        return SwordUtil.decode(name, data, textStart, data.length - textStart, charset).trim();
+    open fun getRawText(cipherKey: ByteArray?): String {
+        val textStart = 0 //keyEnd + 1;
+        cipher(cipherKey, textStart)
+        return SwordUtil.decode(name, data, textStart, data.size - textStart, charset).trim()
     }
 
     /**
@@ -161,9 +163,9 @@ public class DataEntry {
      * 
      * @return the index of the block
      */
-    public DataIndex getBlockIndex() {
-        int start = keyEnd + 1;
-        return new DataIndex(SwordUtil.decodeLittleEndian32(data, start), SwordUtil.decodeLittleEndian32(data, start + 4));
+    open fun getBlockIndex(): DataIndex {
+        val start = keyEnd + 1
+        return DataIndex(SwordUtil.decodeLittleEndian32(data, start), SwordUtil.decodeLittleEndian32(data, start + 4))
     }
 
     /**
@@ -172,69 +174,72 @@ public class DataEntry {
      * 
      * @return the end of the link or -1 if not found.
      */
-    private int getLinkEnd() {
+    private fun getLinkEnd(): Int {
         if (linkEnd == 0) {
-            linkEnd = SwordUtil.findByte(data, keyEnd + 1, SEP_NL);
+            linkEnd = SwordUtil.findByte(data, keyEnd + 1, SEP_NL)
             if (linkEnd == -1) {
-                linkEnd = data.length - 1;
+                linkEnd = data.size - 1
             }
         }
-        return linkEnd;
+        return linkEnd
     }
 
     /**
      * Decipher/Encipher the data in place, if there is a cipher key.
      * 
      * @param cipherKey
-     *            the key to the cipher
+     * the key to the cipher
      * @param offset
-     *            the start of the cipher data
+     * the start of the cipher data
      */
-    public void cipher(byte[] cipherKey, int offset) {
-        if (cipherKey != null && cipherKey.length > 0) {
-            Sapphire cipherEngine = new Sapphire(cipherKey);
-            for (int i = offset; i < data.length; i++) {
-                data[i] = cipherEngine.cipher(data[i]);
+    open fun cipher(cipherKey: ByteArray?, offset: Int) {
+        if (cipherKey != null && cipherKey.size > 0) {
+            val cipherEngine = Sapphire(cipherKey)
+            for (i in offset until data.size) {
+                data[i] = cipherEngine.cipher(data[i])
             }
             // destroy any evidence!
-            cipherEngine.burn();
+            cipherEngine.burn()
         }
     }
 
     /**
-     * Used to separate the key name from the key value Note: it may be \r\n or
-     * just \n, so only need \n. ^M=CR=13=0x0d=\r ^J=LF=10=0x0a=\n
-     */
-    private static final byte SEP_NL = (byte) '\n'; // 10;
-    private static final byte SEP_CR = (byte) '\r'; // 13;
-    private static final byte SEP_BSLASH = (byte) '\\'; // 92;
-    /**
      * A diagnostic name.
      */
-    private String name;
+    private var name: String?
 
     /**
      * The data entry as it comes out of the data file.
      */
-    private byte[] data;
+    private var data: ByteArray
 
     /**
      * The character set of the data entry.
      */
-    private String charset;
+    private var charset: String?
 
     /**
      * The key in the data entry.
      */
-    private String key;
+    private var key: String? = null
 
     /**
      * The index of the separator between the key and the payload.
      */
-    private int keyEnd;
+    private var keyEnd: Int
 
     /**
      * The index of the separator between the link and the payload.
      */
-    private int linkEnd;
+    private var linkEnd: Int = 0
+
+    private companion object {
+        /**
+         * Used to separate the key name from the key value Note: it may be \r\n or
+         * just \n, so only need \n. ^M=CR=13=0x0d=\r ^J=LF=10=0x0a=\n
+         */
+        private const val SEP_NL: Byte = '\n'.code.toByte() // 10;
+        private const val SEP_CR: Byte = '\r'.code.toByte() // 13;
+        private const val SEP_BSLASH: Byte = '\\'.code.toByte() // 92;
+    }
 }
