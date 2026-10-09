@@ -34,8 +34,11 @@ object KFiles {
     }
 
     /** Child names (not paths) of [dir]; empty when [dir] is not a readable directory. */
-    fun list(dir: Path, fs: FileSystem = FileSystem.SYSTEM): List<String> =
-        fs.listOrNull(dir)?.map { it.name } ?: emptyList()
+    fun list(dir: Path, fs: FileSystem = FileSystem.SYSTEM): List<String> = listOrNull(dir, fs) ?: emptyList()
+
+    /** Like [list] but null when [dir] cannot be listed (missing, not a directory, unreadable), as `File.list`. */
+    fun listOrNull(dir: Path, fs: FileSystem = FileSystem.SYSTEM): List<String>? =
+        fs.listOrNull(dir)?.map { it.name }
 
     fun createDirectories(path: Path, fs: FileSystem = FileSystem.SYSTEM) {
         fs.createDirectories(path, mustCreate = false)

@@ -4,6 +4,7 @@ import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URI
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -208,9 +209,10 @@ class NetUtilFileCharacterizationTest {
         val other = File(root, "other").also { it.writeText("y") }
         assertTrue(ro.setWritable(false))
         try {
-            if (File(ro, "probe").let { runCatching { it.createNewFile() }.getOrDefault(false).also { _ -> it.delete() } }) {
-                return // running as root: permissions are not enforced, nothing to pin
+            val permissionsEnforced = !File(ro, "probe").let {
+                runCatching { it.createNewFile() }.getOrDefault(false).also { _ -> it.delete() }
             }
+            Assume.assumeTrue("running as root: permissions are not enforced, nothing to pin", permissionsEnforced)
             val failures = FileUtil.delete(root)
             // children first (inner, then the read-only dir), then the root which is non-empty now
             assertEquals(listOf(inner, ro, root), failures)
@@ -218,6 +220,67 @@ class NetUtilFileCharacterizationTest {
         } finally {
             ro.setWritable(true)
         }
+    }
+
+    @Test
+    fun listByFileWithNullFilter() {
+        val empty = tmp.newFolder("empty")
+        assertEquals(0, NetUtil.listByFile(uri(empty), null)!!.size)
+        val full = tmp.newFolder("full")
+        File(full, "a").writeText("a")
+        // the old FilenameFilter wrapper dereferenced the null filter for every entry
+        assertFailsWith<NullPointerException> { NetUtil.listByFile(uri(full), null) }
+    }
+
+    @Test
+    fun listByFileOnUnreadableDirectoryReturnsNull() {
+        val dir = tmp.newFolder("locked")
+        File(dir, "a").writeText("a")
+        assertTrue(dir.setReadable(false))
+        try {
+            Assume.assumeTrue("running as root: permissions are not enforced", dir.list() == null)
+            // File.list() returned null for a directory that cannot be listed, and listByFile passed that on
+            assertEquals(null, NetUtil.listByFile(uri(dir), DefaultURIFilter()))
+        } finally {
+            dir.setReadable(true)
+        }
+    }
+
+    @Test
+    fun uriWithPercentEncodedSpaceAndNonAsciiNameThroughDelegatingOps() {
+        val dir = tmp.newFolder("my dir")
+        val file = File(dir, "tiedosto \u00e4\u00f6 \u4e2d.txt").apply { writeBytes(ByteArray(7)) }
+        val u = URI("file:" + file.toURI().rawPath) // percent-encoded form, as it arrives from the outside
+        assertTrue(u.rawPath.contains("%20"), u.rawPath)
+        assertTrue(NetUtil.isFile(u))
+        assertTrue(NetUtil.isDirectory(NetUtil.getURI(dir)))
+        assertEquals(7, NetUtil.getSize(u))
+        assertEquals(file.lastModified(), NetUtil.getLastModified(u))
+        assertEquals(setOf(file.name), NetUtil.listByFile(NetUtil.getURI(dir), DefaultURIFilter())!!.toSet())
+        val moved = File(dir, "uusi \u00e5.txt")
+        assertTrue(NetUtil.move(u, uri(moved)))
+        assertTrue(moved.isFile)
+        assertFalse(file.exists())
+        assertTrue(NetUtil.delete(uri(moved)))
+        assertFalse(moved.exists())
+    }
+
+    @Test
+    fun moveFileOntoExistingDirectoryReturnsFalseAndChangesNothing() {
+        val src = tmp.newFile("src.txt").apply { writeText("x") }
+        val dstDir = tmp.newFolder("dstDir")
+        assertFalse(File(src.path).renameTo(dstDir), "File.renameTo baseline")
+        assertFalse(NetUtil.move(uri(src), uri(dstDir)))
+        assertEquals("x", src.readText())
+        assertTrue(dstDir.isDirectory)
+    }
+
+    @Test
+    fun sizeAboveIntRangeIsMinusOne() {
+        assertEquals(-1, NetUtil.fileSizeToInt(Int.MAX_VALUE.toLong() + 1))
+        assertEquals(-1, NetUtil.fileSizeToInt(5L shl 30))
+        assertEquals(Int.MAX_VALUE, NetUtil.fileSizeToInt(Int.MAX_VALUE.toLong()))
+        assertEquals(0, NetUtil.fileSizeToInt(0))
     }
 
     companion object {

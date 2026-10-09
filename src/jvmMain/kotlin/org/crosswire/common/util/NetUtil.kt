@@ -606,7 +606,8 @@ private constructor() {
                 throw MalformedURLException(JSMsg.gettext("The URL {0} is not a directory", uri.toString()))
             }
 
-            return KFiles.list(dir).filter { filter!!.accept(it) }.toTypedArray()
+            // null for a directory that cannot be listed, like File.list()
+            return KFiles.listOrNull(dir)?.filter { filter!!.accept(it) }?.toTypedArray()
         }
 
         /**
@@ -722,13 +723,16 @@ private constructor() {
             return getSize(uri, proxyHost, null)
         }
 
+        /** The `Int` size of a file, or -1 when it does not fit (what `URLConnection.getContentLength` returned). */
+        internal fun fileSizeToInt(size: Long): Int = if (size > Int.MAX_VALUE) -1 else size.toInt()
+
         @JvmStatic
         fun getSize(uri: URI, proxyHost: String?, proxyPort: Int?): Int {
             if (uri.scheme.equals(PROTOCOL_FILE)) {
                 val path = uri.path.toPath()
                 // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
                 if (KFiles.isFile(path)) {
-                    return KFiles.size(path).toInt()
+                    return fileSizeToInt(KFiles.size(path))
                 }
             }
 

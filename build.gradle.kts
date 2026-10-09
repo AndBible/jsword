@@ -26,7 +26,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation("org.jetbrains.kotlinx:atomicfu:0.33.0")
-            implementation("com.squareup.okio:okio:3.9.0")
+            api("com.squareup.okio:okio:3.9.0")
         }
         jvmMain.dependencies {
             implementation("org.apache.commons:commons-compress:1.12")
