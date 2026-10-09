@@ -15,8 +15,8 @@ import java.util.ResourceBundle
 class MsgBaseParityTest {
     private lateinit var savedProvider: LocaleProvider
     private lateinit var savedDefault: Locale
-    @Before fun save() { savedProvider = LocaleProviderManager.getLocaleProvider(); savedDefault = Locale.getDefault() }
-    @After fun restore() { LocaleProviderManager.setLocaleProvider(savedProvider); Locale.setDefault(savedDefault) }
+    @Before fun save() { savedProvider = LocaleProviderManager.getLocaleProvider(); savedDefault = Locale.getDefault(); resetShapers() }
+    @After fun restore() { LocaleProviderManager.setLocaleProvider(savedProvider); Locale.setDefault(savedDefault); resetShapers() }
 
     /** The old MsgBase.lookup, written out with the JDK: bundle by provider locale, MessageFormat by default locale. */
     private fun oldLookup(base: String, key: String, params: Array<Any?>): String {
