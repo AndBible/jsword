@@ -118,3 +118,91 @@ members of each baseline class with the current code. Removed/changed = failure;
   parameters conservative), R8 (`:app` overrides decide parameter types), caller-frame counting
   (`object` + `@JvmStatic` for `CallContext`/`ResourceUtil`/`CWClassLoader`), `getOsis` must return a
   mutable list, differential parity probes for hand-rewritten loops.
+
+# Phase 2: commonization (K2)
+
+Rules for moving converted JSword code from `jvmMain` to `commonMain`. Each row: the rule, the replacement, the
+trap, and where the helper lives (all under `src/commonMain/kotlin`, package `org.crosswire.common.util` unless
+stated). Phase-1 rules (§1-§10) still apply.
+
+## 12. Resources
+- Rule: `KswordResources.bytes(path)` / `.text(path)` read embedded files. `KswordResources` is generated at build
+  time (see `build.gradle.kts`) from `src/embeddedResources/`. Bundles: `ResourceBundles.get(base, locale, charset)`
+  (`ResourceBundles.kt`, returns `KBundle?`).
+- Trap: keep the old charset. `ResourceBundle.getBundle` -> `PropertiesCharset.UTF8_THEN_LATIN1` (the default
+  argument); `Properties.load(InputStream)` -> `PropertiesCharset.LATIN1` (`PropertiesParser.kt`).
+- No `CallContext` / `CWClassLoader` in common code.
+
+## 13. Messages
+- Rule: `MsgBase(bundleName)` (still in `jvmMain`; moves with its callers). `java.text.MessageFormat` ->
+  `MessageFormatLite.format(pattern, locale, args)`. `NumberFormat`/`DecimalFormat` -> `NumberFormats.general`,
+  `.integer`, `.pattern(value, pattern, locale)` (`expect object`, actuals per platform).
+- Trap: where Java used the default formatting locale, pass `KswordLocale.default()`.
+
+## 14. Locale
+- Rule: `KLocale` replaces `java.util.Locale` in common code. `KswordLocale.current()` replaces
+  `LocaleProviderManager.getLocale()`; `KswordLocale.default()` replaces `Locale.getDefault()` (`KLocale.kt`).
+- Trap: legacy language codes (`iw`, `in`, `ji`) are normalized by `KLocale.normalizeLanguage` /
+  `legacyLanguage`; do not compare raw JDK codes.
+
+## 15. Logging
+- Rule: `org.crosswire.common.util.LoggerFactory.getLogger(X::class)` (defined in `Logger.kt`); slf4j `{}` placeholders.
+- Trap: no `org.slf4j` imports in common code. The JVM actual keeps the same logger names.
+
+## 16. Plugins
+- Rule: consumers look implementations up through `PluginRegistry.entries/entry/default(type)`. A class that
+  moves to common is registered with `builder.register(type, name, implClass) { ... }`.
+- Where: there is no `registerCommonPlugins` yet. The only hook today is `expect fun registerPlatformPlugins(builder)`
+  (`PluginRegistry.kt`, actuals in jvmMain/iosMain). Add `registerCommonPlugins` (called from the registry's
+  `lazy`) when the first common class needs registering.
+- Trap: registration order is the order of the old `.plugin` files; `default` is an ordinary name.
+
+## 17. Files
+- Rule: `okio.Path` + `KFiles` (`exists/isFile/readBytes/write/list/delete/move`, each taking an optional
+  `FileSystem`). `java.io.File` / `URI` stay at the JVM API boundary until their class moves.
+  `RandomAccessFile` -> `RandomAccessSource.open(path)` (`read(offset, size)`, `size()`).
+- Trap: `KFiles` keeps `java.io.File`'s boolean/-1 return conventions; do not turn them into exceptions.
+
+## 18. zlib
+- Rule: `org.crosswire.common.compress.Zlib.inflate(input, expectedSize)` / `.deflate(input)`. gzip, bzip2, xz and
+  tar are decided in K4.
+
+## 19. `synchronized` / `@Synchronized`
+- Rule: `kotlinx.atomicfu.locks.SynchronizedObject` + `synchronized(lock) { }` (import
+  `kotlinx.atomicfu.locks.synchronized`). A `@Synchronized` method becomes a `synchronized(lock)` body on a private
+  lock object.
+- Trap: it no longer locks on `this`; check that no caller synchronizes on the instance. `static synchronized`
+  (`synchronized(Outer::class.java)`) becomes a lock object in the companion.
+- Fields read without the lock and written under it: `kotlin.concurrent.Volatile`.
+
+## 20. `java.util.concurrent`
+- Rule: `CopyOnWriteArrayList` -> `CopyOnWriteList` (`CopyOnWriteList.kt`, K2 F5). It is a `MutableList`: iterators and
+  `subList` are snapshots, iterator `remove/set/add` and `subList` mutators throw `UnsupportedOperationException`
+  (as the JDK class; `subList` there is a view that throws on concurrent change, here a read-only copy);
+  `removeAll { }` is one atomic step. The six existing `CopyOnWriteArrayList` uses move with their classes.
+- Executors/futures stay JVM until `common.progress` moves (K4).
+
+## 21. Regex
+- Rule: `kotlin.text.Regex`. Every moved pattern gets a test that runs in `commonTest`.
+- Trap: the native engine differs: lookbehind, `\p{..}` classes; `Pattern.LITERAL` -> `Regex.escape`.
+
+## 22. Dates
+- Rule: kotlinx-datetime (`0.7.1`), added when first needed.
+
+## 23. Java serialization
+- Rule: stays JVM. `Serializable` is dropped when a class moves to common unless a JVM caller is found.
+- Result of `grep -rn "ObjectOutputStream\|ObjectInputStream" app/src/main --include=*.kt` (2026-10-09): the
+  assumption "`:app` serializes no JSword objects" is FALSE. `app/src/main/java/net/bible/android/database/Converters.kt`
+  (`keyToStr` / `strToKey`, lines ~165-182) writes a `org.crosswire.jsword.passage.Key` with `ObjectOutputStream`
+  (Base64 in Room) and reads it back with `ObjectInputStream`, returning null on any exception. Consequences:
+  every concrete `Key` implementation reachable from there (`Verse`, `VerseRange`, `RangedPassage`/`Passage` classes,
+  `DefaultLeafKeyList`, `DefaultKeyList`, ...) keeps `Serializable`, its `serialVersionUID` and its field layout
+  until the stored data is migrated; a class moving to common keeps `Serializable` via an `expect`/typealias
+  or stays in `jvmMain`. The API parity gate already pins serialization members (§10).
+
+## 24. Exceptions
+- Rule: common code throws `okio.IOException` subtypes where Java threw `IOException`. `MissingResourceException`
+  and other `java.util` exceptions stay at the JVM boundary.
+
+## 25. Generated resources
+- Rule: a new resource file goes to `src/embeddedResources/`; nothing new on the JVM classpath.
