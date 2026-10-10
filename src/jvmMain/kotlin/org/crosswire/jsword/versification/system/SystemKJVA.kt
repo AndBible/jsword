@@ -22,7 +22,6 @@ package org.crosswire.jsword.versification.system
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.Versification
 
-import java.util.Arrays
 
 /**
  *
@@ -38,9 +37,10 @@ open class SystemKJVA internal constructor() : Versification(V11N_NAME, BOOKS_OT
         const val V11N_NAME = "KJVA"
 
         private fun <T> concat(array1: Array<T>, array2: Array<T>): Array<T> {
-            val result = Arrays.copyOf(array1, array1.size + array2.size)
-            System.arraycopy(array2, 0, result, array1.size, array2.size)
-            return result
+            val result = array1.copyOf(array1.size + array2.size)
+            array2.copyInto(result, array1.size)
+            @Suppress("UNCHECKED_CAST")
+            return result as Array<T>
         }
 
         // All KJV old testament books followed by all deuterocanonical books.

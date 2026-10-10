@@ -288,3 +288,29 @@ org.crosswire.jsword.versification.system.SystemSynodalProt + K public () throws
 org.crosswire.jsword.versification.system.SystemSynodalProt - F private-or-package static final serialVersionUID: long = 2662552205377421107 # K3 D1
 org.crosswire.jsword.versification.system.SystemVulg + K public () throws [] # Java ctor was package-private (Versifications in the same package calls it); Kotlin has no package visibility, so internal, which compiles to public. The class is still only created by Versifications.
 org.crosswire.jsword.versification.system.SystemVulg - F private-or-package static final serialVersionUID: long = -2155122813160088809 # K3 D1
+
+# K3 Task 8: common stream and event boundaries (D3).
+org.crosswire.jsword.passage.AbstractPassage - M public readDescription(java.io.Reader): void throws [java.io.IOException,org.crosswire.jsword.passage.NoSuchVerseException] # K3 D3
+org.crosswire.jsword.passage.AbstractPassage - M public writeDescription(java.io.Writer): void throws [java.io.IOException] # K3 D3
+org.crosswire.jsword.passage.AbstractPassage + M public readDescription(java.lang.String): void throws [java.io.IOException,org.crosswire.jsword.passage.NoSuchVerseException] # K3 D3
+org.crosswire.jsword.passage.AbstractPassage + M public writeDescription(java.lang.Appendable): void throws [java.io.IOException] # K3 D3
+org.crosswire.jsword.passage.Passage - M public abstract readDescription(java.io.Reader): void throws [java.io.IOException,org.crosswire.jsword.passage.NoSuchVerseException] # K3 D3
+org.crosswire.jsword.passage.Passage - M public abstract writeDescription(java.io.Writer): void throws [java.io.IOException] # K3 D3
+org.crosswire.jsword.passage.Passage + M public abstract readDescription(java.lang.String): void throws [java.io.IOException,org.crosswire.jsword.passage.NoSuchVerseException] # K3 D3
+org.crosswire.jsword.passage.Passage + M public abstract writeDescription(java.lang.Appendable): void throws [java.io.IOException] # K3 D3
+org.crosswire.jsword.passage.PassageEvent - C class public extends java.util.EventObject implements [] # K3 D3
+org.crosswire.jsword.passage.PassageEvent - F private-or-package lower: org.crosswire.jsword.passage.Verse # K3 D3
+org.crosswire.jsword.passage.PassageEvent - F private-or-package type: org.crosswire.jsword.passage.PassageEvent$EventType # K3 D3
+org.crosswire.jsword.passage.PassageEvent - F private-or-package upper: org.crosswire.jsword.passage.Verse # K3 D3
+org.crosswire.jsword.passage.PassageEvent + C class public extends java.lang.Object implements [] # K3 D3
+org.crosswire.jsword.passage.PassageEvent + M public getSource(): java.lang.Object throws [] # K3 D3
+org.crosswire.jsword.passage.PassageKeyFactory - M public static readPassage(java.io.Reader): org.crosswire.jsword.passage.Passage throws [java.io.IOException,org.crosswire.jsword.passage.NoSuchKeyException] # K3 D3
+org.crosswire.jsword.passage.PassageKeyFactory + M public static readPassage(java.lang.String): org.crosswire.jsword.passage.Passage throws [java.io.IOException,org.crosswire.jsword.passage.NoSuchKeyException] # K3 D3
+org.crosswire.jsword.passage.PassageListener - C interface public extends null implements [java.util.EventListener] # K3 D3
+org.crosswire.jsword.passage.PassageListener + C interface public extends null implements [] # K3 D3
+org.crosswire.jsword.versification.Versification - M public static dump(java.io.PrintStream,java.lang.String,org.crosswire.jsword.versification.BibleBookList,int[][]): void throws [] # K3 D3
+org.crosswire.jsword.versification.Versification - M public static optimize(java.io.PrintStream,org.crosswire.jsword.versification.BibleBookList,int[][]): void throws [] # K3 D3
+org.crosswire.jsword.versification.Versification + M public static dump(java.lang.Appendable,java.lang.String,org.crosswire.jsword.versification.BibleBookList,int[][]): void throws [] # K3 D3
+org.crosswire.jsword.versification.Versification + M public static optimize(java.lang.Appendable,org.crosswire.jsword.versification.BibleBookList,int[][]): void throws [] # K3 D3
+org.crosswire.jsword.versification.VersificationToKJVMapper - M public dump(java.io.PrintStream): void throws [] # K3 D3
+org.crosswire.jsword.versification.VersificationToKJVMapper + M public dump(java.lang.Appendable): void throws [] # K3 D3

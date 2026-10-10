@@ -20,10 +20,10 @@
 package org.crosswire.jsword.passage
 
 import org.crosswire.common.icu.NumberShaper
+import org.crosswire.common.util.assertionsEnabled
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
 import java.util.Locale
-import java.util.NoSuchElementException
 
 /**
  * A VerseRange is one step between a Verse and a Passage - it is a Verse plus a
@@ -676,7 +676,7 @@ class VerseRange : VerseKey<VerseRange> {
      */
     private fun verifyData() {
         // Kotlin evaluates the condition eagerly (jswordAssert), Java `assert` only with -ea.
-        if (VerseRange::class.java.desiredAssertionStatus()) {
+        if (assertionsEnabled(VerseRange::class)) {
             jswordAssert(verseCount == calcVerseCount()) { "start=" + start + ", end=" + end + ", verseCount=" + verseCount }
         }
     }

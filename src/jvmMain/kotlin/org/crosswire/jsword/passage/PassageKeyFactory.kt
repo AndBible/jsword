@@ -19,8 +19,7 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.IOException
-import java.io.Reader
+import okio.IOException
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
@@ -544,11 +543,11 @@ private constructor() {
          */
         @JvmStatic
         @Throws(IOException::class, NoSuchKeyException::class)
-        fun readPassage(`in`: Reader?): Passage {
+        fun readPassage(text: String): Passage {
             // Get any versification. It does not matter. readDescripton will overwrite it.
             val rs = Versifications.instance().getVersification("KJV")
             val ref = keyf.createEmptyKeyList(rs) as Passage
-            ref.readDescription(`in`)
+            ref.readDescription(text)
             return ref
         }
 

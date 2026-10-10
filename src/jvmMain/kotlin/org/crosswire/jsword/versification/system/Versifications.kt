@@ -30,6 +30,9 @@
  */
 package org.crosswire.jsword.versification.system
 
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+
 import org.crosswire.jsword.versification.Versification
 
 /**
@@ -40,6 +43,7 @@ import org.crosswire.jsword.versification.Versification
  * @author DM Smith
  */
 class Versifications private constructor() {
+    private val lock = SynchronizedObject()
 
     /**
      * The set of v11n names.
@@ -77,9 +81,10 @@ class Versifications private constructor() {
      * @deprecated Use [getVersification(String)] instead.
      */
     @Deprecated("Use getVersification(String) instead.")
-    @Synchronized
     fun getDefaultVersification(): Versification? {
-        return getVersification(DEFAULT_V11N)
+        synchronized(lock) {
+            return getVersification(DEFAULT_V11N)
+        }
     }
 
     /**
@@ -88,21 +93,22 @@ class Versifications private constructor() {
      * @param name the name of the Versification
      * @return the Versification or null if it is not known.
      */
-    @Synchronized
     fun getVersification(name: String?): Versification? {
-        val actual: String = name ?: DEFAULT_V11N
+        synchronized(lock) {
+            val actual: String = name ?: DEFAULT_V11N
 
-        // This class delays the building of a Versification to when it is
-        // actually needed.
-        var rs = fluffed[actual]
-        if (rs == null) {
-            rs = fluff(actual)
-            if (rs != null) {
-                fluffed[actual] = rs
+            // This class delays the building of a Versification to when it is
+            // actually needed.
+            var rs = fluffed[actual]
+            if (rs == null) {
+                rs = fluff(actual)
+                if (rs != null) {
+                    fluffed[actual] = rs
+                }
             }
-        }
 
-        return rs
+            return rs
+        }
     }
 
     /**
@@ -111,9 +117,10 @@ class Versifications private constructor() {
      * @param name the name of the Versification
      * @return true when the Versification is available for use
      */
-    @Synchronized
     fun isDefined(name: String?): Boolean {
-        return name == null || known.contains(name)
+        synchronized(lock) {
+            return name == null || known.contains(name)
+        }
     }
 
     private fun fluff(name: String?): Versification? {
@@ -183,10 +190,11 @@ class Versifications private constructor() {
      *
      * @param rs the Versification to register
      */
-    @Synchronized
     fun register(rs: Versification) {
-        fluffed[rs.name] = rs
-        known.add(rs.name)
+        synchronized(lock) {
+            fluffed[rs.name] = rs
+            known.add(rs.name)
+        }
     }
 
     /**

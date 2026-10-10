@@ -19,13 +19,7 @@
  */
 package org.crosswire.jsword.versification
 
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
-import java.io.UnsupportedEncodingException
-import java.util.ArrayList
-import java.util.HashMap
 
-import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.KeyValuePair
 import org.crosswire.common.util.LucidRuntimeException
 import org.crosswire.jsword.JSMsg
@@ -598,19 +592,9 @@ open class VersificationToKJVMapper {
      */
     private fun trace() {
         if (LOGGER.isTraceEnabled) {
-            var ps: PrintStream? = null
-            try {
-                val os = ByteArrayOutputStream()
-                ps = PrintStream(os)
-                dump(ps)
-                val output = os.toString("UTF8")
-                LOGGER.trace(output)
-            } catch (e: UnsupportedEncodingException) {
-                // It is impossible!
-                LOGGER.error("Encoding UTF8 not supported.", e)
-            } finally {
-                IOUtil.close(ps)
-            }
+            val output = StringBuilder()
+            dump(output)
+            LOGGER.trace(output.toString())
         }
     }
 
@@ -619,36 +603,30 @@ open class VersificationToKJVMapper {
      * 
      * @param out
      */
-    open fun dump(out: PrintStream?) {
+    open fun dump(out: Appendable) {
         val nonKjvName = this.nonKjv!!.name
-        out!!.println("##############################")
-        out.print(String.format("Mapping between KJV and %s", nonKjvName))
-        out.println("##############################")
-        out.println("    ******************************")
-        out.println("    Forward mappings towards KJV")
-        out.println("    ******************************")
+        out.appendLine("##############################")
+        out.append("Mapping between KJV and $nonKjvName")
+        out.appendLine("##############################")
+        out.appendLine("    ******************************")
+        out.appendLine("    Forward mappings towards KJV")
+        out.appendLine("    ******************************")
         for (entry in this.toKJVMappings.entries) {
             val kjvVerses = entry.value
             val osisRef = entry.key.getOsisRef()
             for (q in kjvVerses) {
-                out.println(String.format("\t(%s) %s => (KJV) %s",
-                        nonKjvName,
-                        osisRef,
-                        q.toString()))
+                out.appendLine("\t($nonKjvName) $osisRef => (KJV) $q")
             }
         }
 
-        out.println("    ******************************")
-        out.println("    Absent verses in left versification:")
-        out.println(String.format("\t[%s]", this.absentVerses.getOsisRef()))
-        out.println("    ******************************")
-        out.println("    Backwards mappings from KJV")
-        out.println("    ******************************")
+        out.appendLine("    ******************************")
+        out.appendLine("    Absent verses in left versification:")
+        out.appendLine("\t[${this.absentVerses.getOsisRef()}]")
+        out.appendLine("    ******************************")
+        out.appendLine("    Backwards mappings from KJV")
+        out.appendLine("    ******************************")
         for (entry in this.fromKJVMappings.entries) {
-            out.println(String.format("\t(KJV): %s => (%s) %s",
-                    entry.key.toString(),
-                    nonKjvName,
-                    entry.value.getOsisRef()))
+            out.appendLine("\t(KJV): ${entry.key} => ($nonKjvName) ${entry.value.getOsisRef()}")
         }
     }
 

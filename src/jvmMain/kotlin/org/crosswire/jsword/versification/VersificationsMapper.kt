@@ -19,9 +19,11 @@
  */
 package org.crosswire.jsword.versification
 
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import kotlin.concurrent.Volatile
+
 import java.io.IOException
-import java.util.ArrayList
-import java.util.HashMap
 import java.util.MissingResourceException
 
 import org.crosswire.common.config.ConfigException
@@ -235,6 +237,8 @@ private constructor() {
     }
 
     companion object {
+        private val lock = SynchronizedObject()
+
         @Volatile
         private var instance: VersificationsMapper? = null
         private val KJV: Versification = Versifications.instance().getVersification(SystemKJVA.V11N_NAME)!!
@@ -247,7 +251,7 @@ private constructor() {
         @JvmStatic
         fun instance(): VersificationsMapper {
             if (instance == null) {
-                synchronized(VersificationsMapper::class.java) {
+                synchronized(lock) {
                     if (instance == null) {
                         instance = VersificationsMapper()
                     }

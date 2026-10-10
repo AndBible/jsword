@@ -19,8 +19,10 @@
  */
 package org.crosswire.jsword.passage
 
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+
 import org.crosswire.common.util.KBitSet
-import java.util.NoSuchElementException
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
@@ -45,6 +47,7 @@ import org.crosswire.jsword.versification.Versification
  * @author DM Smith
  */
 open class BitwisePassage : AbstractPassage {
+    private val lock = SynchronizedObject()
     /** Copies the fields and preserves the deep-copy steps of the original clone. */
     protected constructor(copyFrom: BitwisePassage) : super(copyFrom) {
         store = copyFrom.store.copy()
@@ -305,39 +308,40 @@ open class BitwisePassage : AbstractPassage {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    @Synchronized
     override fun blur(verses: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
-        jswordAssert(verses >= 0) { "" }
-        optimizeWrites()
-        raiseNormalizeProtection()
-
-        if (!restrict!!.equals(RestrictionType.NONE)) {
-            super.blur(verses, restrict, blurDown, blurUp)
-        } else {
+        synchronized(lock) {
+            jswordAssert(verses >= 0) { "" }
             optimizeWrites()
-            raiseEventSuppresion()
             raiseNormalizeProtection()
 
-            val maximumOrdinal = versification.maximumOrdinal()
-            val newStore = KBitSet(maximumOrdinal + 1)
+            if (!restrict!!.equals(RestrictionType.NONE)) {
+                super.blur(verses, restrict, blurDown, blurUp)
+            } else {
+                optimizeWrites()
+                raiseEventSuppresion()
+                raiseNormalizeProtection()
 
-            var i = store.nextSetBit(0)
-            while (i >= 0) {
-                // Ordinal values go from 0 to maximumOrdinal.
-                val start = Math.max(0, i - (if (blurDown) verses else 0))
-                val end = Math.min(maximumOrdinal, i + (if (blurUp) verses else 0))
+                val maximumOrdinal = versification.maximumOrdinal()
+                val newStore = KBitSet(maximumOrdinal + 1)
 
-                for (j in start..end) {
-                    newStore.set(j)
+                var i = store.nextSetBit(0)
+                while (i >= 0) {
+                    // Ordinal values go from 0 to maximumOrdinal.
+                    val start = Math.max(0, i - (if (blurDown) verses else 0))
+                    val end = Math.min(maximumOrdinal, i + (if (blurUp) verses else 0))
+
+                    for (j in start..end) {
+                        newStore.set(j)
+                    }
+                    i = store.nextSetBit(i + 1)
                 }
-                i = store.nextSetBit(i + 1)
-            }
 
-            store = newStore
+                store = newStore
 
-            lowerNormalizeProtection()
-            if (lowerEventSuppressionAndTest()) {
-                fireIntervalAdded(this, null, null)
+                lowerNormalizeProtection()
+                if (lowerEventSuppressionAndTest()) {
+                    fireIntervalAdded(this, null, null)
+                }
             }
         }
     }

@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.versification
 
-import java.util.NoSuchElementException
 
 /**
  * A BibleBookList is an ordered list of one or more BibleBooks.

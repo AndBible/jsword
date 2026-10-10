@@ -19,9 +19,6 @@
  */
 package org.crosswire.jsword.passage;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.util.Iterator;
 
 import org.crosswire.jsword.book.CaseType;
@@ -745,18 +742,11 @@ import org.junit.Test;
 
     @Test
     public void testWriteDescription() throws Exception {
-        File testDat = new File("test.dat");
-        FileWriter wout = new FileWriter(testDat);
-        genC1V135r.writeDescription(wout);
-        wout.close();
-        wout = null;
-        FileReader win = new FileReader(testDat);
+        StringBuilder out = new StringBuilder();
+        genC1V135r.writeDescription(out);
         Passage lst = (Passage) keyf.createEmptyKeyList(v11n);
-        lst.readDescription(win);
-        win.close();
-        win = null;
+        lst.readDescription(out.toString());
         Assert.assertEquals(genC1V135r, lst);
-        testDat.delete();
     }
 
     @Test

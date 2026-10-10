@@ -24,7 +24,6 @@ import org.crosswire.common.util.KeyValuePair
 import org.crosswire.common.util.KswordResources
 
 import java.io.IOException
-import java.util.ArrayList
 
 /**
  * This reads a file up front and creates the key value pairs. Because

@@ -14,39 +14,39 @@ org/crosswire/jsword/book/ReferenceSystem.kt #done
 org/crosswire/jsword/internationalisation/DefaultLocaleProvider.kt #done
 org/crosswire/jsword/internationalisation/LocaleProvider.kt #done
 org/crosswire/jsword/internationalisation/LocaleProviderManager.kt #done
-org/crosswire/jsword/passage/AbstractKeyList.kt
+org/crosswire/jsword/passage/AbstractKeyList.kt #done
 org/crosswire/jsword/passage/AbstractPassage.kt
 org/crosswire/jsword/passage/AccuracyType.kt
 org/crosswire/jsword/passage/BitwisePassage.kt
 org/crosswire/jsword/passage/DefaultKeyList.kt #done
 org/crosswire/jsword/passage/DefaultKeyVisitor.kt
-org/crosswire/jsword/passage/DefaultLeafKeyList.kt
+org/crosswire/jsword/passage/DefaultLeafKeyList.kt #done
 org/crosswire/jsword/passage/DistinctPassage.kt #done
 org/crosswire/jsword/passage/Key.kt #done
 org/crosswire/jsword/passage/KeyFactory.kt
-org/crosswire/jsword/passage/KeyIterator.kt
+org/crosswire/jsword/passage/KeyIterator.kt #done
 org/crosswire/jsword/passage/KeyUtil.kt
 org/crosswire/jsword/passage/KeyVisitor.kt
 org/crosswire/jsword/passage/NoSuchKeyException.kt
 org/crosswire/jsword/passage/NoSuchVerseException.kt
 org/crosswire/jsword/passage/OsisParser.kt
 org/crosswire/jsword/passage/Passage.kt
-org/crosswire/jsword/passage/PassageEvent.kt
+org/crosswire/jsword/passage/PassageEvent.kt #done
 org/crosswire/jsword/passage/PassageKeyFactory.kt
 org/crosswire/jsword/passage/PassageListType.kt
-org/crosswire/jsword/passage/PassageListener.kt
-org/crosswire/jsword/passage/PassageTally.kt
+org/crosswire/jsword/passage/PassageListener.kt #done
+org/crosswire/jsword/passage/PassageTally.kt #done
 org/crosswire/jsword/passage/PassageType.kt
 org/crosswire/jsword/passage/PassageUtil.kt
 org/crosswire/jsword/passage/PreferredKey.kt
 org/crosswire/jsword/passage/RangedPassage.kt #done
 org/crosswire/jsword/passage/ReadOnlyKeyList.kt #done
-org/crosswire/jsword/passage/ReadOnlyPassage.kt
+org/crosswire/jsword/passage/ReadOnlyPassage.kt #done
 org/crosswire/jsword/passage/RestrictionType.kt
 org/crosswire/jsword/passage/RocketPassage.kt #done
 org/crosswire/jsword/passage/SetKeyList.kt #done
-org/crosswire/jsword/passage/SynchronizedPassage.kt
-org/crosswire/jsword/passage/TreeKey.kt
+org/crosswire/jsword/passage/SynchronizedPassage.kt #done
+org/crosswire/jsword/passage/TreeKey.kt #done
 org/crosswire/jsword/passage/Verse.kt
 org/crosswire/jsword/passage/VerseFactory.kt
 org/crosswire/jsword/passage/VerseKey.kt

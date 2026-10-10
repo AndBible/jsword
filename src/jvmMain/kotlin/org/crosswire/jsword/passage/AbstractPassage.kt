@@ -19,13 +19,10 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.BufferedReader
-import java.io.BufferedWriter
-import java.io.IOException
-import java.io.Reader
-import java.io.Writer
-import java.util.ArrayList
-import java.util.NoSuchElementException
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+
+import okio.IOException
 
 import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
@@ -626,43 +623,41 @@ abstract class AbstractPassage : Passage {
     }
 
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.Passage#writeDescription(java.io.Writer)
+     * @see org.crosswire.jsword.passage.Passage#writeDescription(Appendable)
      */
     @Throws(IOException::class)
-    override fun writeDescription(out: Writer?) {
-        val bout = BufferedWriter(out)
-        bout.write(v11n!!.name)
-        bout.newLine()
+    override fun writeDescription(out: Appendable) {
+        val bout = out
+        bout.append(v11n!!.name)
+        bout.append("\n")
 
         val it = rangeIterator(RestrictionType.NONE)
 
         while (it.hasNext()) {
             val range: Key = it.next()
-            bout.write(range.getName())
-            bout.newLine()
+            bout.append(range.getName())
+            bout.append("\n")
         }
 
-        bout.flush()
     }
 
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.Passage#readDescription(java.io.Reader)
+     * @see org.crosswire.jsword.passage.Passage#readDescription(String)
      */
     @Throws(IOException::class, NoSuchVerseException::class)
-    override fun readDescription(`in`: Reader?) {
+    override fun readDescription(text: String) {
         raiseEventSuppresion()
         raiseNormalizeProtection()
 
         var count = 0 // number of lines read
-        // Quiet Android from complaining about using the default BufferReader buffer size.
-        // The actual buffer size is undocumented. So this is a good idea any way.
-        val bin = BufferedReader(`in`, 8192)
-
-        val v11nName = bin.readLine()
+        // BufferedReader did not produce a final empty line after a terminator.
+        val lines = (if (text.isEmpty()) emptySequence() else text.lineSequence()).iterator()
+        val v11nName = if (text.isEmpty()) null else lines.next()
         v11n = Versifications.instance().getVersification(v11nName)
 
-        while (true) {
-            val line = bin.readLine() ?: break
+        while (lines.hasNext()) {
+            val line = lines.next()
+            if (line.isEmpty() && !lines.hasNext() && (text.endsWith("\n") || text.endsWith("\r"))) break
 
             count++
             addVerses(line, null)
@@ -695,7 +690,7 @@ abstract class AbstractPassage : Passage {
      * @see org.crosswire.jsword.passage.Passage#addPassageListener(org.crosswire.jsword.passage.PassageListener)
      */
     override fun addPassageListener(li: PassageListener?) {
-        synchronized(listeners) {
+        synchronized(listenerLock) {
             listeners.add(li)
         }
     }
@@ -704,7 +699,7 @@ abstract class AbstractPassage : Passage {
      * @see org.crosswire.jsword.passage.Passage#removePassageListener(org.crosswire.jsword.passage.PassageListener)
      */
     override fun removePassageListener(li: PassageListener?) {
-        synchronized(listeners) {
+        synchronized(listenerLock) {
             listeners.remove(li)
         }
     }
@@ -798,14 +793,10 @@ abstract class AbstractPassage : Passage {
         }
 
         // Create Event
-        val ev = PassageEvent(source, PassageEvent.EventType.ADDED, start, end)
+        val ev = PassageEvent(requireNotNull(source) { "null source" }, PassageEvent.EventType.ADDED, start, end)
 
         // Copy listener vector so it won't change while firing
-        val temp: MutableList<PassageListener?>
-        synchronized(listeners) {
-            temp = ArrayList<PassageListener?>()
-            temp.addAll(listeners)
-        }
+        val temp = synchronized(listenerLock) { ArrayList(listeners) }
 
         // And run through the list shouting
         for (i in 0 until temp.size) {
@@ -833,14 +824,10 @@ abstract class AbstractPassage : Passage {
         }
 
         // Create Event
-        val ev = PassageEvent(source, PassageEvent.EventType.REMOVED, start, end)
+        val ev = PassageEvent(requireNotNull(source) { "null source" }, PassageEvent.EventType.REMOVED, start, end)
 
         // Copy listener vector so it won't change while firing
-        val temp: MutableList<PassageListener?>
-        synchronized(listeners) {
-            temp = ArrayList<PassageListener?>()
-            temp.addAll(listeners)
-        }
+        val temp = synchronized(listenerLock) { ArrayList(listeners) }
 
         // And run through the list shouting
         for (i in 0 until temp.size) {
@@ -868,14 +855,10 @@ abstract class AbstractPassage : Passage {
         }
 
         // Create Event
-        val ev = PassageEvent(source, PassageEvent.EventType.CHANGED, start, end)
+        val ev = PassageEvent(requireNotNull(source) { "null source" }, PassageEvent.EventType.CHANGED, start, end)
 
         // Copy listener vector so it won't change while firing
-        val temp: MutableList<PassageListener?>
-        synchronized(listeners) {
-            temp = ArrayList<PassageListener?>()
-            temp.addAll(listeners)
-        }
+        val temp = synchronized(listenerLock) { ArrayList(listeners) }
 
         // And run through the list shouting
         for (i in 0 until temp.size) {
@@ -1136,6 +1119,8 @@ abstract class AbstractPassage : Passage {
     /**
      * Support for change notification
      */
+    private val listenerLock = SynchronizedObject()
+
     @JvmField
     protected var listeners: MutableList<PassageListener?>
 

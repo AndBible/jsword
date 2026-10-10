@@ -19,9 +19,10 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.IOException
-import java.io.Reader
-import java.io.Writer
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+
+import okio.IOException
 
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.versification.Versification
@@ -34,6 +35,7 @@ import org.crosswire.jsword.versification.Versification
  * @author Joe Walker
  */
 internal class ReadOnlyPassage : Passage {
+    private val lock = SynchronizedObject()
     /** Copies the fields and preserves the deep-copy steps of the original clone. */
     protected constructor(copyFrom: ReadOnlyPassage) {
         ref = copyFrom.ref
@@ -333,19 +335,20 @@ internal class ReadOnlyPassage : Passage {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
-    @Synchronized
     override fun blur(by: Int, restrict: RestrictionType?, blurDown: Boolean, blurUp: Boolean) {
-        if (ignore) {
-            return
-        }
+        synchronized(lock) {
+            if (ignore) {
+                return
+            }
 
-        throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only passage"))
+            throw IllegalStateException(JSOtherMsg.lookupText("Cannot alter a read-only passage"))
+        }
     }
 
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.Passage#readDescription(java.io.Reader)
+     * @see org.crosswire.jsword.passage.Passage#readDescription(String)
      */
-    override fun readDescription(`in`: Reader?) {
+    override fun readDescription(text: String) {
         if (ignore) {
             return
         }
@@ -354,10 +357,10 @@ internal class ReadOnlyPassage : Passage {
     }
 
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.passage.Passage#writeDescription(java.io.Writer)
+     * @see org.crosswire.jsword.passage.Passage#writeDescription(Appendable)
      */
     @Throws(IOException::class)
-    override fun writeDescription(out: Writer?) {
+    override fun writeDescription(out: Appendable) {
         ref.writeDescription(out)
     }
 

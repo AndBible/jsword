@@ -21,8 +21,6 @@ package org.crosswire.jsword.versification
 
 import org.crosswire.common.util.toJavaLocale
 
-import java.util.HashMap
-import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.MissingResourceException
 import org.crosswire.common.util.KBundle

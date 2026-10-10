@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.versification
 
-import java.util.HashMap
 import java.util.Locale
 
 /**

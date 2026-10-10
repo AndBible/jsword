@@ -38,7 +38,6 @@
  */
 package org.crosswire.jsword.versification
 
-import java.io.PrintStream
 import java.util.Locale
 
 import org.crosswire.common.util.jswordAssert
@@ -140,12 +139,12 @@ open class Versification
         books[0] = BibleBook.INTRO_BIBLE
         if (booksOT.size > 0) {
             books[1] = BibleBook.INTRO_OT
-            System.arraycopy(booksOT, 0, books, 2, booksOT.size)
+            booksOT.copyInto(books, 2)
         }
 
         if (booksNT.size > 0) {
             books[ntStart] = BibleBook.INTRO_NT
-            System.arraycopy(booksNT, 0, books, ntStart + 1, booksNT.size)
+            booksNT.copyInto(books, ntStart + 1)
         }
 
         this.bookList = BibleBookList(books)
@@ -178,7 +177,7 @@ open class Versification
                 // The last verse of chapter 0 is 0
                 dest[0] = 0
                 // copy the last verse array for the chapter
-                System.arraycopy(src, 0, dest, 1, src.size)
+                src.copyInto(dest, 1)
             }
         }
 
@@ -198,7 +197,7 @@ open class Versification
                 // The last verse of chapter 0 is 0
                 dest[0] = 0
                 // copy the last verse array for the chapter
-                System.arraycopy(src, 0, dest, 1, src.size)
+                src.copyInto(dest, 1)
             }
         }
 
@@ -239,8 +238,8 @@ open class Versification
         if (booksNT.size == 0) {
             this.otMaxOrdinal = this.ntMaxOrdinal
         }
-        //        Versification.dump(System.out, this.osisName, this.bookList, this.lastVerse);
-        //        Versification.dump(System.out, this.osisName, this.bookList, this.chapterStarts);
+        //        Versification.dump(out, this.osisName, this.bookList, this.lastVerse);
+        //        Versification.dump(out, this.osisName, this.bookList, this.chapterStarts);
     }
 
     /**
@@ -1256,56 +1255,56 @@ open class Versification
 
     companion object {
         @JvmStatic
-        fun dump(out: PrintStream?, name: String?, bookList: BibleBookList?, array: Array<IntArray>?) {
+        fun dump(out: Appendable, name: String?, bookList: BibleBookList?, array: Array<IntArray>?) {
             var vstr1: String
             var vstr2: String
             var count: Int
-            out!!.println("    private final int[][] " + name + " =")
-            out.println("    {")
+            out.appendLine("    private final int[][] " + name + " =")
+            out.appendLine("    {")
             // Output an array just like lastVerse, indexed by book and chapter,
             // that accumulates verse counts for offsets,
             // having a sentinel at the end.
             val bookCount = array!!.size
             for (bookIndex in 0 until bookCount) {
                 count = 0
-                out.print("        // ")
+                out.append("        // ")
                 if (bookIndex < bookList!!.bookCount) {
                     val book = bookList.getBook(bookIndex)
-                    out.println(book.osis)
+                    out.appendLine(book.osis)
                 } else {
-                    out.println("Sentinel")
+                    out.appendLine("Sentinel")
                 }
-                out.print("        { ")
+                out.append("        { ")
 
                 val numChapters = array[bookIndex].size
                 for (chapterIndex in 0 until numChapters) {
 
                     // Pretty print with 10 items per line
                     if (count++ % 10 == 0) {
-                        out.println()
-                        out.print("            ")
+                        out.append("\n")
+                        out.append("            ")
                     }
 
                     // Output the offset for the chapter introduction
                     // This is referenced with a verse number of 0
                     vstr1 = "     " + array[bookIndex][chapterIndex]
                     vstr2 = vstr1.substring(vstr1.length - 5)
-                    out.print("$vstr2, ")
+                    out.append("$vstr2, ")
                 }
-                out.println()
-                out.println("        },")
+                out.append("\n")
+                out.appendLine("        },")
             }
-            out.println("    };")
+            out.appendLine("    };")
         }
 
         @JvmStatic
-        fun optimize(out: PrintStream?, bookList: BibleBookList?, lastVerse: Array<IntArray>?) {
+        fun optimize(out: Appendable, bookList: BibleBookList?, lastVerse: Array<IntArray>?) {
             var vstr1: String
             var vstr2: String
             var count: Int
             var ordinal = 0
-            out!!.println("    private final int[][] chapterStarts =")
-            out.println("    {")
+            out.appendLine("    private final int[][] chapterStarts =")
+            out.appendLine("    {")
             // Output an array just like lastVerse, indexed by book and chapter,
             // that accumulates verse counts for offsets,
             // having a sentinel at the end.
@@ -1314,9 +1313,9 @@ open class Versification
             var book: BibleBook? = bookList!!.getBook(0)
             while (book != null) {
                 count = 0
-                out.print("        // ")
-                out.println(book.osis)
-                out.print("        { ")
+                out.append("        // ")
+                out.appendLine(book.osis)
+                out.append("        { ")
 
                 // Remember where the NT Starts
                 if (book == BibleBook.INTRO_NT) {
@@ -1328,21 +1327,21 @@ open class Versification
 
                     // Pretty print with 10 items per line
                     if (count++ % 10 == 0) {
-                        out.println()
-                        out.print("            ")
+                        out.append("\n")
+                        out.append("            ")
                     }
 
                     // Output the offset for the chapter introduction
                     // This is referenced with a verse number of 0
                     vstr1 = "     $ordinal"
                     vstr2 = vstr1.substring(vstr1.length - 5)
-                    out.print("$vstr2, ")
+                    out.append("$vstr2, ")
                     // Set ordinal to the start of the next chapter or book introduction
                     val versesInChapter = lastVerse[bookIndex][chapterIndex] + 1
                     ordinal += versesInChapter
                 }
-                out.println()
-                out.println("        },")
+                out.append("\n")
+                out.appendLine("        },")
                 bookIndex++
                 book = bookList.getNextBook(book)
             }
@@ -1351,16 +1350,16 @@ open class Versification
             // It is a book of one chapter starting with what would be the ordinal of the next chapter's introduction.
             vstr1 = "     $ordinal"
             vstr2 = vstr1.substring(vstr1.length - 5)
-            out.println("        // Sentinel")
-            out.println("        { ")
-            out.println("            $vstr2, ")
-            out.println("        },")
-            out.println("    };")
-            out.println()
-            out.println("    /** The last ordinal number of the Old Testament */")
-            out.println("    private int otMaxOrdinal = " + (ntStartOrdinal - 1) + ";")
-            out.println("    /** The last ordinal number of the New Testament and the maximum ordinal number of this Reference System */")
-            out.println("    private int ntMaxOrdinal = " + (ordinal - 1) + ";")
+            out.appendLine("        // Sentinel")
+            out.appendLine("        { ")
+            out.appendLine("            $vstr2, ")
+            out.appendLine("        },")
+            out.appendLine("    };")
+            out.append("\n")
+            out.appendLine("    /** The last ordinal number of the Old Testament */")
+            out.appendLine("    private int otMaxOrdinal = " + (ntStartOrdinal - 1) + ";")
+            out.appendLine("    /** The last ordinal number of the New Testament and the maximum ordinal number of this Reference System */")
+            out.appendLine("    private int ntMaxOrdinal = " + (ordinal - 1) + ";")
         }
     }
 }

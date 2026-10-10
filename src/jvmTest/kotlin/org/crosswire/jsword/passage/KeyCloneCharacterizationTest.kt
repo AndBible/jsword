@@ -304,9 +304,9 @@ class KeyCloneCharacterizationTest {
         val p = BitwisePassage(kjv)
         val sources = mutableListOf<Any>()
         val listener = object : PassageListener {
-            override fun versesAdded(ev: PassageEvent) { sources.add(ev.source) }
-            override fun versesRemoved(ev: PassageEvent) { sources.add(ev.source) }
-            override fun versesChanged(ev: PassageEvent) { sources.add(ev.source) }
+            override fun versesAdded(ev: PassageEvent) { sources.add(ev.getSource()) }
+            override fun versesRemoved(ev: PassageEvent) { sources.add(ev.getSource()) }
+            override fun versesChanged(ev: PassageEvent) { sources.add(ev.getSource()) }
         }
         p.addPassageListener(listener)
         val c = p.clone()

@@ -118,9 +118,7 @@ package org.crosswire.jsword.passage
 
 import org.crosswire.jsword.versification.Versification
 
-import java.io.IOException
-import java.io.Reader
-import java.io.Writer
+import okio.IOException
 
 /**
  * A Passage is a specialized Collection of Verses. The additions are:
@@ -344,7 +342,7 @@ interface Passage : VerseKey<Passage> {
      *                If the file was invalid
      */
     @Throws(IOException::class, NoSuchVerseException::class)
-    fun readDescription(`in`: Reader?)
+    fun readDescription(text: String)
 
     /**
      * To be compatible with humans we read/write ourselves to a file that a
@@ -357,7 +355,7 @@ interface Passage : VerseKey<Passage> {
      *                If the file/network etc breaks
      */
     @Throws(IOException::class)
-    fun writeDescription(out: Writer?)
+    fun writeDescription(out: Appendable)
 
     /**
      * For performance reasons we may well want to hint to the Passage that we

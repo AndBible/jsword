@@ -156,7 +156,7 @@ open class TreeKey : AbstractKeyList {
 
         // Check that that is the same as this
         // Don't use instanceOf since that breaks inheritance
-        if (other.javaClass != this.javaClass) {
+        if (other::class != this::class) {
             return false
         }
 

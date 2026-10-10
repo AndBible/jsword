@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.EventObject
 
 /**
  * Defines an event that encapsulates changes to a Passage. For many operations
@@ -42,7 +41,9 @@ open class PassageEvent
  * @param upper
  *            an int specifying the top of a range
  */
-(source: Any?, versesChanged: EventType?, lower: Verse?, upper: Verse?) : EventObject(source) {
+(private val source: Any, versesChanged: EventType?, lower: Verse?, upper: Verse?) {
+
+    open fun getSource(): Any = source
 
     /**
      * Indicates what kind of change happened to a Passage.

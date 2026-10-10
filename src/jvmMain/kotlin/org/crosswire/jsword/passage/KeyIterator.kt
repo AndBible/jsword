@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.NoSuchElementException
 
 /**
  * This KeyIterator performs a depth first iteration over the subkeys in the

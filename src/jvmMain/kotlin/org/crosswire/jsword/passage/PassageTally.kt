@@ -931,7 +931,7 @@ open class PassageTally : AbstractPassage {
             if (other == null) {
                 return false
             }
-            if (javaClass != other.javaClass) {
+            if (this::class != other::class) {
                 return false
             }
             val that = other as TalliedVerse
@@ -1069,7 +1069,7 @@ open class PassageTally : AbstractPassage {
             if (other == null) {
                 return false
             }
-            if (javaClass != other.javaClass) {
+            if (this::class != other::class) {
                 return false
             }
             val that = other as TalliedVerseRange

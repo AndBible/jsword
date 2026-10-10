@@ -210,7 +210,7 @@ class BookName
             return false
         }
 
-        if (javaClass != other.javaClass) {
+        if (this::class != other::class) {
             return false
         }
 

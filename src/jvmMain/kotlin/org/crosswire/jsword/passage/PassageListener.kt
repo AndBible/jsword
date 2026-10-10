@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.EventListener
 
 /**
  * A PassageListener gets told when the verses in a Passage have changed (added
@@ -28,7 +27,7 @@ import java.util.EventListener
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface PassageListener : EventListener {
+interface PassageListener {
     /**
      * Sent after stuff has been added to the Passage, more info about what and
      * where can be had from the Event
