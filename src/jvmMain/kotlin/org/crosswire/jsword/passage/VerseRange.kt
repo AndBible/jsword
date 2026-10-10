@@ -37,7 +37,18 @@ import java.util.NoSuchElementException
  * @author Joe Walker
  * @author DM Smith
  */
-class VerseRange : VerseKey<VerseRange>, Cloneable {
+class VerseRange : VerseKey<VerseRange> {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: VerseRange) {
+        v11n = copyFrom.v11n
+        start = copyFrom.start
+        end = copyFrom.end
+        verseCount = copyFrom.verseCount
+        parent = copyFrom.parent
+        originalName = copyFrom.originalName
+        shaper = NumberShaper()
+    }
+
     /**
      * The default VerseRange is a single verse - Genesis 1:1. I didn't want to
      * provide this constructor however, you are supposed to provide a default
@@ -362,21 +373,7 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
         private set
 
     override fun clone(): VerseRange {
-        // This gets us a shallow copy
-        var copy: VerseRange? = null
-        try {
-            copy = super<Cloneable>.clone() as VerseRange
-            copy.start = start
-            copy.end = end
-            copy.verseCount = verseCount
-            copy.originalName = originalName
-            copy.shaper = NumberShaper()
-            copy.v11n = v11n
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-
-        return copy!!
+        return VerseRange(this)
     }
 
     override fun equals(other: Any?): Boolean {

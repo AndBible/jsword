@@ -45,7 +45,17 @@ import org.crosswire.common.util.LoggerFactory
  * @author Joe Walker
  * @author DM Smith
  */
-abstract class AbstractPassage : Passage, Cloneable {
+abstract class AbstractPassage : Passage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: AbstractPassage) {
+        v11n = copyFrom.v11n
+        parent = copyFrom.parent
+        listeners = ArrayList(copyFrom.listeners)
+        originalName = copyFrom.originalName
+        suppressEvents = copyFrom.suppressEvents
+        skipNormalization = copyFrom.skipNormalization
+    }
+
     /**
      * Setup that leaves original name being null
      *
@@ -120,22 +130,7 @@ abstract class AbstractPassage : Passage, Cloneable {
         return versification.distance(thatfirst, thisfirst)
     }
 
-    override fun clone(): AbstractPassage {
-        // This gets us a shallow copy
-        var copy: AbstractPassage? = null
-
-        try {
-            copy = super<Cloneable>.clone() as AbstractPassage
-            copy.listeners = ArrayList<PassageListener?>()
-            copy.listeners.addAll(listeners)
-
-            copy.originalName = originalName
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-
-        return copy!!
-    }
+    abstract override fun clone(): AbstractPassage
 
     override fun equals(other: Any?): Boolean {
         // This is cheating because I am supposed to say:

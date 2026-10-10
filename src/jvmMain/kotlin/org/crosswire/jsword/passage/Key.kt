@@ -29,7 +29,7 @@ package org.crosswire.jsword.passage
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable {
+interface Key : Comparable<Key?>, MutableIterable<Key> {
     /**
      * A Human readable version of the Key. For Biblical passages this uses
      * short books names, and the shortest sensible rendering, for example
@@ -213,7 +213,7 @@ interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable {
      *
      * @return A complete copy of ourselves
      */
-    public override fun clone(): Key
+    fun clone(): Key
 
     // equals(Object) and hashCode() were redeclared here in the Java interface so that they
     // were visible as methods on a derived Key; Kotlin interfaces cannot redeclare them

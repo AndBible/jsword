@@ -45,6 +45,11 @@ import org.crosswire.jsword.versification.Versification
  * @author DM Smith
  */
 open class BitwisePassage : AbstractPassage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: BitwisePassage) : super(copyFrom) {
+        store = copyFrom.store.clone() as BitSet
+    }
+
     /**
      * Create an empty BitwisePassage. There are no ctors from either Verse or
      * VerseRange so you need to do new <code>DistinctPassage().add(...);</code>
@@ -106,12 +111,8 @@ open class BitwisePassage : AbstractPassage {
     internal constructor(v11n: Versification?, refs: String?) : this(v11n, refs, null)
 
     override fun clone(): BitwisePassage {
-        // This gets us a shallow copy
-        val copy = super.clone() as BitwisePassage
-
-        copy.store = store.clone() as BitSet
-
-        return copy
+        check(this::class == BitwisePassage::class) { "${this::class} must override clone()" }
+        return BitwisePassage(this)
     }
 
     override fun countVerses(): Int {

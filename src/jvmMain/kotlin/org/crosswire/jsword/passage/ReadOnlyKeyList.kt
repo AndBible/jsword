@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
 
 /**
@@ -28,14 +27,18 @@ import org.crosswire.jsword.JSOtherMsg
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class ReadOnlyKeyList
-/**
- * Simple ctor
- *
- * @param keys the keys
- * @param ignore
- */
-(keys: Key?, ignore: Boolean) : Key, Cloneable {
+open class ReadOnlyKeyList : Key {
+    constructor(keys: Key?, ignore: Boolean) {
+        this.keys = keys
+        this.ignore = ignore
+    }
+
+    /** Clones the delegate as before; its own clone determines collection sharing. */
+    protected constructor(copyFrom: ReadOnlyKeyList) {
+        ignore = copyFrom.ignore
+        keys = copyFrom.keys!!.clone()
+    }
+
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getCardinality()
      */
@@ -212,24 +215,18 @@ open class ReadOnlyKeyList
     }
 
     override fun clone(): ReadOnlyKeyList {
-        var clone: ReadOnlyKeyList? = null
-        try {
-            clone = super<Cloneable>.clone() as ReadOnlyKeyList
-            clone.keys = keys!!.clone()
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
+        check(this::class == ReadOnlyKeyList::class) { "${this::class} must override clone()" }
+        return ReadOnlyKeyList(this)
     }
 
     /**
      * Do we ignore write requests or throw?
      */
-    private var ignore: Boolean = ignore
+    private var ignore: Boolean
 
     /**
      * The Key to which we proxy
      */
-    private var keys: Key? = keys
+    private var keys: Key?
 
 }

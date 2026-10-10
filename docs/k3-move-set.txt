@@ -18,11 +18,11 @@ org/crosswire/jsword/passage/AbstractKeyList.kt
 org/crosswire/jsword/passage/AbstractPassage.kt
 org/crosswire/jsword/passage/AccuracyType.kt
 org/crosswire/jsword/passage/BitwisePassage.kt
-org/crosswire/jsword/passage/DefaultKeyList.kt
+org/crosswire/jsword/passage/DefaultKeyList.kt #done
 org/crosswire/jsword/passage/DefaultKeyVisitor.kt
 org/crosswire/jsword/passage/DefaultLeafKeyList.kt
 org/crosswire/jsword/passage/DistinctPassage.kt
-org/crosswire/jsword/passage/Key.kt
+org/crosswire/jsword/passage/Key.kt #done
 org/crosswire/jsword/passage/KeyFactory.kt
 org/crosswire/jsword/passage/KeyIterator.kt
 org/crosswire/jsword/passage/KeyUtil.kt
@@ -40,11 +40,11 @@ org/crosswire/jsword/passage/PassageType.kt
 org/crosswire/jsword/passage/PassageUtil.kt
 org/crosswire/jsword/passage/PreferredKey.kt
 org/crosswire/jsword/passage/RangedPassage.kt
-org/crosswire/jsword/passage/ReadOnlyKeyList.kt
+org/crosswire/jsword/passage/ReadOnlyKeyList.kt #done
 org/crosswire/jsword/passage/ReadOnlyPassage.kt
 org/crosswire/jsword/passage/RestrictionType.kt
-org/crosswire/jsword/passage/RocketPassage.kt
-org/crosswire/jsword/passage/SetKeyList.kt
+org/crosswire/jsword/passage/RocketPassage.kt #done
+org/crosswire/jsword/passage/SetKeyList.kt #done
 org/crosswire/jsword/passage/SynchronizedPassage.kt
 org/crosswire/jsword/passage/TreeKey.kt
 org/crosswire/jsword/passage/Verse.kt

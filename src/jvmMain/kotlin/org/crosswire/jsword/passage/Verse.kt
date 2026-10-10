@@ -21,7 +21,6 @@ package org.crosswire.jsword.passage
 
 import org.crosswire.common.icu.NumberShaper
 import org.crosswire.common.util.ItemIterator
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.versification.BibleBook
@@ -47,7 +46,17 @@ import java.util.Locale
  * @author Joe Walker
  * @author DM Smith
  */
-class Verse : VerseKey<Verse>, Cloneable {
+class Verse : VerseKey<Verse> {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: Verse) {
+        v11n = copyFrom.v11n
+        book = copyFrom.book
+        chapter = copyFrom.chapter
+        verse = copyFrom.verse
+        ordinal = copyFrom.ordinal
+        subIdentifier = copyFrom.subIdentifier
+    }
+
     /**
      * Create a Verse from book, chapter and verse numbers, throwing up if the
      * specified Verse does not exist.
@@ -261,20 +270,7 @@ class Verse : VerseKey<Verse>, Cloneable {
     }
 
     override fun clone(): Verse {
-        var copy: Verse? = null
-        try {
-            copy = super<Cloneable>.clone() as Verse
-            copy.v11n = this.v11n
-            copy.book = this.book
-            copy.chapter = this.chapter
-            copy.verse = this.verse
-            copy.ordinal = this.ordinal
-            copy.subIdentifier = this.subIdentifier
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-
-        return copy!!
+        return Verse(this)
     }
 
     override fun equals(other: Any?): Boolean {

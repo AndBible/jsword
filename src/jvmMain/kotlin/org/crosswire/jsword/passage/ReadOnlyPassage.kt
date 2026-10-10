@@ -23,7 +23,6 @@ import java.io.IOException
 import java.io.Reader
 import java.io.Writer
 
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.versification.Versification
 
@@ -34,7 +33,13 @@ import org.crosswire.jsword.versification.Versification
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-internal class ReadOnlyPassage : Passage, Cloneable {
+internal class ReadOnlyPassage : Passage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: ReadOnlyPassage) {
+        ref = copyFrom.ref
+        ignore = copyFrom.ignore
+    }
+
     /**
      * Construct a ReadOnlyPassage from a real Passage to which we proxy.
      *
@@ -388,16 +393,7 @@ internal class ReadOnlyPassage : Passage, Cloneable {
     }
 
     override fun clone(): ReadOnlyPassage {
-        var clone: ReadOnlyPassage? = null
-        try {
-            clone = super<Cloneable>.clone() as ReadOnlyPassage
-            clone.ref = this.ref
-            clone.ignore = this.ignore
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-
-        return clone!!
+        return ReadOnlyPassage(this)
     }
 
     /* (non-Javadoc)

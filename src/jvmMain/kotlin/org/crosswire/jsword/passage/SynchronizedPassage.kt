@@ -23,7 +23,6 @@ import java.io.IOException
 import java.io.Reader
 import java.io.Writer
 
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
 
 /**
@@ -34,7 +33,14 @@ import org.crosswire.jsword.versification.Versification
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-internal class SynchronizedPassage : Passage, Cloneable {
+internal class SynchronizedPassage : Passage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: SynchronizedPassage) {
+        synchronized(this) {
+            ref = copyFrom.ref.clone() as Passage
+        }
+    }
+
     /**
      * Construct a SynchronizedPassage from a real Passage to which we proxy.
      *
@@ -378,17 +384,7 @@ internal class SynchronizedPassage : Passage, Cloneable {
 
     @Synchronized
     override fun clone(): SynchronizedPassage {
-        var clone: SynchronizedPassage? = null
-        try {
-            val copy = super<Cloneable>.clone() as SynchronizedPassage
-            clone = copy
-            synchronized(copy) {
-                copy.ref = ref.clone() as Passage
-            }
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
+        return SynchronizedPassage(this)
     }
 
     @Synchronized

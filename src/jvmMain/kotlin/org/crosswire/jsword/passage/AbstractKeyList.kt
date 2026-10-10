@@ -19,15 +19,18 @@
  */
 package org.crosswire.jsword.passage
 
-import org.crosswire.common.util.jswordAssert
-
 /**
  * An implementation of some of the easier methods from Key.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-abstract class AbstractKeyList : Key, Cloneable {
+abstract class AbstractKeyList : Key {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: AbstractKeyList) {
+        name = copyFrom.name
+    }
+
     /**
      * Build an AbstractKeyList with the given name.
      *
@@ -189,15 +192,7 @@ abstract class AbstractKeyList : Key, Cloneable {
         return thisfirst.getName().compareTo(thatfirst.getName())
     }
 
-    override fun clone(): AbstractKeyList {
-        var clone: AbstractKeyList? = null
-        try {
-            clone = super<Cloneable>.clone() as AbstractKeyList
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    abstract override fun clone(): AbstractKeyList
 
     /**
      * The `NameVisitor` constructs a readable representation of the

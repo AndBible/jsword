@@ -32,6 +32,17 @@ import org.crosswire.common.util.LoggerFactory
  * @author Joe Walker
  */
 open class DefaultKeyList : AbstractKeyList {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: DefaultKeyList) : super(copyFrom) {
+        parent = copyFrom.parent
+        keys = copyFrom.keys
+    }
+
+    override fun clone(): DefaultKeyList {
+        check(this::class == DefaultKeyList::class) { "${this::class} must override clone()" }
+        return DefaultKeyList(this)
+    }
+
     /**
      * Simple ctor
      */

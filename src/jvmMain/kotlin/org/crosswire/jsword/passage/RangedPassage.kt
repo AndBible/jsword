@@ -51,6 +51,12 @@ import org.crosswire.jsword.versification.Versification
  * @author Joe Walker
  */
 open class RangedPassage : AbstractPassage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: RangedPassage) : super(copyFrom) {
+        store = TreeSet<VerseRange>()
+        store.addAll(copyFrom.store)
+    }
+
     /**
      * Create an empty RangedPassage. There are no ctors from either Verse or
      * VerseRange so you need to do new <code>RangedPassage().add(...);</code>
@@ -94,17 +100,8 @@ open class RangedPassage : AbstractPassage {
     internal constructor(v11n: Versification?, refs: String?) : this(v11n, refs, null)
 
     override fun clone(): RangedPassage {
-        // This gets us a shallow copy
-        val copy = super.clone() as RangedPassage
-
-        // I want to just do the following
-        // copy.store = (SortedSet) store.clone();
-        // However SortedSet is not Cloneable so I can't
-        // Watch out for this, I'm not sure if it breaks anything.
-        copy.store = TreeSet<VerseRange>()
-        copy.store.addAll(store)
-
-        return copy
+        check(this::class == RangedPassage::class) { "${this::class} must override clone()" }
+        return RangedPassage(this)
     }
 
     override fun countRanges(restrict: RestrictionType?): Int {

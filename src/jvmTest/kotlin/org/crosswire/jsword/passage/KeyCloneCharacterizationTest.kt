@@ -36,6 +36,41 @@ class KeyCloneCharacterizationTest {
         assertTrue(c.contains(gen1.start), "clone changed by original")
     }
 
+    private fun checkMissingCloneOverride(key: Key) {
+        val failure = assertFailsWith<IllegalStateException> { key.clone() }
+        assertTrue(failure.message.orEmpty().contains("must override clone()"))
+    }
+
+    @Test fun bitwiseSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : BitwisePassage(kjv) {})
+
+    @Test fun rocketSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : RocketPassage(kjv) {})
+
+    @Test fun distinctSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : DistinctPassage(kjv) {})
+
+    @Test fun rangedSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : RangedPassage(kjv) {})
+
+    @Test fun tallySubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : PassageTally(kjv) {})
+
+    @Test fun defaultListSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : DefaultKeyList() {})
+
+    @Test fun treeSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : TreeKey("tree") {})
+
+    @Test fun setListSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : SetKeyList(emptySet()) {})
+
+    @Test fun leafSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : DefaultLeafKeyList("leaf") {})
+
+    @Test fun readOnlyListSubclassMustOverrideClone() =
+        checkMissingCloneOverride(object : ReadOnlyKeyList(DefaultKeyList(), false) {})
+
     @Test fun rocketPassage() = checkPassage(RocketPassage(kjv))
     @Test fun bitwisePassage() = checkPassage(BitwisePassage(kjv))
     @Test fun distinctPassage() = checkPassage(DistinctPassage(kjv))

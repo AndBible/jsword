@@ -96,6 +96,15 @@ import org.crosswire.common.util.LoggerFactory
  * @author Joe Walker
  */
 open class PassageTally : AbstractPassage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: PassageTally) : super(copyFrom) {
+        board = copyFrom.board.clone()
+        total = copyFrom.total
+        size = copyFrom.size
+        max = copyFrom.max
+        order = copyFrom.order
+    }
+
     /**
      * Create an empty PassageTally
      *
@@ -166,12 +175,8 @@ open class PassageTally : AbstractPassage {
     open var total: Int = 0
 
     override fun clone(): PassageTally {
-        // This gets us a shallow copy
-        val copy = super.clone() as PassageTally
-
-        copy.board = board.clone()
-
-        return copy
+        check(this::class == PassageTally::class) { "${this::class} must override clone()" }
+        return PassageTally(this)
     }
 
     override fun toString(): String {

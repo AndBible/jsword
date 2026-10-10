@@ -29,6 +29,17 @@ import org.crosswire.common.util.LoggerFactory
  * @author Joe Walker
  */
 open class SetKeyList : AbstractKeyList {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: SetKeyList) : super(copyFrom) {
+        parent = copyFrom.parent
+        list = copyFrom.list
+    }
+
+    override fun clone(): SetKeyList {
+        check(this::class == SetKeyList::class) { "${this::class} must override clone()" }
+        return SetKeyList(this)
+    }
+
     /**
      * Simple ctor
      * @param set

@@ -31,6 +31,17 @@ import org.crosswire.jsword.versification.Versification
  * @author Joe Walker
  */
 open class RocketPassage : BitwisePassage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: RocketPassage) : super(copyFrom) {
+        distinct = copyFrom.distinct
+        ranged = copyFrom.ranged
+    }
+
+    override fun clone(): RocketPassage {
+        check(this::class == RocketPassage::class) { "${this::class} must override clone()" }
+        return RocketPassage(this)
+    }
+
     /**
      * Create a new RocketPassage
      *

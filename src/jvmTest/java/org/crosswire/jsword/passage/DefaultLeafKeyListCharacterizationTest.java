@@ -33,7 +33,7 @@ public class DefaultLeafKeyListCharacterizationTest {
     @Test
     public void iteratingListWithNullNamedLeafDoesNotThrow() {
         DefaultKeyList list = new DefaultKeyList(null, "list");
-        DefaultLeafKeyList leaf = new DefaultLeafKeyList(null);
+        DefaultLeafKeyList leaf = new DefaultLeafKeyList((String) null);
         list.addAll(leaf);
         int seen = 0;
         for (Key k : list) {

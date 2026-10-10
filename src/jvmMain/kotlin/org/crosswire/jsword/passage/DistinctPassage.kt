@@ -38,6 +38,12 @@ import org.crosswire.jsword.versification.Versification
  * @author Joe Walker
  */
 open class DistinctPassage : AbstractPassage {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: DistinctPassage) : super(copyFrom) {
+        store = TreeSet<Key>()
+        store.addAll(copyFrom.store)
+    }
+
     /**
      * Create an empty DistinctPassage. There are no ctors from either Verse or
      * VerseRange so you need to do new <code>DistinctPassage().add(...);</code>
@@ -78,29 +84,9 @@ open class DistinctPassage : AbstractPassage {
     @Throws(NoSuchVerseException::class)
     internal constructor(v11n: Versification?, refs: String?) : this(v11n, refs, null)
 
-    /**
-     * Get a copy of ourselves. Points to note:
-     * <ul>
-     * <li>Call clone() not new() on member Objects, and on us.
-     * <li>Do not use Copy Constructors! - they do not inherit well.
-     * <li>Think about this needing to be synchronized
-     * <li>If this is not cloneable then writing cloneable children is harder
-     * </ul>
-     *
-     * @return A complete copy of ourselves
-     */
     override fun clone(): DistinctPassage {
-        // This gets us a shallow copy
-        val copy = super.clone() as DistinctPassage
-
-        // I want to just do the following
-        // copy.store = (SortedSet) store.clone();
-        // However SortedSet is not Cloneable so I can't
-        // Watch out for this, I'm not sure if it breaks anything.
-        copy.store = TreeSet<Key>()
-        copy.store.addAll(store)
-
-        return copy
+        check(this::class == DistinctPassage::class) { "${this::class} must override clone()" }
+        return DistinctPassage(this)
     }
 
     /* (non-Javadoc)

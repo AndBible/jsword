@@ -20,7 +20,6 @@
 package org.crosswire.jsword.passage
 
 import org.crosswire.common.util.ItemIterator
-import org.crosswire.common.util.jswordAssert
 
 /**
  * A simple default implementation of the Key interface.
@@ -28,7 +27,15 @@ import org.crosswire.common.util.jswordAssert
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class DefaultLeafKeyList : Key, Cloneable {
+open class DefaultLeafKeyList : Key {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: DefaultLeafKeyList) {
+        parent = copyFrom.parent
+        name = copyFrom.name
+        osisName = copyFrom.osisName
+        cloneParent()
+    }
+
     /**
      * Default ctor
      * @param name
@@ -240,16 +247,15 @@ open class DefaultLeafKeyList : Key, Cloneable {
     }
 
     override fun clone(): DefaultLeafKeyList {
-        var clone: DefaultLeafKeyList? = null
-        try {
-            clone = super<Cloneable>.clone() as DefaultLeafKeyList
-            if (parent != null) {
-                clone.parent = parent!!.clone()
-            }
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
+        check(this::class == DefaultLeafKeyList::class) { "${this::class} must override clone()" }
+        return DefaultLeafKeyList(this)
+    }
+
+    /** Applies the old leaf-clone parent poststep, including for JVM Object.clone callers. */
+    protected fun cloneParent() {
+        if (parent != null) {
+            parent = parent!!.clone()
         }
-        return clone!!
     }
 
     /**

@@ -29,6 +29,12 @@ import org.crosswire.common.util.LoggerFactory
  * @author DM Smith
  */
 open class TreeKey : AbstractKeyList {
+    /** Copies the fields and preserves the deep-copy steps of the original clone. */
+    protected constructor(copyFrom: TreeKey) : super(copyFrom) {
+        parent = copyFrom.parent
+        children = copyFrom.children
+    }
+
     /**
      * Setup with the key name and positions of data in the file
      *
@@ -184,7 +190,8 @@ open class TreeKey : AbstractKeyList {
     }
 
     override fun clone(): TreeKey {
-        return super.clone() as TreeKey
+        check(this::class == TreeKey::class) { "${this::class} must override clone()" }
+        return TreeKey(this)
     }
 
     override fun getRootName(): String {
