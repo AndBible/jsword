@@ -99,7 +99,7 @@ open class PassageTally : AbstractPassage {
     /** Copies the fields and preserves the deep-copy steps of the original clone. */
     protected constructor(copyFrom: PassageTally) : super(copyFrom) {
         board = copyFrom.board.clone()
-        total = copyFrom.total
+        totalState = copyFrom.totalState
         size = copyFrom.size
         max = copyFrom.max
         order = copyFrom.order
@@ -172,7 +172,12 @@ open class PassageTally : AbstractPassage {
     /**
      * @return the total
      */
-    open var total: Int = 0
+    open var total: Int
+        get() = totalState
+        set(value) { totalState = value }
+
+    // Copies must bypass open accessors before subclass state has been initialized.
+    private var totalState: Int = 0
 
     override fun clone(): PassageTally {
         check(this::class == PassageTally::class) { "${this::class} must override clone()" }

@@ -4,6 +4,7 @@ import org.crosswire.jsword.book.readings.ReadingsKey
 import org.crosswire.jsword.book.sword.RawLDBackend
 import org.crosswire.jsword.book.sword.SwordBookMetaData
 import org.crosswire.jsword.book.sword.state.RawLDBackendState
+import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.system.Versifications
 import java.util.Date
@@ -76,6 +77,64 @@ class KeyCloneCharacterizationTest {
     @Test fun distinctPassage() = checkPassage(DistinctPassage(kjv))
     @Test fun rangedPassage() = checkPassage(RangedPassage(kjv))
     @Test fun passageTally() = checkPassage(PassageTally(kjv))
+
+    private class StatefulTally : PassageTally {
+        private var adjustment = intArrayOf(100)
+
+        constructor(v11n: Versification?) : super(v11n)
+        private constructor(copyFrom: StatefulTally) : super(copyFrom) {
+            adjustment = copyFrom.adjustment.copyOf()
+        }
+
+        override var total: Int
+            get() = super.total + adjustment[0]
+            set(value) { super.total = value - adjustment[0] }
+
+        fun baseTotal(): Int = super.total
+        override fun clone(): StatefulTally = StatefulTally(this)
+    }
+
+    private class AdjustedGetterTally : PassageTally {
+        private val adjustment = intArrayOf(100)
+
+        constructor(v11n: Versification?) : super(v11n)
+        private constructor(copyFrom: AdjustedGetterTally) : super(copyFrom)
+
+        override var total: Int
+            get() = super.total + adjustment[0]
+            set(value) { super.total = value }
+
+        fun baseTotal(): Int = super.total
+        override fun clone(): AdjustedGetterTally = AdjustedGetterTally(this)
+    }
+
+    @Test fun tallySubclassCopyDoesNotCallSetterBeforeSubclassInitialization() {
+        val p = StatefulTally(kjv).apply { total = 137; add(gen1) }
+        assertEquals(37, p.baseTotal())
+        val c = p.clone()
+        assertSame(p.javaClass, c.javaClass)
+        assertNotSame(p, c)
+        assertEquals(37, c.baseTotal())
+        assertEquals(137, c.total)
+        assertEquals("Gen.1", c.getOsisRef())
+        c.total = 237
+        assertEquals(137, c.baseTotal())
+        assertEquals(37, p.baseTotal())
+        c.remove(gen1)
+        assertTrue(p.contains(gen1.start))
+    }
+
+    @Test fun tallySubclassCopyPreservesBaseStateRatherThanOverriddenGetterValue() {
+        val p = AdjustedGetterTally(kjv).apply { total = 37 }
+        assertEquals(137, p.total)
+        assertEquals(37, p.baseTotal())
+        val c = p.clone()
+        assertEquals(37, c.baseTotal())
+        assertEquals(137, c.total)
+        c.total = 52
+        assertEquals(52, c.baseTotal())
+        assertEquals(37, p.baseTotal())
+    }
 
     @Test fun tallyCopiesCountsAndOrderingWithoutSharingBoard() {
         val p = PassageTally(kjv).apply { add(gen1); add(gen1); add(rom3) }
