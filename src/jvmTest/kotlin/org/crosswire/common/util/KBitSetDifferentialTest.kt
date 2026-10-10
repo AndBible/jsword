@@ -39,6 +39,62 @@ class KBitSetDifferentialTest {
     }
 
     @Test
+    fun equalityDependsOnContentNotCapacity() {
+        val small = KBitSet(0).apply { set(63); set(64) }
+        val large = KBitSet(4096).apply { set(63); set(64) }
+        assertEquals(small, large)
+        assertEquals(large, small)
+        assertEquals(small.hashCode(), large.hashCode())
+        assertEquals(KBitSet(0), KBitSet(4096))
+        large.set(4095)
+        kotlin.test.assertNotEquals(small, large)
+        kotlin.test.assertNotEquals(large, small)
+        kotlin.test.assertNotEquals<Any>(small, "{63, 64}")
+    }
+
+    @Test
+    fun algebraHandlesDifferentCapacitiesAndSelfAliasing() {
+        for (operation in 0..2) {
+            for (reverse in listOf(false, true)) {
+                val small = KBitSet(0).apply { set(0); set(63) }
+                val large = KBitSet(1024).apply { set(63); set(64); set(1000) }
+                val a = if (reverse) large else small
+                val b = if (reverse) small else large
+                when (operation) {
+                    0 -> { a.and(b); assertEquals("{63}", a.toString()) }
+                    1 -> { a.or(b); assertEquals("{0, 63, 64, 1000}", a.toString()) }
+                    else -> {
+                        a.andNot(b)
+                        assertEquals(if (reverse) "{64, 1000}" else "{0}", a.toString())
+                    }
+                }
+            }
+        }
+        val s = KBitSet(0).apply { set(0); set(63); set(64); set(1000) }
+        s.and(s)
+        assertEquals("{0, 63, 64, 1000}", s.toString())
+        s.or(s)
+        assertEquals("{0, 63, 64, 1000}", s.toString())
+        s.andNot(s)
+        assertEquals("{}", s.toString())
+    }
+
+    @Test
+    fun copyPreservesContentWithBidirectionalIndependence() {
+        val original = KBitSet(0).apply { set(0); set(63); set(64); set(1000) }
+        val copy = original.copy()
+        assertEquals("{0, 63, 64, 1000}", copy.toString())
+        assertEquals(original, copy)
+        copy.clear(63)
+        copy.set(2000)
+        assertEquals("{0, 63, 64, 1000}", original.toString())
+        original.clear(64)
+        original.set(3)
+        assertEquals("{0, 64, 1000, 2000}", copy.toString())
+        assertEquals("{0, 3, 63, 1000}", original.toString())
+    }
+
+    @Test
     fun setBeyondTheInitialSizeGrows() {
         val j = BitSet(10); val k = KBitSet(10)
         j.set(1000); k.set(1000)
