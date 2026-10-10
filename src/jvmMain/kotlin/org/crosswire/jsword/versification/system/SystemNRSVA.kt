@@ -413,10 +413,5 @@ open class SystemNRSVA internal constructor() : Versification(V11N_NAME, BOOKS_O
         )
 
         internal val LAST_VERSE_NT: Array<IntArray> = SystemNRSV.LAST_VERSE_NT
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -1915001343269114316L
     }
 }

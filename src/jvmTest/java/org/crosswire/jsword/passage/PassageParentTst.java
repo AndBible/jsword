@@ -20,12 +20,8 @@
 package org.crosswire.jsword.passage;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Iterator;
 
 import org.crosswire.jsword.book.CaseType;
@@ -745,40 +741,6 @@ import org.junit.Test;
         Assert.assertEquals(4, temp.countVerses());
         temp.retainAll(keyf.getKey(v11n, "exo-rev"));
         Assert.assertEquals("", temp.getName());
-    }
-
-    @Test
-    public void testWriteObject() throws Exception {
-        Passage hard = (Passage) keyf.createEmptyKeyList(v11n);
-        for (int i = 10; i < v11n.maximumOrdinal(); i += 200) {
-            hard.add(v11n.decodeOrdinal(i));
-        }
-
-        File testDat = new File("test.dat");
-
-        FileOutputStream fileOut = new FileOutputStream(testDat);
-        ObjectOutputStream objOut = new ObjectOutputStream(fileOut);
-        objOut.writeObject(genC1V135r);
-        objOut.writeObject(exoC2V1To10C2V1To11r);
-        objOut.writeObject(genToRev);
-        objOut.writeObject(hard);
-        objOut.writeObject(grace);
-        objOut.close();
-        objOut = null;
-        FileInputStream fileIn = new FileInputStream(testDat);
-        ObjectInputStream objIn = new ObjectInputStream(fileIn);
-        Passage genC1V135Copy = (Passage) objIn.readObject();
-        Passage exoC2V1To10C2V1To11rCopy = (Passage) objIn.readObject();
-        Passage genToRevCopy = (Passage) objIn.readObject();
-        Passage hardCopy = (Passage) objIn.readObject();
-        Passage graceCopy = (Passage) objIn.readObject();
-        objIn.close();
-        Assert.assertEquals(genC1V135Copy, genC1V135r);
-        Assert.assertEquals(exoC2V1To10C2V1To11rCopy, exoC2V1To10C2V1To11r);
-        Assert.assertEquals(genToRevCopy, genToRev);
-        Assert.assertEquals(hardCopy, hard);
-        Assert.assertEquals(graceCopy, grace);
-        testDat.delete();
     }
 
     @Test

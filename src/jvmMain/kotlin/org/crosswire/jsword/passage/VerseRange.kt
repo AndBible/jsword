@@ -22,9 +22,6 @@ package org.crosswire.jsword.passage
 import org.crosswire.common.icu.NumberShaper
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.Locale
 import java.util.NoSuchElementException
 
@@ -361,7 +358,6 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
      *
      * @return The last verse in the range
      */
-    @Transient
     var end: Verse
         private set
 
@@ -689,47 +685,6 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
     }
 
     /**
-     * Write out the object to the given ObjectOutputStream
-     *
-     * @param out
-     *            The stream to write our state to
-     * @throws IOException
-     *             If the write fails
-     * @serialData Write the ordinal number of this verse
-     */
-    @Throws(IOException::class)
-    private fun writeObject(out: ObjectOutputStream) {
-        out.defaultWriteObject()
-
-        // Ignore the original name. Is this wise?
-        // I am expecting that people are not that fussed about it and
-        // it could make everything far more verbose
-    }
-
-    /**
-     * Write out the object to the given ObjectOutputStream
-     *
-     * @param in
-     *            The stream to read our state from
-     * @throws IOException
-     *             If the write fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     * @serialData Write the ordinal number of this verse
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`in`: ObjectInputStream) {
-        `in`.defaultReadObject()
-
-        end = calcEnd()
-        shaper = NumberShaper()
-
-        verifyData()
-
-        // We are ignoring the originalName and parent.
-    }
-
-    /**
      * Iterate over the Verses in the VerseRange
      */
     private class VerseIterator(range: VerseRange) : MutableIterator<Key> {
@@ -868,7 +823,6 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
      * constructor, hence neither lateinit nor a null check on access: a NullPointerException must be
      * raised by the JVM on the field, as in Java).
      */
-    @Transient
     private var v11n: Versification
 
     /**
@@ -879,19 +833,16 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
     /**
      * Allow the conversion to and from other number representations.
      */
-    @Transient
     private var shaper: NumberShaper
 
     /**
      * The parent key.
      */
-    @Transient
     private var parent: Key? = null
 
     /**
      * The original string for picky users
      */
-    @Transient
     private var originalName: String? = null
 
     companion object {
@@ -967,10 +918,5 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
          * What characters should we use to separate VerseRange parts on output
          */
         const val RANGE_PREF_DELIM: Char = RANGE_OSIS_DELIM
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 8307795549869653580L
     }
 }

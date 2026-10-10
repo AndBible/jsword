@@ -168,10 +168,5 @@ open class SystemNRSV internal constructor() : Versification(V11N_NAME, BOOKS_OT
                27,  21,
             ),
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 6104112750913219370L
     }
 }

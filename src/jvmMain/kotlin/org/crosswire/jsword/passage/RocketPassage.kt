@@ -19,9 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.IOException
-import java.io.ObjectInputStream
-
 import org.crosswire.jsword.versification.Versification
 
 /**
@@ -260,37 +257,13 @@ open class RocketPassage : BitwisePassage {
     }
 
     /**
-     * Serialization support
-     *
-     * @param is
-     *            The stream to read our state from
-     * @throws IOException
-     *             if the read fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`is`: ObjectInputStream) {
-        optimizeWrites()
-        `is`.defaultReadObject()
-    }
-
-    /**
      * The contained DistinctPassage
      */
-    @Transient
     private var distinct: DistinctPassage? = null
 
     /**
      * The contained RangedPassage
      */
-    @Transient
     private var ranged: RangedPassage? = null
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = 3258125864771401268L
-    }
 }

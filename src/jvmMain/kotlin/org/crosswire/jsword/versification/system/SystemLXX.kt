@@ -579,10 +579,5 @@ open class SystemLXX internal constructor() : Versification(V11N_NAME, BOOKS_OT,
                27,  21
             ),
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3365882007485277007L
     }
 }

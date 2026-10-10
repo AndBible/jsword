@@ -286,10 +286,5 @@ abstract class AbstractKeyList : Key, Cloneable {
                 }
             }
         }
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3858640507828137034L
     }
 }

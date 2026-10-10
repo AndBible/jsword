@@ -19,9 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.Collections
 import java.util.SortedSet
 import java.util.TreeSet
@@ -185,55 +182,8 @@ open class DistinctPassage : AbstractPassage {
     }
 
     /**
-     * Call the support mechanism in AbstractPassage
-     *
-     * @param out
-     *            The stream to write our state to
-     * @throws IOException
-     *             if the read fails
-     * @serialData Write the ordinal number of this verse
-     * @see AbstractPassage#writeObjectSupport(ObjectOutputStream)
-     */
-    @Throws(IOException::class)
-    private fun writeObject(out: ObjectOutputStream) {
-        out.defaultWriteObject()
-
-        writeObjectSupport(out)
-    }
-
-    /**
-     * Call the support mechanism in AbstractPassage
-     *
-     * @param in
-     *            The stream to read our state from
-     * @throws IOException
-     *             if the read fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     * @serialData Write the ordinal number of this verse
-     * @see AbstractPassage#readObjectSupport(ObjectInputStream)
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`in`: ObjectInputStream) {
-        optimizeWrites()
-
-        store = TreeSet<Key>()
-
-        `in`.defaultReadObject()
-
-        readObjectSupport(`in`)
-    }
-
-    /**
      * The place the real data is stored
      */
-    @Transient
     private var store: SortedSet<Key> = TreeSet<Key>()
 
-    private companion object {
-        /**
-         * To make serialization work across new versions
-         */
-        private const val serialVersionUID: Long = 817374460730441662L
-    }
 }

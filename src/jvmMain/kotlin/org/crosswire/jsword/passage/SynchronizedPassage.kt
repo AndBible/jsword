@@ -414,10 +414,4 @@ internal class SynchronizedPassage : Passage, Cloneable {
      */
     private var ref: Passage
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = 3833181441264531251L
-    }
 }

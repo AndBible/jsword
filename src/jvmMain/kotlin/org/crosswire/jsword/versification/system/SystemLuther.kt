@@ -528,10 +528,5 @@ open class SystemLuther internal constructor() : Versification(V11N_NAME, BOOKS_
                27,  21,
             ),
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -1165901663498643158L
     }
 }

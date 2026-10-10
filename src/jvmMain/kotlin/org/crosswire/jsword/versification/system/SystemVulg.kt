@@ -543,10 +543,5 @@ open class SystemVulg internal constructor() : Versification(V11N_NAME, BOOKS_OT
                20,
             )
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -2155122813160088809L
     }
 }

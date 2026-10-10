@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Oracle vs current over real modules, a passage corpus, all versifications, confs and serialization
+ * Oracle vs current over real modules, a passage corpus, all versifications, confs
  * (KSword K1 spec §4.2). Line-based outputs are compared line by line; the first 20 mismatches are
  * reported with both sides.
  */
@@ -127,17 +127,6 @@ class CorpusParityTest {
         }
     }
 
-    @Test
-    fun serializationBothDirections() {
-        val kinds = listOf("Rocket", "Bitwise", "Distinct", "Ranged", "Tally", "Verse", "VerseRange")
-        val refs = listOf("Gen 1:1-5; Exo 2", "Mat 5-7, 10:1; Rev 22", "Ps 119", "Jude 3")
-        for (k in kinds) for (r in refs) {
-            val fromOracle = Oracle.call("ser.write", k, "KJV", r)
-            val fromCurrent = Current.call("ser.write", k, "KJV", r)
-            assertEquals(Oracle.call("ser.read", fromOracle), Current.call("ser.read", fromOracle), "$k $r oracle→current")
-            assertEquals(Current.call("ser.read", fromCurrent), Oracle.call("ser.read", fromCurrent), "$k $r current→oracle")
-        }
-    }
 
     @Test
     fun rtfToOsis() {

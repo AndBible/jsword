@@ -225,10 +225,6 @@ open class SetKeyList : AbstractKeyList {
     private var list: MutableList<Key?> = ArrayList()
 
     private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -1460162676283475117L
 
         /**
          * The log stream

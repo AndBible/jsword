@@ -20,9 +20,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.NoSuchElementException
 import java.util.TreeSet
 
@@ -717,44 +714,6 @@ open class PassageTally : AbstractPassage {
     }
 
     /**
-     * Call the support mechanism in AbstractPassage
-     *
-     * @param out
-     *            The stream to write our state to
-     * @serialData Write the ordinal number of this verse
-     * @see AbstractPassage#writeObjectSupport(ObjectOutputStream)
-     * @throws IOException
-     *             if the read fails
-     */
-    @Throws(IOException::class)
-    private fun writeObject(out: ObjectOutputStream) {
-        out.defaultWriteObject()
-
-        writeObjectSupport(out)
-    }
-
-    /**
-     * Call the support mechanism in AbstractPassage
-     *
-     * @param in
-     *            The stream to read our state from
-     * @throws IOException
-     *             if the read fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     * @serialData Write the ordinal number of this verse
-     * @see AbstractPassage#readObjectSupport(ObjectInputStream)
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`in`: ObjectInputStream) {
-        optimizeWrites()
-
-        `in`.defaultReadObject()
-
-        readObjectSupport(`in`)
-    }
-
-    /**
      * Indicates how this PassageTally is to order it's Verses.
      */
     enum class Order {
@@ -1136,10 +1095,5 @@ open class PassageTally : AbstractPassage {
          * The log stream
          */
         private val log: Logger = LoggerFactory.getLogger(PassageTally::class)
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = 3761128240928274229L
     }
 }

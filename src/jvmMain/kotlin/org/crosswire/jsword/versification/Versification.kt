@@ -39,7 +39,6 @@
 package org.crosswire.jsword.versification
 
 import java.io.PrintStream
-import java.io.Serializable
 import java.util.Locale
 
 import org.crosswire.common.util.jswordAssert
@@ -90,7 +89,7 @@ open class Versification
     booksNT: Array<BibleBook>,
     lastVerseOT: Array<IntArray>,
     lastVerseNT: Array<IntArray>
-) : ReferenceSystem, Serializable {
+) : ReferenceSystem {
     /** The ordered list of books in this versification.  */
     private var bookList: BibleBookList
 
@@ -1363,10 +1362,5 @@ open class Versification
             out.println("    /** The last ordinal number of the New Testament and the maximum ordinal number of this Reference System */")
             out.println("    private int ntMaxOrdinal = " + (ordinal - 1) + ";")
         }
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -6226916242596368765L
     }
 }

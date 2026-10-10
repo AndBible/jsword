@@ -47,7 +47,6 @@ class BibleNames
  */
 private constructor() {
     /** we cache the Localized Bible Names because there is quite a bit of processing going on for each individual Locale  */
-    @Transient
     private var localizedBibleNames: MutableMap<Locale, NameList>
     var enableFuzzy: Boolean? = true
 

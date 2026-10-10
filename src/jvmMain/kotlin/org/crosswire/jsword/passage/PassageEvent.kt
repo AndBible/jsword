@@ -112,10 +112,4 @@ open class PassageEvent
         return upper
     }
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3906647492467898675L
-    }
 }

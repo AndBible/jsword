@@ -136,10 +136,5 @@ open class SystemKJVA internal constructor() : Versification(V11N_NAME, BOOKS_OT
         ))
 
         internal val LAST_VERSE_NT: Array<IntArray> = SystemKJV.LAST_VERSE_NT
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 1054681694714921358L
     }
 }

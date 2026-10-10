@@ -325,7 +325,6 @@ internal class ReadOnlyPassage : Passage, Cloneable {
         blur(by, restrict, true, true)
     }
 
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
@@ -418,10 +417,4 @@ internal class ReadOnlyPassage : Passage, Cloneable {
      */
     private var ignore: Boolean
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = 3257853173036102193L
-    }
 }

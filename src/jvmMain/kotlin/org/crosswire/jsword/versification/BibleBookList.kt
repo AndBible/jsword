@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.versification
 
-import java.io.Serializable
 import java.util.NoSuchElementException
 
 /**
@@ -38,7 +37,7 @@ open class BibleBookList
  * Create an ordered BibleBookList from the input.
  * @param books
  */
-internal constructor(books: Array<BibleBook>) : Iterable<BibleBook>, Serializable {
+internal constructor(books: Array<BibleBook>) : Iterable<BibleBook> {
     /** The ordered books in this list  */
     @JvmField
     protected var books: Array<BibleBook> = books.clone()
@@ -191,10 +190,4 @@ internal constructor(books: Array<BibleBook>) : Iterable<BibleBook>, Serializabl
         }
     }
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -2681289798451902815L
-    }
 }

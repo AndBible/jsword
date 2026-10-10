@@ -318,10 +318,5 @@ open class SystemMT internal constructor() : Versification(V11N_NAME, BOOKS_OT, 
         )
 
         internal val LAST_VERSE_NT: Array<IntArray> = SystemDefault.LAST_VERSE_NONE
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -3679238882055120660L
     }
 }

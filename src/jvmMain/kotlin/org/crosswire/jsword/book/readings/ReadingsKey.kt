@@ -125,10 +125,5 @@ open class ReadingsKey : DefaultLeafKeyList {
          * Date formatter
          */
         private val KEY_FORMAT: MessageFormat = MessageFormat("{0,number,00}.{1,number,00}")
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = -5500401548068844993L
     }
 }

@@ -113,10 +113,5 @@ open class SystemDefault : Versification() {
             BibleBook.ZECH,
             BibleBook.MAL,
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -921273257871599555L
     }
 }

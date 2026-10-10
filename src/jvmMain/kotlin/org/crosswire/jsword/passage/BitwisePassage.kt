@@ -19,15 +19,11 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.BitSet
 import java.util.NoSuchElementException
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
-import org.crosswire.jsword.versification.system.Versifications
 
 /**
  * A Passage that is implemented using a BitSet - one for each verse. The
@@ -305,7 +301,6 @@ open class BitwisePassage : AbstractPassage {
         blur(verses, restrict, true, true)
     }
 
-
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType, boolean, boolean)
      */
@@ -405,63 +400,9 @@ open class BitwisePassage : AbstractPassage {
     }
 
     /**
-     * Call the support mechanism in AbstractPassage
-     *
-     * @param out
-     *            The stream to write our state to
-     * @serialData Write the ordinal number of this verse
-     * @see AbstractPassage#writeObjectSupport(ObjectOutputStream)
-     * @throws IOException
-     *             if the read fails
-     */
-    @Throws(IOException::class)
-    private fun writeObject(out: ObjectOutputStream) {
-        out.defaultWriteObject()
-
-        // Save off the versification by name
-        out.writeUTF(versification.name)
-
-        writeObjectSupport(out)
-    }
-
-    /**
-     * Call the support mechanism in AbstractPassage
-     *
-     * @param in
-     *            The stream to read our state from
-     * @throws IOException
-     *             if the read fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     * @serialData Write the ordinal number of this verse
-     * @see AbstractPassage#readObjectSupport(ObjectInputStream)
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`in`: ObjectInputStream) {
-        optimizeWrites()
-
-        `in`.defaultReadObject()
-
-        // Read the versification by name
-        val v11nName = `in`.readUTF()
-        val v11n = Versifications.instance().getVersification(v11nName)
-
-        store = BitSet(v11n!!.maximumOrdinal() + 1)
-
-        readObjectSupport(`in`)
-    }
-
-    /**
      * The place the real data is stored
      */
     @JvmField
-    @Transient
     protected var store: BitSet
 
-    private companion object {
-        /**
-         * To make serialization work across new versions
-         */
-        private const val serialVersionUID: Long = -5931560451407396276L
-    }
 }

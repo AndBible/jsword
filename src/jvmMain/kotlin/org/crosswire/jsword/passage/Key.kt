@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.passage
 
-import java.io.Serializable
-
 /**
  * A Key is a Key that can contain other Keys.
  *
@@ -31,7 +29,7 @@ import java.io.Serializable
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable, Serializable {
+interface Key : Comparable<Key?>, MutableIterable<Key>, Cloneable {
     /**
      * A Human readable version of the Key. For Biblical passages this uses
      * short books names, and the shortest sensible rendering, for example

@@ -44,10 +44,4 @@ open class NoSuchVerseException : NoSuchKeyException {
      */
     constructor(msg: String?, ex: Throwable?) : super(msg, ex)
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3257572797638129463L
-    }
 }

@@ -430,10 +430,5 @@ open class SystemSynodalProt internal constructor() : Versification(V11N_NAME, B
                27,  21
             )
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 2662552205377421107L
     }
 }

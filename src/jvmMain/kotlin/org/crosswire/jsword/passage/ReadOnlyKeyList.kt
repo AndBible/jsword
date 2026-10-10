@@ -232,10 +232,4 @@ open class ReadOnlyKeyList
      */
     private var keys: Key? = keys
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -7947159638198641657L
-    }
 }

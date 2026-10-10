@@ -22,12 +22,9 @@ package org.crosswire.jsword.passage
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.io.Reader
 import java.io.Writer
 import java.util.ArrayList
-import java.util.BitSet
 import java.util.NoSuchElementException
 
 import org.crosswire.common.util.StringUtil
@@ -43,9 +40,6 @@ import org.crosswire.common.util.LoggerFactory
 /**
  * This is a base class to help with some of the common implementation details
  * of being a Passage.
- * <p>
- * Importantly, this class takes care of Serialization in a general yet
- * optimized way. I think I am going to have a look at replacement here.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
@@ -508,7 +502,6 @@ abstract class AbstractPassage : Passage, Cloneable {
         raiseEventSuppresion()
         raiseNormalizeProtection()
 
-
         if (key is RangedPassage) {
             val it = key.rangeIterator(RestrictionType.NONE)
             while (it.hasNext()) {
@@ -629,7 +622,6 @@ abstract class AbstractPassage : Passage, Cloneable {
             fireIntervalAdded(this, null, null)
         }
     }
-
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#blur(int, org.crosswire.jsword.passage.RestrictionType)
@@ -1135,186 +1127,27 @@ abstract class AbstractPassage : Passage, Cloneable {
     }
 
     /**
-     * Write out the object to the given ObjectOutputStream. There are 3 ways of
-     * doing this - according to the 3 implementations of Passage.
-     * <ul>
-     * <li>Distinct: If we write out a list if verse ordinals then the space
-     * used is 4 bytes per verse.
-     * <li>Bitwise: If we write out a bitmap then the space used is something
-     * like 31104/8 = 4k bytes.
-     * <li>Ranged: The we write a list of start/end pairs then the space used is
-     * 8 bytes per range.
-     * </ul>
-     * Since we can take our time about this section, we calculate the optimal
-     * storage method before we do the saving. If some methods come out equal
-     * first then bitwise is preferred, then distinct, then ranged, because I
-     * imagine that for speed of deserialization this is the sensible order.
-     * I've not tested it though.
-     *
-     * @param out
-     *            The stream to write our state to
-     * @throws IOException
-     *             if the read fails
-     */
-    @Throws(IOException::class)
-    protected open fun writeObjectSupport(out: ObjectOutputStream) {
-        // Save off the versification by name
-        out.writeUTF(v11n!!.name)
-
-        // the size in bits of teach storage method
-        val bitwiseSize = v11n!!.maximumOrdinal()
-        val rangedSize = 8 * countRanges(RestrictionType.NONE)
-        val distinctSize = 4 * countVerses()
-
-        // if bitwise is equal smallest
-        if (bitwiseSize <= rangedSize && bitwiseSize <= distinctSize) {
-            out.writeInt(BITWISE)
-
-            val store = BitSet(bitwiseSize)
-            val iter = iterator()
-            while (iter.hasNext()) {
-                val verse = iter.next() as Verse
-                store.set(verse.ordinal)
-            }
-
-            out.writeObject(store)
-        } else if (distinctSize <= rangedSize) {
-            // if distinct is not bigger than ranged
-            // write the Passage type and the number of verses
-            out.writeInt(DISTINCT)
-            out.writeInt(countVerses())
-
-            // write the verse ordinals in a loop
-            for (aKey in this) {
-                val verse = aKey as Verse
-                out.writeInt(verse.ordinal)
-            }
-        } else {
-            // otherwise use ranges
-            // write the Passage type and the number of ranges
-            out.writeInt(RANGED)
-            out.writeInt(countRanges(RestrictionType.NONE))
-
-            // write the verse ordinals in a loop
-            val it = rangeIterator(RestrictionType.NONE)
-            while (it.hasNext()) {
-                val range = it.next()
-                out.writeInt(range.start.ordinal)
-                out.writeInt(range.getCardinality())
-            }
-        }
-
-        // Ignore the original name. Is this wise?
-        // I am expecting that people are not that fussed about it and
-        // it could make everything far more verbose
-    }
-
-    /**
-     * Serialization support.
-     *
-     * @param is
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`is`: ObjectInputStream) {
-        listeners = ArrayList<PassageListener?>()
-        originalName = null
-        parent = null
-        skipNormalization = 0
-        suppressEvents = 0
-
-        `is`.defaultReadObject()
-    }
-
-    /**
-     * Write out the object to the given ObjectOutputStream
-     *
-     * @param is
-     *            The stream to read our state from
-     * @throws IOException
-     *             if the read fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    protected open fun readObjectSupport(`is`: ObjectInputStream) {
-        raiseEventSuppresion()
-        raiseNormalizeProtection()
-
-        // Read the versification by name
-        val v11nName = `is`.readUTF()
-        v11n = Versifications.instance().getVersification(v11nName)
-
-        val type = `is`.readInt()
-        when (type) {
-            BITWISE -> {
-                val store = `is`.readObject() as BitSet
-                var i = 0
-                while (i < v11n!!.maximumOrdinal()) {
-                    if (store.get(i)) {
-                        add(v11n!!.decodeOrdinal(i))
-                    }
-                    i++
-                }
-            }
-
-            DISTINCT -> {
-                val verses = `is`.readInt()
-                for (i in 0 until verses) {
-                    val ord = `is`.readInt()
-                    add(v11n!!.decodeOrdinal(ord))
-                }
-            }
-
-            RANGED -> {
-                val ranges = `is`.readInt()
-                for (i in 0 until ranges) {
-                    val ord = `is`.readInt()
-                    val count = `is`.readInt()
-                    add(RestrictionType.NONE.toRange(versification, v11n!!.decodeOrdinal(ord), count))
-                }
-            }
-
-            else -> throw ClassCastException(JSOtherMsg.lookupText("Can only use Verses and VerseRanges in this Collection"))
-        }
-
-        // We are ignoring the originalName. It was set to null in the
-        // default ctor so I will ignore it here.
-
-        // We don't bother to call fireContentsChanged(...) because
-        // nothing can have registered at this point
-        lowerEventSuppressionAndTest()
-        lowerNormalizeProtection()
-    }
-
-    /**
      * The Versification to which this passage belongs.
      */
-    @Transient
     private var v11n: Versification?
 
     /**
      * The parent key. See the key interface for more information. NOTE(joe):
-     * These keys are not serialized, should we?
      *
      * @see Key
      */
-    @Transient
     private var parent: Key? = null
 
     /**
      * Support for change notification
      */
     @JvmField
-    @Transient
     protected var listeners: MutableList<PassageListener?>
 
     /**
      * The original string for picky users
      */
     @JvmField
-    @Transient
     protected var originalName: String?
 
     /**
@@ -1324,7 +1157,6 @@ abstract class AbstractPassage : Passage, Cloneable {
      * this is 0 before doing the calculation.
      */
     @JvmField
-    @Transient
     protected var suppressEvents: Int = 0
 
     /**
@@ -1332,7 +1164,6 @@ abstract class AbstractPassage : Passage, Cloneable {
      * this, and the decrement it when done.
      */
     @JvmField
-    @Transient
     protected var skipNormalization: Int = 0
 
     companion object {
@@ -1403,10 +1234,5 @@ abstract class AbstractPassage : Passage, Cloneable {
          * What characters should we use to separate VerseRanges in a Passage
          */
         const val REF_OSIS_DELIM: String = " "
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = -5931560451407396276L
     }
 }

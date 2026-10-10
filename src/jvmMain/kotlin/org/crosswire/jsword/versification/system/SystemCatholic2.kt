@@ -314,10 +314,5 @@ open class SystemCatholic2 internal constructor() : Versification(V11N_NAME, BOO
         )
 
         internal val LAST_VERSE_NT: Array<IntArray> = SystemCatholic.LAST_VERSE_NT
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 1956062452449097319L
     }
 }

@@ -29,9 +29,6 @@ import org.crosswire.jsword.versification.BibleNames
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.Locale
 
 /**
@@ -348,7 +345,6 @@ class Verse : VerseKey<Verse>, Cloneable {
      *
      * @return The book of the Bible
      */
-    @Transient
     var book: BibleBook
         private set
 
@@ -357,7 +353,6 @@ class Verse : VerseKey<Verse>, Cloneable {
      *
      * @return The chapter number
      */
-    @Transient
     var chapter: Int = 0
         private set
 
@@ -366,7 +361,6 @@ class Verse : VerseKey<Verse>, Cloneable {
      *
      * @return The verse number
      */
-    @Transient
     var verse: Int = 0
         private set
 
@@ -445,44 +439,6 @@ class Verse : VerseKey<Verse>, Cloneable {
         }
 
         return Integer.toString(verse)
-    }
-
-    /**
-     * Write out the object to the given ObjectOutputStream
-     *
-     * @param out
-     *            The stream to write our state to
-     * @throws IOException
-     *             if the read fails
-     * @serialData Write the ordinal number of this verse
-     */
-    @Throws(IOException::class)
-    private fun writeObject(out: ObjectOutputStream) {
-        out.defaultWriteObject()
-        out.writeUTF(v11n.name)
-    }
-
-    /**
-     * Write out the object to the given ObjectOutputStream
-     *
-     * @param in
-     *            The stream to read our state from
-     * @throws IOException
-     *             if the read fails
-     * @throws ClassNotFoundException
-     *             If the read data is incorrect
-     * @serialData Write the ordinal number of this verse
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`in`: ObjectInputStream) {
-        `in`.defaultReadObject()
-        val v11nName = `in`.readUTF()
-        v11n = Versifications.instance().getVersification(v11nName)!!
-        val decoded = v11n.decodeOrdinal(ordinal)
-
-        this.book = decoded.book
-        this.chapter = decoded.chapter
-        this.verse = decoded.verse
     }
 
     /* (non-Javadoc)
@@ -592,7 +548,6 @@ class Verse : VerseKey<Verse>, Cloneable {
     /**
      * The versification for this verse.
      */
-    @Transient
     private var v11n: Versification
 
     companion object {
@@ -662,9 +617,5 @@ class Verse : VerseKey<Verse>, Cloneable {
 
         private val log = LoggerFactory.getLogger(Verse::class)
 
-        /**
-         * To make serialization work across new versions
-         */
-        private const val serialVersionUID = -4033921076023185171L
     }
 }

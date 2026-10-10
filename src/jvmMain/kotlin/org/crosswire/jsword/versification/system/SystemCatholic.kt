@@ -482,10 +482,5 @@ open class SystemCatholic internal constructor() : Versification(V11N_NAME, BOOK
                27,  21,
             ),
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -2425837859408015667L
     }
 }

@@ -19,10 +19,6 @@
  */
 package org.crosswire.jsword.passage;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Iterator;
 
 import org.crosswire.jsword.book.CaseType;
@@ -308,20 +304,4 @@ public class PassageTally2Test {
         Assert.assertEquals("Gen 1:1, 3, 5, 7, 2:1, 3:1", temp.getName());
     }
 
-    @Test
-    public void testObject() throws Exception {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream objOut = new ObjectOutputStream(bout);
-        objOut.writeObject(tally);
-        objOut.writeObject(empty);
-        objOut.close();
-        objOut = null;
-        ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-        ObjectInputStream objIn = new ObjectInputStream(bin);
-        Passage genC1V135Copy = (Passage) objIn.readObject();
-        Passage exo2a3bCopy = (Passage) objIn.readObject();
-        objIn.close();
-        Assert.assertEquals(tally, genC1V135Copy);
-        Assert.assertEquals(empty, exo2a3bCopy);
-    }
 }

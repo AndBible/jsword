@@ -398,10 +398,5 @@ open class SystemDarbyFR internal constructor() : Versification(V11N_NAME, BOOKS
                27,  21
             ),
         )
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3365882007485277007L
     }
 }

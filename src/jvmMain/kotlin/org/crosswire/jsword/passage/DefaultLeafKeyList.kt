@@ -267,10 +267,4 @@ open class DefaultLeafKeyList : Key, Cloneable {
      */
     private var osisName: String? = null
 
-    private companion object {
-        /**
-         *
-         */
-        private const val serialVersionUID = -7462556005744186622L
-    }
 }

@@ -317,10 +317,5 @@ open class SystemLeningrad internal constructor() : Versification(V11N_NAME, BOO
         )
 
         internal val LAST_VERSE_NT: Array<IntArray> = SystemDefault.LAST_VERSE_NONE
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -1483944788413812511L
     }
 }

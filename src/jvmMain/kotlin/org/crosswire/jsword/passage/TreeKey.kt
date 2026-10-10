@@ -229,10 +229,5 @@ open class TreeKey : AbstractKeyList {
          * The log stream
          */
         private val log: Logger = LoggerFactory.getLogger(TreeKey::class)
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -6560408145705717977L
     }
 }
