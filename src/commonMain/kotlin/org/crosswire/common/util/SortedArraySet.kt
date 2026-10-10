@@ -23,6 +23,17 @@ class SortedArraySet<T>(private val comparator: Comparator<in T>) : AbstractMuta
         return true
     }
 
+    override fun addAll(elements: Collection<T>): Boolean {
+        // Like TreeSet's empty sorted-source bulk build, retain the source's established order.
+        if (items.isEmpty() && elements is SortedArraySet<T> && comparator == elements.comparator) {
+            if (elements.isEmpty()) return false
+            items.addAll(elements.items)
+            modCount++
+            return true
+        }
+        return super.addAll(elements)
+    }
+
     override fun remove(element: T): Boolean {
         val i = search(element)
         if (i < 0) return false

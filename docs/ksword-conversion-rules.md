@@ -204,7 +204,7 @@ stated). Phase-1 rules (§1-§10) still apply.
 
 ## 26. K3 replacements
 - `Cloneable` / `super.clone()` -> protected copy constructors and explicit `Key.clone()`; copy exactly the old shallow/deep fields and fail loudly for an open subclass without its own override; JVM-only inheritors retain `Cloneable` and `super<Cloneable>.clone()`.
-- `TreeSet` / `SortedSet` -> `SortedArraySet` (`SortedArraySet.kt`); keep sorted iteration and iterator removal, differential-test against the JDK, and retain the measured Ranged remove slowdown (~1.51x warmed).
+- `TreeSet` / `SortedSet` -> `SortedArraySet` (`SortedArraySet.kt`); keep sorted iteration and iterator removal, differential-test against the JDK, and report timings honestly: the early warmed ~1.51x Ranged remove slowdown was not the final M2 result (M2 medians 817.5626065 ms old / 2576.456209 ms new, 3.151x; later samples 2.07-2.67x). See the appended Task 14 review-fix evidence; old measurements remain historical, not closure evidence.
 - `BitSet` -> `KBitSet` (`KBitSet.kt`, `copy()` replaces clone); preserve bit operations and passage equality/hashCode, including capacity-independent logical equality.
 - Java mapped collections / `Iterable` / `Comparable` / `Object` -> Kotlin collections / types; preserve JVM types and behavior.
 - `Collections.*` / `Arrays.*` / `System.arraycopy` -> Kotlin stdlib / wrappers (`copyOf`, `copyInto`); an unmodifiable live view must remain a view, not become a snapshot.
@@ -215,6 +215,26 @@ stated). Phase-1 rules (§1-§10) still apply.
 - `NoSuchElementException` / `ClassCastException` -> Kotlin exceptions; JVM typealiases preserve catch behavior.
 - `Reader` / `Writer` / buffered variants -> `String` input / `Appendable` output (`Passage`, `PassageKeyFactory`, `StringUtil`); preserve description round trips (D3).
 - `PrintStream` -> `Appendable` (`Versification`, `VersificationToKJVMapper`); preserve dev-tool output text (D3).
-- `EventObject` / `EventListener` -> plain `PassageEvent` / `PassageListener`; keep Java `getSource()` and nullable-source empty events (D3).
+- `EventObject` / `EventListener` -> plain `PassageEvent` / `PassageListener`; keep Java `getSource()` and non-null source (null is rejected) and nullable start/end bounds for empty events (D3).
 - `javaClass` / `X::class.java` -> KClass comparisons / `this::class.simpleName`; preserve pinned class-name output and `MsgBase` bundle names.
 - `@JvmStatic` / `@JvmField` / `@JvmOverloads` / `@Throws` stay in common with explicit imports; `@Throws` uses `okio.IOException::class`.
+
+### K3 Task 14 review-fix evidence (2026-10-10)
+
+The early ~1.51x figure above was superseded by the M2 3.151x finding; neither is erased.
+At frozen b63d4745, the unchanged faithful NT probe (two warmups, eight alternating-order samples,
+4121 remaining verses) measured Ranged remove medians 809.240615 ms old / 1641.8442145 ms new (2.029x).
+Temporary diagnostic instrumentation measured 87,794,175 new snapshot-copy comparisons versus zero
+for the old empty TreeSet sorted-source bulk build; normalization had 87,839,557 new comparisons
+versus 145,430,524 old. Instrumented stage timings are attribution evidence, not uninstrumented
+performance ratios. A second frozen allocation probe measured 248,690,664 new versus 681,716,472
+old allocated bytes in round 7, with 1/2 collections and 1/5 ms GC respectively: allocation volume
+alone does not explain the slowdown.
+
+The scoped fix preserves sorted order and avoids re-comparing an already sorted source only when
+an empty SortedArraySet receives another SortedArraySet with an equal comparator (TreeSet's
+analogous bulk-build condition). Two unchanged uninstrumented post-fix probe runs measured
+929.7893575 / 1287.543108 ms (1.385x) and 811.0789035 / 1078.655247 ms (1.330x).
+This is not a Native timing claim or a guarantee for arbitrary workloads. Distinct remove still
+measured 2.182x and 2.139x at roughly 0.5/1.1 ms; retain this residual finding for review.
+Full raw samples and XML are in the controller's Task 14 fix workspace; no earlier history was rewritten.

@@ -7,6 +7,49 @@ import kotlin.test.assertEquals
 
 class SortedArraySetDifferentialTest {
     @Test
+    fun emptyCopyOfSameOrderingDoesNotCompareEveryElementAgain() {
+        var comparisons = 0
+        val order = Comparator<Int> { a, b -> comparisons++; a.compareTo(b) }
+        val original = SortedArraySet(order).apply { addAll(0 until 4096) }
+        val copy = SortedArraySet(order)
+        comparisons = 0
+        assertEquals(true, copy.addAll(original))
+        assertEquals(0, comparisons, "already sorted source needs no binary-search rebuild")
+        assertEquals(original.toList(), copy.toList())
+        copy.remove(0)
+        original.remove(4095)
+        assertEquals(true, original.contains(0))
+        assertEquals(true, copy.contains(4095))
+        assertEquals(false, copy.addAll(copy))
+    }
+
+    @Test
+    fun bulkCopyInvalidatesExistingIteratorButEmptyCopyDoesNot() {
+        val source = SortedArraySet<Int>().apply { add(1); add(2) }
+        val target = SortedArraySet<Int>()
+        val stale = target.iterator()
+        assertEquals(true, target.addAll(source))
+        kotlin.test.assertFailsWith<ConcurrentModificationException> { stale.next() }
+        val current = target.iterator()
+        assertEquals(false, target.addAll(emptyList()))
+        assertEquals(1, current.next())
+        assertEquals(2, current.next())
+        assertEquals(false, current.hasNext())
+    }
+
+    @Test
+    fun differentOrderingAndNonemptyCopiesStillMatchTreeSet() {
+        val reverse = SortedArraySet<Int>(reverseOrder()).apply { addAll(listOf(3, 2, 1)) }
+        val target = SortedArraySet<Int>()
+        val expected = TreeSet<Int>()
+        assertEquals(expected.addAll(reverse), target.addAll(reverse))
+        assertEquals(expected.toList(), target.toList())
+        assertEquals(expected.addAll(listOf(0, 2, 4)), target.addAll(listOf(0, 2, 4)))
+        assertEquals(expected.toList(), target.toList())
+        assertEquals(expected.addAll(emptyList()), target.addAll(emptyList()))
+    }
+
+    @Test
     fun randomOperationsMatchTreeSet() {
         val rnd = Random(7)
         repeat(300) { round ->

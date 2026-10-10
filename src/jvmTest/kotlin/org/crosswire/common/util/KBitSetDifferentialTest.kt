@@ -6,6 +6,37 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class KBitSetDifferentialTest {
+    @Test
+    fun negativeIndicesMatchJdkExceptionTypeAndMessage() {
+        for (index in listOf(-1, -64, Int.MIN_VALUE)) {
+            val j = BitSet()
+            val k = KBitSet()
+            val operations = listOf<Pair<() -> Unit, () -> Unit>>(
+                { j.get(index); Unit } to { k[index]; Unit },
+                { j.set(index) } to { k.set(index) },
+                { j.clear(index) } to { k.clear(index) },
+                { j.nextSetBit(index); Unit } to { k.nextSetBit(index); Unit }
+            )
+            for ((jdk, common) in operations) {
+                val expected = kotlin.test.assertFailsWith<IndexOutOfBoundsException> { jdk() }
+                val actual = kotlin.test.assertFailsWith<IndexOutOfBoundsException> { common() }
+                assertEquals(expected.message, actual.message)
+            }
+        }
+    }
+
+    @Test
+    fun publicBitwisePassageRejectsNegativeOrdinalLikeJdk() {
+        val passage = org.crosswire.jsword.passage.BitwisePassage(
+            org.crosswire.jsword.versification.system.Versifications.instance().getVersification("KJV")!!
+        )
+        val failure = kotlin.test.assertFailsWith<IndexOutOfBoundsException> {
+            passage.addVersifiedOrdinal(-1)
+        }
+        assertEquals("bitIndex < 0: -1", failure.message)
+        assertEquals(0, passage.countVerses())
+    }
+
     private fun assertSame(j: BitSet, k: KBitSet, ctx: String) {
         assertEquals(j.cardinality(), k.cardinality(), "$ctx cardinality")
         assertEquals(j.isEmpty, k.isEmpty, "$ctx isEmpty")

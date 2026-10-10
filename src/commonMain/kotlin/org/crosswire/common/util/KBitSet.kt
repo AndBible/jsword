@@ -8,20 +8,20 @@ class KBitSet(nbits: Int = 64) {
     private var words = LongArray(wordIndex(maxOf(nbits, 1) - 1) + 1)
 
     operator fun get(i: Int): Boolean {
-        require(i >= 0) { "bitIndex < 0: $i" }
+        if (i < 0) throw IndexOutOfBoundsException("bitIndex < 0: $i")
         val w = wordIndex(i)
         return w < words.size && (words[w] and (1L shl i)) != 0L
     }
 
     fun set(i: Int) {
-        require(i >= 0) { "bitIndex < 0: $i" }
+        if (i < 0) throw IndexOutOfBoundsException("bitIndex < 0: $i")
         val w = wordIndex(i)
         if (w >= words.size) words = words.copyOf(maxOf(2 * words.size, w + 1))
         words[w] = words[w] or (1L shl i)
     }
 
     fun clear(i: Int) {
-        require(i >= 0) { "bitIndex < 0: $i" }
+        if (i < 0) throw IndexOutOfBoundsException("bitIndex < 0: $i")
         val w = wordIndex(i)
         if (w < words.size) words[w] = words[w] and (1L shl i).inv()
     }
@@ -29,7 +29,7 @@ class KBitSet(nbits: Int = 64) {
     fun clear() = words.fill(0L)
 
     fun nextSetBit(from: Int): Int {
-        require(from >= 0) { "fromIndex < 0: $from" }
+        if (from < 0) throw IndexOutOfBoundsException("fromIndex < 0: $from")
         var w = wordIndex(from)
         if (w >= words.size) return -1
         var word = words[w] and (-1L shl from)

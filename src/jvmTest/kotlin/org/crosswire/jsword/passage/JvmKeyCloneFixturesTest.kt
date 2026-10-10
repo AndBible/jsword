@@ -33,6 +33,22 @@ class JvmKeyCloneFixturesTest {
         assertTrue(c.contains(gen1.start))
     }
 
+    @Test fun compressedDictionaryBackendCopiesRuntimeClassAndSharesMetadataWithoutOpeningModule() {
+        val metadata = SwordBookMetaData(
+            "[CloneZLD]\nDescription=Compressed clone fixture\nModDrv=zLD\n".toByteArray(), "CloneZLD"
+        )
+        val original = org.crosswire.jsword.book.sword.ZLDBackend(metadata)
+        val copy = original.clone() as org.crosswire.jsword.book.sword.ZLDBackend
+        assertSame<Class<*>>(original.javaClass, copy.javaClass)
+        assertNotSame(original, copy)
+        assertEquals(original.getName(), copy.getName())
+        assertSame(metadata, copy.bookMetaData)
+        original.bookMetaData.setProperty("Description", "original mutation")
+        assertEquals("original mutation", copy.bookMetaData.getProperty("Description"))
+        copy.bookMetaData.setProperty("Description", "copy mutation")
+        assertEquals("copy mutation", original.bookMetaData.getProperty("Description"))
+    }
+
     @Test fun rawDictionaryBackendCopiesRuntimeClassAndMetadataWithoutOpeningModule() {
         // Construction and clone do not call initState; reading/indexing would need module files.
         val metadata = SwordBookMetaData(
