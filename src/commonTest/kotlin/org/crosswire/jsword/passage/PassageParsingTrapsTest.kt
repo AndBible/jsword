@@ -1,22 +1,22 @@
 package org.crosswire.jsword.passage
 
-import org.crosswire.jsword.versification.system.Versifications
-import org.crosswire.jsword.internationalisation.DefaultLocaleProvider
+import org.crosswire.common.util.KLocale
+import org.crosswire.jsword.internationalisation.LocaleProvider
 import org.crosswire.jsword.internationalisation.LocaleProviderManager
-import java.util.Locale
+import org.crosswire.jsword.versification.system.Versifications
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-/** Literal fixtures captured on 452ea363 before the K3 Task 9 parser replacements. */
-class Task9PrechangeCaptureTest {
+/** Literals from task-9-prechange.xml on 452ea363, not the converted parser. */
+class PassageParsingTrapsTest {
     @Test
     fun preservesPrechangeWhitespaceReferences() {
-        val saved = Locale.getDefault()
         val provider = LocaleProviderManager.getLocaleProvider()
         try {
-            Locale.setDefault(Locale.ENGLISH)
-            LocaleProviderManager.setLocaleProvider(DefaultLocaleProvider())
+            LocaleProviderManager.setLocaleProvider(object : LocaleProvider {
+                override fun getUserLocale() = KLocale.ENGLISH
+            })
             val v11n = Versifications.instance().getVersification("KJV")
             for (space in listOf(' ', '\t', '\n', ' ', ' ', ' ', ' ')) {
                 assertEquals(if (space == '\t' || space == '\n') "John" else "John.3.16",
@@ -35,7 +35,6 @@ class Task9PrechangeCaptureTest {
                 assertEquals(listOf("John", "3", "16", "17"), AccuracyType.tokenize(input).toList())
             }
         } finally {
-            Locale.setDefault(saved)
             LocaleProviderManager.setLocaleProvider(provider)
         }
     }

@@ -17,15 +17,18 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.versification.system;
+package org.crosswire.jsword.versification.system
 
-import java.util.Iterator;
+import org.crosswire.jsword.versification.*
+import org.crosswire.jsword.versification.system.*
+import kotlin.test.*
+import org.crosswire.common.util.KLocale
+import org.crosswire.common.util.MissingResourceException
+import okio.IOException
 
-import org.crosswire.jsword.versification.Versification;
-import org.junit.Assert;
-import org.junit.Test;
 
-import junit.framework.TestCase;
+import org.crosswire.jsword.versification.Versification
+
 
 /**
  * JUnit test.
@@ -33,17 +36,17 @@ import junit.framework.TestCase;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class VersificationsTest extends TestCase {
+class VersificationsTest {
     @Test
-    public void testFluff() {
-        Versification v11n = null;
-        Iterator<String> iter = Versifications.instance().iterator();
+    fun testFluff() {
+        var v11n: Versification? = null
+        var iter: Iterator<String> = Versifications.instance().iterator()
         while (iter.hasNext()) {
-            String name = iter.next();
-            v11n = Versifications.instance().getVersification(name);
-            Assert.assertTrue("Predefined v11n is known", Versifications.instance().isDefined(name));
-            Assert.assertEquals("Name matches", name, v11n.getName());
-            Assert.assertTrue("v11n is not empty", v11n.maximumOrdinal() > 0);
+            var name: String = iter.next()
+            v11n = Versifications.instance().getVersification(name)!!
+            assertTrue(Versifications.instance().isDefined(name), "Predefined v11n is known")
+            assertEquals(name, v11n.name, "Name matches")
+            assertTrue(v11n.maximumOrdinal() > 0, "v11n is not empty")
         }
     }
 }

@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
+import org.crosswire.common.util.parseReferenceInt
+
 import org.crosswire.common.util.StringUtil
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.Versification
@@ -102,7 +104,7 @@ class OsisParser {
                 chapter = v11n!!.getLastChapter(book)
                 endOsisIDParts.add(chapter.toString())
             } else {
-                chapter = (endOsisIDParts[1]).toInt()
+                chapter = parseReferenceInt(endOsisIDParts[1])
             }
 
             // can asssume last verse if unspecified because this is the trailing osis Id
@@ -162,7 +164,7 @@ class OsisParser {
         if (endParts.size == 2 && endParts[1].length > 0) {
             subIdentifier = endParts[1]
         }
-        return Verse(v11n, b, (osisIDParts[1]).toInt(), (endParts[0]).toInt(), subIdentifier)
+        return Verse(v11n, b, parseReferenceInt(osisIDParts[1]), parseReferenceInt(endParts[0]), subIdentifier)
     }
 
     /**

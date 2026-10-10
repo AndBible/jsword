@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
+import org.crosswire.common.util.parseReferenceInt
+
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.JvmField
 
@@ -574,7 +576,7 @@ class Verse : VerseKey<Verse> {
         @Throws(NoSuchVerseException::class)
         protected fun parseInt(text: String?): Int {
             try {
-                return (shaper.unshape(text!!)).toInt()
+                return parseReferenceInt(shaper.unshape(text!!))
             } catch (ex: NumberFormatException) {
                 // TRANSLATOR: The chapter or verse number is actually not a number, but something else.
                 // {0} is a placeholder for what the user supplied.

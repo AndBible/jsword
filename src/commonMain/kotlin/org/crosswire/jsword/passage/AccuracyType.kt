@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
+import org.crosswire.common.util.parseReferenceInt
+
 import kotlin.jvm.JvmStatic
 
 import org.crosswire.common.icu.NumberShaper
@@ -526,7 +528,7 @@ enum class AccuracyType {
         @Throws(NoSuchVerseException::class)
         private fun parseInt(text: String): Int {
             try {
-                return (NumberShaper().unshape(text)).toInt()
+                return parseReferenceInt(NumberShaper().unshape(text))
             } catch (ex: NumberFormatException) {
                 // TRANSLATOR: The chapter or verse number is actually not a number, but something else.
                 // {0} is a placeholder for what the user supplied.

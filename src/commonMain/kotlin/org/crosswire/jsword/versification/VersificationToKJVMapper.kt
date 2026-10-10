@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.versification
 
+import org.crosswire.common.util.parseReferenceInt
+
 
 import org.crosswire.common.util.KeyValuePair
 import org.crosswire.common.util.LucidRuntimeException
@@ -449,7 +451,7 @@ open class VersificationToKJVMapper {
             // TODO(CJB): internationalize
             throw NoSuchKeyException(JSMsg.gettext("Unable to offset the given key [{0}]", offsetBasis))
         }
-        val offset = (versesKey.substring(1)).toInt()
+        val offset = parseReferenceInt(versesKey.substring(1))
 
         // Convert key immediately to the target versification system, namely the KJV, since it is the only
         // one supported. Convert by ref - since the whole purpose of this is to define equivalents.

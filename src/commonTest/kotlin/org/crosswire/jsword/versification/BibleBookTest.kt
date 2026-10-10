@@ -14,30 +14,32 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2005 - 2016
+ * © CrossWire Bible Society, 2012 - 2016
  *
  */
-package org.crosswire.jsword.versification;
+package org.crosswire.jsword.versification
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.crosswire.jsword.versification.*
+import org.crosswire.jsword.versification.system.*
+import kotlin.test.*
+import org.crosswire.common.util.KLocale
+import org.crosswire.common.util.MissingResourceException
+import okio.IOException
+
 
 /**
- * JUnit test of Versification classes.
+ * JUnit test.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-    BookNameTest.class,
-    BibleNamesTest.class,
-    BibleBookListTest.class,
-    VersificationTest.class,
-    FileVersificationMappingTest.class,
-    VersificationsMapperTest.class,
-    VersificationToKJVMapperTest.class
-})
-public class AllTests {
+class BibleBookTest {
+
+    @Test
+    fun testGetBookOSIS(){
+        assertEquals("Gen", BibleBook.GEN.osis)
+        assertEquals("Exod", BibleBook.EXOD.osis)
+        assertEquals("Rev", BibleBook.REV.osis)
+    }
+
 }

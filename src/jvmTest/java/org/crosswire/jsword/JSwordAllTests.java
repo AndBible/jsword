@@ -52,8 +52,6 @@ import org.junit.runners.Suite.SuiteClasses;
     org.crosswire.jsword.passage.VerseTest.class,
     org.crosswire.jsword.passage.VerseRangeTest.class,
     org.crosswire.jsword.passage.TreeKeyTest.class,
-    org.crosswire.jsword.versification.AllTests.class,
-    org.crosswire.jsword.versification.system.AllTests.class
 })
 public class JSwordAllTests {
 }
