@@ -105,19 +105,19 @@ class AccuracyTypeTest {
     @Test
     fun testTokenizeManualVerification(){
         // Manual verification that our fix solves the GitHub issue cases
-        
-        
+
+
         var test1: Array<String> = AccuracyType.tokenize("2Macc.10.38")
-        
+
         assertEquals(3, test1.size, "Should have 3 tokens")
         assertEquals("2Macc", test1[0], "First should be book name")
         var test2: Array<String> = AccuracyType.tokenize("1Esd.1.12")
-        
+
         assertEquals(3, test2.size, "Should have 3 tokens")
         assertEquals("1Esd", test2[0], "First should be book name")
         // Test the case from GitHub issue #3214
         var test3: Array<String> = AccuracyType.tokenize("Bible:Gen.4.26")
-        
+
         // This should still work but may have more tokens due to the prefix
     }
 }

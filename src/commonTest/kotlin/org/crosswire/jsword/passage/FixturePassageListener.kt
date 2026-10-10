@@ -23,7 +23,7 @@ import kotlin.test.*
 
 /**
  * To help us test the VerseCollectionListener interface.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */

@@ -29,7 +29,7 @@ import org.crosswire.jsword.versification.system.Versifications
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith

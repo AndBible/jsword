@@ -28,7 +28,7 @@ import org.crosswire.jsword.versification.system.Versifications
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
@@ -45,7 +45,7 @@ class PassageUtilTest {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see junit.framework.TestCase#setUp()
      */
     @BeforeTest
@@ -61,7 +61,7 @@ class PassageUtilTest {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see junit.framework.TestCase#tearDown()
      */
     @AfterTest

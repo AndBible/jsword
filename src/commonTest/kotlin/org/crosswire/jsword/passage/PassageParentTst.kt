@@ -31,7 +31,7 @@ import org.crosswire.jsword.versification.system.Versifications
  * This would be called TestPassage however then people might think it was a
  * separate TestCase, which it is not, needing to be inherited from to customize
  * the type of test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
@@ -77,8 +77,8 @@ abstract class PassageParentTst(private val ptype: PassageType, private val opti
      * performing tests aimed at writing after optimizing for reads is allowed
      * to be a bad performer (which includes using lots of memory) So the
      * problem is with the tests and not with the Passages.
-     * 
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @BeforeTest
     fun setUp(){
