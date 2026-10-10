@@ -25,7 +25,7 @@
  */
 package org.crosswire.jsword.internationalisation
 
-import java.util.Locale
+import org.crosswire.common.util.KLocale
 
 /**
  * Provides the correct Locale to use
@@ -39,5 +39,5 @@ interface LocaleProvider {
      *
      * @return the user locale
      */
-    fun getUserLocale(): Locale
+    fun getUserLocale(): KLocale
 }

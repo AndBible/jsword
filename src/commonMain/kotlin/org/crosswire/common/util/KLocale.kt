@@ -1,7 +1,5 @@
 package org.crosswire.common.util
 
-import kotlin.concurrent.Volatile
-
 /**
  * A locale value for common code (language, country, variant) (K2 F1). The string form matches
  * `java.util.Locale` except for a variant-only locale (ours "__POSIX", Java ""). There is no script
@@ -37,10 +35,9 @@ class KLocale(language: String, country: String = "", variant: String = "") {
     }
 }
 
-/** The locale JSword formats and translates for. A host without a JVM `LocaleProvider` (iOS) sets [provider]. */
+/** The locale JSword formats and translates for; routed through the platform until Task 11. */
 object KswordLocale {
-    @Volatile var provider: (() -> KLocale)? = null
-    fun current(): KLocale = provider?.invoke() ?: platformCurrentLocale()
+    fun current(): KLocale = platformCurrentLocale()
     /** The platform default locale (`Locale.getDefault()` on the JVM), used by bundle fallback and number formats. */
     fun default(): KLocale = platformDefaultLocale()
 }

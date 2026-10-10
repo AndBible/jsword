@@ -19,7 +19,7 @@
  */
 package org.crosswire.jsword.internationalisation
 
-import java.util.Locale
+import org.crosswire.common.util.KLocale
 
 /**
  * A factory for creating LocaleProvider objects, to support all the static instances of where JSword needs access to the the Locale.
@@ -49,7 +49,7 @@ class LocaleProviderManager private constructor() {
          * @return the locale
          */
         @JvmStatic
-        fun getLocale(): Locale {
+        fun getLocale(): KLocale {
             return localeProvider.getUserLocale()
         }
 

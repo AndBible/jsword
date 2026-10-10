@@ -1,19 +1,19 @@
 # K3 move set (spec 2026-10-10 §3.1). " #done" = cleaned, guarded by scripts/k3-common-ready.sh.
-org/crosswire/common/config/ConfigException.kt
-org/crosswire/common/icu/NumberShaper.kt
-org/crosswire/common/util/ItemIterator.kt
-org/crosswire/common/util/KeyValuePair.kt
-org/crosswire/common/util/LucidException.kt
-org/crosswire/common/util/LucidRuntimeException.kt
-org/crosswire/common/util/MsgBase.kt
-org/crosswire/common/util/StringUtil.kt
-org/crosswire/jsword/JSMsg.kt
-org/crosswire/jsword/JSOtherMsg.kt
-org/crosswire/jsword/book/CaseType.kt
-org/crosswire/jsword/book/ReferenceSystem.kt
-org/crosswire/jsword/internationalisation/DefaultLocaleProvider.kt
-org/crosswire/jsword/internationalisation/LocaleProvider.kt
-org/crosswire/jsword/internationalisation/LocaleProviderManager.kt
+org/crosswire/common/config/ConfigException.kt #done
+org/crosswire/common/icu/NumberShaper.kt #done
+org/crosswire/common/util/ItemIterator.kt #done
+org/crosswire/common/util/KeyValuePair.kt #done
+org/crosswire/common/util/LucidException.kt #done
+org/crosswire/common/util/LucidRuntimeException.kt #done
+org/crosswire/common/util/MsgBase.kt #done
+org/crosswire/common/util/StringUtil.kt #done
+org/crosswire/jsword/JSMsg.kt #done
+org/crosswire/jsword/JSOtherMsg.kt #done
+org/crosswire/jsword/book/CaseType.kt #done
+org/crosswire/jsword/book/ReferenceSystem.kt #done
+org/crosswire/jsword/internationalisation/DefaultLocaleProvider.kt #done
+org/crosswire/jsword/internationalisation/LocaleProvider.kt #done
+org/crosswire/jsword/internationalisation/LocaleProviderManager.kt #done
 org/crosswire/jsword/passage/AbstractKeyList.kt
 org/crosswire/jsword/passage/AbstractPassage.kt
 org/crosswire/jsword/passage/AccuracyType.kt

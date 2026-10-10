@@ -55,11 +55,18 @@ final class CorpusProbe {
             org.crosswire.jsword.internationalisation.LocaleProvider old =
                 org.crosswire.jsword.internationalisation.LocaleProviderManager.getLocaleProvider();
             org.crosswire.jsword.internationalisation.LocaleProviderManager.setLocaleProvider(
-                new org.crosswire.jsword.internationalisation.LocaleProvider() {
-                    public java.util.Locale getUserLocale() {
-                        return fi;
-                    }
-                });
+                (org.crosswire.jsword.internationalisation.LocaleProvider) java.lang.reflect.Proxy.newProxyInstance(
+                    org.crosswire.jsword.internationalisation.LocaleProvider.class.getClassLoader(),
+                    new Class<?>[] {org.crosswire.jsword.internationalisation.LocaleProvider.class},
+                    (proxy, method, arguments) -> {
+                        // The baseline returns Locale; K3 returns KLocale. Keep this shared probe source portable.
+                        Class<?> localeType = method.getReturnType();
+                        if (localeType == java.util.Locale.class) {
+                            return fi;
+                        }
+                        return localeType.getConstructor(String.class, String.class, String.class)
+                            .newInstance(fi.getLanguage(), fi.getCountry(), fi.getVariant());
+                    }));
             try {
                 return apply("passage.parseAll", args);
             } finally {

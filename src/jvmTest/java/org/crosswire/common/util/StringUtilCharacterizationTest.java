@@ -19,9 +19,6 @@
  */
 package org.crosswire.common.util;
 
-import java.io.IOException;
-import java.io.StringReader;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -228,6 +225,7 @@ public class StringUtilCharacterizationTest {
 
     @Test
     public void testIndexOfWhitespace() {
+        Assert.assertEquals("\n", StringUtil.NEWLINE);
         char[] str = "ab c\td".toCharArray();
         Assert.assertEquals(2, StringUtil.indexOfWhitespace(str, 0));
         Assert.assertEquals(2, StringUtil.indexOfWhitespace(str, 2));
@@ -239,10 +237,4 @@ public class StringUtilCharacterizationTest {
         Assert.assertEquals(1, StringUtil.indexOfWhitespace("a\u2003b".toCharArray(), 0));
     }
 
-    @Test
-    public void testReadAppendsNewlinePerLine() throws IOException {
-        Assert.assertEquals("a" + StringUtil.NEWLINE + "b" + StringUtil.NEWLINE, StringUtil.read(new StringReader("a\nb")));
-        Assert.assertEquals("", StringUtil.read(new StringReader("")));
-        Assert.assertEquals(System.getProperty("line.separator", "\r\n"), StringUtil.NEWLINE);
-    }
 }

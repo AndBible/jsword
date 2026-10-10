@@ -19,7 +19,7 @@
  */
 package org.crosswire.common.util
 
-import java.util.NoSuchElementException
+import kotlin.NoSuchElementException
 
 /**
  * An `ItemIterator` is an `Iterator` that iterates a

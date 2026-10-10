@@ -19,7 +19,8 @@
  */
 package org.crosswire.jsword.internationalisation
 
-import java.util.Locale
+import org.crosswire.common.util.KLocale
+import org.crosswire.common.util.KswordLocale
 
 /**
  * A default Locale provider simply returns Locale.getDefault()
@@ -32,8 +33,8 @@ open class DefaultLocaleProvider : LocaleProvider {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.internationalisation.LocaleProvider#getUserLocale()
      */
-    override fun getUserLocale(): Locale {
+    override fun getUserLocale(): KLocale {
         //Default locale are cached by the underlying java implementation, so no need to cache here.
-        return Locale.getDefault()
+        return KswordLocale.default()
     }
 }

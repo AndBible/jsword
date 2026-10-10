@@ -20,7 +20,7 @@ class MsgBaseParityTest {
 
     /** The old MsgBase.lookup, written out with the JDK: bundle by provider locale, MessageFormat by default locale. */
     private fun oldLookup(base: String, key: String, params: Array<Any?>): String {
-        val l = LocaleProviderManager.getLocale()
+        val l = LocaleProviderManager.getLocale().toJavaLocale()
         val raw = try { ResourceBundle.getBundle(base, l, CWClassLoader.instance(MsgBaseParityTest::class.java)).getString(key) } catch (e: Exception) { key }
         val text = if (params.isEmpty()) raw else MessageFormat.format(raw.replace("'", "''"), *params)
         return org.crosswire.common.icu.NumberShaper().shape(text)!!
@@ -46,7 +46,7 @@ class MsgBaseParityTest {
             arrayOf(null, -1), arrayOf(2.5, "s"))
         for (tag in listOf("en", "fi", "de", "fa", "zh_CN", "ar")) {
             val l = Locale(tag.substringBefore('_'), tag.substringAfter('_', ""))
-            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = l })
+            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = l.toKLocale() })
             Locale.setDefault(l)
             resetShapers()
             for (key in keys) for (p in params) {
@@ -58,7 +58,7 @@ class MsgBaseParityTest {
         }
         for (tag in listOf("en", "de", "fa")) {
             val l = Locale(tag)
-            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = l })
+            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = l.toKLocale() })
             Locale.setDefault(l)
             resetShapers()
             assertEquals(oldLookup("JSOtherMsg", "Book must not be null", arrayOf()), JSOtherMsg.lookupText("Book must not be null"))
@@ -78,7 +78,7 @@ class MsgBaseParityTest {
         val results = mutableListOf<List<String>>()
         for ((providerTag, defaultTag) in listOf("fa" to "en", "en" to "fa")) {
             val provider = Locale(providerTag)
-            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = provider })
+            LocaleProviderManager.setLocaleProvider(object : LocaleProvider { override fun getUserLocale() = provider.toKLocale() })
             Locale.setDefault(Locale(defaultTag))
             resetShapers()
             val actual = keys.map { JSMsg.gettext(it, *params) }

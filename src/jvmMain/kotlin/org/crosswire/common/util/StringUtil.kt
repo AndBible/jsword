@@ -22,10 +22,6 @@
  */
 package org.crosswire.common.util
 
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.Reader
-
 /**
  * A generic class of String utilities.
  *
@@ -42,7 +38,7 @@ private constructor() {
          * The newline character
          */
         @JvmField
-        val NEWLINE: String = System.getProperty("line.separator", "\r\n")
+        val NEWLINE: String = "\n"
 
         /**
          * Compare two strings for equality such that both can be null.
@@ -57,34 +53,6 @@ private constructor() {
                 return string2 == null
             }
             return string1 == string2
-        }
-
-        /**
-         * This method reads an InputStream <b>In its entirety</b>, and passes The
-         * text back as a string. If you are reading from a source that can block
-         * then be prepared for a long wait for this to return.
-         *
-         * @param in
-         *            The Stream to read from.
-         * @return A string containing all the text from the Stream.
-         * @throws IOException when an I/O error occurred
-         */
-        @JvmStatic
-        @Throws(IOException::class)
-        fun read(`in`: Reader): String {
-            val retcode = StringBuilder()
-            // Quiet Android from complaining about using the default BufferReader buffer size.
-            // The actual buffer size is undocumented. So this is a good idea any way.
-            val din = BufferedReader(`in`, 8192)
-
-            while (true) {
-                val line = din.readLine() ?: break
-
-                retcode.append(line)
-                retcode.append(NEWLINE)
-            }
-
-            return retcode.toString()
         }
 
         /**
@@ -104,14 +72,14 @@ private constructor() {
             for (i in 0 until variable.length) {
                 var c = variable[i]
 
-                if (lastlower && Character.isUpperCase(c) && !lastspace) {
+                if (lastlower && c.isUpperCase() && !lastspace) {
                     retcode.append(' ')
                 }
 
-                lastlower = !Character.isUpperCase(c)
+                lastlower = !c.isUpperCase()
 
                 if (lastspace) {
-                    c = Character.toUpperCase(c)
+                    c = c.uppercaseChar()
                 }
 
                 if (c == '_') {
@@ -148,7 +116,7 @@ private constructor() {
                 var j = 0
                 while (first.code == 0 && j < word.length) {
                     val c = word[j]
-                    if (Character.isLetter(c)) {
+                    if (c.isLetter()) {
                         first = c
                     }
                     j++
@@ -187,12 +155,12 @@ private constructor() {
         @JvmStatic
         fun split(str: String?): Array<String> {
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val cstr = str.toCharArray()
@@ -269,12 +237,12 @@ private constructor() {
         @JvmStatic
         fun split(str: String?, max: Int): Array<String> {
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val cstr = str.toCharArray()
@@ -362,12 +330,12 @@ private constructor() {
         @JvmStatic
         fun split(str: String?, separatorChar: Char): Array<String> {
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             // Determine the size of the array
@@ -450,12 +418,12 @@ private constructor() {
         @JvmStatic
         fun split(str: String?, separatorChar: Char, max: Int): Array<String> {
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             // Determine the size of the array
@@ -595,12 +563,12 @@ private constructor() {
             }
 
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val cstr = str.toCharArray()
@@ -688,12 +656,12 @@ private constructor() {
         @JvmStatic
         fun splitAll(str: String?, separatorChar: Char): Array<String> {
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             // Determine the size of the array
@@ -764,12 +732,12 @@ private constructor() {
         @JvmStatic
         fun splitAll(str: String?, separatorChar: Char, max: Int): Array<String> {
             if (str == null) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             val len = str.length
             if (len == 0) {
-                return EMPTY_STRING_ARRAY.clone()
+                return EMPTY_STRING_ARRAY.copyOf()
             }
 
             // Determine the size of the array
@@ -911,7 +879,7 @@ private constructor() {
         fun indexOfWhitespace(str: CharArray, offset: Int): Int {
             val strlen = str.size
             for (i in offset until strlen) {
-                if (Character.isWhitespace(str[i])) {
+                if (str[i].isJavaWhitespace()) {
                     return i
                 }
             }

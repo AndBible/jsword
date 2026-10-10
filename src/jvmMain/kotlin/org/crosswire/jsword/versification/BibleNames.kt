@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.versification
 
+import org.crosswire.common.util.toJavaLocale
+
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.Locale
@@ -176,7 +178,7 @@ private constructor() {
      */
     private fun getLocalizedBibleNames(): NameList {
         // Get the current Locale
-        return getBibleNamesForLocale(LocaleProviderManager.getLocale())
+        return getBibleNamesForLocale(LocaleProviderManager.getLocale().toJavaLocale())
     }
 
     /**

@@ -52,10 +52,4 @@ open class LucidRuntimeException : RuntimeException {
      */
     constructor(msg: String?, cause: Throwable?) : super(msg, cause)
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3906091143962965817L
-    }
 }

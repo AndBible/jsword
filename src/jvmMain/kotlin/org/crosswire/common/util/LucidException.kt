@@ -81,10 +81,4 @@ open class LucidException : Exception {
             return message + reason + cause.message
         }
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3257846580311963191L
-    }
 }

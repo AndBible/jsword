@@ -184,3 +184,17 @@ org.crosswire.common.util.CWProject + M public final getReadableFrontendProjectD
 org.crosswire.common.util.CWProject + M public final getWritableFrontendProjectDirPath(): okio.Path throws [] # K2 F4: new okio Path accessor on CWProject (additive).
 org.crosswire.common.util.CWProject + M public final getWritableProjectDirPath(): okio.Path throws [] # K2 F4: new okio Path accessor on CWProject (additive).
 org.crosswire.common.util.CWProject + M public final getWritableProjectSubdirPath(java.lang.String,boolean): okio.Path throws [java.io.IOException] # K2 F4: new okio Path accessor on CWProject (additive).
+org.crosswire.common.config.ConfigException - F private-or-package static final serialVersionUID: long = 3258135764670689593 # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.icu.NumberShaper + C class public extends java.lang.Object implements [] # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.icu.NumberShaper - C class public extends java.lang.Object implements [java.io.Serializable] # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.icu.NumberShaper - F private-or-package nineShape: char # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.icu.NumberShaper - F private-or-package static final serialVersionUID: long = -8408052851113601251 # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.util.LucidException - F private-or-package static final serialVersionUID: long = 3257846580311963191 # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.util.LucidRuntimeException - F private-or-package static final serialVersionUID: long = 3906091143962965817 # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
+org.crosswire.common.util.StringUtil - M public static read(java.io.Reader): java.lang.String throws [java.io.IOException] # K3 D3: unused production Reader API removed; only obsolete read-specific tests called it.
+org.crosswire.jsword.internationalisation.DefaultLocaleProvider + M public getUserLocale(): org.crosswire.common.util.KLocale throws [] # K3 D3: LocaleProvider uses the common KLocale value.
+org.crosswire.jsword.internationalisation.DefaultLocaleProvider - M public getUserLocale(): java.util.Locale throws [] # K3 D3: LocaleProvider uses the common KLocale value.
+org.crosswire.jsword.internationalisation.LocaleProvider + M public abstract getUserLocale(): org.crosswire.common.util.KLocale throws [] # K3 D3: LocaleProvider uses the common KLocale value.
+org.crosswire.jsword.internationalisation.LocaleProvider - M public abstract getUserLocale(): java.util.Locale throws [] # K3 D3: LocaleProvider uses the common KLocale value.
+org.crosswire.jsword.internationalisation.LocaleProviderManager + M public static getLocale(): org.crosswire.common.util.KLocale throws [] # K3 D3: LocaleProvider uses the common KLocale value.
+org.crosswire.jsword.internationalisation.LocaleProviderManager - M public static getLocale(): java.util.Locale throws [] # K3 D3: LocaleProvider uses the common KLocale value.

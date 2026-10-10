@@ -19,8 +19,6 @@
  */
 package org.crosswire.common.util
 
-import java.util.MissingResourceException
-
 import org.crosswire.common.icu.NumberShaper
 
 /**
@@ -63,19 +61,19 @@ open class MsgBase protected constructor(private val bundleName: String) {
         // A missing bundle (e.g. FTPMsg, whose properties sit in a package directory) degrades to the key, as before.
         val value = try { localisedResources().getString(key) } catch (ex: MissingResourceException) { null }
         if (value == null) {
-            log.error("Missing resource: Locale={} name={} package={}", KswordLocale.current(), key, javaClass.name)
+            log.error("Missing resource: Locale={} name={} package={}", KswordLocale.current(), key, this::class.qualifiedName ?: "")
             return key
         }
         return value
     }
 
     private fun localisedResources(): KBundle {
-        val name = bundleName.ifEmpty { ClassUtil.getShortClassName(javaClass.name) }
+        val name = bundleName.ifEmpty { this::class.simpleName ?: "" }
         val locale = KswordLocale.current()
         // if for some reason there is no bundle, then we can only do our best, which is to return the English Locale.
         return ResourceBundles.get(name, locale) ?: ResourceBundles.get(name, KLocale.ENGLISH) ?: run {
-            log.error("Missing resources: Locale={} class={}", locale, javaClass.name)
-            throw MissingResourceException("Unable to find the language resources.", javaClass.name, name)
+            log.error("Missing resources: Locale={} class={}", locale, this::class.qualifiedName ?: "")
+            throw MissingResourceException("Unable to find the language resources.", this::class.qualifiedName ?: "", name)
         }
     }
 

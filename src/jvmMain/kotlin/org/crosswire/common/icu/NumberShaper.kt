@@ -25,8 +25,6 @@
  */
 package org.crosswire.common.icu
 
-import java.io.Serializable
-
 import org.crosswire.common.util.KswordLocale
 
 /**
@@ -57,7 +55,7 @@ open class NumberShaper
 /**
  * Create a shaper that is appropriate for the user's locale.
  */
-() : Serializable {
+() {
     /**
      * Determine whether shaping is possible.
      *
@@ -296,10 +294,4 @@ open class NumberShaper
      */
     private var nineShape: Char = '\u0000'
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -8408052851113601251L
-    }
 }

@@ -19,8 +19,11 @@
  */
 package org.crosswire.jsword.book
 
+import org.crosswire.common.util.lowercase
+import org.crosswire.common.util.uppercase
+
 import org.crosswire.common.util.jswordAssert
-import org.crosswire.jsword.internationalisation.LocaleProviderManager
+import org.crosswire.common.util.KswordLocale as CurrentLanguage
 
 /**
  * Types of Sentence Case.
@@ -32,7 +35,7 @@ import org.crosswire.jsword.internationalisation.LocaleProviderManager
 enum class CaseType {
     LOWER {
         override fun setCase(word: String): String {
-            return word.lowercase(LocaleProviderManager.getLocale())
+            return word.lowercase(CurrentLanguage.current())
         }
     },
 
@@ -63,7 +66,7 @@ enum class CaseType {
 
     UPPER {
         override fun setCase(word: String): String {
-            return word.uppercase(LocaleProviderManager.getLocale())
+            return word.uppercase(CurrentLanguage.current())
         }
     };
 
@@ -98,7 +101,7 @@ enum class CaseType {
                 return ""
             }
 
-            return Character.toUpperCase(word[0]).toString() + word.substring(1).lowercase(LocaleProviderManager.getLocale())
+            return word[0].uppercaseChar().toString() + word.substring(1).lowercase(CurrentLanguage.current())
         }
 
         /**
@@ -127,13 +130,13 @@ enum class CaseType {
             }
 
             // Lower case?
-            if (word == word.lowercase(LocaleProviderManager.getLocale())) {
+            if (word == word.lowercase(CurrentLanguage.current())) {
                 return LOWER
             }
 
             // Upper case?
             // A string length of 1 is no good ('I' or 'A' is sentence case)
-            if (word == word.uppercase(LocaleProviderManager.getLocale()) && word.length != 1) {
+            if (word == word.uppercase(CurrentLanguage.current()) && word.length != 1) {
                 return UPPER
             }
 
