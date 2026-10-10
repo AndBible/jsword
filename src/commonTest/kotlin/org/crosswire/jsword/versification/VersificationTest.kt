@@ -63,7 +63,11 @@ class VersificationTest {
     private fun forEachVersification(block: () -> Unit) {
         for (name in listOf(SystemCalvin.V11N_NAME, SystemCatholic.V11N_NAME, SystemCatholic2.V11N_NAME, SystemDarbyFR.V11N_NAME, SystemGerman.V11N_NAME, SystemKJV.V11N_NAME, SystemKJVA.V11N_NAME, SystemLeningrad.V11N_NAME, SystemLuther.V11N_NAME, SystemMT.V11N_NAME, SystemNRSV.V11N_NAME, SystemNRSVA.V11N_NAME, SystemSegond.V11N_NAME, SystemSynodal.V11N_NAME, SystemSynodalProt.V11N_NAME, SystemVulg.V11N_NAME)) {
             v11n = Versifications.instance().getVersification(name)!!
-            block()
+            try {
+                block()
+            } catch (error: AssertionError) {
+                throw AssertionError("Versification $name: ${error.message}", error)
+            }
         }
     }
     private var storedCase: CaseType? = null
