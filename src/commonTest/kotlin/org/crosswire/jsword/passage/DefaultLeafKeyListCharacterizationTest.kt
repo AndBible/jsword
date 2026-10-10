@@ -17,33 +17,32 @@
  * \u00A9 CrossWire Bible Society, 2026
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.*
 
 /**
  * Characterization of {@link DefaultLeafKeyList} with a null name. Java returned the null
- * from the getters; the Kotlin conversion declares them non-null and returns "" instead
+ * from the getters the Kotlin conversion declares them non-null and returns "" instead
  * (documented deviation) so that iterating such a key never throws.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class DefaultLeafKeyListCharacterizationTest {
+class DefaultLeafKeyListCharacterizationTest {
     @Test
-    public void iteratingListWithNullNamedLeafDoesNotThrow() {
-        DefaultKeyList list = new DefaultKeyList(null, "list");
-        DefaultLeafKeyList leaf = new DefaultLeafKeyList((String) null);
-        list.addAll(leaf);
-        int seen = 0;
-        for (Key k : list) {
-            Assert.assertSame(leaf, k);
-            Assert.assertEquals("", k.getName());
-            Assert.assertEquals("", k.getOsisRef());
-            Assert.assertEquals("", k.getOsisID());
-            Assert.assertEquals("", k.getRootName());
-            seen++;
+    fun iteratingListWithNullNamedLeafDoesNotThrow() {
+        var list: DefaultKeyList = DefaultKeyList(null, "list")
+        var leaf: DefaultLeafKeyList = DefaultLeafKeyList((null as String?))
+        list.addAll(leaf)
+        var seen: Int = 0
+        for (k in list) {
+            assertSame(leaf, k)
+            assertEquals("", k.getName())
+            assertEquals("", k.getOsisRef())
+            assertEquals("", k.getOsisID())
+            assertEquals("", k.getRootName())
+            seen++
         }
-        Assert.assertEquals(1, seen);
+        assertEquals(1, seen)
     }
 }

@@ -34,58 +34,7 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class PassageUtilTest {
-    /**
-     * How we create Passages
-     */
-    private static PassageKeyFactory keyf = PassageKeyFactory.instance();
-    /** Control the output of names */
-    private CaseType storedCase;
-    private boolean fullName;
-    private boolean persist;
-    private Versification v11n;
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see junit.framework.TestCase#setUp()
-     */
-    @Before
-    public void setUp() throws Exception {
-        storedCase = BookName.getDefaultCase();
-        BookName.setCase(CaseType.SENTENCE);
-        fullName = BookName.isFullBookName();
-        BookName.setFullBookName(false);
-        persist = PassageUtil.isPersistentNaming();
-
-        // AV11N(DMS): Update test to test all V11Ns
-        v11n = Versifications.instance().getVersification("KJV");
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see junit.framework.TestCase#tearDown()
-     */
-    @After
-    public void tearDown() throws Exception {
-        BookName.setCase(storedCase);
-        BookName.setFullBookName(fullName);
-        PassageUtil.setPersistentNaming(persist);
-    }
-
-    @Test
-    public void testOther() {
-        // Need to add:
-        /*
-         * log("PassageUtil.[s|g]etBlurRestriction()");
-         * log("PassageUtil.isValidBlurRestriction()");
-         * log("PassageUtil.getBlurRestrictions()");
-         * log("PassageUtil.isValidCase()"); log("PassageUtil.getCases()");
-         * log("PassageUtil.isValidAccuracy()"); Should there be getAccuracies()
-         */
-    }
-
+public class PassageBinaryJvmTest {
     @Test
     public void testBinary() {
         byte[] buffer;
@@ -314,32 +263,4 @@ public class PassageUtilTest {
         }
     }
 
-    @Test
-    public void testBinaryRepresentation() throws Exception {
-        Passage genC1V135 = keyf.getKey(v11n, "Gen 1:1, Gen 1:3, Gen 1:5");
-        Passage exo2aTo3b = keyf.getKey(v11n, "Exo 2:1-10, Exo 3:1-11");
-        Passage gentoRev = keyf.getKey(v11n, "Gen 1:1-Rev 22:21");
-        Passage hard = (Passage) keyf.createEmptyKeyList(v11n);
-        Passage empty = (Passage) keyf.createEmptyKeyList(v11n);
-
-        for (int i = 1; i < v11n.maximumOrdinal(); i += 10) {
-            hard.add(v11n.decodeOrdinal(i));
-        }
-
-        byte[] temp = PassageKeyFactory.toBinaryRepresentation(genC1V135);
-        Passage genC1V135Copy = PassageKeyFactory.fromBinaryRepresentation(temp);
-        Assert.assertEquals(genC1V135Copy, genC1V135);
-        temp = PassageKeyFactory.toBinaryRepresentation(exo2aTo3b);
-        Passage exo2aTo3bCopy = PassageKeyFactory.fromBinaryRepresentation(temp);
-        Assert.assertEquals(exo2aTo3bCopy, exo2aTo3b);
-        temp = PassageKeyFactory.toBinaryRepresentation(gentoRev);
-        Passage genToRevCopy = PassageKeyFactory.fromBinaryRepresentation(temp);
-        Assert.assertEquals(genToRevCopy, gentoRev);
-        temp = PassageKeyFactory.toBinaryRepresentation(hard);
-        Passage hardCopy = PassageKeyFactory.fromBinaryRepresentation(temp);
-        Assert.assertEquals(hardCopy, hard);
-        temp = PassageKeyFactory.toBinaryRepresentation(empty);
-        Passage emptyCopy = PassageKeyFactory.fromBinaryRepresentation(temp);
-        Assert.assertEquals(emptyCopy, empty);
-    }
 }

@@ -17,12 +17,12 @@
  * \u00A9 CrossWire Bible Society, 2026
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
 
-import org.crosswire.jsword.versification.Versification;
-import org.crosswire.jsword.versification.system.Versifications;
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.*
+
+import org.crosswire.jsword.versification.Versification
+import org.crosswire.jsword.versification.system.Versifications
 
 /**
  * Characterization of reference parsing in AbstractPassage.addVerses:
@@ -32,27 +32,27 @@ import org.junit.Test;
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class PassageKeyFactoryCharacterizationTest {
-    private final Versification v11n = Versifications.instance().getVersification("KJV");
+class PassageKeyFactoryCharacterizationTest {
+    private var v11n: Versification = Versifications.instance().getVersification("KJV")!!
 
     @Test
-    public void controlCharsAndSpacesAfterSemicolonAreTrimmed() throws Exception {
-        Passage p = PassageKeyFactory.instance().getKey(v11n, "Gen 1:1;\u0001 Gen 1:2");
-        Assert.assertEquals(2, p.countVerses());
+    fun controlCharsAndSpacesAfterSemicolonAreTrimmed(){
+        var p: Passage = PassageKeyFactory.instance().getKey(v11n, "Gen 1:1;\u0001 Gen 1:2")
+        assertEquals(2, p.countVerses())
     }
 
     @Test
-    public void nbspAfterSemicolonStillParsesInSingleAttemptParser() throws Exception {
+    fun nbspAfterSemicolonStillParsesInSingleAttemptParser(){
         // PassageKeyFactory.getKey would retry with a normalized reference and hide differences, so the
         // single-attempt parser (AbstractPassage.addVerses, via the RangedPassage constructor) is used directly.
         // U+00A0 is not trimmed by Java's String.trim(); the reference parser itself copes with it.
-        Passage p = new RangedPassage(v11n, "Gen 1:1;\u00A0Gen 1:2", null);
-        Assert.assertEquals(2, p.countVerses());
+        var p: Passage = RangedPassage(v11n, "Gen 1:1;\u00A0Gen 1:2", null)
+        assertEquals(2, p.countVerses())
     }
 
     @Test
-    public void controlCharsAreTrimmedInSingleAttemptParser() throws Exception {
-        Passage p = new RangedPassage(v11n, "Gen 1:1;\u0001 Gen 1:2", null);
-        Assert.assertEquals(2, p.countVerses());
+    fun controlCharsAreTrimmedInSingleAttemptParser(){
+        var p: Passage = RangedPassage(v11n, "Gen 1:1;\u0001 Gen 1:2", null)
+        assertEquals(2, p.countVerses())
     }
 }

@@ -17,7 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
+
+import kotlin.test.*
 
 /**
  * JUnit Test.
@@ -25,8 +27,18 @@ package org.crosswire.jsword.passage;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class PassageMixTest extends PassageParentTst {
-    public PassageMixTest() {
-        super(PassageType.MIX, false);
+class PassageConstantsTest {
+
+    @Test
+    fun testAllowedDelims() {
+        // Check that we're not re-using delimiters
+        for (i in AccuracyType.VERSE_ALLOWED_DELIMS.indices) {
+            assertEquals(-1, AbstractPassage.REF_ALLOWED_DELIMS.indexOf(AccuracyType.VERSE_ALLOWED_DELIMS[i]))
+            assertNotEquals(VerseRange.RANGE_OSIS_DELIM, AccuracyType.VERSE_ALLOWED_DELIMS[i])
+        }
+
+        for (i in AbstractPassage.REF_ALLOWED_DELIMS.indices) {
+            assertNotEquals(VerseRange.RANGE_OSIS_DELIM, AbstractPassage.REF_ALLOWED_DELIMS[i])
+        }
     }
 }

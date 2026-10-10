@@ -36,7 +36,22 @@ import org.junit.runners.Suite.SuiteClasses;
     org.crosswire.jsword.book.filter.thml.AllTests.class,
     org.crosswire.jsword.book.sword.AllTests.class,
     org.crosswire.jsword.index.lucene.analysis.AllTests.class,
-    org.crosswire.jsword.passage.AllTests.class,
+    // Common passage tests are also discovered directly; keep the root suite's coverage.
+    org.crosswire.jsword.passage.AccuracyTypeTest.class,
+    org.crosswire.jsword.passage.PassageConstantsTest.class,
+    org.crosswire.jsword.passage.PassageMixTest.class,
+    org.crosswire.jsword.passage.PassageSizeTest.class,
+    org.crosswire.jsword.passage.PassageSpeedOptTest.class,
+    org.crosswire.jsword.passage.PassageSpeedTest.class,
+    org.crosswire.jsword.passage.PassageTallyTest.class,
+    org.crosswire.jsword.passage.PassageTally2Test.class,
+    org.crosswire.jsword.passage.PassageUtilTest.class,
+    org.crosswire.jsword.passage.PassageBinaryJvmTest.class,
+    org.crosswire.jsword.passage.PassageWriteSpeedTest.class,
+    org.crosswire.jsword.passage.OsisParserTest.class,
+    org.crosswire.jsword.passage.VerseTest.class,
+    org.crosswire.jsword.passage.VerseRangeTest.class,
+    org.crosswire.jsword.passage.TreeKeyTest.class,
     org.crosswire.jsword.versification.AllTests.class,
     org.crosswire.jsword.versification.system.AllTests.class
 })

@@ -17,7 +17,9 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.passage;
+package org.crosswire.jsword.passage
+
+import kotlin.test.*
 
 /**
  * To help us test the VerseCollectionListener interface.
@@ -25,39 +27,36 @@ package org.crosswire.jsword.passage;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-class FixturePassageListener implements PassageListener {
-    private int adds;
-    private int removals;
-    private int changes;
+class FixturePassageListener : PassageListener {
+    private var adds = 0
+    private var removals: Int = 0
+    private var changes: Int = 0
 
-    FixturePassageListener() {
+    override fun versesAdded(ev: PassageEvent) {
+        adds++
     }
 
-    public void versesAdded(PassageEvent ev) {
-        adds++;
+    override fun versesRemoved(ev: PassageEvent) {
+        removals++
     }
 
-    public void versesRemoved(PassageEvent ev) {
-        removals++;
+    override fun versesChanged(ev: PassageEvent) {
+        changes++
     }
 
-    public void versesChanged(PassageEvent ev) {
-        changes++;
-    }
-
-    public boolean check(int addcheck, int removalcheck, int changecheck) throws Exception {
+    fun check(addcheck: Int, removalcheck: Int, changecheck: Int): Boolean{
         if (this.adds != addcheck) {
-            throw new Exception("ADD: should have: " + addcheck + ", noted " + this.adds);
+            throw Exception("ADD: should have: " + addcheck + ", noted " + this.adds)
         }
 
         if (this.removals != removalcheck) {
-            throw new Exception("REMOVALS: should have: " + removalcheck + ", noted " + this.removals);
+            throw Exception("REMOVALS: should have: " + removalcheck + ", noted " + this.removals)
         }
 
         if (this.changes != changecheck) {
-            throw new Exception("CHANGES: should have: " + changecheck + ", noted " + this.changes);
+            throw Exception("CHANGES: should have: " + changecheck + ", noted " + this.changes)
         }
 
-        return true;
+        return true
     }
 }

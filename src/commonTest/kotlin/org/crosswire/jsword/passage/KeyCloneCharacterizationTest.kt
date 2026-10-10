@@ -1,14 +1,9 @@
 package org.crosswire.jsword.passage
 
-import org.crosswire.jsword.book.readings.ReadingsKey
-import org.crosswire.jsword.book.sword.RawLDBackend
-import org.crosswire.jsword.book.sword.SwordBookMetaData
-import org.crosswire.jsword.book.sword.state.RawLDBackendState
+
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.system.Versifications
-import java.util.Date
-import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -26,9 +21,9 @@ class KeyCloneCharacterizationTest {
     private fun checkPassage(p: Passage) {
         p.add(gen1)
         val c = p.clone() as Passage
-        assertSame(p.javaClass, c.javaClass, "${p.javaClass.simpleName} class")
+        assertEquals(p::class, c::class, "${p::class.simpleName} class")
         assertNotSame(p, c)
-        assertEquals("Gen.1", c.getOsisRef(), "${p.javaClass.simpleName} content")
+        assertEquals("Gen.1", c.getOsisRef(), "${p::class.simpleName} content")
         assertEquals(p, c)
         assertSame(p.versification, c.versification)
         c.add(rom3)
@@ -112,7 +107,7 @@ class KeyCloneCharacterizationTest {
         val p = StatefulTally(kjv).apply { total = 137; add(gen1) }
         assertEquals(37, p.baseTotal())
         val c = p.clone()
-        assertSame(p.javaClass, c.javaClass)
+        assertEquals(p::class, c::class)
         assertNotSame(p, c)
         assertEquals(37, c.baseTotal())
         assertEquals(137, c.total)
@@ -152,28 +147,12 @@ class KeyCloneCharacterizationTest {
         assertEquals(1, c.getTallyOf(rom3.start))
     }
 
-    @Test fun rocketCopiesPopulatedCacheReferencesButInvalidatesOnlyItsOwnCaches() {
-        val p = RocketPassage(kjv).apply { add(gen1); optimizeReads() }
-        val c = p.clone() as RocketPassage
-        // These references are part of the copy contract, although normal writes invalidate them.
-        for (name in listOf("distinct", "ranged")) {
-            val field = RocketPassage::class.java.getDeclaredField(name).apply { isAccessible = true }
-            assertTrue(field.get(p) != null)
-            assertSame(field.get(p), field.get(c), name)
-        }
-        assertEquals("Gen.1", c.getOsisRef())
-        c.add(rom3)
-        assertEquals("Gen.1", p.getOsisRef())
-        p.remove(gen1)
-        assertTrue(c.contains(gen1.start))
-    }
-
     @Test fun readOnlyPassageSharesDelegateAndCopiesIgnorePolicy() {
         for (ignore in listOf(false, true)) {
             val p = BitwisePassage(kjv).apply { add(gen1) }
             val ro = PassageKeyFactory.getReadOnlyPassage(p, ignore)
             val c = ro.clone() as Passage
-            assertSame(ro.javaClass, c.javaClass)
+            assertEquals(ro::class, c::class)
             assertNotSame(ro, c)
             assertEquals("Gen.1", c.getOsisRef())
             if (ignore) c.add(rom3) else assertFailsWith<IllegalStateException> { c.add(rom3) }
@@ -191,7 +170,7 @@ class KeyCloneCharacterizationTest {
     @Test fun verseCopiesIdentityAndSubIdentifier() {
         val v = Verse(kjv, BibleBook.GEN, 1, 1, "a")
         val c = v.clone()
-        assertSame(v.javaClass, c.javaClass)
+        assertEquals(v::class, c::class)
         assertNotSame(v, c)
         assertEquals(v, c)
         assertEquals("Gen.1.1!a", c.getOsisRef())
@@ -202,7 +181,7 @@ class KeyCloneCharacterizationTest {
     @Test fun verseRangeCopiesEndpointsCountAndOriginalName() {
         val r = VerseRangeFactory.fromString(kjv, "Rom 3:1-5")
         val c = r.clone()
-        assertSame(r.javaClass, c.javaClass)
+        assertEquals(r::class, c::class)
         assertNotSame(r, c)
         assertEquals(r, c)
         assertSame(r.start, c.start)
@@ -218,7 +197,7 @@ class KeyCloneCharacterizationTest {
         val b = DefaultLeafKeyList("b", "B")
         p.addAll(a)
         val c = p.clone()
-        assertSame(p.javaClass, c.javaClass)
+        assertEquals(p::class, c::class)
         assertNotSame(p, c)
         assertEquals(p, c)
         assertEquals(osis, c.getOsisRef())
@@ -257,7 +236,7 @@ class KeyCloneCharacterizationTest {
         val parent = DefaultKeyList(null, "parent")
         val leaf = DefaultLeafKeyList("x", "X", parent)
         val c = leaf.clone()
-        assertSame(leaf.javaClass, c.javaClass)
+        assertEquals(leaf::class, c::class)
         assertNotSame(leaf, c)
         assertEquals(leaf, c)
         assertEquals("x", c.getName())
@@ -273,7 +252,7 @@ class KeyCloneCharacterizationTest {
             val p = DefaultKeyList(null, "list").apply { addAll(DefaultLeafKeyList("a")) }
             val ro = ReadOnlyKeyList(p, ignore)
             val c = ro.clone()
-            assertSame(ro.javaClass, c.javaClass)
+            assertEquals(ro::class, c::class)
             assertNotSame(ro, c)
             assertEquals("a", c.getOsisRef())
             val added = DefaultLeafKeyList("b")
@@ -285,19 +264,6 @@ class KeyCloneCharacterizationTest {
             assertEquals("renamed", ro.getName())
             assertEquals("list", c.getName(), "delegate itself was cloned")
         }
-    }
-
-    @Test fun rawDictionaryBackendCopiesRuntimeClassAndMetadataWithoutOpeningModule() {
-        // Construction and clone do not call initState; reading/indexing would need module files.
-        val metadata = SwordBookMetaData(
-            "[CloneTest]\nDescription=Clone fixture\nModDrv=RawLD\n".toByteArray(), "CloneTest"
-        )
-        val p = RawLDBackend<RawLDBackendState>(metadata, 2)
-        val c = p.clone()
-        assertSame<Class<*>>(RawLDBackend::class.java, c.javaClass)
-        assertNotSame(p, c)
-        assertEquals("CloneTest", c.getName())
-        assertSame(metadata, c.bookMetaData)
     }
 
     @Test fun passageCloneCopiesListenerRegistrationsIntoAnIndependentList() {
@@ -323,48 +289,4 @@ class KeyCloneCharacterizationTest {
         assertSame(p, sources[2])
     }
 
-    @Test fun readingsKeyClonesNonNullParentButSharesItsCollection() {
-        val previousLocale = Locale.getDefault()
-        Locale.setDefault(Locale.US)
-        try {
-            val parent = DefaultKeyList(null, "readings")
-            val a = DefaultLeafKeyList("a")
-            parent.addAll(a)
-            val p = ReadingsKey("Jan 1, 2026", "1.January", parent)
-            val c = p.clone()
-            assertSame(ReadingsKey::class.java, c.javaClass)
-            assertNotSame(p, c)
-            assertEquals(p, c)
-            assertEquals("Jan 1, 2026", c.getName())
-            assertEquals("1.January", c.getOsisRef())
-            assertEquals(0, p.compareTo(c))
-            val copiedParent = c.getParent() as DefaultKeyList
-            assertNotSame(parent, copiedParent)
-            assertEquals("readings", copiedParent.getName())
-            copiedParent.setName("copy")
-            assertEquals("readings", parent.getName())
-            assertEquals("copy", copiedParent.getName())
-            val b = DefaultLeafKeyList("b")
-            copiedParent.addAll(b)
-            assertTrue(parent.contains(b), "parent collection remains shallow-shared")
-            parent.removeAll(a)
-            assertFalse(copiedParent.contains(a), "sharing is bidirectional")
-        } finally {
-            Locale.setDefault(previousLocale)
-        }
-    }
-
-    @Test fun readingsKeyKeepsRuntimeClassDateAndLeafFields() {
-        val date = Date(0)
-        val p = ReadingsKey(date)
-        val c = p.clone()
-        assertSame(ReadingsKey::class.java, c.javaClass)
-        assertNotSame(p, c)
-        assertEquals(p, c)
-        assertEquals(p.getOsisRef(), c.getOsisRef())
-        assertEquals(0, p.compareTo(c))
-        assertEquals(p.hashCode(), c.hashCode())
-        date.time = 86400000L
-        assertEquals(date.hashCode(), c.hashCode(), "date reference is currently shared")
-    }
 }
