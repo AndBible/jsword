@@ -1,5 +1,7 @@
 package org.crosswire.common.util
 
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
+
 /**
  * A locale value for common code (language, country, variant) (K2 F1). The string form matches
  * `java.util.Locale` except for a variant-only locale (ours "__POSIX", Java ""). There is no script
@@ -35,12 +37,11 @@ class KLocale(language: String, country: String = "", variant: String = "") {
     }
 }
 
-/** The locale JSword formats and translates for; routed through the platform until Task 11. */
+/** The locale JSword formats and translates for, supplied by the host's locale provider. */
 object KswordLocale {
-    fun current(): KLocale = platformCurrentLocale()
+    fun current(): KLocale = LocaleProviderManager.getLocale()
     /** The platform default locale (`Locale.getDefault()` on the JVM), used by bundle fallback and number formats. */
     fun default(): KLocale = platformDefaultLocale()
 }
 
-internal expect fun platformCurrentLocale(): KLocale
 internal expect fun platformDefaultLocale(): KLocale

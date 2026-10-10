@@ -193,14 +193,7 @@ stated). Phase-1 rules (§1-§10) still apply.
 
 ## 23. Java serialization
 - Rule: stays JVM. `Serializable` is dropped when a class moves to common unless a JVM caller is found.
-- Result of `grep -rn "ObjectOutputStream\|ObjectInputStream" app/src/main --include=*.kt` (2026-10-09): the
-  assumption "`:app` serializes no JSword objects" is FALSE. `app/src/main/java/net/bible/android/database/Converters.kt`
-  (`keyToStr` / `strToKey`, lines ~165-182) writes a `org.crosswire.jsword.passage.Key` with `ObjectOutputStream`
-  (Base64 in Room) and reads it back with `ObjectInputStream`, returning null on any exception. Consequences:
-  every concrete `Key` implementation reachable from there (`Verse`, `VerseRange`, `RangedPassage`/`Passage` classes,
-  `DefaultLeafKeyList`, `DefaultKeyList`, ...) keeps `Serializable`, its `serialVersionUID` and its field layout
-  until the stored data is migrated; a class moving to common keeps `Serializable` via an `expect`/typealias
-  or stays in `jvmMain`. The API parity gate already pins serialization members (§10).
+- K3 (2026-10-10): `Converters.keyToStr/strToKey` were dead code (no `Key` column; never called from generated Room code) and were deleted; the reference model has no Java serialization.
 
 ## 24. Exceptions
 - Rule: common code throws `okio.IOException` subtypes where Java threw `IOException`. `MissingResourceException`
@@ -208,3 +201,20 @@ stated). Phase-1 rules (§1-§10) still apply.
 
 ## 25. Generated resources
 - Rule: a new resource file goes to `src/embeddedResources/`; nothing new on the JVM classpath.
+
+## 26. K3 replacements
+- `Cloneable` / `super.clone()` -> protected copy constructors and explicit `Key.clone()`; copy exactly the old shallow/deep fields and fail loudly for an open subclass without its own override; JVM-only inheritors retain `Cloneable` and `super<Cloneable>.clone()`.
+- `TreeSet` / `SortedSet` -> `SortedArraySet` (`SortedArraySet.kt`); keep sorted iteration and iterator removal, differential-test against the JDK, and retain the measured Ranged remove slowdown (~1.51x warmed).
+- `BitSet` -> `KBitSet` (`KBitSet.kt`, `copy()` replaces clone); preserve bit operations and passage equality/hashCode, including capacity-independent logical equality.
+- Java mapped collections / `Iterable` / `Comparable` / `Object` -> Kotlin collections / types; preserve JVM types and behavior.
+- `Collections.*` / `Arrays.*` / `System.arraycopy` -> Kotlin stdlib / wrappers (`copyOf`, `copyInto`); an unmodifiable live view must remain a view, not become a snapshot.
+- `Character.isLetter/isDigit/isUpperCase/toUpperCase` -> `Char.isLetter()/isDigit()/isUpperCase()/uppercaseChar()`; preserve character semantics.
+- `Character.isWhitespace` -> `Char.isJavaWhitespace()` (`CharCompat.kt`); exclude U+00A0, U+2007 and U+202F as Java does, unlike Kotlin whitespace.
+- `System.getProperty("line.separator")` -> `"\n"` (`StringUtil`); matches Linux/Android's existing output.
+- Locale-sensitive lower/upper case -> `String.lowercase/uppercase(KLocale)` (`CaseMapping.kt`, platform actuals); preserve Turkish/Azeri dotted i and Greek final sigma.
+- `NoSuchElementException` / `ClassCastException` -> Kotlin exceptions; JVM typealiases preserve catch behavior.
+- `Reader` / `Writer` / buffered variants -> `String` input / `Appendable` output (`Passage`, `PassageKeyFactory`, `StringUtil`); preserve description round trips (D3).
+- `PrintStream` -> `Appendable` (`Versification`, `VersificationToKJVMapper`); preserve dev-tool output text (D3).
+- `EventObject` / `EventListener` -> plain `PassageEvent` / `PassageListener`; keep Java `getSource()` and nullable-source empty events (D3).
+- `javaClass` / `X::class.java` -> KClass comparisons / `this::class.simpleName`; preserve pinned class-name output and `MsgBase` bundle names.
+- `@JvmStatic` / `@JvmField` / `@JvmOverloads` / `@Throws` stay in common with explicit imports; `@Throws` uses `okio.IOException::class`.
