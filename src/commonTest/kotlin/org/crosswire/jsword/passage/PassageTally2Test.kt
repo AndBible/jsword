@@ -243,7 +243,7 @@ class PassageTally2Test {
         temp.add(VerseRangeFactory.fromString(v11n, "Gen 1:2-4"))
         assertEquals("Gen 1:1, 3, 5, 2, 4, 7, 2:1, 3:1", temp.getName())
         assertFailsWith<NullPointerException> {
-            temp.addAll((null as Key))
+            temp.addAll(null)
         }
     }
 
