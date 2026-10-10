@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# K3 guard (spec §4.1): files marked "#done" in the move list must not use JVM-only APIs.
+# K3 guard (spec 4.1): files marked "#done" in the move list must not use JVM-only APIs.
 # Heuristic; the real proof is the iOS compile after the move (Task 11). Deleted after the move.
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
