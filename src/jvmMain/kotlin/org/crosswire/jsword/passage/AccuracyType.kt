@@ -511,7 +511,7 @@ enum class AccuracyType {
         }
 
         /**
-         * This is simply a convenience function to wrap Integer.parseInt() and give
+         * This is simply a convenience function to parse an integer and give
          * us a reasonable exception on failure. It is called by VerseRange hence
          * protected, however I would prefer private
          *
@@ -524,7 +524,7 @@ enum class AccuracyType {
         @Throws(NoSuchVerseException::class)
         private fun parseInt(text: String): Int {
             try {
-                return Integer.parseInt(NumberShaper().unshape(text))
+                return (NumberShaper().unshape(text)).toInt()
             } catch (ex: NumberFormatException) {
                 // TRANSLATOR: The chapter or verse number is actually not a number, but something else.
                 // {0} is a placeholder for what the user supplied.
@@ -623,18 +623,18 @@ enum class AccuracyType {
                     normalized[normalizedLength++] = curChar
                     continue
                 }
-                val charIsDigit = curChar == '$' || Character.isDigit(curChar)
-                        || (curChar == 'f' && (if (i + 1 < length) input[i + 1] else ' ') == 'f' && !Character.isLetter(lastChar))
-                if (charIsDigit || Character.isLetter(curChar)) {
+                val charIsDigit = curChar == '$' || curChar.isDigit()
+                        || (curChar == 'f' && (if (i + 1 < length) input[i + 1] else ' ') == 'f' && !lastChar.isLetter())
+                if (charIsDigit || curChar.isLetter()) {
                     foundBoundary = true
-                    val charWasDigit = lastChar == '$' || Character.isDigit(lastChar) || (lastChar == 'f' && (if (i > 2) input[i - 2] else '0') == 'f')
-                    if (charWasDigit || Character.isLetter(lastChar)) {
+                    val charWasDigit = lastChar == '$' || lastChar.isDigit() || (lastChar == 'f' && (if (i > 2) input[i - 2] else '0') == 'f')
+                    if (charWasDigit || lastChar.isLetter()) {
                         foundBoundary = false
                         // Replace transitions between digits and letters with
                         // spaces, but not for book names that start with digits
                         if (normalizedLength > 0 && charWasDigit != charIsDigit) {
                             // Don't split if this looks like a book name (digit followed by letters at start of token)
-                            val isBookNamePattern = charWasDigit && Character.isLetter(curChar) && tokenCount == 0
+                            val isBookNamePattern = charWasDigit && curChar.isLetter() && tokenCount == 0
                             if (!isBookNamePattern) {
                                 foundBoundary = true
                             }

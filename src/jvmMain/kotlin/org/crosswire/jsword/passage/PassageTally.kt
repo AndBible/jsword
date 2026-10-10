@@ -223,7 +223,7 @@ open class PassageTally : AbstractPassage {
             }
         } else {
             if (maxCount == 0) {
-                maxCount = Integer.MAX_VALUE
+                maxCount = Int.MAX_VALUE
             }
 
             val it: MutableIterator<Key> = OrderedVerseIterator(versification, board)
@@ -268,7 +268,7 @@ open class PassageTally : AbstractPassage {
         var maxCount = cnt
         val retcode = StringBuilder()
         if (maxCount == 0) {
-            maxCount = Integer.MAX_VALUE
+            maxCount = Int.MAX_VALUE
         }
 
         val it = OrderedVerseIterator(versification, board)

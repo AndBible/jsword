@@ -28,7 +28,7 @@ import org.crosswire.jsword.versification.BibleNames
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.LoggerFactory
-import java.util.Locale
+import org.crosswire.common.util.KLocale
 
 /**
  * A Verse is a pointer to a single verse. Externally its unique identifier is
@@ -207,7 +207,7 @@ class Verse : VerseKey<Verse> {
      * @param locale the desired locale of name
      * @return a String containing a description of the Key
      */
-    fun getNameInLocale(base: Key?, locale: Locale?): String {
+    fun getNameInLocale(base: Key?, locale: KLocale?): String {
         if (locale == null) return getName(base)
         if (base != null && base !is Verse) {
             return getName()
@@ -404,7 +404,7 @@ class Verse : VerseKey<Verse> {
      *            the context or null if there is none
      * @return the verse representation
      */
-    private fun doGetName(verseBase: Verse?, locale: Locale?): String {
+    private fun doGetName(verseBase: Verse?, locale: KLocale?): String {
         val buf = StringBuilder()
         // To cope with thing like Jude 2...
         if (book.isShortBook) {
@@ -415,7 +415,7 @@ class Verse : VerseKey<Verse> {
                 return buf.toString()
             }
 
-            return Integer.toString(verse)
+            return verse.toString()
         }
 
         if (verseBase == null || verseBase.book !== book) {
@@ -434,7 +434,7 @@ class Verse : VerseKey<Verse> {
             return buf.toString()
         }
 
-        return Integer.toString(verse)
+        return verse.toString()
     }
 
     /* (non-Javadoc)
@@ -559,7 +559,7 @@ class Verse : VerseKey<Verse> {
         }
 
         /**
-         * This is simply a convenience function to wrap Integer.parseInt() and give
+         * This is simply a convenience function to parse an integer and give
          * us a reasonable exception on failure. It is called by VerseRange hence
          * protected, however I would prefer private
          *
@@ -571,7 +571,7 @@ class Verse : VerseKey<Verse> {
         @Throws(NoSuchVerseException::class)
         protected fun parseInt(text: String?): Int {
             try {
-                return Integer.parseInt(shaper.unshape(text!!))
+                return (shaper.unshape(text!!)).toInt()
             } catch (ex: NumberFormatException) {
                 // TRANSLATOR: The chapter or verse number is actually not a number, but something else.
                 // {0} is a placeholder for what the user supplied.

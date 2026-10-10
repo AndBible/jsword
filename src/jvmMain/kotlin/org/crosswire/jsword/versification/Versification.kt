@@ -38,7 +38,9 @@
  */
 package org.crosswire.jsword.versification
 
-import java.util.Locale
+import org.crosswire.common.util.ArrayIndexOutOfBoundsException
+
+import org.crosswire.common.util.KLocale
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg
@@ -373,7 +375,7 @@ open class Versification
      * @param locale the desired locale for book name. If left null, returns with default locale
      * @return The full name of the book or null if not in this versification
      */
-    open fun getPreferredNameInLocale(book: BibleBook?, locale: Locale?): String? {
+    open fun getPreferredNameInLocale(book: BibleBook?, locale: KLocale?): String? {
         if (containsBook(book)) {
             if (locale != null) {
                 return BibleNames.instance().getPreferredNameInLocale(book, locale)
@@ -671,7 +673,7 @@ open class Versification
      * @return true or false ...
      */
     open fun isAdjacentBook(first: Verse?, second: Verse?): Boolean {
-        return Math.abs(bookList.getOrdinal(second!!.book) - bookList.getOrdinal(first!!.book)) == 1
+        return kotlin.math.abs(bookList.getOrdinal(second!!.book) - bookList.getOrdinal(first!!.book)) == 1
     }
 
     /**

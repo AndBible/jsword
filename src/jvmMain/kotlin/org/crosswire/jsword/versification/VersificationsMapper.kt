@@ -23,8 +23,8 @@ import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlin.concurrent.Volatile
 
-import java.io.IOException
-import java.util.MissingResourceException
+import okio.IOException
+import org.crosswire.common.util.MissingResourceException
 
 import org.crosswire.common.config.ConfigException
 import org.crosswire.jsword.passage.Passage

@@ -23,7 +23,7 @@ import org.crosswire.common.icu.NumberShaper
 import org.crosswire.common.util.assertionsEnabled
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
-import java.util.Locale
+import org.crosswire.common.util.KLocale
 
 /**
  * A VerseRange is one step between a Verse and a Passage - it is a Verse plus a
@@ -195,7 +195,7 @@ class VerseRange : VerseKey<VerseRange> {
      * @param locale the desired locale of name
      * @return a String containing a description of the Key
      */
-    fun getNameInLocale(base: Key?, locale: Locale?): String {
+    fun getNameInLocale(base: Key?, locale: KLocale?): String {
         if (locale == null) return getName(base)
         if (PassageUtil.isPersistentNaming() && originalName != null) {
             return originalName!!
@@ -580,7 +580,7 @@ class VerseRange : VerseKey<VerseRange> {
         this.parent = parent
     }
 
-    private fun doGetName(base: Key?, locale: Locale?): String {
+    private fun doGetName(base: Key?, locale: KLocale?): String {
         // Cache these we're going to be using them a lot.
         val startBook = start.book
         val startChapter = start.chapter

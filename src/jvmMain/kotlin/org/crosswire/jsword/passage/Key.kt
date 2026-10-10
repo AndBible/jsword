@@ -102,8 +102,8 @@ interface Key : Comparable<Key?>, MutableIterable<Key> {
 
     /**
      * Returns the number of elements in this set (its cardinality). If this set
-     * contains more than <tt>Integer.MAX_VALUE</tt> elements, returns
-     * <tt>Integer.MAX_VALUE</tt>.
+     * contains more than <tt>Int.MAX_VALUE</tt> elements, returns
+     * <tt>Int.MAX_VALUE</tt>.
      * <p>
      * This method is potentially expensive, as it often requires cycling through all the keys in the set.</p>
      * @return the number of elements in this set (its cardinality).

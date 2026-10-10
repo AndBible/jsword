@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
+import org.crosswire.common.util.ArrayIndexOutOfBoundsException
+
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 
@@ -266,8 +268,7 @@ abstract class AbstractPassage : Passage {
             // {1,number,integer} is a placeholder for the count of Bible books. It works the same way as the count of verses.
             // {1,choice,0#books|1#book|1<books} is the placeholder for the singular or plural of "book"
             return JSMsg.gettext("{0,number,integer} {0,choice,0#verses|1#verse|1<verses} in {1,number,integer} {1,choice,0#books|1#book|1<books}",
-                    Integer.valueOf(countVerses()), Integer.valueOf(booksInPassage()
-                    ))
+                    countVerses(), booksInPassage())
         }
 
     /* (non-Javadoc)
@@ -355,7 +356,7 @@ abstract class AbstractPassage : Passage {
 
         for (i in 0..offset) {
             if (!it.hasNext()) {
-                throw ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", Integer.valueOf(offset), Integer.valueOf(countVerses())))
+                throw ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", offset, countVerses()))
             }
 
             retcode = it.next()
@@ -374,7 +375,7 @@ abstract class AbstractPassage : Passage {
 
         for (i in 0..offset) {
             if (!it.hasNext()) {
-                throw ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", Integer.valueOf(offset), Integer.valueOf(countVerses())))
+                throw ArrayIndexOutOfBoundsException(JSOtherMsg.lookupText("Index out of range (Given {0,number,integer}, Max {1,number,integer}).", offset, countVerses()))
             }
 
             retcode = it.next()
@@ -939,7 +940,7 @@ abstract class AbstractPassage : Passage {
             // chance to fix the error
             // throw new LogicError();
 
-            log.warn("skip_normalization={}", Integer.toString(skipNormalization))
+            log.warn("skip_normalization={}", skipNormalization.toString())
         }
     }
 
@@ -972,7 +973,7 @@ abstract class AbstractPassage : Passage {
             // chance to fix the error
             // throw new LogicError();
 
-            log.warn("suppress_events={}", Integer.toString(suppressEvents))
+            log.warn("suppress_events={}", suppressEvents.toString())
         }
     }
 

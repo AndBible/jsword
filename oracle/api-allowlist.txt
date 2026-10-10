@@ -236,7 +236,7 @@ org.crosswire.jsword.passage.VerseRange - F private-or-package static final seri
 org.crosswire.jsword.passage.VerseRange - F private-or-package verseCount: int # K3 D1
 org.crosswire.jsword.passage.VerseRange - M private-or-package final readObject(java.io.ObjectInputStream): void throws [java.io.IOException,java.lang.ClassNotFoundException] # K3 D1
 org.crosswire.jsword.passage.VerseRange - M private-or-package final writeObject(java.io.ObjectOutputStream): void throws [java.io.IOException] # K3 D1
-org.crosswire.jsword.versification.BibleNames + M public final load(java.util.Locale): void throws [] # Java method was package-private (test hook used by BibleNamesTest in the same package); Kotlin has no package visibility and internal would mangle the name for the Java test, so it is public.
+org.crosswire.jsword.versification.BibleNames + M public final load(org.crosswire.common.util.KLocale): void throws [] # Java method was package-private (test hook used by BibleNamesTest in the same package); Kotlin has no package visibility and internal would mangle the name for the Java test, so it is public.
 org.crosswire.jsword.versification.QualifiedKey + K public (org.crosswire.jsword.passage.Verse) throws [] # Same constructor, now public (see above).
 org.crosswire.jsword.versification.QualifiedKey - K protected (org.crosswire.jsword.passage.Verse) throws [] # Java ctor was protected, which in Java includes package access used by VersificationToKJVMapper/VersificationsMapper; a Kotlin protected constructor of a final class is invisible to them, so it is public.
 org.crosswire.jsword.versification.Versification + C class public extends java.lang.Object implements [org.crosswire.jsword.book.ReferenceSystem] # K3 D1
@@ -314,3 +314,18 @@ org.crosswire.jsword.versification.Versification + M public static dump(java.lan
 org.crosswire.jsword.versification.Versification + M public static optimize(java.lang.Appendable,org.crosswire.jsword.versification.BibleBookList,int[][]): void throws [] # K3 D3
 org.crosswire.jsword.versification.VersificationToKJVMapper - M public dump(java.io.PrintStream): void throws [] # K3 D3
 org.crosswire.jsword.versification.VersificationToKJVMapper + M public dump(java.lang.Appendable): void throws [] # K3 D3
+
+org.crosswire.jsword.passage.Verse - M public final getNameInLocale(org.crosswire.jsword.passage.Key,java.util.Locale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.passage.Verse + M public final getNameInLocale(org.crosswire.jsword.passage.Key,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.passage.VerseRange - M public final getNameInLocale(org.crosswire.jsword.passage.Key,java.util.Locale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.passage.VerseRange + M public final getNameInLocale(org.crosswire.jsword.passage.Key,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BibleNames - F public static final undefinedPattern: java.util.regex.Pattern # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BibleNames - M public final getPreferredNameInLocale(org.crosswire.jsword.versification.BibleBook,java.util.Locale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BibleNames + F public static final undefinedPattern: kotlin.text.Regex # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BibleNames + M public final getPreferredNameInLocale(org.crosswire.jsword.versification.BibleBook,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BookName - K public (java.util.Locale,org.crosswire.jsword.versification.BibleBook,java.lang.String,java.lang.String,java.lang.String) throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BookName - M public static normalize(java.lang.String,java.util.Locale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BookName + K public (org.crosswire.common.util.KLocale,org.crosswire.jsword.versification.BibleBook,java.lang.String,java.lang.String,java.lang.String) throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.BookName + M public static normalize(java.lang.String,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.Versification - M public getPreferredNameInLocale(org.crosswire.jsword.versification.BibleBook,java.util.Locale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+org.crosswire.jsword.versification.Versification + M public getPreferredNameInLocale(org.crosswire.jsword.versification.BibleBook,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)

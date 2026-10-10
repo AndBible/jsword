@@ -327,8 +327,8 @@ open class BitwisePassage : AbstractPassage {
                 var i = store.nextSetBit(0)
                 while (i >= 0) {
                     // Ordinal values go from 0 to maximumOrdinal.
-                    val start = Math.max(0, i - (if (blurDown) verses else 0))
-                    val end = Math.min(maximumOrdinal, i + (if (blurUp) verses else 0))
+                    val start = maxOf(0, i - (if (blurDown) verses else 0))
+                    val end = minOf(maximumOrdinal, i + (if (blurUp) verses else 0))
 
                     for (j in start..end) {
                         newStore.set(j)

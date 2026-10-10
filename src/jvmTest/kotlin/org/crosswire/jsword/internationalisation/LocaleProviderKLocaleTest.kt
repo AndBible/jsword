@@ -35,7 +35,7 @@ class LocaleProviderKLocaleTest {
         // :app maps sr-Latn to sr_LT, which selects BibleNames_sr_LT.properties.
         useLocale(KLocale("sr", "LT"))
         assertEquals("Postanje", BibleNames.instance().getPreferredName(BibleBook.GEN))
-        assertEquals(BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale("sr", "LT")),
+        assertEquals(BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, KLocale("sr", "LT")),
             BibleNames.instance().getPreferredName(BibleBook.GEN))
     }
 

@@ -23,7 +23,7 @@ import org.crosswire.common.config.ConfigException
 import org.crosswire.common.util.KeyValuePair
 import org.crosswire.common.util.KswordResources
 
-import java.io.IOException
+import okio.IOException
 
 /**
  * This reads a file up front and creates the key value pairs. Because

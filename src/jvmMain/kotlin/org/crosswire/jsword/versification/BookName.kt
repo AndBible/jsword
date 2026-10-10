@@ -19,9 +19,10 @@
  */
 package org.crosswire.jsword.versification
 
-import java.util.Locale
-import java.util.regex.Pattern
+import org.crosswire.common.util.KLocale
 
+import org.crosswire.common.util.lowercase
+import org.crosswire.common.util.uppercase
 import org.crosswire.common.util.StringUtil
 import org.crosswire.jsword.book.CaseType
 
@@ -49,7 +50,7 @@ class BookName
  *            optional comma separated list of alternates for the Book
  */
 (
-    locale: Locale?,
+    locale: KLocale?,
     /**
      * Get the BibleBook to which this set of names is tied.
      * 
@@ -75,7 +76,7 @@ class BookName
     private var alternateNames: Array<String>? = null
 
     /** The locale for the Book Name  */
-    private val locale: Locale
+    private val locale: KLocale
 
     init {
         this.locale = locale!!
@@ -252,8 +253,8 @@ class BookName
          * @return the normalized string
          */
         @JvmStatic
-        fun normalize(str: String?, locale: Locale?): String {
-            return normPattern.matcher(str).replaceAll("").lowercase(locale!!)
+        fun normalize(str: String?, locale: KLocale?): String {
+            return normPattern.replace(str!!, "").lowercase(locale!!)
         }
 
         /**
@@ -334,7 +335,7 @@ class BookName
         }
 
         /** remove spaces and some punctuation in Book Name (make sure , is allowed)  */
-        private val normPattern: Pattern = Pattern.compile("[. ]")
+        private val normPattern: Regex = Regex("[. ]")
 
         /** How the book names are reported.  */
         private var bookCase: CaseType? = CaseType.SENTENCE

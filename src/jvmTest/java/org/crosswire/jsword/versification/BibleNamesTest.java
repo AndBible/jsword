@@ -66,87 +66,87 @@ public class BibleNamesTest {
 
     @Test
     public void testLoadEnglish() {
-        BibleNames.instance().load(Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
     }
 
     @Test
     public void testLoadAF() {
-        BibleNames.instance().load(new Locale("af"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("af")));
     }
 
     @Test
     public void testLoadEgyptianArabic() {
-        BibleNames.instance().load(new Locale("ar", "EG"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("ar", "EG")));
     }
 
     @Test
     public void testLoadBG() {
-        BibleNames.instance().load(new Locale("bg"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("bg")));
     }
 
     @Test
     public void testLoadCS() {
-        BibleNames.instance().load(new Locale("cs"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("cs")));
     }
 
     @Test
     public void testLoadCY() {
-        BibleNames.instance().load(new Locale("cy"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("cy")));
     }
 
     @Test
     public void testLoadDanish() {
-        BibleNames.instance().load(new Locale("da"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("da")));
     }
 
     @Test
     public void testLoadGerman() {
-        BibleNames.instance().load(new Locale("de"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("de")));
     }
 
     @Test
     public void testLoadSpanish() {
-        BibleNames.instance().load(new Locale("es"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("es")));
     }
 
     @Test
     public void testLoadET() {
-        BibleNames.instance().load(new Locale("et"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("et")));
     }
 
     @Test
     public void testLoadFarsi() {
-        BibleNames.instance().load(new Locale("fa"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("fa")));
     }
 
     @Test
     public void testLoadFinnish() {
-        BibleNames.instance().load(new Locale("fi"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("fi")));
     }
 
     @Test
     public void testLoadFO() {
-        BibleNames.instance().load(new Locale("fo"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("fo")));
     }
 
     @Test
     public void testLoadFrench() {
-        BibleNames.instance().load(new Locale("fr"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("fr")));
     }
 
     @Test
     public void testLoadHebrew() {
-        BibleNames.instance().load(new Locale("he"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("he")));
     }
 
     @Test
     public void testLoadHU() {
-        BibleNames.instance().load(new Locale("hu"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("hu")));
     }
 
     @Test
     public void testLoadID() {
-        BibleNames.instance().load(new Locale("id"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("id")));
     }
 
     @Test
@@ -155,144 +155,144 @@ public class BibleNamesTest {
         // Indonesian book names, never Hindi. BibleNames_in.properties previously held
         // a copy of the Hindi names, which surfaced as Hindi for Indonesian users on
         // runtimes that resolve Indonesian to the "in" bundle (e.g. Android's ART).
-        BibleNames.instance().load(new Locale("in"));
-        String viaIn = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, new Locale("in"));
-        String viaId = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, new Locale("id"));
-        String hindi = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, new Locale("hi"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("in")));
+        String viaIn = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("in")));
+        String viaId = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("id")));
+        String hindi = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("hi")));
         assertEquals(viaId, viaIn);
         assertNotEquals(hindi, viaIn);
     }
 
     @Test
     public void testLoadItalian() {
-        BibleNames.instance().load(new Locale("it"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("it")));
     }
 
     @Test
     public void testLoadIW() {
-        BibleNames.instance().load(new Locale("iw"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("iw")));
     }
 
     @Test
     public void testLoadKO() {
-        BibleNames.instance().load(new Locale("ko"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("ko")));
     }
 
     @Test
     public void testLoadLA() {
-        BibleNames.instance().load(new Locale("la"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("la")));
     }
 
     @Test
     public void testLoadLT() {
-        BibleNames.instance().load(new Locale("lt"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("lt")));
     }
 
     @Test
     public void testLoadNB() {
-        BibleNames.instance().load(new Locale("nb"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("nb")));
     }
 
     @Test
     public void testLoadDutch() {
-        BibleNames.instance().load(new Locale("nl"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("nl")));
     }
 
     @Test
     public void testLoadNN() {
-        BibleNames.instance().load(new Locale("nn"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("nn")));
     }
 
     @Test
     public void testLoadPL() {
-        BibleNames.instance().load(new Locale("pl"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("pl")));
     }
 
     @Test
     public void testLoadBrazillianPortuguese() {
-        BibleNames.instance().load(new Locale("pt", "BR"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("pt", "BR")));
     }
 
     @Test
     public void testLoadPortuguese() {
-        BibleNames.instance().load(new Locale("pt"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("pt")));
     }
 
     @Test
     public void testLoadRo() {
-        BibleNames.instance().load(new Locale("ro"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("ro")));
     }
 
     @Test
     public void testLoadRU() {
-        BibleNames.instance().load(new Locale("ru"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("ru")));
     }
 
     @Test
     public void testLoadSK() {
-        BibleNames.instance().load(new Locale("sk"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("sk")));
     }
 
     @Test
     public void testLoadSL() {
-        BibleNames.instance().load(new Locale("sl"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("sl")));
     }
 
     @Test
     public void testLoadSwedish() {
-        BibleNames.instance().load(new Locale("sv"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("sv")));
     }
 
     @Test
     public void testLoadThai() {
-        BibleNames.instance().load(new Locale("th"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("th")));
     }
 
     @Test
     public void testLoadTR() {
-        BibleNames.instance().load(new Locale("tr"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("tr")));
     }
 
     @Test
     public void testLoadUkranian() {
-        BibleNames.instance().load(new Locale("uk"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("uk")));
     }
 
     @Test
     public void testLoadVietnamese() {
-        BibleNames.instance().load(new Locale("vi"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("vi")));
     }
 
     @Test
     public void testLoadChineseTraditional() {
-        BibleNames.instance().load(new Locale("zh", "CN"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("zh", "CN")));
     }
 
     @Test
     public void testLoadChineseSimplified() {
-        BibleNames.instance().load(new Locale("zh"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("zh")));
     }
 
     @Test
     public void testLoadSwahili() {
-        BibleNames.instance().load(new Locale("sw"));
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(new Locale("sw")));
     }
 
     @Test
     public void testLoadMS() {
         Locale locale = new Locale("ms");
-        BibleNames.instance().load(locale);
-        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
-        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
         assertNotEquals(english, localized);
     }
 
     @Test
     public void testLoadCA() {
         Locale locale = new Locale("ca");
-        BibleNames.instance().load(locale);
-        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
-        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
         assertNotEquals(english, localized);
     }
 
@@ -300,36 +300,36 @@ public class BibleNamesTest {
     public void testLoadFIL() {
         // Filipino Genesis is also "Genesis"; assert on Exodus ("Exodo") instead.
         Locale locale = new Locale("fil");
-        BibleNames.instance().load(locale);
-        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.EXOD, locale);
-        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.EXOD, Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.EXOD, org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.EXOD, org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
         assertNotEquals(english, localized);
     }
 
     @Test
     public void testLoadNE() {
         Locale locale = new Locale("ne");
-        BibleNames.instance().load(locale);
-        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
-        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
         assertNotEquals(english, localized);
     }
 
     @Test
     public void testLoadUR() {
         Locale locale = new Locale("ur");
-        BibleNames.instance().load(locale);
-        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
-        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
         assertNotEquals(english, localized);
     }
 
     @Test
     public void testLoadUZ() {
         Locale locale = new Locale("uz");
-        BibleNames.instance().load(locale);
-        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, locale);
-        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, Locale.ENGLISH);
+        BibleNames.instance().load(org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String localized = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(locale));
+        String english = BibleNames.instance().getPreferredNameInLocale(BibleBook.GEN, org.crosswire.common.util.KLocale_jvmKt.toKLocale(Locale.ENGLISH));
         assertNotEquals(english, localized);
     }
 

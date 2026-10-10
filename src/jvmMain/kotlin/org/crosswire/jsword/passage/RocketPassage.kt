@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
+import org.crosswire.common.util.ArrayIndexOutOfBoundsException
+
 import org.crosswire.jsword.versification.Versification
 
 /**

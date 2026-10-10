@@ -19,14 +19,11 @@
  */
 package org.crosswire.jsword.versification
 
-import org.crosswire.common.util.toJavaLocale
 
-import java.util.Locale
-import java.util.MissingResourceException
+import org.crosswire.common.util.KLocale
+import org.crosswire.common.util.MissingResourceException
 import org.crosswire.common.util.KBundle
 import org.crosswire.common.util.ResourceBundles
-import org.crosswire.common.util.toKLocale
-import java.util.regex.Pattern
 
 import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
@@ -45,13 +42,13 @@ class BibleNames
  */
 private constructor() {
     /** we cache the Localized Bible Names because there is quite a bit of processing going on for each individual Locale  */
-    private var localizedBibleNames: MutableMap<Locale, NameList>
+    private var localizedBibleNames: MutableMap<KLocale, NameList>
     var enableFuzzy: Boolean? = true
 
     init {
         localizedBibleNames = HashMap()
-        englishBibleNames = getBibleNamesForLocale(Locale.ENGLISH)
-        localizedBibleNames[Locale.ENGLISH] = englishBibleNames!!
+        englishBibleNames = getBibleNamesForLocale(KLocale.ENGLISH)
+        localizedBibleNames[KLocale.ENGLISH] = englishBibleNames!!
     }
 
     /**
@@ -83,7 +80,7 @@ private constructor() {
      * @param book the desired book
      * @return The full name of the book or blank if not in this versification
      */
-    fun getPreferredNameInLocale(book: BibleBook?, locale: Locale?): String {
+    fun getPreferredNameInLocale(book: BibleBook?, locale: KLocale?): String {
         if (locale == null) return getPreferredName(book)
         return getBibleNamesForLocale(locale).getPreferredName(book)
     }
@@ -161,7 +158,7 @@ private constructor() {
      * 
      * @param locale
      */
-    fun load(locale: Locale?) {
+    fun load(locale: KLocale?) {
         val bibleNames = NameList(locale)
         if (localizedBibleNames[locale] == null) {
             localizedBibleNames[locale!!] = bibleNames
@@ -175,7 +172,7 @@ private constructor() {
      */
     private fun getLocalizedBibleNames(): NameList {
         // Get the current Locale
-        return getBibleNamesForLocale(LocaleProviderManager.getLocale().toJavaLocale())
+        return getBibleNamesForLocale(LocaleProviderManager.getLocale())
     }
 
     /**
@@ -184,7 +181,7 @@ private constructor() {
      * @param locale the locale
      * @return the bible names for locale
      */
-    private fun getBibleNamesForLocale(locale: Locale?): NameList {
+    private fun getBibleNamesForLocale(locale: KLocale?): NameList {
         var bibleNames = localizedBibleNames[locale]
         if (bibleNames == null) {
             bibleNames = NameList(locale)
@@ -206,9 +203,9 @@ private constructor() {
     /**
      * Create NameList for the given locale
      */
-    internal constructor(locale: Locale?) {
+    internal constructor(locale: KLocale?) {
         /** The locale for the Bible Names  */
-        private var locale: Locale = locale!!
+        private var locale: KLocale = locale!!
 
         /**
          * The collection of BookNames by BibleBooks.
@@ -406,7 +403,7 @@ private constructor() {
             // Create the book name maps
             books = LinkedHashMap(ntCount + otCount + ncCount)
 
-            val resources = ResourceBundles.get("BibleNames", locale.toKLocale())
+            val resources = ResourceBundles.get("BibleNames", locale)
                 ?: throw MissingResourceException("Can't find bundle for base name BibleNames, locale $locale", "BibleNames", "")
 
             fullNT = HashMap(ntCount)
@@ -448,7 +445,7 @@ private constructor() {
             }
 
             var altBook = getString(resources, osisName + ALT_KEY)
-            if (altBook == null || undefinedPattern.matcher(altBook).matches()) {
+            if (altBook == null || undefinedPattern.matches(altBook)) {
                 altBook = ""
             }
 
@@ -478,7 +475,7 @@ private constructor() {
 
     companion object {
         @JvmField
-        val undefinedPattern: Pattern = Pattern.compile("^#.*")
+        val undefinedPattern: Regex = Regex("^#.*")
 
         /** English BibleNames, or null when using the program's default locale  */
         private var englishBibleNames: NameList? = null
@@ -498,7 +495,7 @@ private constructor() {
          */
         private fun containsLetter(text: String?): Boolean {
             for (i in 0 until text!!.length) {
-                if (Character.isLetter(text[i])) {
+                if (text[i].isLetter()) {
                     return true
                 }
             }

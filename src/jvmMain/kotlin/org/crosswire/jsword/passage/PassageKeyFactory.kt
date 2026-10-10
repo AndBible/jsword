@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.passage
 
+import org.crosswire.common.util.isJavaWhitespace
+
 import okio.IOException
 
 import org.crosswire.common.util.jswordAssert
@@ -222,7 +224,7 @@ private constructor() {
             curChar = passageReference[i]
 
             // Determine whether we are starting a number
-            isNumber = Character.isDigit(curChar)
+            isNumber = curChar.isDigit()
             isEndMarker = curChar == '$' || (curChar == 'f' && (if (i + 1 < size) passageReference[i + 1] else ' ') == 'f')
             isNumberOrMarker = isNumber || isEndMarker
             // If the last thing we saw was a number and the next thing we see
@@ -233,7 +235,7 @@ private constructor() {
                     buf.append(AbstractPassage.REF_PREF_DELIM)
                 } else if (isEndMarker) {
                     buf.append(VerseRange.RANGE_OSIS_DELIM)
-                } else if (Character.isLetter(curChar)) {
+                } else if (curChar.isLetter()) {
                     buf.append(' ')
                 }
 
@@ -254,7 +256,7 @@ private constructor() {
                     // If it wasn't an 'f' or a '$' then it was digits
                     while (i < size) {
                         curChar = passageReference[i]
-                        if (!Character.isDigit(curChar)) {
+                        if (!curChar.isDigit()) {
                             break
                         }
                         buf.append(curChar)
@@ -264,7 +266,7 @@ private constructor() {
 
                 // skip all following whitespace, it will be added back in as
                 // needed
-                while (i < size && Character.isWhitespace(passageReference[i])) {
+                while (i < size && passageReference[i].isJavaWhitespace()) {
                     i++
                 }
             } else {

@@ -19,7 +19,7 @@
  */
 package org.crosswire.jsword.versification
 
-import java.util.Locale
+import org.crosswire.common.util.KLocale
 
 /**
  * A BibleBook is a book of the Bible. It may or may not be canonical.
@@ -202,7 +202,7 @@ enum class BibleBook(
          */
         @JvmStatic
         fun fromOSIS(osis: String?): BibleBook? {
-            val match = BookName.normalize(osis, Locale.ENGLISH)
+            val match = BookName.normalize(osis, KLocale.ENGLISH)
             return osisMap[match]
         }
 
@@ -221,7 +221,7 @@ enum class BibleBook(
 
         init {
             for (book in values()) {
-                osisMap[BookName.normalize(book.osis, Locale.ENGLISH)] = book
+                osisMap[BookName.normalize(book.osis, KLocale.ENGLISH)] = book
                 exactMatches[book.osis] = book
             }
         }

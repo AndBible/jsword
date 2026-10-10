@@ -219,7 +219,7 @@ open class VersificationToKJVMapper {
 
         if (kjvKeys != null && kjvKeys.getCardinality() != 1) {
             // We detect if the keys are 1-apart from each other. If so, then we skip verse 0 on both sides.
-            val diff = Math.abs(leftKeys.getCardinality() - kjvKeys.getCardinality())
+            val diff = kotlin.math.abs(leftKeys.getCardinality() - kjvKeys.getCardinality())
 
             if (diff > 1) {
                 reportCardinalityError(leftKeys, kjvKeys)
@@ -304,9 +304,7 @@ open class VersificationToKJVMapper {
     private fun reportCardinalityError(leftKeys: VerseKey<*>, kjvKeys: VerseKey<*>) {
         // TODO (CJB): change this to a neater exception
         // then something went wrong, as we have remaining verses
-        throw LucidRuntimeException(String.format("%s has a cardinality of %s whilst %s has a cardinality of %s.",
-                leftKeys, Integer.toString(leftKeys.getCardinality()),
-                kjvKeys, Integer.toString(kjvKeys.getCardinality())))
+        throw LucidRuntimeException("$leftKeys has a cardinality of ${leftKeys.getCardinality()} whilst $kjvKeys has a cardinality of ${kjvKeys.getCardinality()}.")
     }
 
     /**
@@ -451,7 +449,7 @@ open class VersificationToKJVMapper {
             // TODO(CJB): internationalize
             throw NoSuchKeyException(JSMsg.gettext("Unable to offset the given key [{0}]", offsetBasis))
         }
-        val offset = Integer.parseInt(versesKey.substring(1))
+        val offset = (versesKey.substring(1)).toInt()
 
         // Convert key immediately to the target versification system, namely the KJV, since it is the only
         // one supported. Convert by ref - since the whole purpose of this is to define equivalents.
