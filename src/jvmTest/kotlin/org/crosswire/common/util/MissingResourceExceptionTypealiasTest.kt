@@ -9,6 +9,6 @@ class MissingResourceExceptionTypealiasTest {
     fun isTheJdkClassOnTheJvm() {
         val e: Throwable = MissingResourceException("m", "C", "k")
         assertTrue(e is java.util.MissingResourceException)
-        assertEquals("k", (e as java.util.MissingResourceException).key)
+        assertEquals("k", e.key)
     }
 }
