@@ -35,12 +35,26 @@ while IFS= read -r line; do
   case "$line" in *'#done'*) ;; *) continue ;; esac
   f="${line%% *}"
   [ -f "$root/$f" ] || { echo "$f: listed file missing" ; hits=1; continue; }
-  atomic=0; grep -q '^import kotlinx\.atomicfu\.locks\.synchronized' "$root/$f" && atomic=1
+  atomic=0
+  if grep -q '^import kotlinx\.atomicfu\.locks\.synchronized' "$root/$f"; then
+    atomic=1
+  else
+    grep_status=$?
+    [ "$grep_status" -eq 1 ] || { echo "$f: grep failed while checking atomicfu import"; hits=1; continue; }
+  fi
   for p in "${patterns[@]}"; do
     [ "$p" = '(^|[^.A-Za-z])synchronized\(' ] && [ "$atomic" = 1 ] && continue
-    # strip comment lines (KDoc / line comments) before matching
-    if out=$(grep -nE "$p" "$root/$f" | grep -vE '^[0-9]+:\s*(\*|//|/\*)'); then
-      while IFS= read -r m; do echo "$f:$m   [$p]"; done <<< "$out"; hits=1
+    # Distinguish grep's no-match status from read/search errors before filtering comments.
+    if matches=$(grep -nE "$p" "$root/$f"); then
+      if out=$(grep -vE '^[0-9]+:\s*(\*|//|/\*)' <<< "$matches"); then
+        while IFS= read -r m; do echo "$f:$m   [$p]"; done <<< "$out"; hits=1
+      else
+        grep_status=$?
+        [ "$grep_status" -eq 1 ] || { echo "$f: grep failed while filtering comments"; hits=1; }
+      fi
+    else
+      grep_status=$?
+      [ "$grep_status" -eq 1 ] || { echo "$f: grep failed"; hits=1; }
     fi
   done
 done < "$list"
