@@ -7,6 +7,7 @@ import org.crosswire.jsword.book.sword.state.RawLDBackendState
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.system.Versifications
 import java.util.Date
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -203,6 +204,60 @@ class KeyCloneCharacterizationTest {
         assertNotSame(p, c)
         assertEquals("CloneTest", c.getName())
         assertSame(metadata, c.bookMetaData)
+    }
+
+    @Test fun passageCloneCopiesListenerRegistrationsIntoAnIndependentList() {
+        val p = BitwisePassage(kjv)
+        val sources = mutableListOf<Any>()
+        val listener = object : PassageListener {
+            override fun versesAdded(ev: PassageEvent) { sources.add(ev.source) }
+            override fun versesRemoved(ev: PassageEvent) { sources.add(ev.source) }
+            override fun versesChanged(ev: PassageEvent) { sources.add(ev.source) }
+        }
+        p.addPassageListener(listener)
+        val c = p.clone()
+        p.add(gen1)
+        c.add(rom3)
+        assertEquals(2, sources.size)
+        assertSame(p, sources[0])
+        assertSame(c, sources[1])
+        c.removePassageListener(listener)
+        c.remove(rom3)
+        assertEquals(2, sources.size, "clone registration was removed")
+        p.remove(gen1)
+        assertEquals(3, sources.size, "original registration remains")
+        assertSame(p, sources[2])
+    }
+
+    @Test fun readingsKeyClonesNonNullParentButSharesItsCollection() {
+        val previousLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+        try {
+            val parent = DefaultKeyList(null, "readings")
+            val a = DefaultLeafKeyList("a")
+            parent.addAll(a)
+            val p = ReadingsKey("Jan 1, 2026", "1.January", parent)
+            val c = p.clone()
+            assertSame(ReadingsKey::class.java, c.javaClass)
+            assertNotSame(p, c)
+            assertEquals(p, c)
+            assertEquals("Jan 1, 2026", c.getName())
+            assertEquals("1.January", c.getOsisRef())
+            assertEquals(0, p.compareTo(c))
+            val copiedParent = c.getParent() as DefaultKeyList
+            assertNotSame(parent, copiedParent)
+            assertEquals("readings", copiedParent.getName())
+            copiedParent.setName("copy")
+            assertEquals("readings", parent.getName())
+            assertEquals("copy", copiedParent.getName())
+            val b = DefaultLeafKeyList("b")
+            copiedParent.addAll(b)
+            assertTrue(parent.contains(b), "parent collection remains shallow-shared")
+            parent.removeAll(a)
+            assertFalse(copiedParent.contains(a), "sharing is bidirectional")
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
     }
 
     @Test fun readingsKeyKeepsRuntimeClassDateAndLeafFields() {
