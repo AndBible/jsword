@@ -38,8 +38,6 @@
  */
 package org.crosswire.jsword.versification
 
-import org.crosswire.common.util.ArrayIndexOutOfBoundsException
-
 import org.crosswire.common.util.KLocale
 
 import org.crosswire.common.util.jswordAssert
@@ -434,7 +432,7 @@ open class Versification
             return lastVerse[bookList.getOrdinal(book)].size - 1
         } catch (ex: NullPointerException) {
             return 0
-        } catch (ex: ArrayIndexOutOfBoundsException) {
+        } catch (ex: IndexOutOfBoundsException) {
             return 0
         }
     }
@@ -456,7 +454,7 @@ open class Versification
             return lastVerse[bookList.getOrdinal(book)][chapter]
         } catch (ex: NullPointerException) {
             return 0
-        } catch (ex: ArrayIndexOutOfBoundsException) {
+        } catch (ex: IndexOutOfBoundsException) {
             return 0
         }
     }
@@ -893,7 +891,7 @@ open class Versification
     open fun getOrdinal(verse: Verse?): Int {
         try {
             return chapterStarts[bookList.getOrdinal(verse!!.book)][verse.chapter] + verse.verse
-        } catch (e: ArrayIndexOutOfBoundsException) {
+        } catch (e: IndexOutOfBoundsException) {
             return 0
         }
     }
