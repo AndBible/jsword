@@ -134,7 +134,7 @@ stated). Phase-1 rules (§1-§10) still apply.
 - No `CallContext` / `CWClassLoader` in common code.
 
 ## 13. Messages
-- Rule: `MsgBase(bundleName)` (still in `jvmMain`; moves with its callers). `java.text.MessageFormat` ->
+- Rule: `MsgBase(bundleName)`. `java.text.MessageFormat` ->
   `MessageFormatLite.format(pattern, locale, args)`. `NumberFormat`/`DecimalFormat` -> `NumberFormats.general`,
   `.integer`, `.pattern(value, pattern, locale)` (`expect object`, actuals per platform).
 - Trap: where Java used the default formatting locale, pass `KswordLocale.default()`.
