@@ -19,8 +19,7 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.NoSuchElementException
-import java.util.TreeSet
+import org.crosswire.common.util.SortedArraySet
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.versification.Versification
@@ -53,7 +52,7 @@ import org.crosswire.jsword.versification.Versification
 open class RangedPassage : AbstractPassage {
     /** Copies the fields and preserves the deep-copy steps of the original clone. */
     protected constructor(copyFrom: RangedPassage) : super(copyFrom) {
-        store = TreeSet<VerseRange>()
+        store = SortedArraySet<VerseRange>()
         store.addAll(copyFrom.store)
     }
 
@@ -65,7 +64,7 @@ open class RangedPassage : AbstractPassage {
      *            The Versification to which this Passage belongs.
      */
     constructor(refSystem: Versification?) : super(refSystem) {
-        store = TreeSet<VerseRange>()
+        store = SortedArraySet<VerseRange>()
     }
 
     /**
@@ -90,7 +89,7 @@ open class RangedPassage : AbstractPassage {
     // was protected: PassageType (same package) needs it, and Kotlin protected has no package access
     @Throws(NoSuchVerseException::class)
     internal constructor(v11n: Versification?, refs: String?, basis: Key?) : super(v11n, refs) {
-        store = TreeSet<VerseRange>()
+        store = SortedArraySet<VerseRange>()
         addVerses(refs, basis)
         normalize()
     }
@@ -198,7 +197,7 @@ open class RangedPassage : AbstractPassage {
         var removed = false
 
         // This allows us to modify store which iterating through a copy
-        val newStore: MutableSet<Key> = TreeSet<Key>()
+        val newStore: MutableSet<Key> = SortedArraySet<Key>()
         newStore.addAll(store)
 
         // go through all the VerseRanges
@@ -232,7 +231,7 @@ open class RangedPassage : AbstractPassage {
     override fun retainAll(key: Key?) {
         optimizeWrites()
 
-        val newStore: MutableSet<VerseRange> = TreeSet<VerseRange>()
+        val newStore: MutableSet<VerseRange> = SortedArraySet<VerseRange>()
 
         if (key is RangedPassage) {
             val thatIter = key.rangeIterator(RestrictionType.CHAPTER)
@@ -296,7 +295,7 @@ open class RangedPassage : AbstractPassage {
 
         var last: VerseRange? = null
         var next: VerseRange? = null
-        val newStore: MutableSet<VerseRange> = TreeSet<VerseRange>()
+        val newStore: MutableSet<VerseRange> = SortedArraySet<VerseRange>()
 
         val it = rangeIterator(RestrictionType.NONE)
         while (it.hasNext()) {
@@ -342,7 +341,7 @@ open class RangedPassage : AbstractPassage {
         private var real: MutableIterator<Key>
 
         init {
-            val temp: MutableSet<Key> = TreeSet<Key>()
+            val temp: MutableSet<Key> = SortedArraySet<Key>()
 
             while (it.hasNext()) {
                 val range = it.next()

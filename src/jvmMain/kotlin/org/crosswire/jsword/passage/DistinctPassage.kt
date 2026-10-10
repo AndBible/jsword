@@ -19,9 +19,9 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.Collections
-import java.util.SortedSet
-import java.util.TreeSet
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import org.crosswire.common.util.SortedArraySet
 
 import org.crosswire.jsword.versification.Versification
 
@@ -40,8 +40,8 @@ import org.crosswire.jsword.versification.Versification
 open class DistinctPassage : AbstractPassage {
     /** Copies the fields and preserves the deep-copy steps of the original clone. */
     protected constructor(copyFrom: DistinctPassage) : super(copyFrom) {
-        store = TreeSet<Key>()
-        store.addAll(copyFrom.store)
+        store = SortedArraySet<Key>()
+        synchronized(storeLock) { store.addAll(copyFrom.store) }
     }
 
     /**
@@ -76,7 +76,7 @@ open class DistinctPassage : AbstractPassage {
     // was protected: PassageType (same package) needs it, and Kotlin protected has no package access
     @Throws(NoSuchVerseException::class)
     internal constructor(v11n: Versification?, refs: String?, basis: Key?) : super(v11n, refs) {
-        store = Collections.synchronizedSortedSet(TreeSet<Key>())
+        store = SortedArraySet<Key>()
         addVerses(refs, basis)
     }
 
@@ -93,20 +93,21 @@ open class DistinctPassage : AbstractPassage {
      * @see java.lang.Iterable#iterator()
      */
     override fun iterator(): MutableIterator<Key> {
+        // Like Collections.synchronizedSortedSet, iterator traversal is not locked.
         return store.iterator()
     }
 
     override fun isEmpty(): Boolean {
-        return store.isEmpty()
+        return synchronized(storeLock) { store.isEmpty() }
     }
 
     override fun countVerses(): Int {
-        return store.size
+        return synchronized(storeLock) { store.size }
     }
 
     override fun contains(that: Key?): Boolean {
         for (aKey in that!!) {
-            if (!store.contains(aKey)) {
+            if (!synchronized(storeLock) { store.contains(aKey) }) {
                 return false
             }
         }
@@ -127,7 +128,7 @@ open class DistinctPassage : AbstractPassage {
             if (firstVerse == null) {
                 firstVerse = lastVerse
             }
-            store.add(lastVerse)
+            synchronized(storeLock) { store.add(lastVerse) }
         }
 
         // we do an extra check here because the cost of calculating the
@@ -150,7 +151,7 @@ open class DistinctPassage : AbstractPassage {
             if (firstVerse == null) {
                 firstVerse = lastVerse
             }
-            store.remove(lastVerse)
+            synchronized(storeLock) { store.remove(lastVerse) }
         }
 
         // we do an extra check here because the cost of calculating the
@@ -163,13 +164,15 @@ open class DistinctPassage : AbstractPassage {
     override fun clear() {
         optimizeWrites()
 
-        store.clear()
+        synchronized(storeLock) { store.clear() }
         fireIntervalRemoved(this, null, null)
     }
 
     /**
      * The place the real data is stored
      */
-    private var store: SortedSet<Key> = TreeSet<Key>()
+    private val storeLock = SynchronizedObject()
+
+    private var store: SortedArraySet<Key> = SortedArraySet<Key>()
 
 }

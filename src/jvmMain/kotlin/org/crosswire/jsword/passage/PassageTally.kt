@@ -20,8 +20,7 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.NoSuchElementException
-import java.util.TreeSet
+import org.crosswire.common.util.SortedArraySet
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
@@ -842,7 +841,7 @@ open class PassageTally : AbstractPassage {
 
         init {
             referenceSystem = v11n
-            val output = TreeSet<TalliedVerse>()
+            val output = SortedArraySet<TalliedVerse>()
 
             val vib = board.size - 1
             for (i in 0..vib) {
@@ -983,7 +982,7 @@ open class PassageTally : AbstractPassage {
         private var it: MutableIterator<TalliedVerseRange>
 
         init {
-            val output: MutableSet<TalliedVerseRange> = TreeSet<TalliedVerseRange>()
+            val output: MutableSet<TalliedVerseRange> = SortedArraySet<TalliedVerseRange>()
 
             val rit: MutableIterator<VerseRange> = AbstractPassage.VerseRangeIterator(v11n, vit, RestrictionType.NONE)
             while (rit.hasNext()) {

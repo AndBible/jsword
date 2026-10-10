@@ -19,7 +19,7 @@
  */
 package org.crosswire.jsword.passage
 
-import java.util.BitSet
+import org.crosswire.common.util.KBitSet
 import java.util.NoSuchElementException
 
 import org.crosswire.common.util.jswordAssert
@@ -47,7 +47,7 @@ import org.crosswire.jsword.versification.Versification
 open class BitwisePassage : AbstractPassage {
     /** Copies the fields and preserves the deep-copy steps of the original clone. */
     protected constructor(copyFrom: BitwisePassage) : super(copyFrom) {
-        store = copyFrom.store.clone() as BitSet
+        store = copyFrom.store.copy()
     }
 
     /**
@@ -58,7 +58,7 @@ open class BitwisePassage : AbstractPassage {
      *            The Versification to which this Passage belongs.
      */
     constructor(v11n: Versification?) : super(v11n) {
-        store = BitSet(v11n!!.maximumOrdinal() + 1)
+        store = KBitSet(v11n!!.maximumOrdinal() + 1)
     }
 
     /**
@@ -84,7 +84,7 @@ open class BitwisePassage : AbstractPassage {
     // was protected: PassageType (same package) needs it, and Kotlin protected has no package access
     @Throws(NoSuchVerseException::class)
     internal constructor(v11n: Versification?, refs: String?, basis: Key?) : super(v11n, refs) {
-        store = BitSet(v11n!!.maximumOrdinal() + 1)
+        store = KBitSet(v11n!!.maximumOrdinal() + 1)
         addVerses(refs, basis)
     }
 
@@ -133,7 +133,7 @@ open class BitwisePassage : AbstractPassage {
     override fun contains(that: Key?): Boolean {
         for (aKey in that!!) {
             val verse = aKey as Verse
-            if (!store.get(verse.ordinal)) {
+            if (!store[verse.ordinal]) {
                 return false
             }
         }
@@ -268,16 +268,16 @@ open class BitwisePassage : AbstractPassage {
     override fun retainAll(key: Key?) {
         optimizeWrites()
 
-        var thatStore: BitSet? = null
+        var thatStore: KBitSet? = null
         if (key is BitwisePassage) {
             thatStore = key.store
         } else {
             val v11n = versification
-            thatStore = BitSet(v11n.maximumOrdinal() + 1)
+            thatStore = KBitSet(v11n.maximumOrdinal() + 1)
 
             for (aKey in key!!) {
                 val ord = (aKey as Verse).ordinal
-                if (store.get(ord)) {
+                if (store[ord]) {
                     thatStore.set(ord)
                 }
             }
@@ -319,7 +319,7 @@ open class BitwisePassage : AbstractPassage {
             raiseNormalizeProtection()
 
             val maximumOrdinal = versification.maximumOrdinal()
-            val newStore = BitSet(maximumOrdinal + 1)
+            val newStore = KBitSet(maximumOrdinal + 1)
 
             var i = store.nextSetBit(0)
             while (i >= 0) {
@@ -404,6 +404,6 @@ open class BitwisePassage : AbstractPassage {
      * The place the real data is stored
      */
     @JvmField
-    protected var store: BitSet
+    protected var store: KBitSet
 
 }
