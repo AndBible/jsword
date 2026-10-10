@@ -41,7 +41,9 @@ open class PassageEvent
  * @param upper
  *            an int specifying the top of a range
  */
-(private val source: Any, versesChanged: EventType?, lower: Verse?, upper: Verse?) {
+(source: Any?, versesChanged: EventType?, lower: Verse?, upper: Verse?) {
+
+    private val source: Any = requireNotNull(source) { "null source" }
 
     open fun getSource(): Any = source
 
