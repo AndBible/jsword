@@ -818,10 +818,7 @@ class VerseRange : VerseKey<VerseRange>, Cloneable {
     }
 
     /**
-     * The Versification with which this range is defined. It is transient and, as in Java, never restored
-     * by deserialization, so it is null there although the type says otherwise (assigned in every
-     * constructor, hence neither lateinit nor a null check on access: a NullPointerException must be
-     * raised by the JVM on the field, as in Java).
+     * The Versification with which this range is defined, assigned in every constructor.
      */
     private var v11n: Versification
 

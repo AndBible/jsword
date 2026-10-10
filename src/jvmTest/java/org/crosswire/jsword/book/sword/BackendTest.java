@@ -47,6 +47,21 @@ import static org.junit.Assert.assertTrue;
  * @author DM Smith
  */
 public class BackendTest {
+    @Test
+    public void testKeyBackendsHaveNoJavaSerializationHooks() {
+        for (Class<?> type : new Class<?>[] {AbstractKeyBackend.class, RawLDBackend.class, ZLDBackend.class}) {
+            assertTrue(Key.class.isAssignableFrom(type));
+            assertFalse(java.io.Serializable.class.isAssignableFrom(type));
+            for (java.lang.reflect.Field field : type.getDeclaredFields()) {
+                assertFalse(type.getName(), "serialVersionUID".equals(field.getName()));
+            }
+            for (java.lang.reflect.Method method : type.getDeclaredMethods()) {
+                assertFalse(type.getName(), "readObject".equals(method.getName())
+                        || "writeObject".equals(method.getName()) || "readResolve".equals(method.getName()));
+            }
+        }
+    }
+
     /**
      * Z Text
      * 

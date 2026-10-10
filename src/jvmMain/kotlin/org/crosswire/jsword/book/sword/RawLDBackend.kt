@@ -31,7 +31,6 @@ import org.crosswire.jsword.book.sword.state.RawLDBackendState
 import org.crosswire.jsword.passage.DefaultLeafKeyList
 import org.crosswire.jsword.passage.Key
 import java.io.IOException
-import java.io.ObjectInputStream
 import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
 import java.text.DecimalFormat
@@ -510,18 +509,6 @@ open class RawLDBackend<T : RawLDBackendState>
         return DecimalFormat("0000")
     }
 
-    /**
-     * Serialization support.
-     * 
-     * @param is
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`is`: ObjectInputStream) {
-        `is`.defaultReadObject()
-    }
-
     /** 
      * Experimental code.
      */
@@ -640,9 +627,5 @@ open class RawLDBackend<T : RawLDBackendState>
          */
         private const val OFFSETSIZE = 4
 
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 818089833394450383L
     }
 }
