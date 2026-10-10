@@ -134,7 +134,7 @@ stated). Phase-1 rules (§1-§10) still apply.
 - No `CallContext` / `CWClassLoader` in common code.
 
 ## 13. Messages
-- Rule: `MsgBase(bundleName)` (still in `jvmMain`; moves with its callers). `java.text.MessageFormat` ->
+- Rule: `MsgBase(bundleName)`. `java.text.MessageFormat` ->
   `MessageFormatLite.format(pattern, locale, args)`. `NumberFormat`/`DecimalFormat` -> `NumberFormats.general`,
   `.integer`, `.pattern(value, pattern, locale)` (`expect object`, actuals per platform).
 - Trap: where Java used the default formatting locale, pass `KswordLocale.default()`.
@@ -193,14 +193,7 @@ stated). Phase-1 rules (§1-§10) still apply.
 
 ## 23. Java serialization
 - Rule: stays JVM. `Serializable` is dropped when a class moves to common unless a JVM caller is found.
-- Result of `grep -rn "ObjectOutputStream\|ObjectInputStream" app/src/main --include=*.kt` (2026-10-09): the
-  assumption "`:app` serializes no JSword objects" is FALSE. `app/src/main/java/net/bible/android/database/Converters.kt`
-  (`keyToStr` / `strToKey`, lines ~165-182) writes a `org.crosswire.jsword.passage.Key` with `ObjectOutputStream`
-  (Base64 in Room) and reads it back with `ObjectInputStream`, returning null on any exception. Consequences:
-  every concrete `Key` implementation reachable from there (`Verse`, `VerseRange`, `RangedPassage`/`Passage` classes,
-  `DefaultLeafKeyList`, `DefaultKeyList`, ...) keeps `Serializable`, its `serialVersionUID` and its field layout
-  until the stored data is migrated; a class moving to common keeps `Serializable` via an `expect`/typealias
-  or stays in `jvmMain`. The API parity gate already pins serialization members (§10).
+- K3 (2026-10-10): `Converters.keyToStr/strToKey` were dead code (no `Key` column; never called from generated Room code) and were deleted; the reference model has no Java serialization.
 
 ## 24. Exceptions
 - Rule: common code throws `okio.IOException` subtypes where Java threw `IOException`. `MissingResourceException`
@@ -208,3 +201,40 @@ stated). Phase-1 rules (§1-§10) still apply.
 
 ## 25. Generated resources
 - Rule: a new resource file goes to `src/embeddedResources/`; nothing new on the JVM classpath.
+
+## 26. K3 replacements
+- `Cloneable` / `super.clone()` -> protected copy constructors and explicit `Key.clone()`; copy exactly the old shallow/deep fields and fail loudly for an open subclass without its own override; JVM-only inheritors retain `Cloneable` and `super<Cloneable>.clone()`.
+- `TreeSet` / `SortedSet` -> `SortedArraySet` (`SortedArraySet.kt`); keep sorted iteration and iterator removal, differential-test against the JDK, and report timings honestly: the early warmed ~1.51x Ranged remove slowdown was not the final M2 result (M2 medians 817.5626065 ms old / 2576.456209 ms new, 3.151x; later samples 2.07-2.67x). See the appended Task 14 review-fix evidence; old measurements remain historical, not closure evidence.
+- `BitSet` -> `KBitSet` (`KBitSet.kt`, `copy()` replaces clone); preserve bit operations and passage equality/hashCode, including capacity-independent logical equality.
+- Java mapped collections / `Iterable` / `Comparable` / `Object` -> Kotlin collections / types; preserve JVM types and behavior.
+- `Collections.*` / `Arrays.*` / `System.arraycopy` -> Kotlin stdlib / wrappers (`copyOf`, `copyInto`); an unmodifiable live view must remain a view, not become a snapshot.
+- `Character.isLetter/isDigit/isUpperCase/toUpperCase` -> `Char.isLetter()/isDigit()/isUpperCase()/uppercaseChar()`; preserve character semantics.
+- `Character.isWhitespace` -> `Char.isJavaWhitespace()` (`CharCompat.kt`); exclude U+00A0, U+2007 and U+202F as Java does, unlike Kotlin whitespace.
+- `System.getProperty("line.separator")` -> `"\n"` (`StringUtil`); matches Linux/Android's existing output.
+- Locale-sensitive lower/upper case -> `String.lowercase/uppercase(KLocale)` (`CaseMapping.kt`, platform actuals); preserve Turkish/Azeri dotted i and Greek final sigma.
+- `NoSuchElementException` / `ClassCastException` -> Kotlin exceptions; JVM typealiases preserve catch behavior.
+- `Reader` / `Writer` / buffered variants -> `String` input / `Appendable` output (`Passage`, `PassageKeyFactory`, `StringUtil`); preserve description round trips (D3).
+- `PrintStream` -> `Appendable` (`Versification`, `VersificationToKJVMapper`); preserve dev-tool output text (D3).
+- `EventObject` / `EventListener` -> plain `PassageEvent` / `PassageListener`; keep Java `getSource()` and non-null source (null is rejected) and nullable start/end bounds for empty events (D3).
+- `javaClass` / `X::class.java` -> KClass comparisons / `this::class.simpleName`; preserve pinned class-name output and `MsgBase` bundle names.
+- `@JvmStatic` / `@JvmField` / `@JvmOverloads` / `@Throws` stay in common with explicit imports; `@Throws` uses `okio.IOException::class`.
+
+### K3 Task 14 review-fix evidence (2026-10-10)
+
+The early ~1.51x figure above was superseded by the M2 3.151x finding; neither is erased.
+At frozen b63d4745, the unchanged faithful NT probe (two warmups, eight alternating-order samples,
+4121 remaining verses) measured Ranged remove medians 809.240615 ms old / 1641.8442145 ms new (2.029x).
+Temporary diagnostic instrumentation measured 87,794,175 new snapshot-copy comparisons versus zero
+for the old empty TreeSet sorted-source bulk build; normalization had 87,839,557 new comparisons
+versus 145,430,524 old. Instrumented stage timings are attribution evidence, not uninstrumented
+performance ratios. A second frozen allocation probe measured 248,690,664 new versus 681,716,472
+old allocated bytes in round 7, with 1/2 collections and 1/5 ms GC respectively: allocation volume
+alone does not explain the slowdown.
+
+The scoped fix preserves sorted order and avoids re-comparing an already sorted source only when
+an empty SortedArraySet receives another SortedArraySet with an equal comparator (TreeSet's
+analogous bulk-build condition). Two unchanged uninstrumented post-fix probe runs measured
+929.7893575 / 1287.543108 ms (1.385x) and 811.0789035 / 1078.655247 ms (1.330x).
+This is not a Native timing claim or a guarantee for arbitrary workloads. Distinct remove still
+measured 2.182x and 2.139x at roughly 0.5/1.1 ms; retain this residual finding for review.
+Full raw samples and XML are in the controller's Task 14 fix workspace; no earlier history was rewritten.

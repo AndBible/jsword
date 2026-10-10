@@ -19,7 +19,7 @@
  */
 package org.crosswire.common.util;
 
-import java.util.Locale;
+import org.crosswire.common.util.KLocale;
 
 import org.crosswire.jsword.internationalisation.DefaultLocaleProvider;
 import org.crosswire.jsword.internationalisation.LocaleProvider;
@@ -37,6 +37,7 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
 public class LanguagesCharacterizationTest {
+    private final LocaleProvider savedProvider = LocaleProviderManager.getLocaleProvider();
     private static final String GRC_NAME = "Greek, Ancient [to 1453] (\u1F19\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AE)";
     private static final String HE_NAME = "Hebrew (\u05E2\u05D1\u05E8\u05D9\u05EA)";
     private static final String ZH_HANT_NAME = "Chinese, Traditional (\u7E41\u4F53\u4E2D\u6587)";
@@ -44,15 +45,15 @@ public class LanguagesCharacterizationTest {
     @Before
     public void useEnglish() {
         LocaleProviderManager.setLocaleProvider(new LocaleProvider() {
-            public Locale getUserLocale() {
-                return Locale.ENGLISH;
+            public KLocale getUserLocale() {
+                return new KLocale("en", "", "");
             }
         });
     }
 
     @After
     public void restoreLocale() {
-        LocaleProviderManager.setLocaleProvider(new DefaultLocaleProvider());
+        LocaleProviderManager.setLocaleProvider(savedProvider);
     }
 
     @Test

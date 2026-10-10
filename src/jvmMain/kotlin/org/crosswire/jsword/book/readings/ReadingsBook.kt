@@ -23,6 +23,8 @@
  */
 package org.crosswire.jsword.book.readings
 
+import org.crosswire.common.util.toJavaLocale
+
 import java.util.ArrayList
 import java.util.Collections
 import java.util.Date
@@ -82,7 +84,7 @@ open class ReadingsBook
     init {
         //although we're getting this from the LocaleProviderManager, we're still setting 
         //the language on the metadata once, so won't cope for dynamic changes
-        val defaultLocale = LocaleProviderManager.getLocale()
+        val defaultLocale = LocaleProviderManager.getLocale().toJavaLocale()
         val prop = ResourceBundles.get(setname!!, KswordLocale.current())
             ?: throw MissingResourceException("Can't find bundle for base name $setname, locale $defaultLocale", setname, "")
 

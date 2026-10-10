@@ -59,7 +59,7 @@ object Languages {
      * @return the localised common languages
      */
     private fun getLocalisedCommonLanguages(): KBundle? {
-        val locale = LocaleProviderManager.getLocale().toKLocale()
+        val locale = LocaleProviderManager.getLocale()
         var langs = localisedCommonLanguages.get(locale)
         if (langs == null) {
             synchronized(Languages::class.java) {

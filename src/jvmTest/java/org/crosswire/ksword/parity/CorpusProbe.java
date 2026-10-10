@@ -1,10 +1,6 @@
 package org.crosswire.ksword.parity;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,11 +51,18 @@ final class CorpusProbe {
             org.crosswire.jsword.internationalisation.LocaleProvider old =
                 org.crosswire.jsword.internationalisation.LocaleProviderManager.getLocaleProvider();
             org.crosswire.jsword.internationalisation.LocaleProviderManager.setLocaleProvider(
-                new org.crosswire.jsword.internationalisation.LocaleProvider() {
-                    public java.util.Locale getUserLocale() {
-                        return fi;
-                    }
-                });
+                (org.crosswire.jsword.internationalisation.LocaleProvider) java.lang.reflect.Proxy.newProxyInstance(
+                    org.crosswire.jsword.internationalisation.LocaleProvider.class.getClassLoader(),
+                    new Class<?>[] {org.crosswire.jsword.internationalisation.LocaleProvider.class},
+                    (proxy, method, arguments) -> {
+                        // The baseline returns Locale; K3 returns KLocale. Keep this shared probe source portable.
+                        Class<?> localeType = method.getReturnType();
+                        if (localeType == java.util.Locale.class) {
+                            return fi;
+                        }
+                        return localeType.getConstructor(String.class, String.class, String.class)
+                            .newInstance(fi.getLanguage(), fi.getCountry(), fi.getVariant());
+                    }));
             try {
                 return apply("passage.parseAll", args);
             } finally {
@@ -251,39 +254,6 @@ final class CorpusProbe {
                     org.crosswire.jsword.book.sword.SwordBookPath.setDownloadDir(previous);
                 }
                 return sb.toString();
-            }
-            case "ser.write": {
-                // args: kind (Rocket|Bitwise|Distinct|Ranged|Tally|Verse|VerseRange), v11n, ref
-                Versification v11n = Versifications.instance().getVersification(args.get(1));
-                Passage parsed = PassageKeyFactory.instance().getKey(v11n, args.get(2));
-                Object obj;
-                switch (args.get(0)) {
-                    case "Rocket": { Passage p = new RocketPassage(v11n); p.addAll(parsed); obj = p; break; }
-                    case "Bitwise": { Passage p = new BitwisePassage(v11n); p.addAll(parsed); obj = p; break; }
-                    case "Distinct": { Passage p = new DistinctPassage(v11n); p.addAll(parsed); obj = p; break; }
-                    case "Ranged": { Passage p = new RangedPassage(v11n); p.addAll(parsed); obj = p; break; }
-                    case "Tally": { PassageTally p = new PassageTally(v11n); p.addAll(parsed); obj = p; break; }
-                    case "Verse": obj = parsed.getVerseAt(0); break;
-                    case "VerseRange": obj = parsed.getRangeAt(0, RestrictionType.NONE); break;
-                    default: throw new IllegalArgumentException(args.get(0));
-                }
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                try (ObjectOutputStream oos = new ObjectOutputStream(bos)) {
-                    oos.writeObject(obj);
-                }
-                return hex(bos.toByteArray());
-            }
-            case "ser.read": {
-                try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(unhex(args.get(0))))) {
-                    Object o = ois.readObject();
-                    String ref = o instanceof Key ? ((Key) o).getOsisRef() : String.valueOf(o);
-                    String extra = o instanceof Verse ? " id=" + ((Verse) o).getOsisID()
-                        : o instanceof VerseRange ? " card=" + ((VerseRange) o).getCardinality()
-                        : o instanceof Passage ? " verses=" + ((Passage) o).countVerses() : "";
-                    return o.getClass().getName() + " " + ref + extra;
-                } catch (Exception e) {
-                    return fail(e);
-                }
             }
             case "corpus.osis.rtf": {
                 // args: RTF snippets separated by U+0001. Serialized OSIS (raw format) or the exception.
@@ -523,11 +493,4 @@ final class CorpusProbe {
         return sb.toString();
     }
 
-    private static byte[] unhex(String s) {
-        byte[] out = new byte[s.length() / 2];
-        for (int i = 0; i < out.length; i++) {
-            out[i] = (byte) Integer.parseInt(s.substring(2 * i, 2 * i + 2), 16);
-        }
-        return out;
-    }
 }

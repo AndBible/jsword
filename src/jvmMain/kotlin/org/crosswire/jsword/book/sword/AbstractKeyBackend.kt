@@ -284,10 +284,4 @@ abstract class AbstractKeyBackend<T : OpenFileState>
         blur(by, restrict, true, true)
     }
 
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -2782112117361556089L
-    }
 }

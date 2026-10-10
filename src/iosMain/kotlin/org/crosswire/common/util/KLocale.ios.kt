@@ -6,10 +6,10 @@ import platform.Foundation.currentLocale
 import platform.Foundation.languageCode
 
 /**
- * `NSLocale.currentLocale` reflects the app bundle's localizations and ignores the script, so hosts
- * should set [KswordLocale.provider] with their real UI locale.
+ * `NSLocale.currentLocale` reflects the app bundle's localizations and ignores the script.
+ * An iOS host calls `LocaleProviderManager.setLocaleProvider` to select JSword's current locale;
+ * this platform default remains the fallback for bundles and number formats.
  */
-internal actual fun platformCurrentLocale(): KLocale = platformDefaultLocale()
 internal actual fun platformDefaultLocale(): KLocale {
     val l = NSLocale.currentLocale
     return KLocale(l.languageCode, l.countryCode ?: "")

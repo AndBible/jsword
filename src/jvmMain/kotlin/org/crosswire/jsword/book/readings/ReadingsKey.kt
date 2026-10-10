@@ -34,7 +34,7 @@ import org.crosswire.jsword.passage.Key
  * @author Joe Walker
  * @author DM Smith
  */
-open class ReadingsKey : DefaultLeafKeyList {
+open class ReadingsKey : DefaultLeafKeyList, Cloneable {
     /**
      * Simple Constructor.
      * 
@@ -97,7 +97,7 @@ open class ReadingsKey : DefaultLeafKeyList {
     }
 
     override fun clone(): ReadingsKey {
-        return super.clone() as ReadingsKey
+        return (super<Cloneable>.clone() as ReadingsKey).apply { cloneParent() }
     }
 
     /**
@@ -125,10 +125,5 @@ open class ReadingsKey : DefaultLeafKeyList {
          * Date formatter
          */
         private val KEY_FORMAT: MessageFormat = MessageFormat("{0,number,00}.{1,number,00}")
-
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID: Long = -5500401548068844993L
     }
 }

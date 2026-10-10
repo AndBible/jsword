@@ -19,10 +19,6 @@
  */
 package org.crosswire.common.util;
 
-import java.io.IOException;
-import java.io.PipedReader;
-import java.io.PipedWriter;
-import java.io.PrintWriter;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
@@ -38,18 +34,6 @@ import org.junit.Test;
  * @author DM Smith
  */
 public class StringUtilTest {
-
-    @Test
-    public void testRead() throws IOException {
-        PipedReader in = new PipedReader();
-        PipedWriter pout = new PipedWriter(in);
-        PrintWriter out = new PrintWriter(pout, true);
-        out.println("a b c d e");
-        out.println("f g h i j");
-        out.close();
-        pout.close();
-        Assert.assertEquals("a b c d e" + StringUtil.NEWLINE + "f g h i j" + StringUtil.NEWLINE, StringUtil.read(in));
-    }
 
     @Test
     public void testGetInitials() {

@@ -1,0 +1,74 @@
+/**
+ * Distribution License:
+ * JSword is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License, version 2.1 or later
+ * as published by the Free Software Foundation. This program is distributed
+ * in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * The License is available on the internet at:
+ *      http://www.gnu.org/copyleft/lgpl.html
+ * or by writing to:
+ *      Free Software Foundation, Inc.
+ *      59 Temple Place - Suite 330
+ *      Boston, MA 02111-1307, USA
+ *
+ * © CrossWire Bible Society, 2005 - 2016
+ *
+ */
+package org.crosswire.jsword.passage
+
+import kotlin.jvm.JvmStatic
+
+/**
+ * A Utility class containing various static methods.
+ *
+ * @see gnu.lgpl.License The GNU Lesser General Public License for details.
+ * @author Joe Walker
+ */
+class PassageUtil
+/**
+ * Prevent instantiation
+ */
+private constructor() {
+    companion object {
+        /**
+         * Do we remember the original string used to configure us?
+         *
+         * @param persistentNaming
+         *            True to keep the old string False (default) to generate a new
+         *            better one
+         */
+        @JvmStatic
+        fun setPersistentNaming(persistentNaming: Boolean) {
+            PassageUtil.persistentNaming = persistentNaming
+        }
+
+        /**
+         * Do we remember the original string used to configure us?
+         *
+         * @return True if we keep the old string False (default) if we generate a
+         *         new better one
+         */
+        @JvmStatic
+        fun isPersistentNaming(): Boolean {
+            return persistentNaming
+        }
+
+        /**
+         * By default do we remember the original string used to configure us?
+         *
+         * @return false getDefaultPersistentNaming() is always false
+         */
+        @JvmStatic
+        fun getDefaultPersistentNaming(): Boolean {
+            return false
+        }
+
+        /**
+         * Do we store the original string?
+         */
+        private var persistentNaming = getDefaultPersistentNaming()
+    }
+}

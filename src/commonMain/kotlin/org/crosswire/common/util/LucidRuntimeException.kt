@@ -1,0 +1,55 @@
+/**
+ * Distribution License:
+ * JSword is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License, version 2.1 or later
+ * as published by the Free Software Foundation. This program is distributed
+ * in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * The License is available on the internet at:
+ *      http://www.gnu.org/copyleft/lgpl.html
+ * or by writing to:
+ *      Free Software Foundation, Inc.
+ *      59 Temple Place - Suite 330
+ *      Boston, MA 02111-1307, USA
+ *
+ * © CrossWire Bible Society, 2005 - 2016
+ *
+ */
+package org.crosswire.common.util
+
+/**
+ * EventExceptions are generally used for passing problems through the event
+ * system which does not allow checked exceptions through.
+ *
+ * So LucidRuntimeException is a LucidException in all but inheritance -
+ * LucidException inherits from Exception and so is checked, where EventEception
+ * inherits from RuntimeException and so is not checked. In general you would
+ * create a subclass of LucidException before you used it, however
+ * EventExceptions would be used directly.
+ *
+ * @see gnu.lgpl.License The GNU Lesser General Public License for details.
+ * @author Joe Walker
+ * @see LucidException
+ */
+open class LucidRuntimeException : RuntimeException {
+    /**
+     * All LucidRuntimeException are constructed with references to resources in
+     * an i18n properties file.
+     *
+     * @param msg
+     *            The resource id to read
+     */
+    constructor(msg: String?) : super(msg)
+
+    /**
+     * All LucidRuntimeException are constructed with references to resources in
+     * an i18n properties file.
+     *
+     * @param msg   The resource id to read
+     * @param cause The cause of the exception
+     */
+    constructor(msg: String?, cause: Throwable?) : super(msg, cause)
+
+}

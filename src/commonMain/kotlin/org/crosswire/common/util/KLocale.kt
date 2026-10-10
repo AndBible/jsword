@@ -1,6 +1,6 @@
 package org.crosswire.common.util
 
-import kotlin.concurrent.Volatile
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
 
 /**
  * A locale value for common code (language, country, variant) (K2 F1). The string form matches
@@ -37,13 +37,11 @@ class KLocale(language: String, country: String = "", variant: String = "") {
     }
 }
 
-/** The locale JSword formats and translates for. A host without a JVM `LocaleProvider` (iOS) sets [provider]. */
+/** The locale JSword formats and translates for, supplied by the host's locale provider. */
 object KswordLocale {
-    @Volatile var provider: (() -> KLocale)? = null
-    fun current(): KLocale = provider?.invoke() ?: platformCurrentLocale()
+    fun current(): KLocale = LocaleProviderManager.getLocale()
     /** The platform default locale (`Locale.getDefault()` on the JVM), used by bundle fallback and number formats. */
     fun default(): KLocale = platformDefaultLocale()
 }
 
-internal expect fun platformCurrentLocale(): KLocale
 internal expect fun platformDefaultLocale(): KLocale

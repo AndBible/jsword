@@ -27,7 +27,6 @@ import org.crosswire.jsword.book.sword.state.ZLDBackendState
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
-import java.io.ObjectInputStream
 
 /**
  * An extension of RawLDBackend to read Z format files.
@@ -119,18 +118,6 @@ open class ZLDBackend
         return finalEntry
     }
 
-    /**
-     * Serialization support.
-     * 
-     * @param is
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`is`: ObjectInputStream) {
-        `is`.defaultReadObject()
-    }
-
     /** 
      * Experimental code.
      */
@@ -204,6 +191,5 @@ open class ZLDBackend
          * The log stream
          */
         private val log: Logger = LoggerFactory.getLogger(ZLDBackend::class)
-        private const val serialVersionUID = 3536098410391064446L
     }
 }
