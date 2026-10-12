@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.util.regex.Pattern
 
 import org.crosswire.common.util.Language
 import org.crosswire.common.util.Version
@@ -125,7 +124,7 @@ enum class ConfigEntryType {
 
         override fun isAllowed(value: String?): Boolean {
             try {
-                Integer.parseInt(value)
+                (value ?: throw NumberFormatException("null")).toInt()
                 return true
             } catch (e: NumberFormatException) {
                 return false
@@ -134,7 +133,7 @@ enum class ConfigEntryType {
 
         override fun convert(input: String?): Any? {
             try {
-                return Integer.valueOf(input)
+                return (input ?: throw NumberFormatException("null")).toInt()
             } catch (e: NumberFormatException) {
                 return getDefault()
             }
@@ -162,7 +161,7 @@ enum class ConfigEntryType {
         }
 
         override fun convert(input: String?): Any? {
-            return java.lang.Boolean.valueOf(input)
+            return input.equals("true", ignoreCase = true)
         }
     },
 
@@ -292,7 +291,7 @@ enum class ConfigEntryType {
 
         override fun isAllowed(value: String?): Boolean {
             try {
-                Integer.parseInt(value)
+                (value ?: throw NumberFormatException("null")).toInt()
                 return true
             } catch (e: NumberFormatException) {
                 return false
@@ -301,7 +300,7 @@ enum class ConfigEntryType {
 
         override fun convert(input: String?): Any? {
             try {
-                return Integer.valueOf(input)
+                return (input ?: throw NumberFormatException("null")).toInt()
             } catch (e: NumberFormatException) {
                 return null
             }
@@ -327,7 +326,7 @@ enum class ConfigEntryType {
         }
 
         override fun convert(input: String?): Any? {
-            return java.lang.Boolean.valueOf(input)
+            return input.equals("true", ignoreCase = true)
         }
     },
 
@@ -527,7 +526,7 @@ enum class ConfigEntryType {
 
         override fun isAllowed(value: String?): Boolean {
             try {
-                Integer.parseInt(value)
+                (value ?: throw NumberFormatException("null")).toInt()
                 return true
             } catch (e: NumberFormatException) {
                 return false
@@ -536,7 +535,7 @@ enum class ConfigEntryType {
 
         override fun convert(input: String?): Any? {
             try {
-                return Integer.valueOf(input)
+                return (input ?: throw NumberFormatException("null")).toInt()
             } catch (e: NumberFormatException) {
                 return null
             }
@@ -549,10 +548,10 @@ enum class ConfigEntryType {
      */
     SWORD_VERSION_DATE(SwordBookMetaData.KEY_SWORD_VERSION_DATE) {
         override fun isAllowed(value: String?): Boolean {
-            return validDatePattern.matcher(value).matches()
+            return validDatePattern.matches(value!!)
         }
 
-        private val validDatePattern: Pattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2}")
+        private val validDatePattern: Regex = Regex("\\d{4}-\\d{2}-\\d{2}")
     },
 
     /**
@@ -592,10 +591,10 @@ enum class ConfigEntryType {
      */
     COPYRIGHT_DATE(SwordBookMetaData.KEY_COPYRIGHT_DATE) {
         override fun isAllowed(value: String?): Boolean {
-            return validDatePattern.matcher(value).matches()
+            return validDatePattern.matches(value!!)
         }
 
-        private val validDatePattern: Pattern = Pattern.compile("\\d{4}(\\s*-\\s*\\d{4})?(\\s*,\\s*\\d{4}(\\s*-\\s*\\d{4})?)*")
+        private val validDatePattern: Regex = Regex("\\d{4}(\\s*-\\s*\\d{4})?(\\s*,\\s*\\d{4}(\\s*-\\s*\\d{4})?)*")
     },
 
     /**

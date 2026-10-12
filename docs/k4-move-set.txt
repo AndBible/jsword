@@ -35,8 +35,8 @@ org/crosswire/common/util/TimeGate.kt
 org/crosswire/common/util/URIFilter.kt
 org/crosswire/common/util/Version.kt #done
 org/crosswire/common/util/WebResource.kt
-org/crosswire/jsword/book/BookCategory.kt
-org/crosswire/jsword/book/BookException.kt
+org/crosswire/jsword/book/BookCategory.kt #done
+org/crosswire/jsword/book/BookException.kt #done
 org/crosswire/jsword/book/BookMetaData.kt #done
 org/crosswire/jsword/book/FeatureType.kt #done
 org/crosswire/jsword/book/KeyType.kt #done
@@ -49,10 +49,10 @@ org/crosswire/jsword/book/sword/AbstractBackend.kt
 org/crosswire/jsword/book/sword/AbstractKeyBackend.kt
 org/crosswire/jsword/book/sword/Backend.kt
 org/crosswire/jsword/book/sword/BlockType.kt
-org/crosswire/jsword/book/sword/BookType.kt
-org/crosswire/jsword/book/sword/ConfigEntryTable.kt
-org/crosswire/jsword/book/sword/ConfigEntryType.kt
-org/crosswire/jsword/book/sword/ConfigValueInterceptor.kt
+org/crosswire/jsword/book/sword/BookType.kt #done
+org/crosswire/jsword/book/sword/ConfigEntryTable.kt #done
+org/crosswire/jsword/book/sword/ConfigEntryType.kt #done
+org/crosswire/jsword/book/sword/ConfigValueInterceptor.kt #done
 org/crosswire/jsword/book/sword/DataEntry.kt
 org/crosswire/jsword/book/sword/DataIndex.kt
 org/crosswire/jsword/book/sword/GenBookBackend.kt
@@ -63,7 +63,7 @@ org/crosswire/jsword/book/sword/RawLDBackend.kt
 org/crosswire/jsword/book/sword/StatefulFileBackedBackend.kt
 org/crosswire/jsword/book/sword/SwordBookMetaData.kt
 org/crosswire/jsword/book/sword/SwordBookPath.kt
-org/crosswire/jsword/book/sword/SwordConstants.kt
+org/crosswire/jsword/book/sword/SwordConstants.kt #done
 org/crosswire/jsword/book/sword/SwordUtil.kt
 org/crosswire/jsword/book/sword/TreeKeyIndex.kt
 org/crosswire/jsword/book/sword/TreeNode.kt

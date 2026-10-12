@@ -38,8 +38,9 @@ enum class BookCategory
     /**
      * The names of the BookCategory
      */
-    @Transient private val internalName: String,
-    @Transient private val externalName: String
+    // JVM enums serialize by constant name, never by these instance fields.
+    private val internalName: String,
+    private val externalName: String
 ) {
     /** Books that are Bibles  */
     // TRANSLATOR: The name for the book category consisting of Bibles.

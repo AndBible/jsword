@@ -26,8 +26,6 @@ import org.crosswire.jsword.book.KeyType
 import org.crosswire.jsword.book.sword.state.RawBackendState
 import org.crosswire.jsword.book.sword.state.RawLDBackendState
 
-import java.util.ArrayList
-import java.util.Arrays
 
 /**
  * Data about book types.
@@ -230,9 +228,9 @@ abstract class BookType
             }
         }
 
-        private val supportedBookTypes = ArrayList<BookType>(Arrays.asList(
+        private val supportedBookTypes = arrayListOf(
             rawText, zText, zText4, rawCom, rawCom4, zCom, zCom4, hrefCom, rawFiles, rawLd,
-            rawLd4, zLd, rawGenBook)
+            rawLd4, zLd, rawGenBook
         )
 
         @JvmStatic
