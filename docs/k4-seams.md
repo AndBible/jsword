@@ -116,3 +116,19 @@ implementations at Task 16, not a new common parser with changed ordering.
 `IniSectionJvm` owns File/InputStream/Writer overloads; IniSection consumes
 Path/ByteArray/Appendable. Necessary JVM callers and BibleApplication's resource
 stream call were qualified mechanically now rather than waiting for Task 14.
+
+### Task 6 util review fixes
+
+`IniSectionJvm.kt` also supplies plain JVM `platformIniLineSeparator(): String`,
+backed by the cached `System.lineSeparator()` value (as PrintWriter uses). The
+internal `iniLineSeparator` platform value can be forced in characterization;
+Task 16 adds the expect/actual boundary, with iOS LF. The common serializer uses
+this for record endings only; embedded continuation LF remains unchanged.
+
+`unmodifiableIniKeys(Set<String>): Collection<String>` and
+`unmodifiableIniValues(Collection<String>): Collection<String>` are plain JVM
+helpers using Collections.unmodifiableSet/Collection. This preserves live views
+and the Java removeIf default-method contract: always UOE, without evaluating a
+predicate, even for an empty view or no match. Task 16 needs common declarations
+and an iOS live read-only view actual. The former common wrappers were removed
+because Kotlin collection implementations do not override Java removeIf.

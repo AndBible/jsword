@@ -124,4 +124,54 @@ class MetadataUtilCharacterizationTest {
             home.deleteRecursively()
         }
     }
+    @Test
+    fun writerUsesPlatformSeparatorAndFlushesWithoutClosing() {
+        val old = iniLineSeparator
+        try {
+            iniLineSeparator = "\r\n"
+            val output = java.io.StringWriter()
+            IniSectionJvm.save(IniSection("Demo").apply { add("A", "one") }, output)
+            assertEquals("[Demo]\r\nA = one\r\n", output.toString())
+        } finally {
+            iniLineSeparator = old
+        }
+    }
+
+    @Test
+    fun liveViewsRemoveIfAlwaysRejectsWithoutEvaluatingPredicate() {
+        for (populated in listOf(false, true)) {
+            val section = IniSection()
+            if (populated) section.add("A", "one")
+            val views = listOf(section.keys, section.getValues("A") ?: run {
+                section.add("A", "one")
+                val view = section.getValues("A")!!
+                section.remove("A", "one")
+                view
+            })
+            for (view in views) {
+                var called = false
+                assertFailsWith<UnsupportedOperationException> {
+                    (view as java.util.Collection<String>).removeIf { called = true; false }
+                }
+                assertEquals(false, called)
+            }
+        }
+    }
+
+    @Test
+    fun languageFallbackMatchesJdkDisplayLocaleRatherThanFixedEnglish() {
+        val old = java.util.Locale.getDefault(java.util.Locale.Category.DISPLAY)
+        try {
+            for (locale in listOf(java.util.Locale.GERMAN, java.util.Locale.FRENCH)) {
+                java.util.Locale.setDefault(java.util.Locale.Category.DISPLAY, locale)
+                // JDK fallback is a platform boundary; unlike JSword bundles it uses DISPLAY.
+                assertEquals("gsw", Languages.getName("gsw"))
+                val expected = java.util.Locale("gsw").displayLanguage
+                kotlin.test.assertNotEquals("gsw", expected)
+                assertEquals(expected, Language("gsw").name)
+            }
+        } finally {
+            java.util.Locale.setDefault(java.util.Locale.Category.DISPLAY, old)
+        }
+    }
 }

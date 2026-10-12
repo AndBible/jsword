@@ -147,7 +147,7 @@ class IniSection : Iterable<Any?> {
      * @return the set of keys
      */
     val keys: Collection<String>
-        get() = ReadOnlyIniSet(section.keys)
+        get() = unmodifiableIniKeys(section.keys)
 
     /**
      * Returns {@code true} if the IniSection contains any values for the specified key.
@@ -217,7 +217,7 @@ class IniSection : Iterable<Any?> {
      */
     fun getValues(key: String?): Collection<String>? {
         if (containsKey(key)) {
-            return ReadOnlyIniCollection(valuesOf(key)!!)
+            return unmodifiableIniValues(valuesOf(key)!!)
         }
         return null
     }
@@ -362,15 +362,16 @@ class IniSection : Iterable<Any?> {
 
     /** Outputs the legacy section format without closing the destination. */
     fun save(out: Appendable) {
-        out.append("[").append(name ?: "null").append("]\n")
+        val separator = platformIniLineSeparator()
+        out.append("[").append(name ?: "null").append("]").append(separator)
         var first = true
         for ((key, values) in section) {
             for (value in values) {
                 if (!first) {
-                    out.append('\n')
+                    out.append(separator)
                     first = false
                 }
-                out.append(key).append(" = ").append(format(value)).append('\n')
+                out.append(key).append(" = ").append(format(value)).append(separator)
             }
         }
     }
