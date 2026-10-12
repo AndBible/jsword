@@ -44,6 +44,28 @@ final class CorpusProbe {
     private CorpusProbe() {
     }
 
+    private static SwordBookMetaData fileMetadata(File file, java.net.URI root) throws Exception {
+        try {
+            Class<?> holder = Class.forName("org.crosswire.jsword.book.sword.SwordBookMetaDataJvm");
+            return (SwordBookMetaData) holder.getMethod("create", File.class, java.net.URI.class).invoke(null, file, root);
+        } catch (ClassNotFoundException oldApi) {
+            return SwordBookMetaData.class.getConstructor(File.class, java.net.URI.class).newInstance(file, root);
+        }
+    }
+
+    private static Class<?> pathBoundary() throws Exception {
+        try { return Class.forName("org.crosswire.jsword.book.sword.SwordBookPathJvm"); }
+        catch (ClassNotFoundException oldApi) { return Class.forName("org.crosswire.jsword.book.sword.SwordBookPath"); }
+    }
+
+    private static File downloadDir() throws Exception {
+        return (File) pathBoundary().getMethod("getSwordDownloadDir").invoke(null);
+    }
+
+    private static void setDownloadDir(File dir) throws Exception {
+        pathBoundary().getMethod("setDownloadDir", File.class).invoke(null, dir);
+    }
+
     static String apply(String op, List<String> args) throws Exception {
         if (op.equals("passage.parseAllFi")) {
             // Same as passage.parseAll, but with the Finnish locale so BibleNames_fi names resolve.
@@ -72,7 +94,7 @@ final class CorpusProbe {
         switch (op) {
             case "fixture.dump": {
                 File conf = new File(args.get(0));
-                SwordBookMetaData md = new SwordBookMetaData(conf, conf.getParentFile().getParentFile().toURI());
+                SwordBookMetaData md = fileMetadata(conf, conf.getParentFile().getParentFile().toURI());
                 Book book;
                 if (md.getInitials().equals("K4RawText4")) {
                     if (md.getBookType() != null) {
@@ -286,7 +308,7 @@ final class CorpusProbe {
                 StringBuilder sb = new StringBuilder();
                 try {
                     URI root = conf.getParentFile().getParentFile().toURI();
-                    SwordBookMetaData md = new SwordBookMetaData(conf, root);
+                    SwordBookMetaData md = fileMetadata(conf, root);
                     sb.append("initials=").append(md.getInitials()).append(" category=").append(md.getBookCategory()).append('\n');
                     dumpMeta(sb, md);
                 } catch (Exception e) {
@@ -299,9 +321,9 @@ final class CorpusProbe {
                 // download dir and lists the books found under it; a header-less conf must not abort the scan.
                 File dir = new File(args.get(0));
                 StringBuilder sb = new StringBuilder();
-                File previous = org.crosswire.jsword.book.sword.SwordBookPath.getSwordDownloadDir();
+                File previous = downloadDir();
                 try {
-                    org.crosswire.jsword.book.sword.SwordBookPath.setDownloadDir(dir);
+                    setDownloadDir(dir);
                     org.crosswire.jsword.book.Book[] found = new org.crosswire.jsword.book.sword.SwordBookDriver().getBooks();
                     java.util.TreeSet<String> names = new java.util.TreeSet<String>();
                     for (org.crosswire.jsword.book.Book b : found) {
@@ -314,7 +336,7 @@ final class CorpusProbe {
                 } catch (Exception e) {
                     sb.append(fail(e));
                 } finally {
-                    org.crosswire.jsword.book.sword.SwordBookPath.setDownloadDir(previous);
+                    setDownloadDir(previous);
                 }
                 return sb.toString();
             }

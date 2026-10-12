@@ -126,7 +126,7 @@ public class SwordBookMetaDataTest {
             System.out.println(e.getMessage());
         }
 
-        swordBookMetaData = new SwordBookMetaData(configFile, new URI("file:///tmp"));
+        swordBookMetaData = SwordBookMetaDataJvm.create(configFile, new URI("file:///tmp"));
 
         return swordBookMetaData;
     }

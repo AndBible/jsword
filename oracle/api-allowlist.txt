@@ -350,3 +350,29 @@ org.crosswire.common.util.PropertyMap - M public load(java.io.InputStream): void
 org.crosswire.common.util.PropertyMap - M public store(java.io.OutputStream,java.lang.String): void throws [java.io.IOException] # K4 split: stream entry point retained in PropertyMapJvm; JDK Properties semantics preserved by helpers.
 org.crosswire.common.util.PropertyMap + M public load(byte[]): void throws [] # K4 stream: byte-array entry point delegates to legacy JVM Properties helper.
 org.crosswire.common.util.PropertyMap + M public store(java.lang.String): byte[] throws [] # K4 stream: byte-array entry point delegates to legacy JVM Properties helper.
+
+org.crosswire.jsword.book.MetaDataLocator - M protected static getFile(java.net.URI): java.io.File throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.MetaDataLocator - M public abstract getReadLocation(): java.io.File throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.MetaDataLocator - M public abstract getWriteLocation(): java.io.File throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.MetaDataLocator + M protected static getPath(java.net.URI): okio.Path throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.MetaDataLocator + M public abstract getReadLocation(): okio.Path throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.MetaDataLocator + M public abstract getWriteLocation(): okio.Path throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookMetaData - K public (java.io.File,java.net.URI) throws [java.io.IOException,org.crosswire.jsword.book.BookException] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookMetaData - M public final getConfigFile(): java.io.File throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookMetaData - M public static normalize(java.io.Writer,org.crosswire.common.util.IniSection,java.lang.String[]): void throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookMetaData + K public (okio.Path,java.net.URI) throws [java.io.IOException,org.crosswire.jsword.book.BookException] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookMetaData + M public final getConfigFile(): okio.Path throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static getAugmentPath(): java.io.File[] throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static getBookList(java.io.File): java.lang.String[] throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static getDownloadDir(): java.io.File throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static getSwordDownloadDir(): java.io.File throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static getSwordPath(): java.io.File[] throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static setAugmentPath(java.io.File[]): void throws [org.crosswire.jsword.book.BookException] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath - M public static setDownloadDir(java.io.File): void throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static getAugmentPath(): okio.Path[] throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static getBookList(okio.Path): java.lang.String[] throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static getDownloadDir(): okio.Path throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static getSwordDownloadDir(): okio.Path throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static getSwordPath(): okio.Path[] throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static setAugmentPath(okio.Path[]): void throws [org.crosswire.jsword.book.BookException] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
+org.crosswire.jsword.book.sword.SwordBookPath + M public static setDownloadDir(okio.Path): void throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained

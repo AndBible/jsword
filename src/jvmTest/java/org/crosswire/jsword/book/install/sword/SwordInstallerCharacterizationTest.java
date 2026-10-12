@@ -46,6 +46,7 @@ import org.crosswire.jsword.book.install.InstallException;
 import org.crosswire.jsword.book.install.Installer;
 import org.crosswire.jsword.book.install.InstallerFactory;
 import org.crosswire.jsword.book.sword.SwordBookMetaData;
+import org.crosswire.jsword.book.sword.SwordBookMetaDataJvm;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -391,7 +392,7 @@ public class SwordInstallerCharacterizationTest {
     public void testIsNewerComparesTheRemoteWithTheInstalledConf() throws Exception {
         Book installed = Books.installed().getBook("KJV");
         Assume.assumeNotNull(installed);
-        File conf = ((SwordBookMetaData) installed.getBookMetaData()).getConfigFile();
+        File conf = org.crosswire.jsword.book.sword.SwordBookMetaDataJvm.getConfigFile((SwordBookMetaData) installed.getBookMetaData());
         Assume.assumeTrue(conf != null && conf.exists());
 
         File remote = new File(work, "KJV.zip");

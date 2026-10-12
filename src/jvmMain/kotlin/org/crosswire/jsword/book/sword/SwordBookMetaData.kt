@@ -19,17 +19,11 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.io.File
-import java.io.IOException
-import java.io.PrintWriter
-import java.io.Writer
-import java.net.URI
-import java.util.ArrayList
-
-import java.util.Collections
-import java.util.HashMap
-import java.util.HashSet
-import java.util.regex.Pattern
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.IOException
+import org.crosswire.common.util.KUri
+import org.crosswire.common.util.KFiles
 
 import org.crosswire.common.util.Filter
 import org.crosswire.common.util.IOUtil
@@ -88,7 +82,7 @@ import org.crosswire.common.util.LoggerFactory
  */
 class SwordBookMetaData : AbstractBookMetaData {
     /**
-     * Loads a sword config from a given File.
+     * Loads a sword config from a given Path.
      *
      * @param file
      *            the config file
@@ -99,7 +93,7 @@ class SwordBookMetaData : AbstractBookMetaData {
      *             indicates missing data files
      */
     @Throws(IOException::class, BookException::class)
-    constructor(file: File, bookRootPath: URI?) {
+    constructor(file: Path, bookRootPath: KUri?) {
         this.installed = true
         this.configFile = file
         this.bookConfPath = file.name // something like kjv.conf
@@ -279,7 +273,7 @@ class SwordBookMetaData : AbstractBookMetaData {
      *
      * @return Returns the conf file or null if loaded from a byte buffer.
      */
-    val configFile: File?
+    val configFile: Path?
 
     /**
      * Get the book conf which is a name such as kjv.conf.
@@ -473,7 +467,7 @@ class SwordBookMetaData : AbstractBookMetaData {
         if (config != null) {
             config.replace(key, value)
             try {
-                org.crosswire.common.util.IniSectionJvm.save(config, File(writeLocation, bookConfPath), bookCharset)
+                config.save(metadataChildPath(writeLocation, bookConfPath), bookCharset)
             } catch (ex: IOException) {
                 LOGGER.error("Unable to save {}={}: conf file for [{}]; error={}", key, value, configAll.name, ex)
             }
@@ -492,11 +486,11 @@ class SwordBookMetaData : AbstractBookMetaData {
         filtered = keepers != null
 
         configAll.clear()
-        org.crosswire.common.util.IniSectionJvm.load(configAll, configFile, ENCODING_UTF8, keepers)
+        configAll.load(configFile!!, ENCODING_UTF8, keepers)
         val encoding = configAll.get(KEY_ENCODING)
         if (!ENCODING_UTF8.equals(encoding, ignoreCase = true)) {
             configAll.clear()
-            org.crosswire.common.util.IniSectionJvm.load(configAll, configFile, ENCODING_LATIN1, keepers)
+            configAll.load(configFile!!, ENCODING_LATIN1, keepers)
         }
     }
 
@@ -522,17 +516,17 @@ class SwordBookMetaData : AbstractBookMetaData {
 
     private fun addConfig(locator: MetaDataLocator): IniSection? {
         // The write location supersedes the read location
-        var conf = File(locator.writeLocation, bookConfPath)
-        if (!conf.exists()) {
-            conf = File(locator.readLocation, bookConfPath)
+        var conf = metadataChildPath(locator.writeLocation, bookConfPath)
+        if (!KFiles.exists(conf)) {
+            conf = metadataChildPath(locator.readLocation, bookConfPath)
         }
 
-        if (conf.exists()) {
+        if (KFiles.exists(conf)) {
             // The additional confs have the same encoding as the SWORD conf.
             val encoding = getProperty(KEY_ENCODING)
             try {
                 val config = IniSection()
-                org.crosswire.common.util.IniSectionJvm.load(config, conf, encoding)
+                config.load(conf, encoding)
                 mergeConfig(config)
                 return config
             } catch (e: IOException) {
@@ -684,7 +678,7 @@ class SwordBookMetaData : AbstractBookMetaData {
         // directory.
         var datapath = getProperty(KEY_DATA_PATH)
         if (datapath == null) {
-            throw BookException(String.format("Data path for the book %s is not set", configAll.name))
+            throw BookException("Data path for the book ${configAll.name} is not set")
         }
         var lastSlash = datapath.lastIndexOf('/')
 
@@ -703,10 +697,10 @@ class SwordBookMetaData : AbstractBookMetaData {
         }
 
         var location = NetUtil.lengthenURI(library, datapath)
-        val bookDir = File(location!!.path)
+        val bookDir = location!!.getPath()!!.toPath()
         // For some modules, the last element of the DataPath
         // is a prefix for file names.
-        if (!bookDir.isDirectory) {
+        if (!KFiles.isDirectory(bookDir)) {
             if (isDirectoryPath) {
                 // TRANSLATOR: This indicates that the Book is only partially installed.
                 throw BookException(JSMsg.gettext("The book {0} is missing its data files", configAll.name))
@@ -715,7 +709,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             // not a directory path
             // try appending .dat on the end to see if we have a file, if not,
             // then
-            if (!File(location.path + ".dat").exists()) {
+            if (!KFiles.exists((location.getPath() + ".dat").toPath())) {
                 // TRANSLATOR: This indicates that the Book is only partially
                 // installed.
                 throw BookException(JSMsg.gettext("The book {0} is missing its data files", configAll.name))
@@ -795,7 +789,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             return keepers.contains(obj) || obj.startsWith("AndBible")
         }
 
-        private val keepers: MutableSet<String> = HashSet()
+        private val keepers: MutableSet<String> = mutableSetOf()
 
         init {
             // Load up the keepers set
@@ -876,7 +870,7 @@ class SwordBookMetaData : AbstractBookMetaData {
         val DEFAULTS: Map<String, String>
 
         init {
-            val tempMap = HashMap<String, String>()
+            val tempMap = mutableMapOf<String, String>()
             tempMap.put(KEY_COMPRESS_TYPE, "LZSS")
             tempMap.put(KEY_BLOCK_TYPE, "CHAPTER")
             tempMap.put(KEY_BLOCK_COUNT, "200")
@@ -894,7 +888,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             tempMap.put(KEY_DISTRIBUTION_LICENSE, "Public Domain")
             tempMap.put(KEY_CASE_SENSITIVE_KEYS, "false")
             tempMap.put(KEY_STRONGS_PADDING, "true")
-            DEFAULTS = Collections.unmodifiableMap(tempMap)
+            DEFAULTS = metadataDefaultsView(tempMap)
         }
 
         /**
@@ -919,11 +913,11 @@ class SwordBookMetaData : AbstractBookMetaData {
         // History is a special case. It is of the form History_x.x
         // The ConfigEntryType is History without the _x.x.
         // We want to put x.x at the beginning of the string
-        private fun adjustHistory(config: IniSection) {
+        internal fun adjustHistory(config: IniSection) {
             // Iterate over a copy of the keys so that we don't get
             // a concurrent modification exception when we remove matching keys
             // and when we add new keys
-            val keys: List<String> = ArrayList(config.keys)
+            val keys: List<String> = config.keys.toList()
             for (key in keys) {
                 var value = config.get(key)
                 val type = ConfigEntryType.fromString(key)
@@ -934,67 +928,6 @@ class SwordBookMetaData : AbstractBookMetaData {
                     config.add(KEY_HISTORY, value)
                 }
             }
-        }
-
-        @JvmStatic
-        fun normalize(out: Writer?, config: IniSection, order: Array<String>) {
-            var writer: PrintWriter? = null
-            if (out is PrintWriter) {
-                writer = out
-            } else {
-                writer = PrintWriter(out)
-            }
-            val copy = IniSection(config)
-            // History is a special case
-            adjustHistory(copy)
-
-            val knownKeys: MutableList<String> = ArrayList(copy.keys)
-            writer.print("[")
-            writer.print(copy.name)
-            writer.print("]")
-            writer.println()
-
-            // Get the keys out in the specified order
-            for (key in order) {
-                knownKeys.remove(key)
-                if (!copy.containsKey(key)) {
-                    continue
-                }
-                val values = copy.getValues(key)!!
-                val iter = values.iterator()
-                var value: String
-                while (iter.hasNext()) {
-                    value = iter.next()
-                    var newKey = key
-                    // When key is History, it needs to be reversed
-                    if (KEY_HISTORY.equals(key, ignoreCase = true)) {
-                        val pos = value.indexOf(' ')
-                        newKey += "_" + value.substring(0, pos)
-                        value = value.substring(pos + 1)
-                    }
-                    writer.print(newKey)
-                    writer.print("=")
-                    writer.print(Regex("\n").replace(value, " \\\\\n"))
-                    writer.println()
-                }
-            }
-
-            val keys = knownKeys.iterator()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                val values = copy.getValues(key)!!
-                val iter = values.iterator()
-                var value: String
-                while (iter.hasNext()) {
-                    value = iter.next()
-                    writer.print(key)
-                    writer.print("=")
-                    writer.print(Regex("\n").replace(value, " \\\\\n"))
-                    writer.println()
-                }
-            }
-
-            writer.flush()
         }
 
         @JvmStatic
@@ -1035,11 +968,11 @@ class SwordBookMetaData : AbstractBookMetaData {
                     value = type.filter(value)
 
                     // Report on fields that shouldn't have RTF but do
-                    if (!type.allowsRTF() && RTF_PATTERN.matcher(value).find()) {
+                    if (!type.allowsRTF() && RTF_PATTERN.containsMatchIn(value!!)) {
                         buf.append("Unexpected RTF: ").append(key).append(" = ").append(value).append('\n')
                     }
 
-                    if (!type.allowsHTML() && HTML_PATTERN.matcher(value).find()) {
+                    if (!type.allowsHTML() && HTML_PATTERN.containsMatchIn(value!!)) {
                         buf.append("Unexpected HTML: ").append(key).append(" = ").append(value).append('\n')
                     }
 
@@ -1164,8 +1097,8 @@ class SwordBookMetaData : AbstractBookMetaData {
             BookMetaData.KEY_LANGUAGE
         )
 
-        private val RTF_PATTERN: Pattern = Pattern.compile("\\\\pard|\\\\pa[er]|\\\\qc|\\\\[bi]|\\\\u-?[0-9]{4,6}+")
-        private val HTML_PATTERN: Pattern = Pattern.compile("(<[a-zA-Z]|[a-zA-Z]>)")
+        private val RTF_PATTERN: Regex = Regex("\\\\pard|\\\\pa[er]|\\\\qc|\\\\[bi]|\\\\u-?[0-9]{4,6}+")
+        private val HTML_PATTERN: Regex = Regex("(<[a-zA-Z]|[a-zA-Z]>)")
 
         /**
          * Sword only recognizes two encodings for its modules: UTF-8 and Latin-1

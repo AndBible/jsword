@@ -63,7 +63,7 @@ open class SwordBookDriver
      * @see org.crosswire.jsword.book.BookProvider#getBooks()
      */
     override fun getBooks(): Array<Book> {
-        val dirs = SwordBookPath.getSwordPath()
+        val dirs = SwordBookPathJvm.getSwordPath()
         //initial size based on Guava's  newHashMapWithExpectedSize method:
         //http://docs.guava-libraries.googlecode.com/git/javadoc/src-html/com/google/common/collect/Maps.html#line.201
         val valid: MutableSet<Book> = HashSet(dirs.size + dirs.size / 3)
@@ -80,7 +80,7 @@ open class SwordBookDriver
             return
         }
 
-        val bookConfs = SwordBookPath.getBookList(mods)
+        val bookConfs = SwordBookPathJvm.getBookList(mods)
 
         // Loop through the entries in this mods.d directory
         val bookDirURI = NetUtil.getURI(bookDir)
@@ -92,7 +92,7 @@ open class SwordBookDriver
                 val configfile = File(mods, bookConf)
                 if (configfile.exists()) {
                     // First time here chain is null, indicating that we are at the master BookMetaData
-                    sbmd = SwordBookMetaData(configfile, bookDirURI)
+                    sbmd = SwordBookMetaDataJvm.create(configfile, bookDirURI)
                 }
 
                 if (sbmd == null) {
@@ -134,7 +134,7 @@ open class SwordBookDriver
      */
     override fun isDeletable(dead: Book): Boolean {
         val sbmd = dead.bookMetaData as SwordBookMetaData
-        val confFile = sbmd.configFile
+        val confFile = SwordBookMetaDataJvm.getConfigFile(sbmd)
         // We can only uninstall what we download into our download dir.
         return confFile != null && confFile.exists()
     }
@@ -145,7 +145,7 @@ open class SwordBookDriver
     @Throws(BookException::class)
     override fun delete(dead: Book) {
         val sbmd = dead.bookMetaData as SwordBookMetaData
-        val confFile = sbmd.configFile
+        val confFile = SwordBookMetaDataJvm.getConfigFile(sbmd)
 
         // We can only uninstall what we download into our download dir.
         if (confFile == null || !confFile.exists()) {
@@ -227,7 +227,7 @@ open class SwordBookDriver
             if (configfile.exists()) {
                 try {
                     // Now we can create the new bmd
-                    bmd = SwordBookMetaData(configfile, bookDirURI)
+                    bmd = SwordBookMetaDataJvm.create(configfile, bookDirURI)
                 } catch (e: IOException) {
                     LOGGER.warn("Couldn't create SwordBookMetaData", e)
                 }

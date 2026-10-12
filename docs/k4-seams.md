@@ -132,3 +132,39 @@ and the Java removeIf default-method contract: always UOE, without evaluating a
 predicate, even for an empty view or no match. Task 16 needs common declarations
 and an iOS live read-only view actual. The former common wrappers were removed
 because Kotlin collection implementations do not override Java removeIf.
+
+### Task 6 final File boundaries
+
+`MetaDataLocator` owns nullable Path locations; `MetaDataLocatorJvm` exposes File
+getters. `validatedFileUriPath(KUri): Path` in ResourceHomeHook.jvm.kt deliberately
+uses File(URI), preserving rejection of non-file, relative, authority, query and
+fragment URIs. Task 16 adds the common declaration and equivalent iOS validation.
+Directory creation failure remains ignored and the computed location is returned.
+
+`SwordBookMetaData` accepts Path and exposes Path? configFile;
+`SwordBookMetaDataJvm.create(File, KUri?)` and `getConfigFile(metadata)` are the File
+factory/bridge. Its Writer normalize entry point moved intact to that holder.
+IniSection Path and ByteArray parsing already uses KCharset, including the
+UTF-8 first parse, filtered Encoding lookup, clear and CP1252 retry.
+
+`SwordBookPathJvm` owns the seven File methods, delegating to the Path core and
+checking an empty download File before conversion (okio maps empty to dot).
+Empty File book-list requests also retain the old null result.
+
+Plain JVM helpers in `SwordStorageHooks.jvm.kt` need common expect declarations
+and actual bodies in Task 16: `metadataChildPath(Path?, String?): Path` preserves
+File(parent, child), including null parent, absolute child and null-child NPE;
+`metadataDefaultsView(Map<String,String>): Map<String,String>` retains Java
+unmodifiable-map behavior; `storageCanRead/Write(Path): Boolean` preserve access
+checks; `storageSeparator(): String`; `storageMkdirs(Path): Boolean` preserves
+mkdirs failure; `storageListNames(Path): List<String>?` preserves native File.list
+order (okio sorts). iOS uses its filesystem/access/child equivalents; do not
+silently substitute sorted listing on the JVM. Facade registration hook remains
+plain JVM until Task 16, with assignment before driver registration unchanged.
+
+Mechanical real JVM/app File caller qualifications are advanced from Task 14:
+SwordBookDriver, AbstractSwordInstaller, the dual-compiled CorpusProbe (reflective
+old/new selection), File metadata tests, BackupControl, InstallDeps,
+SwordEnvironmentInitialisation and the existing app download/backup tests.
+Null-only configFile checks in TtfBook, BackgroundImageBook and installer tests
+remain on the core and require no File conversion.

@@ -4,6 +4,7 @@ import org.crosswire.common.util.CWProject
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
+import okio.Path.Companion.toPath
 import java.net.URI
 import java.nio.file.Files
 
@@ -48,7 +49,7 @@ class MetaDataLocatorCommonReadyTest {
         )
         for ((expected, getter) in cases) {
             assertFalse("child must initially be absent: $expected", expected.exists())
-            assertEquals(expected, getter())
+            assertEquals(expected.path.toPath(), getter())
             assertTrue("getter must create directory: $expected", expected.isDirectory)
         }
     }
@@ -70,7 +71,7 @@ class MetaDataLocatorCommonReadyTest {
         set(project, "writeHome", parentFile.toURI())
         set(project, "homes", arrayOf(parentFile.toURI()))
         val expected = File(parentFile, "jsword-mods.d")
-        assertEquals(expected, MetaDataLocator.JSWORD.writeLocation)
+        assertEquals(expected.path.toPath(), MetaDataLocator.JSWORD.writeLocation)
         assertFalse(expected.exists())
         for (uri in listOf(URI("https://example.com/home"), URI("file://host/home"), URI("relative/home"), URI("file:/home?q=x"), URI("file:/home#fragment"))) {
             set(project, "homes", arrayOf(uri))

@@ -40,7 +40,7 @@ org/crosswire/jsword/book/BookException.kt #done
 org/crosswire/jsword/book/BookMetaData.kt #done
 org/crosswire/jsword/book/FeatureType.kt #done
 org/crosswire/jsword/book/KeyType.kt #done
-org/crosswire/jsword/book/MetaDataLocator.kt
+org/crosswire/jsword/book/MetaDataLocator.kt #done
 org/crosswire/jsword/book/basic/AbstractBookMetaData.kt #done
 org/crosswire/jsword/book/install/DownloadCancelledException.kt
 org/crosswire/jsword/book/install/DownloadException.kt
@@ -61,8 +61,8 @@ org/crosswire/jsword/book/sword/RawBackend.kt
 org/crosswire/jsword/book/sword/RawFileBackend.kt
 org/crosswire/jsword/book/sword/RawLDBackend.kt
 org/crosswire/jsword/book/sword/StatefulFileBackedBackend.kt
-org/crosswire/jsword/book/sword/SwordBookMetaData.kt
-org/crosswire/jsword/book/sword/SwordBookPath.kt
+org/crosswire/jsword/book/sword/SwordBookMetaData.kt #done
+org/crosswire/jsword/book/sword/SwordBookPath.kt #done
 org/crosswire/jsword/book/sword/SwordConstants.kt #done
 org/crosswire/jsword/book/sword/SwordUtil.kt
 org/crosswire/jsword/book/sword/TreeKeyIndex.kt

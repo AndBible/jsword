@@ -19,14 +19,11 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.io.File
-import java.io.FileInputStream
-import java.io.FilenameFilter
-import java.io.IOException
-import java.io.InputStream
-import java.net.URI
-import java.util.ArrayList
-
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.IOException
+import org.crosswire.common.util.KFiles
+import org.crosswire.common.util.systemProperty
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.OSType
 import org.crosswire.common.util.PropertyMap
@@ -47,21 +44,6 @@ class SwordBookPath
  * Some basic name initialization
  */
 private constructor() {
-    /**
-     * Check that the directories in the version directory really represent
-     * versions.
-     */
-    internal class CustomFilenameFilter : FilenameFilter {
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.io.FilenameFilter#accept(java.io.File, java.lang.String)
-         */
-        override fun accept(parent: File?, name: String?): Boolean {
-            return !name!!.startsWith(PREFIX_GLOBALS) && name.endsWith(SwordConstants.EXTENSION_CONF)
-        }
-    }
-
     companion object {
         /**
          * Establish additional locations that Sword may hold books.
@@ -72,13 +54,13 @@ private constructor() {
          */
         @JvmStatic
         @Throws(BookException::class)
-        fun setAugmentPath(theNewDirs: Array<File>?) {
+        fun setAugmentPath(theNewDirs: Array<Path>?) {
             val newDirs = theNewDirs
             if (newDirs == null) {
                 return
             }
 
-            augmentPath = newDirs.clone()
+            augmentPath = newDirs.copyOf()
 
             // Now we need to (re)register ourselves
             registerSwordDriver()
@@ -90,8 +72,8 @@ private constructor() {
          * @return The new Sword directory
          */
         @JvmStatic
-        fun getAugmentPath(): Array<File> {
-            return augmentPath.clone()
+        fun getAugmentPath(): Array<Path> {
+            return augmentPath.copyOf()
         }
 
         /**
@@ -102,8 +84,8 @@ private constructor() {
          * @return the array of Book locations.
          */
         @JvmStatic
-        fun getSwordPath(): Array<File> {
-            val swordPath = ArrayList<File>()
+        fun getSwordPath(): Array<Path> {
+            val swordPath = mutableListOf<Path>()
 
             // The first place to look for Books
             swordPath.add(getSwordDownloadDir())
@@ -136,21 +118,21 @@ private constructor() {
          * @return the list of books in that location
          */
         @JvmStatic
-        fun getBookList(bookDir: File): Array<String>? {
-            return bookDir.list(CustomFilenameFilter())
+        fun getBookList(bookDir: Path): Array<String>? {
+            return storageListNames(bookDir)?.filter { !it.startsWith(PREFIX_GLOBALS) && it.endsWith(SwordConstants.EXTENSION_CONF) }?.toTypedArray()
         }
 
         /**
          * Search all of the "standard" Sword locations for Books. Remember all the
          * locations.
          */
-        private fun getDefaultPaths(): Array<File> {
+        private fun getDefaultPaths(): Array<Path> {
             // If possible migrate the old location to the new one
             migrateBookDir()
 
-            val bookDirs: MutableList<File> = ArrayList()
+            val bookDirs: MutableList<Path> = mutableListOf()
 
-            val home = System.getProperty(PROPERTY_USER_HOME)
+            val home = systemProperty(PROPERTY_USER_HOME)
 
             // Is sword.conf in the current directory?
             readSwordConf(bookDirs, ".")
@@ -159,27 +141,27 @@ private constructor() {
             testDefaultPath(bookDirs, ".")
 
             // how about in the library, just next door?
-            testDefaultPath(bookDirs, ".." + File.separator + DIR_SWORD_LIBRARY)
+            testDefaultPath(bookDirs, ".." + storageSeparator() + DIR_SWORD_LIBRARY)
 
             // if there is a property set for the sword home directory
             // The Sword project defines SWORD_HOME, but JSword expects this to be
             // transformed into sword.home.
-            val swordhome = System.getProperty(PROPERTY_SWORD_HOME)
+            val swordhome = systemProperty(PROPERTY_SWORD_HOME)
             if (swordhome != null) {
                 testDefaultPath(bookDirs, swordhome)
 
                 // how about in the library, just next door?
-                testDefaultPath(bookDirs, swordhome + File.separator + ".." + File.separator + DIR_SWORD_LIBRARY)
+                testDefaultPath(bookDirs, swordhome + storageSeparator() + ".." + storageSeparator() + DIR_SWORD_LIBRARY)
             }
 
-            if (System.getProperty("os.name").startsWith("Windows")) {
+            if (systemProperty("os.name")!!.startsWith("Windows")) {
                 testDefaultPath(bookDirs, DIR_WINDOWS_DEFAULT)
                 // how about in the library, just next door?
-                testDefaultPath(bookDirs, DIR_WINDOWS_DEFAULT + File.separator + ".." + File.separator + DIR_SWORD_LIBRARY)
+                testDefaultPath(bookDirs, DIR_WINDOWS_DEFAULT + storageSeparator() + ".." + storageSeparator() + DIR_SWORD_LIBRARY)
             }
 
             // .sword in the users home directory?
-            readSwordConf(bookDirs, home + File.separator + DIR_SWORD_CONF)
+            readSwordConf(bookDirs, home + storageSeparator() + DIR_SWORD_CONF)
 
             // Check for sword.conf in the usual places
             val sysconfigPaths = StringUtil.split(DIR_SWORD_GLOBAL_CONF, ':')
@@ -190,45 +172,33 @@ private constructor() {
             val userDataArea = OSType.getOSType().getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)
 
             // Check look for mods.d in the sword user data area
-            testDefaultPath(bookDirs, File(userDataArea!!.path))
+            testDefaultPath(bookDirs, userDataArea!!.getPath()!!.toPath())
 
             // JSword used to hold books in ~/.jsword (or its equivalent) but has
             // code that will
             // migrate it to ~/.sword (or its equivalent)
             // If the migration did not work then use the old area
-            testDefaultPath(bookDirs, File(CWProject.instance().writableProjectDir!!.path))
+            testDefaultPath(bookDirs, CWProject.instance().writableProjectDir!!.getPath()!!.toPath())
 
             return bookDirs.toTypedArray()
         }
 
-        private fun readSwordConf(bookDirs: MutableList<File>, swordConfDir: File) {
-            val sysconfig = File(swordConfDir, SWORD_GLOBAL_CONF)
-            if (sysconfig.canRead()) {
-                var `is`: InputStream? = null
+        private fun readSwordConf(bookDirs: MutableList<Path>, swordConfDir: Path) {
+            val sysconfig = swordConfDir / SWORD_GLOBAL_CONF
+            if (storageCanRead(sysconfig)) {
                 try {
                     val prop = PropertyMap()
-                    `is` = FileInputStream(sysconfig)
-                    org.crosswire.common.util.PropertyMapJvm.load(prop, `is`!!)
-                    var datapath = prop.get(DATA_PATH)
-                    testDefaultPath(bookDirs, datapath)
-                    datapath = prop.get(AUGMENT_PATH)
-                    testDefaultPath(bookDirs, datapath)
+                    prop.load(KFiles.readBytes(sysconfig))
+                    testDefaultPath(bookDirs, prop.get(DATA_PATH))
+                    testDefaultPath(bookDirs, prop.get(AUGMENT_PATH))
                 } catch (ex: IOException) {
                     log.warn("Failed to read system config file", ex)
-                } finally {
-                    if (`is` != null) {
-                        try {
-                            `is`.close()
-                        } catch (e: IOException) {
-                            log.warn("Failed to close system config file", e)
-                        }
-                    }
                 }
             }
         }
 
-        private fun readSwordConf(bookDirs: MutableList<File>, swordConfDir: String) {
-            readSwordConf(bookDirs, File(swordConfDir))
+        private fun readSwordConf(bookDirs: MutableList<Path>, swordConfDir: String) {
+            readSwordConf(bookDirs, swordConfDir.toPath())
         }
 
         /**
@@ -240,13 +210,13 @@ private constructor() {
          * @param path
          *            the path to check
          */
-        private fun testDefaultPath(bookDirs: MutableList<File>, path: File?) {
+        private fun testDefaultPath(bookDirs: MutableList<Path>, path: Path?) {
             if (path == null) {
                 return
             }
 
-            val mods = File(path, SwordConstants.DIR_CONF)
-            if (mods.isDirectory && mods.canRead()) {
+            val mods = path / SwordConstants.DIR_CONF
+            if (KFiles.isDirectory(mods) && storageCanRead(mods)) {
                 bookDirs.add(path)
             }
         }
@@ -260,21 +230,21 @@ private constructor() {
          * @param path
          *            the path to check
          */
-        private fun testDefaultPath(bookDirs: MutableList<File>, path: String?) {
+        private fun testDefaultPath(bookDirs: MutableList<Path>, path: String?) {
             if (path == null) {
                 return
             }
 
-            testDefaultPath(bookDirs, File(path))
+            testDefaultPath(bookDirs, path.toPath())
         }
 
-        private fun getDefaultDownloadPath(): File {
-            var path: File? = null
+        private fun getDefaultDownloadPath(): Path {
+            var path: Path? = null
             val possiblePaths = getDefaultPaths()
 
             for (i in possiblePaths.indices) {
-                val mods = File(possiblePaths[i], SwordConstants.DIR_CONF)
-                if (mods.canWrite()) {
+                val mods = possiblePaths[i] / SwordConstants.DIR_CONF
+                if (storageCanWrite(mods)) {
                     path = possiblePaths[i]
                     break
                 }
@@ -284,7 +254,7 @@ private constructor() {
             // be established
             if (path == null) {
                 val userDataArea = OSType.getOSType().getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)
-                path = File(userDataArea!!.path)
+                path = userDataArea!!.getPath()!!.toPath()
             }
 
             return path
@@ -294,38 +264,38 @@ private constructor() {
             // Books should be on this path
             val userDataArea = OSType.getOSType().getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)
 
-            val swordBookPath = File(userDataArea!!.path)
+            val swordBookPath = userDataArea!!.getPath()!!.toPath()
 
             // The "old" Book location might be in one of two locations
             // It might be ~/.jsword or the new project dir
-            var oldPath = File(CWProject.instance().deprecatedWritableProjectDir!!.path)
+            var oldPath = CWProject.instance().deprecatedWritableProjectDir!!.getPath()!!.toPath()
 
-            if (oldPath.isDirectory) {
+            if (KFiles.isDirectory(oldPath)) {
                 migrateBookDir(oldPath, swordBookPath)
                 return
             }
 
             // now trying the new project dir
-            oldPath = File(CWProject.instance().writableProjectDir!!.path)
+            oldPath = CWProject.instance().writableProjectDir!!.getPath()!!.toPath()
 
-            if (oldPath.isDirectory) {
+            if (KFiles.isDirectory(oldPath)) {
                 migrateBookDir(oldPath, swordBookPath)
                 return
             }
 
             // Finally, it might be ~/.sword
-            oldPath = File(OSType.DEFAULT.getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)!!.path)
-            if (oldPath.isDirectory) {
+            oldPath = OSType.DEFAULT.getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)!!.getPath()!!.toPath()
+            if (KFiles.isDirectory(oldPath)) {
                 migrateBookDir(oldPath, swordBookPath)
             }
         }
 
-        private fun migrateBookDir(oldPath: File, newPath: File) {
+        private fun migrateBookDir(oldPath: Path, newPath: Path) {
             // move the modules and confs
-            val oldDataDir = File(oldPath, SwordConstants.DIR_DATA)
-            val newDataDir = File(newPath, SwordConstants.DIR_DATA)
-            val oldConfDir = File(oldPath, SwordConstants.DIR_CONF)
-            val newConfDir = File(newPath, SwordConstants.DIR_CONF)
+            val oldDataDir = oldPath / SwordConstants.DIR_DATA
+            val newDataDir = newPath / SwordConstants.DIR_DATA
+            val oldConfDir = oldPath / SwordConstants.DIR_CONF
+            val newConfDir = newPath / SwordConstants.DIR_CONF
 
             // move the modules
             if (!migrate(oldDataDir, newDataDir)) {
@@ -339,18 +309,18 @@ private constructor() {
             }
         }
 
-        private fun migrate(oldPath: File, newPath: File): Boolean {
-            if (oldPath == newPath || !oldPath.exists()) {
+        private fun migrate(oldPath: Path, newPath: Path): Boolean {
+            if (oldPath == newPath || !KFiles.exists(oldPath)) {
                 return true
             }
 
             // make sure the parent exists
-            val parent = newPath.parentFile
-            if (!parent.exists() && !parent.mkdirs()) {
+            val parent = newPath.parent!!
+            if (!KFiles.exists(parent) && !storageMkdirs(parent)) {
                 return false
             }
 
-            return oldPath.renameTo(newPath)
+            return KFiles.move(oldPath, newPath)
         }
 
         /**
@@ -360,7 +330,7 @@ private constructor() {
          * @return Returns the download directory.
          */
         @JvmStatic
-        fun getSwordDownloadDir(): File {
+        fun getSwordDownloadDir(): Path {
             if (overrideDownloadDir != null) {
                 return overrideDownloadDir!!
             }
@@ -371,7 +341,7 @@ private constructor() {
          * @return Returns the download directory that the user chose.
          */
         @JvmStatic
-        fun getDownloadDir(): File? {
+        fun getDownloadDir(): Path? {
             return overrideDownloadDir
         }
 
@@ -380,8 +350,8 @@ private constructor() {
          *            The download directory that the user specifies.
          */
         @JvmStatic
-        fun setDownloadDir(dlDir: File) {
-            if ("" != dlDir.path) {
+        fun setDownloadDir(dlDir: Path) {
+            if ("" != dlDir.toString()) {
                 overrideDownloadDir = dlDir
                 log.debug("Setting sword download directory to: {}", dlDir)
             }
@@ -438,24 +408,24 @@ private constructor() {
         private const val PROPERTY_USER_HOME = "user.home"
 
         /**
-         * File prefix for config file
+         * Path prefix for config file
          */
         private const val PREFIX_GLOBALS = "globals."
 
         /**
          * The directory URL
          */
-        private var augmentPath: Array<File> = arrayOf()
+        private var augmentPath: Array<Path> = arrayOf()
 
         /**
          * The directory URL
          */
-        private var defaultDownloadDir: File = getDefaultDownloadPath()
+        private var defaultDownloadDir: Path = getDefaultDownloadPath()
 
         /**
          * The directory URL
          */
-        private var overrideDownloadDir: File? = null
+        private var overrideDownloadDir: Path? = null
 
         /**
          * The log stream

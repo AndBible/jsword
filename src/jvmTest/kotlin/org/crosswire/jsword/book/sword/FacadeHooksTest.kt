@@ -49,7 +49,7 @@ class FacadeHooksTest {
                 fields[3].set(registry, HashSet<org.crosswire.jsword.book.BookDriver>())
                 assertTrue(registry.drivers.isEmpty())
 
-                SwordBookPath.setAugmentPath(SwordBookPath.getAugmentPath())
+                SwordBookPathJvm.setAugmentPath(SwordBookPathJvm.getAugmentPath())
 
                 assertEquals(listOf(SwordBookDriver.instance()), registry.drivers.toList())
             } finally {

@@ -61,7 +61,8 @@ import org.crosswire.jsword.book.sword.NullBackend
 import org.crosswire.jsword.book.sword.SwordBook
 import org.crosswire.jsword.book.sword.SwordBookDriver
 import org.crosswire.jsword.book.sword.SwordBookMetaData
-import org.crosswire.jsword.book.sword.SwordBookPath
+import org.crosswire.jsword.book.sword.SwordBookMetaDataJvm
+import org.crosswire.jsword.book.sword.SwordBookPathJvm
 import org.crosswire.jsword.book.sword.SwordConstants
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
@@ -115,7 +116,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      */
     override fun isNewer(book: Book): Boolean {
         val sbmd = book.bookMetaData as SwordBookMetaData
-        val conf = sbmd.configFile
+        val conf = org.crosswire.jsword.book.sword.SwordBookMetaDataJvm.getConfigFile(sbmd)
 
         // The conf may not exist in our download dir.
         // In this case we say that it should not be downloaded again.
@@ -253,7 +254,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             job.isCancelable = false
             if (!job.isFinished) {
                 //copy into mods.d and modules under SWORD_HOME
-                val dldir = SwordBookPath.getSwordDownloadDir()
+                val dldir = SwordBookPathJvm.getSwordDownloadDir()
                 IOUtil.unpackZip(NetUtil.getAsFile(temp), dldir, true, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
 
                 //copy everything else into JSWORD_HOME

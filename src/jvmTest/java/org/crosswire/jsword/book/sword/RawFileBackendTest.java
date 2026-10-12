@@ -78,7 +78,7 @@ public class RawFileBackendTest {
             System.out.println(e.getMessage());
         }
 
-        SwordBookMetaData swordBookMetaData = new SwordBookMetaData(configFile, new URI("file:///tmp"));
+        SwordBookMetaData swordBookMetaData = SwordBookMetaDataJvm.create(configFile, new URI("file:///tmp"));
         v11n = Versifications.instance().getVersification(swordBookMetaData.getProperty(BookMetaData.KEY_VERSIFICATION));
         backend = new RawFileBackend(swordBookMetaData, 2);
         backend.create();
