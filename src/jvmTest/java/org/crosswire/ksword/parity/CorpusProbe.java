@@ -70,6 +70,67 @@ final class CorpusProbe {
             }
         }
         switch (op) {
+            case "fixture.dump": {
+                File conf = new File(args.get(0));
+                SwordBookMetaData md = new SwordBookMetaData(conf, conf.getParentFile().getParentFile().toURI());
+                Book book;
+                if (md.getInitials().equals("K4RawText4")) {
+                    if (md.getBookType() != null) {
+                        throw new AssertionError("RawText4 discovery unexpectedly supported; baseline has no registration");
+                    }
+                    book = new org.crosswire.jsword.book.sword.SwordBook(md,
+                        new org.crosswire.jsword.book.sword.RawBackend(md, 4));
+                } else {
+                    book = md.getBookType().createBook(md);
+                }
+                // AbstractBook exposes getBackend in both versions; reflection avoids binding to facade seams.
+                Object backend = book.getClass().getMethod("getBackend").invoke(book);
+                java.lang.reflect.Method length = backend.getClass().getMethod("getRawTextLength", Key.class);
+                StringBuilder sb = new StringBuilder();
+                int i = 0;
+                try {
+                    for (Key key : book.getGlobalKeyList()) {
+                        String raw;
+                        try {
+                            raw = java.util.Base64.getEncoder().encodeToString(book.getRawText(key).getBytes(StandardCharsets.UTF_8));
+                        } catch (Exception e) {
+                            raw = fail(e);
+                        }
+                        sb.append(i++).append('\t').append(key.getName()).append('\t').append(raw)
+                          .append('\t').append(length.invoke(backend, key)).append('\n');
+                    }
+                    sb.append("count=").append(i).append('\n');
+                    if (md.getInitials().equals("K4GenBook")) {
+                        for (Key key : book.getGlobalKeyList()) {
+                            String path = "";
+                            for (Key node = key; node != null && !node.getName().isEmpty(); node = node.getParent()) {
+                                path = "/" + node.getName() + path;
+                            }
+                            sb.append("tree\t").append(path).append('\n');
+                        }
+                    }
+                    if (md.getKeyType() == org.crosswire.jsword.book.KeyType.VERSE) {
+                        for (String ref : new String[] {"Gen.1.4", "John.1.4", "Rev.22.21"}) {
+                            Key key = book.getKey(ref);
+                            sb.append("empty\t").append(ref).append('\t')
+                              .append(java.util.Base64.getEncoder().encodeToString(book.getRawText(key).getBytes(StandardCharsets.UTF_8)))
+                              .append('\t').append(length.invoke(backend, key)).append('\n');
+                        }
+                    }
+                    if (md.getInitials().equals("K4Devotion")) {
+                        for (String internal : new String[] {"01.01", "02.29", "12.31"}) {
+                            Key key = new org.crosswire.jsword.passage.DefaultLeafKeyList(internal);
+                            String raw = (String) backend.getClass().getMethod("getRawText", Key.class).invoke(backend, key);
+                            sb.append("internal\t").append(internal).append('\t')
+                              .append(java.util.Base64.getEncoder().encodeToString(raw.getBytes(StandardCharsets.UTF_8)))
+                              .append('\t').append(length.invoke(backend, key)).append('\n');
+                        }
+                    }
+                    return sb.toString();
+                } finally {
+                    book.getClass().getMethod("deactivate", org.crosswire.common.activate.Lock.class).invoke(book, new Object[] {null});
+                }
+            }
             case "corpus.modules": {
                 List<String> names = new ArrayList<>();
                 for (Book b : Books.installed().getBooks()) {

@@ -121,6 +121,13 @@ tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
 
+tasks.withType<Test>().configureEach {
+    systemProperty("ksword.fixturesDir", layout.projectDirectory.dir("src/commonTest/resources/k4-modules").asFile.absolutePath)
+    for (flag in listOf("k4.fixtures.write", "k4.timing", "k4.census")) {
+        systemProperty(flag, providers.gradleProperty(flag).getOrElse("false"))
+    }
+}
+
 tasks.named<Test>("jvmTest") {
     useJUnit()
     systemProperty("user.language", "en")
