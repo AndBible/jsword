@@ -20,6 +20,7 @@
 package org.crosswire.jsword.book.sword
 
 import okio.Path
+import okio.Path.Companion.toPath
 import okio.IOException
 import org.crosswire.common.util.systemProperty
 import org.crosswire.common.util.CWProject
@@ -439,4 +440,16 @@ private constructor() {
          */
         private val log: Logger = LoggerFactory.getLogger(SwordBookPath::class)
     }
+}
+
+/** Authoritative File spelling; Path is only a convenience projection for Path API consumers. */
+internal class StorageLocation(raw: String) {
+    val spelling: String = storageFileSpelling(raw)
+    val path: Path get() = spelling.toPath()
+    val name: String get() = storageName(this)
+    val parent: StorageLocation? get() = storageParent(this)
+    operator fun div(child: String): StorageLocation = storageChild(this, child)
+    override fun equals(other: Any?): Boolean = other is StorageLocation && storageFileEquals(this, other)
+    override fun hashCode(): Int = storageFileHash(this)
+    override fun toString(): String = spelling
 }

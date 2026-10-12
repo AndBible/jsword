@@ -7,7 +7,6 @@ import java.io.IOException
 import org.crosswire.common.util.KUri
 import org.crosswire.common.util.IniSection
 import org.crosswire.jsword.book.BookException
-import okio.Path.Companion.toPath
 
 /** File and Writer API boundary for metadata. */
 object SwordBookMetaDataJvm {

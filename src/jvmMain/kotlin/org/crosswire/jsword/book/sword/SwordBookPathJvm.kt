@@ -1,7 +1,6 @@
 package org.crosswire.jsword.book.sword
 
 import java.io.File
-import okio.Path.Companion.toPath
 import org.crosswire.jsword.book.BookException
 
 /** JVM File signatures delegate to the shared Path state and preserve defensive copies. */

@@ -21,8 +21,21 @@ internal fun storageMkdirs(location: StorageLocation): Boolean = java.io.File(lo
 internal fun storageListNames(location: StorageLocation): List<String>? = java.io.File(location.spelling).list()?.toList()
 internal fun storageMove(from: StorageLocation, to: StorageLocation): Boolean =
     java.io.File(from.spelling).renameTo(java.io.File(to.spelling))
-internal fun storageSave(section: org.crosswire.common.util.IniSection, location: StorageLocation, encoding: String?) =
-    org.crosswire.common.util.IniSectionJvm.save(section, java.io.File(location.spelling), encoding)
+internal fun storageSave(section: org.crosswire.common.util.IniSection, location: StorageLocation, encoding: String?) {
+    var writer: java.io.Writer? = null
+    try {
+        writer = java.io.OutputStreamWriter(java.io.FileOutputStream(java.io.File(location.spelling)), encoding)
+        org.crosswire.common.util.IniSectionJvm.save(section, writer)
+    } finally {
+        // Match the legacy owned Writer close, including propagating close failures.
+        writer?.close()
+    }
+}
 
 internal fun storageUriLocation(uri: org.crosswire.common.util.KUri): StorageLocation =
     StorageLocation(java.io.File(uri).path)
+
+internal fun storageFileSpelling(raw: String): String = java.io.File(raw).path
+internal fun storageFileEquals(a: StorageLocation, b: StorageLocation): Boolean =
+    java.io.File(a.spelling) == java.io.File(b.spelling)
+internal fun storageFileHash(location: StorageLocation): Int = java.io.File(location.spelling).hashCode()

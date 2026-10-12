@@ -188,3 +188,17 @@ handling. `metadataDefaultsView` and `storageSeparator` remain as inventoried.
 The internal lexical metadata constructor is JVM public and has one exact K4
 seam allowance; locator Path projection getters are concrete (exact allowances
 updated). No File signature is reintroduced into the common-ready classes.
+
+### Task 6 File-boundary review fix 2
+
+StorageLocation is now inline in the already-listed SwordBookPath.kt, so it moves
+with that file in Task 16; no unlisted JVM dependency or move-count increase.
+New plain JVM hooks `storageFileSpelling(String): String`,
+`storageFileEquals(StorageLocation, StorageLocation): Boolean` and
+`storageFileHash(StorageLocation): Int` use File construction/equality/hash:
+redundant/trailing separators collapse, dot segments and Unix backslashes remain.
+Task 16 supplies native literal-path construction/equality/hash equivalents.
+`storageSave` now uses FileOutputStream/OutputStreamWriter and the existing INI
+Writer serializer directly, bypassing every Path conversion. Charset selection,
+record newline/continuation formatting, writer flush and owned-stream closure
+remain JVM behavior. File-open failures still reach metadata's IOException log.

@@ -110,6 +110,20 @@ class SwordStorageBoundaryTest {
         assertThrows(NullPointerException::class.java) { storageChild(null, null) }
     }
 
+    @Test fun rawDiscoveryConstructionMatchesFileEqualityAndMigrationEarlyExit() = temporary { root ->
+        val plain = File(root, "books")
+        val raw = plain.path + "///"
+        assertEquals(plain.path, StorageLocation(raw).spelling)
+        assertEquals(StorageLocation(plain.path), StorageLocation(raw))
+        assertNotEquals(StorageLocation("./modules"), StorageLocation("modules"))
+        assertEquals(File("dir\\name//child/").path, StorageLocation("dir\\name//child/").spelling)
+        val migrate = SwordBookPath.Companion::class.java.getDeclaredMethod("migrate", StorageLocation::class.java, StorageLocation::class.java).apply { isAccessible = true }
+        plain.mkdir()
+        File(plain, "data").writeText("untouched")
+        assertEquals(true, migrate.invoke(SwordBookPath.Companion, StorageLocation(plain.path), StorageLocation(raw)))
+        assertEquals("untouched", File(plain, "data").readText())
+    }
+
     @Test fun listingPreservesNullAndActualFilenameFilter() = temporary { root ->
         for (name in listOf("a.conf", "b.CONF", "globals.test.conf", "other", "ä.conf")) File(root, name).writeText("")
         File(root, "directory.conf").mkdir()

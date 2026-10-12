@@ -85,6 +85,77 @@ class StorageBoundaryParityTest {
         }
     }
 
+    @Test fun overrideWritesPreserveLiteralBackslashFileAndParentLikeOldOracle() {
+        if (File.separator != "/") return
+        val root = Files.createTempDirectory("override lexical").toFile()
+        val oldMd = Oracle.loader.loadClass("org.crosswire.jsword.book.sword.SwordBookMetaData")
+        val oldProject = Oracle.loader.loadClass("org.crosswire.common.util.CWProject")
+        val currentProject = org.crosswire.common.util.CWProject::class.java
+        val snapshots = listOf(oldProject, currentProject).map { type ->
+            val field = type.getDeclaredField("instance").apply { isAccessible = true }
+            field to field.get(null)
+        }
+        try {
+            val write = File(root, "home\\literal").apply { mkdirs() }
+            for (type in listOf(oldProject, currentProject)) {
+                val constructor = type.getDeclaredConstructor().apply { isAccessible = true }
+                val project = constructor.newInstance()
+                type.getDeclaredField("instance").apply { isAccessible = true }.set(null, project)
+                type.getDeclaredField("writeHome").apply { isAccessible = true }.set(project, write.toURI())
+                type.getDeclaredField("homes").apply { isAccessible = true }.set(project, arrayOf(write.toURI()))
+            }
+            val file = File(root, "dir\\name.conf").apply {
+                writeText("[Demo]\nDescription=Base\nModDrv=RawText\nEncoding=UTF-8\n")
+            }
+            val old = oldMd.getConstructor(File::class.java, URI::class.java).newInstance(file, null)
+            val current = SwordBookMetaDataJvm.create(file, null)
+            val locatorType = Oracle.loader.loadClass("org.crosswire.jsword.book.MetaDataLocator")
+            val locator = locatorType.enumConstants.first { it.toString() == "JSWORD" }
+            val target = File(File(write, "jsword-mods.d"), file.name)
+            oldMd.getMethod("putProperty", String::class.java, String::class.java, locatorType)
+                .invoke(old, "Description", "Café", locator)
+            val expected = target.readBytes()
+            assertTrue(target.delete())
+            current.putProperty("Description", "Café", org.crosswire.jsword.book.MetaDataLocator.JSWORD)
+            assertArrayEquals(expected, target.readBytes())
+            assertFalse(File(root, "home/literal/jsword-mods.d/dir/name.conf").exists())
+        } finally {
+            snapshots.forEach { (field, value) -> field.set(null, value) }
+            root.deleteRecursively()
+        }
+    }
+
+    @Test fun rawSwordHomeAndConfDiscoveryRetainOldFileDeduplication() {
+        val root = Files.createTempDirectory("discovery spellings").toFile()
+        val oldType = Oracle.loader.loadClass("org.crosswire.jsword.book.sword.SwordBookPath")
+        val currentType = org.crosswire.jsword.book.sword.SwordBookPath.Companion::class.java
+        val oldTest = oldType.getDeclaredMethod("testDefaultPath", MutableList::class.java, String::class.java).apply { isAccessible = true }
+        val currentTest = currentType.getDeclaredMethod("testDefaultPath", MutableList::class.java, String::class.java).apply { isAccessible = true }
+        val oldRead = oldType.getDeclaredMethod("readSwordConf", MutableList::class.java, String::class.java).apply { isAccessible = true }
+        val currentRead = currentType.getDeclaredMethod("readSwordConf", MutableList::class.java, String::class.java).apply { isAccessible = true }
+        val oldHome = System.getProperty("sword.home")
+        try {
+            val books = File(root, "books").apply { mkdir() }
+            File(books, "mods.d").mkdir()
+            System.setProperty("sword.home", books.path + "///")
+            val legacy = mutableListOf<File>()
+            val current = mutableListOf<Any>()
+            for (raw in listOf(books.path, System.getProperty("sword.home"), books.path + "/./")) {
+                oldTest.invoke(null, legacy, raw)
+                currentTest.invoke(org.crosswire.jsword.book.sword.SwordBookPath.Companion, current, raw)
+            }
+            File(root, "sword.conf").writeText("DataPath=${books.path}//\nAugmentPath=${books.path}/\n")
+            oldRead.invoke(null, legacy, root.path)
+            currentRead.invoke(org.crosswire.jsword.book.sword.SwordBookPath.Companion, current, root.path)
+            assertEquals(legacy.map { it.path }, current.map { it.toString() })
+            assertEquals(legacy.distinct().map { it.path }, current.distinct().map { it.toString() })
+            assertEquals(2, current.distinct().size)
+        } finally {
+            if (oldHome == null) System.clearProperty("sword.home") else System.setProperty("sword.home", oldHome)
+            root.deleteRecursively()
+        }
+    }
+
     @Test fun fileMetadataParsingAndFilteredEncodingMatchBaseline() {
         val root = Files.createTempDirectory("storage oracle space \u00e4").toFile()
         try {
