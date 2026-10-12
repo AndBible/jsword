@@ -445,6 +445,10 @@ internal constructor(
      */
     @Synchronized
     protected fun updateProgress(now: Long): Boolean {
+        if (finished) {
+            return false
+        }
+
         val oldPercent = percent
         workUnits = (now - startTime).toInt()
 
@@ -523,6 +527,13 @@ internal constructor(
         predictionMapURI = null
     }
 
+    /** Runs a prediction tick, including the progress notification, at the supplied time. */
+    internal fun predictTick(now: Long) {
+        if (updateProgress(now)) {
+            JobManager.fireWorkProgressed(this)
+        }
+    }
+
     /**
      * So we can fake progress for Jobs that don't tell us how they are doing
      */
@@ -531,9 +542,7 @@ internal constructor(
          * @see java.util.TimerTask#run()
          */
         override fun run() {
-            if (updateProgress(System.currentTimeMillis())) {
-                JobManager.fireWorkProgressed(this@Job)
-            }
+            predictTick(System.currentTimeMillis())
         }
     }
 
