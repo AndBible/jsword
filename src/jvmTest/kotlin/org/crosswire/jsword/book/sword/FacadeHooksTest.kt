@@ -30,8 +30,34 @@ class FacadeHooksTest {
         }
     }
 
-    @Test fun swordDriverIsRegistered() {
-        assertTrue(Books.installed().drivers.any { it is SwordBookDriver })
+    @Test fun augmentPathChangeRegistersSwordDriverInEmptyRegistry() {
+        val registry = Books.installed()
+        val fields = listOf("books", "initials", "names", "driverSet").map { name ->
+            Books::class.java.getDeclaredField(name).apply { isAccessible = true }
+        }
+        val augmentField = SwordBookPath::class.java.getDeclaredField("augmentPath").apply {
+            isAccessible = true
+        }
+        synchronized(registry) {
+            val originalRegistry = fields.map { it.get(registry) }
+            val originalAugment = augmentField.get(null)
+            try {
+                // Swap, not clear: retain the original registry objects for exact restoration.
+                fields[0].set(registry, java.util.TreeSet<org.crosswire.jsword.book.Book>())
+                fields[1].set(registry, HashMap<String, org.crosswire.jsword.book.Book>())
+                fields[2].set(registry, HashMap<String, org.crosswire.jsword.book.Book>())
+                fields[3].set(registry, HashSet<org.crosswire.jsword.book.BookDriver>())
+                assertTrue(registry.drivers.isEmpty())
+
+                SwordBookPath.setAugmentPath(SwordBookPath.getAugmentPath())
+
+                assertEquals(listOf(SwordBookDriver.instance()), registry.drivers.toList())
+            } finally {
+                // Restore directly: cleanup must not depend on the registration hook under test.
+                augmentField.set(null, originalAugment)
+                fields.zip(originalRegistry).forEach { (field, original) -> field.set(registry, original) }
+            }
+        }
     }
 
     private fun metadata(driver: String, extra: String = "") = SwordBookMetaData(
