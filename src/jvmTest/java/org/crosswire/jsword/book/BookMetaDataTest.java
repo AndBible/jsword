@@ -41,31 +41,24 @@ import org.junit.Test;
  */
 public class BookMetaDataTest {
     @Test
-    public void testDifferentInitialsNotEqual() {
+    public void testDifferentInitialsNotEqual() throws IOException, BookException {
         String kjvMetaData = "[KJV]\nDataPath=./modules/texts/ztext/kjv/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n";
         // the only difference is the initials
         String kjvaMetaData = "[KJVA]\nDataPath=./modules/texts/ztext/kjva/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n";
-        try {
             BookMetaData bmKJV = new SwordBookMetaData(kjvMetaData.getBytes(), "KJV");
             BookMetaData bmKJV2 = new SwordBookMetaData(kjvMetaData.getBytes(), "KJV");
             BookMetaData bmKJVA = new SwordBookMetaData(kjvaMetaData.getBytes(), "KJVA");
             Assert.assertTrue("Same metadata should equal", bmKJV.equals(bmKJV2));
             Assert.assertFalse("Different initials should not equal", bmKJV.equals(bmKJVA));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (BookException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
-    public void testSortOrderIsByInitials() {
+    public void testSortOrderIsByInitials() throws IOException, BookException {
         String kjvMetaData = "[KJV]\nDataPath=./modules/texts/ztext/kjv/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n";
         // Desc starts with 'The...' but initials are 'Common' so comes first if sorted by initials
         String commonMetaData = "[Common]\nDataPath=./modules/texts/ztext/common/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=The Common Edition: New Testament\nLCSH=Bible. English.\n";
         // Ensure sort is case insensitive
         String aaaMetaData = "[AAA]\nDataPath=./modules/texts/ztext/common/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=aaa aaa aaa\nLCSH=Bible. English.\n";
-        try {
             // create some book meta data
             BookMetaData bmKJV = new SwordBookMetaData(kjvMetaData.getBytes(), "KJV");
             BookMetaData bmCommon = new SwordBookMetaData(commonMetaData.getBytes(), "Common");
@@ -83,10 +76,22 @@ public class BookMetaDataTest {
             Assert.assertEquals("Common should be second in sorted book list", bmCommon, mdList.get(1));
             Assert.assertEquals("KJV should be last in sorted book list", bmKJV, mdList.get(2));
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (BookException e) {
-            e.printStackTrace();
+    }
+    @Test
+    public void testEqualityRequiresSameConcreteClass() throws IOException, BookException {
+        org.crosswire.jsword.book.basic.DefaultBookMetaData base = new org.crosswire.jsword.book.basic.DefaultBookMetaData(null, "Demo", BookCategory.BIBLE);
+        base.setInitials("Demo");
+        BookMetaData derived = new DerivedMetadata();
+        BookMetaData derived2 = new DerivedMetadata();
+        assertEquals(derived, derived2);
+        assertFalse(base.equals(derived));
+        assertFalse(derived.equals(base));
+    }
+
+    private static class DerivedMetadata extends org.crosswire.jsword.book.basic.DefaultBookMetaData {
+        DerivedMetadata() {
+            super(null, "Demo", BookCategory.BIBLE);
+            setInitials("Demo");
         }
     }
 }
