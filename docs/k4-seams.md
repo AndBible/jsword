@@ -1,0 +1,39 @@
+# K4 seams
+
+| Seam | commonMain | jvmMain | iosMain | Removed by |
+|---|---|---|---|---|
+| `org.crosswire.common.kdom.Content`, `Document` | `expect abstract class Content` / `expect open class Document`, each declaring `final override fun equals(other: Any?): Boolean` and `final override fun hashCode(): Int` | `actual typealias` to `org.jdom2.Content` / `org.jdom2.Document` | opaque classes, `internal constructor()`, identity equality | K5 (real kdom) |
+| `org.crosswire.common.util.KUri` | `expect class KUri` (members: Task 2 inventory) | `actual typealias KUri = java.net.URI` | own RFC 3986 subset on `KUriParts` | stays |
+| `org.crosswire.jsword.book.Book`, `BookDriver` (`BookSeams.kt`), `org.crosswire.jsword.book.filter.SourceFilter` (`SourceFilterSeams.kt`) | `expect interface` with only the members common code calls | existing interface becomes `actual interface` with all members and supertypes unchanged | minimal `actual interface` | K5b (facade move) |
+| facade hooks (`SwordFacadeHooks.kt`, package `org.crosswire.jsword.book.sword`) | `internal expect fun swordMetaDataToOsis(md: SwordBookMetaData): Document`, `internal expect fun sourceFilterFor(sourceType: String?): SourceFilter`, `internal expect fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book`, `internal expect fun registerSwordDriver()` | today's code | throw `UnsupportedOperationException("K5b: <what>")`; `registerSwordDriver` is a no-op | K5b |
+| `CWProject` class-loader hook (`ResourceHomeHook.kt`, package `org.crosswire.common.util`) | `internal expect fun setResourceHome(dirs: Array<KUri>)` | `CWClassLoader.setHome(dirs)` | no-op (resources are embedded, K2) | stays |
+| `DevotionDateFormat` (package `org.crosswire.jsword.book.sword`) | `expect object DevotionDateFormat { fun format(month: Int, day: Int): String; fun parseMonthDay(text: String): Pair<Int, Int>? }` | today's `DateFormatter.getDateInstance()` + `GregorianCalendar` code from `RawLDBackend` | `NSDateFormatter`, medium date style, lenient | stays |
+| `OpenFileStateManager` scheduler, `Job` ticker (`Scheduling.kt`, package `org.crosswire.common.util`) | `expect fun scheduleRepeating(periodMs: Long, task: () -> Unit): Cancellable` + `fun interface Cancellable { fun cancel() }` | daemon `ScheduledExecutorService` (one per call, as today) | `dispatch_source` timer on a global queue | stays |
+| BZIP2/XZ (`CompressorPlatform.kt`, package `org.crosswire.common.compress`) | `internal expect fun platformUncompress(type: CompressorType, input: ByteArray, expectedLength: Int): ByteArray`, `internal expect fun platformCompress(type: CompressorType, input: ByteArray): ByteArray` | commons-compress (today's `BZip2`/`XZ` bodies) | throw `BookException` "unsupported compression on this platform: <type>" | stays (D4) |
+| HTTP (`HttpTransport.kt`, package `org.crosswire.common.util`) | `interface HttpTransport`, `class HttpHead`, `interface HttpBody`, `class TransportCancelledException : okio.IOException` | `UrlConnectionHttpTransport` (today's `HttpsURLConnection` code) | none in K4 (track I); `WebResource.transport` must be set by the host | stays (D3) |
+
+## Task status
+
+Task 2 introduces Content, Document and KUri. Other rows describe planned seams and are not implemented by Task 2. Content/Document retain final identity equality on both platforms; native placeholders have no public constructor.
+
+## KUri inventory
+
+Inventory at jsword 30882a72 over the 83 move-set files. The plan matcher misses bare `uri` and `orig`; a supplementary identifier matcher yields the following counts, excluding comments.
+
+| Member | Code occurrences | Seam treatment |
+|---|---:|---|
+| path | 19 | getPath() |
+| scheme | 16 | getScheme() |
+| toURL() | 10 | Tasks 8/14 JVM split or okio Path, not a KUri member |
+| toString() | 6 | toString() |
+| userInfo | 2 | getUserInfo() |
+| host | 2 | getHost() |
+| port | 2 | getPort() |
+| query | 1 | getQuery() |
+| fragment | 1 | getFragment() |
+
+Comments add three toURL mentions (13 total). Unqualified receiver `path` in CWProject and `NetUtil.lengthenURI(...).path` are outside identifier counts but require no additional seam member. Direct constructors are URI(String) (NetUtil lines 147/940) and seven components (425/461); the four-component overload remains part of the required seam and is tested. getRawPath(), isAbsolute(), equals() and hashCode() are also declared for construction/behavior verification. No resolve/normalize/relativize call appeared in the move set. Common code must use explicit getter functions.
+
+## Native URI behavior
+
+KUriModel is the common implementation core exercised against java.net.URI on JVM and delegated to by the iOS actual. Parsed text is retained, with UTF-8 percent decoding for getters; opaque URIs have null hierarchical components. Component builders quote percent signs and illegal characters separately for path, user info, query and fragment. Non-ASCII letters remain literal. Equality folds scheme/server-host case and percent-escape hex case, distinguishes opaque/hierarchical forms and retains raw component semantics (no path normalization). Hashing uses the same canonical components. Invalid server names in parsed input can remain registry authorities with a null host; component constructors require a valid server authority. JVM actuals remain typealiases, so existing Java-facing URI/JDOM signatures are unchanged.
