@@ -109,7 +109,9 @@ final class CorpusProbe {
                             sb.append("tree\t").append(path).append('\n');
                         }
                     }
-                    if (md.getKeyType() == org.crosswire.jsword.book.KeyType.VERSE) {
+                    // RawText4's test-only backend is verse-based despite its unregistered metadata type.
+                    if (md.getKeyType() == org.crosswire.jsword.book.KeyType.VERSE
+                            || md.getInitials().equals("K4RawText4")) {
                         for (String ref : new String[] {"Gen.1.4", "John.1.4", "Rev.22.21"}) {
                             Key key = book.getKey(ref);
                             sb.append("empty\t").append(ref).append('\t')

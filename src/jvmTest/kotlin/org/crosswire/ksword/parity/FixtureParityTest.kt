@@ -20,7 +20,15 @@ class FixtureParityTest {
     private fun compare(initials: String, expected: List<Pair<String, String>>, oracle: String, current: String) {
         assertEquals(oracle, current, "oracle vs current: $initials")
         val empties = oracle.lineSequence().filter { it.startsWith("empty\t") }.map { it.split('\t') }.toList()
-        empties.forEach { assertEquals("", it[2], "$initials missing ${it[1]}"); assertEquals("0", it[3]) }
+        val verseModules = setOf("K4RawText", "K4RawText4", "K4ZTextBook", "K4ZTextChapterLzss",
+            "K4ZText4Verse", "K4Cipher", "K4Latin1", "K4Combining", "K4RawCom", "K4ZComChapter")
+        val references = if (initials in verseModules) listOf("Gen.1.4", "John.1.4", "Rev.22.21") else emptyList()
+        assertEquals(references, empties.map { it[1] }, "$initials empty references")
+        empties.forEach {
+            assertEquals(4, it.size, "$initials empty row width")
+            assertEquals("", it[2], "$initials missing ${it[1]}")
+            assertEquals("0", it[3], "$initials missing length ${it[1]}")
+        }
         val lines = oracle.lineSequence().filter { '\t' in it && it.substringBefore('\t').toIntOrNull() != null }.map { it.split('\t') }.toList()
         assertEquals("count=${lines.size}", oracle.lineSequence().single { it.startsWith("count=") })
         lines.forEachIndexed { index, row ->
@@ -75,13 +83,45 @@ class FixtureParityTest {
         val confs = File(root, "mods.d").listFiles()!!.filter { it.extension == "conf" }.sortedBy { it.name }
         assertEquals(names, confs.map { it.nameWithoutExtension }.toSet())
         var keys = 0
+        var emptyReads = 0
         for (conf in confs) {
             val oracle = Oracle.call("fixture.dump", conf.path)
             compare(conf.nameWithoutExtension, expected.getValue(conf.nameWithoutExtension), oracle,
                 Current.call("fixture.dump", conf.path))
             keys += oracle.lineSequence().count { it.substringBefore('\t').toIntOrNull() != null }
+            emptyReads += oracle.lineSequence().count { it.startsWith("empty\t") }
         }
-        println("K4FIXTURES modules=${confs.size} keys=$keys")
+        assertEquals(30, emptyReads)
+        println("K4FIXTURES modules=${confs.size} keys=$keys emptyReads=$emptyReads")
+    }
+
+    @Test fun omittedOrCorruptRawText4EmptyRowsFailRealComparator() {
+        val oracle = Oracle.call("fixture.dump", File(root, "mods.d/K4RawText4.conf").path)
+        val expected = manifest().getValue("K4RawText4")
+        val rows = oracle.lines().filter { it.startsWith("empty\t") }
+        assertEquals(3, rows.size)
+        for (row in rows) {
+            val omitted = oracle.replace("$row\n", "")
+            val missing = assertFailsWith<AssertionError> {
+                compare("K4RawText4", expected, omitted, omitted)
+            }
+            assertTrue(missing.message!!.contains("empty references"))
+            val columns = row.split('\t').toMutableList()
+            columns[2] = Base64.getEncoder().encodeToString("corrupt empty text".toByteArray())
+            val corruptText = oracle.replace(row, columns.joinToString("\t"))
+            val text = assertFailsWith<AssertionError> {
+                compare("K4RawText4", expected, corruptText, corruptText)
+            }
+            assertTrue(text.message!!.contains("missing ${columns[1]}"))
+            columns[2] = ""
+            columns[3] = "1"
+            val corruptLength = oracle.replace(row, columns.joinToString("\t"))
+            val length = assertFailsWith<AssertionError> {
+                compare("K4RawText4", expected, corruptLength, corruptLength)
+            }
+            assertTrue(length.message!!.contains("missing length ${columns[1]}"))
+        }
+        println("K4EMPTYMUTATION module=K4RawText4 omitted=3 corruptText=3 corruptLength=3 assertions=9")
     }
 
     @Test fun aPlantedDifferenceIsDetected() {
