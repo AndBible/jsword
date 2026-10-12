@@ -15,7 +15,64 @@ import okio.Path
  * with a positive size fails in the underlying [FileHandle] read.
  */
 class RandomAccessSource(private val handle: FileHandle) : Closeable {
+    private var cursor = 0L
+    private var closed = false
+
     fun size(): Long = handle.size()
+
+    internal fun position(): Long {
+        checkOpen()
+        return cursor
+    }
+
+    internal fun seek(offset: Long) {
+        checkOpen()
+        if (offset < 0) throw okio.IOException("Negative seek offset")
+        cursor = offset
+    }
+
+    internal fun readAtCursor(offset: Long, size: Int): ByteArray {
+        seek(offset)
+        return readNext(size)
+    }
+
+    internal fun readNext(size: Int): ByteArray {
+        checkOpen()
+        // Legacy readNextRAF checks the handle even for a zero-sized request.
+        handle.size()
+        return read(cursor, size).also { cursor += it.size }
+    }
+
+    internal fun readUntil(stopByte: Byte): ByteArray {
+        val offset = position()
+        var count = 0
+        val byte = ByteArray(1)
+        var next: Int
+        do {
+            val n = handle.read(cursor, byte, 0, 1)
+            next = if (n < 0) -1 else byte[0].toInt() and 0xff
+            if (n > 0) cursor++
+            count++
+        } while (next != -1 && next != stopByte.toInt())
+        return readAtCursor(offset, count)
+    }
+
+    internal fun writeAtCursor(offset: Long, data: ByteArray?) {
+        seek(offset)
+        writeNext(data)
+    }
+
+    internal fun writeNext(data: ByteArray?) {
+        if (data == null) return
+        checkOpen()
+        if (!handle.readWrite) throw okio.IOException("Bad file descriptor")
+        handle.write(cursor, data, 0, data.size)
+        cursor += data.size
+    }
+
+    private fun checkOpen() {
+        if (closed) throw okio.IOException("Stream Closed")
+    }
 
     fun read(offset: Long, size: Int): ByteArray {
         // It is common to have an entry that points to nothing. That is the equivalent of an empty string.
@@ -44,7 +101,10 @@ class RandomAccessSource(private val handle: FileHandle) : Closeable {
         return result
     }
 
-    override fun close() = handle.close()
+    override fun close() {
+        closed = true
+        handle.close()
+    }
 
     companion object {
         private val log = LoggerFactory.getLogger("org.crosswire.jsword.book.sword.SwordUtil")

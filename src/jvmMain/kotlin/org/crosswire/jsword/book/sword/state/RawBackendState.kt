@@ -149,6 +149,7 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
     }
 
     override fun releaseResources() {
+        markResourcesClosed()
         IOUtil.close(ntIdxRaf)
         IOUtil.close(ntTextRaf)
         IOUtil.close(otIdxRaf)

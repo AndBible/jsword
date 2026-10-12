@@ -27,13 +27,10 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.BlockType
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.util.HashMap
-import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.TimeUnit
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import org.crosswire.common.util.scheduleRepeating
+import kotlin.concurrent.Volatile
 
 /**
  * Manages the creation and re-distribution of open file states. This increases
@@ -64,38 +61,27 @@ class OpenFileStateManager
  * prevent instantiation
  */
 private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
-    private val metaToStates: MutableMap<BookMetaData, Queue<OpenFileState>> = HashMap()
+    private val lock = SynchronizedObject()
+    private val metaToStates = mutableMapOf<BookMetaData, ArrayDeque<OpenFileState>>()
 
     @Volatile
     private var shuttingDown = false
 
-    private val monitoringThread: ScheduledFuture<*> = Executors.newScheduledThreadPool(1, object : ThreadFactory {
-        override fun newThread(r: Runnable): Thread {
-            val t = Thread(r)
-            t.isDaemon = true
-            return t
-        }
-    }).scheduleWithFixedDelay(object : Runnable {
-        override fun run() {
-            // check the state of the maps and queues... The queues may have too much in them and that will in turn max out
-            // the heap.
+    private val monitoringThread = scheduleRepeating(cleanupIntervalSeconds * 1000L) {
+        synchronized(lock) {
             val currentTime = System.currentTimeMillis()
-
-            for (e in this@OpenFileStateManager.metaToStates.values) {
-                val iterator = e.iterator()
+            for (states in metaToStates.values) {
+                val iterator = states.iterator()
                 while (iterator.hasNext()) {
                     val state = iterator.next()
                     if (state.getLastAccess() + maxExpiry * 1000 < currentTime) {
-                        //release resources
                         state.releaseResources()
-
-                        //remove from the queues
                         iterator.remove()
                     }
                 }
             }
         }
-    }, 0, cleanupIntervalSeconds.toLong(), TimeUnit.SECONDS)
+    }
 
     @Throws(BookException::class)
     fun getRawBackendState(metadata: BookMetaData): RawBackendState {
@@ -182,63 +168,29 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : OpenFileState> getInstance(metadata: BookMetaData): T? {
-        val availableStates = getQueueForMeta(metadata)
-        val state = availableStates.poll() as T?
-
-        //while not strictly necessary, the documentation suggests that iterating through the collection
-        //gives you a snapshot at some point in time, though not necessarily consistent, so just in case this remains
-        //in access of the iterator() functionality, we update the last access date to avoid it being destroyed while we
-        //use it
-        if (state != null) {
-            state.setLastAccess(System.currentTimeMillis())
-        }
-        return state
-    }
-
-    private fun getQueueForMeta(metadata: BookMetaData): Queue<OpenFileState> {
-        var availableStates = metaToStates[metadata]
-        if (availableStates == null) {
-            synchronized(OpenFileState::class.java) {
-                availableStates = ConcurrentLinkedQueue()
-                metaToStates[metadata] = availableStates!!
-            }
-        }
-        return availableStates!!
+    private fun <T : OpenFileState> getInstance(metadata: BookMetaData): T? = synchronized(lock) {
+        val state = metaToStates.getOrPut(metadata) { ArrayDeque() }.removeFirstOrNull() as T?
+        state?.setLastAccess(System.currentTimeMillis())
+        state
     }
 
     fun release(fileState: OpenFileState?) {
-        if (fileState == null) {
-            // can't release anything. JSword has failed to open a file state,
-            // and a finally block is trying to close this
-            return
-        }
-
-        fileState.setLastAccess(System.currentTimeMillis())
-
-        // instead of releasing, we add to our queue
-        val bmd = fileState.getBookMetaData()
-        val queueForMeta = getQueueForMeta(bmd)
-        LOGGER.trace("Offering to releasing: {}", bmd.initials)
-        val offered = queueForMeta.offer(fileState)
-
-        // ignore if we couldn't offer to the queue
-        if (!offered) {
-            LOGGER.trace("Released: {}", bmd.initials)
-            fileState.releaseResources()
+        if (fileState == null) return
+        synchronized(lock) {
+            fileState.setLastAccess(System.currentTimeMillis())
+            val metadata = fileState.getBookMetaData()
+            LOGGER.trace("Offering to releasing: {}", metadata.initials)
+            metaToStates.getOrPut(metadata) { ArrayDeque() }.addLast(fileState)
         }
     }
 
-    /**
-     * Shuts down all open files
-     */
+    /** Shuts down all pooled open files. */
     fun shutDown() {
         shuttingDown = true
-        this.monitoringThread.cancel(true)
-        for (e in metaToStates.values) {
-            var state: OpenFileState? = null
-            while (e.poll().also { state = it } != null) {
-                state!!.releaseResources()
+        monitoringThread.cancel()
+        synchronized(lock) {
+            for (states in metaToStates.values) {
+                while (states.isNotEmpty()) states.removeFirst().releaseResources()
             }
         }
     }
@@ -251,6 +203,10 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     }
 
     companion object {
+        private val managerLock = SynchronizedObject()
+        internal fun createForTest(cleanupIntervalSeconds: Int, maxExpirySeconds: Int): OpenFileStateManager =
+            OpenFileStateManager(cleanupIntervalSeconds, maxExpirySeconds)
+
         @Volatile
         private var manager: OpenFileStateManager? = null
         private val LOGGER: Logger = LoggerFactory.getLogger(OpenFileStateManager::class)
@@ -264,7 +220,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
          */
         @JvmStatic
         fun init(cleanupIntervalSeconds: Int, maxExpiry: Int) {
-            synchronized(OpenFileStateManager::class.java) {
+            synchronized(managerLock) {
                 if (manager == null) {
                     manager = OpenFileStateManager(cleanupIntervalSeconds, maxExpiry)
                 } else {
@@ -281,7 +237,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
         @JvmStatic
         fun instance(): OpenFileStateManager {
             if (manager == null) {
-                synchronized(OpenFileStateManager::class.java) {
+                synchronized(managerLock) {
                     init(60, 60)
                 }
             }

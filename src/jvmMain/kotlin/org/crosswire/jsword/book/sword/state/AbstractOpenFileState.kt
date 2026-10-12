@@ -33,6 +33,13 @@ abstract class AbstractOpenFileState
  * @param bmd the BookMetaData for this OpenFileState
  */
 (bmd: BookMetaData) : OpenFileState {
+    @kotlin.concurrent.Volatile
+    private var closedForTest = false
+
+    internal fun isClosedForTest(): Boolean = closedForTest
+
+    internal fun markResourcesClosed() { closedForTest = true }
+
     private var lastAccess: Long = System.currentTimeMillis()
 
     /**

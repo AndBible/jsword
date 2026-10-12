@@ -39,3 +39,22 @@ internal fun storageFileSpelling(raw: String): String = java.io.File(raw).path
 internal fun storageFileEquals(a: StorageLocation, b: StorageLocation): Boolean =
     java.io.File(a.spelling) == java.io.File(b.spelling)
 internal fun storageFileHash(location: StorageLocation): Int = java.io.File(location.spelling).hashCode()
+
+/** Open the authoritative File spelling without an okio Path projection. */
+internal fun storageOpenRandomAccess(location: StorageLocation, writable: Boolean): org.crosswire.common.util.RandomAccessSource {
+    val raf = java.io.RandomAccessFile(java.io.File(location.spelling), if (writable) "rw" else "r")
+    return org.crosswire.common.util.RandomAccessSource(object : okio.FileHandle(writable) {
+        override fun protectedRead(fileOffset: Long, array: ByteArray, arrayOffset: Int, byteCount: Int): Int = synchronized(raf) {
+            raf.seek(fileOffset)
+            raf.read(array, arrayOffset, byteCount)
+        }
+        override fun protectedWrite(fileOffset: Long, array: ByteArray, arrayOffset: Int, byteCount: Int) = synchronized(raf) {
+            raf.seek(fileOffset)
+            raf.write(array, arrayOffset, byteCount)
+        }
+        override fun protectedSize(): Long = synchronized(raf) { raf.length() }
+        override fun protectedResize(size: Long) = synchronized(raf) { raf.setLength(size) }
+        override fun protectedFlush() = raf.fd.sync()
+        override fun protectedClose() = raf.close()
+    })
+}

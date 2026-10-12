@@ -202,3 +202,66 @@ Task 16 supplies native literal-path construction/equality/hash equivalents.
 Writer serializer directly, bypassing every Path conversion. Charset selection,
 record newline/continuation formatting, writer flush and owned-stream closure
 remain JVM behavior. File-open failures still reach metadata's IOException log.
+
+### Task 8 lexical random access boundary
+
+`storageOpenRandomAccess(StorageLocation, writable: Boolean): RandomAccessSource`
+is a plain internal JVM hook until Task 16. It opens `RandomAccessFile(File(spelling),
+"r"/"rw")` directly and owns it through an okio FileHandle; authoritative spelling
+never passes through Path. Task 16 adds its common expect and an iOS literal-path
+FileHandle actual, retaining writable creation, zero-filled extension, read-only
+write failure and owned close. FileHandle resize/flush methods are required adapter
+methods, not new caller-facing operations.
+
+RandomAccessSource's internal cursor compatibility operations (`position`, `seek`,
+`readAtCursor`, `readNext`, `readUntil`, `writeAtCursor`, `writeNext`) serve existing
+TreeKeyIndex and RawFiles callers only. Cursor reads seek first (negative offsets
+throw even for zero/negative sizes), shorten past EOF, and consume the delimiter.
+The original public positional `read` remains unchanged, including its documented
+zero-size-before-offset difference. Task 16 needs no platform hooks for this cursor
+logic; only the lexical open hook is platform-specific.
+
+`Scheduling.jvm.kt` is deliberately plain JVM now; Task 16 moves Cancellable to
+common, adds the scheduleRepeating expect and actual modifiers. Its iOS actual
+uses a global dispatch queue and a dispatch source timer. To preserve fixed delay
+rather than fixed rate, use a one-shot timer and re-arm after each completed task:
+
+```kotlin
+// Scheduling.ios.kt (Task 16; imports/foreign opt-in verified at that gate)
+actual fun scheduleRepeating(periodMs: Long, task: () -> Unit): Cancellable {
+    val queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)
+    val timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0u, 0u, queue)!!
+    val lock = SynchronizedObject()
+    var cancelled = false
+    fun arm(delayNs: Long) {
+        dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, delayNs),
+            DISPATCH_TIME_FOREVER, 0u)
+    }
+    dispatch_source_set_event_handler(timer) {
+        // Do not hold the cancellation lock while user code runs.
+        if (synchronized(lock) { !cancelled }) {
+            task()
+            synchronized(lock) {
+                if (!cancelled) arm(periodMs * 1_000_000L)
+            }
+        }
+    }
+    arm(0L)
+    dispatch_resume(timer)
+    return Cancellable {
+        synchronized(lock) {
+            if (!cancelled) {
+                cancelled = true
+                dispatch_source_cancel(timer)
+            }
+        }
+    }
+}
+```
+
+Task 16 must verify dispatch constant/unsigned types and source ownership under
+Kotlin/Native. Cancellation must not interrupt a running task; no further re-arm
+occurs afterwards. JVM scheduleWithFixedDelay also suppresses future runs when
+the task throws; the Native actual must cancel rather than allow an exception to
+escape into the C callback. This snippet is handoff design, not Native runtime
+evidence.
