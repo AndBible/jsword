@@ -1,8 +1,8 @@
 # K4 move set (spec 3.1). "<path> #done" = cleaned and guarded. Deleted after the move (Task 16).
-org/crosswire/common/activate/Activatable.kt
-org/crosswire/common/activate/Activator.kt
-org/crosswire/common/activate/Kill.kt
-org/crosswire/common/activate/Lock.kt
+org/crosswire/common/activate/Activatable.kt #done
+org/crosswire/common/activate/Activator.kt #done
+org/crosswire/common/activate/Kill.kt #done
+org/crosswire/common/activate/Lock.kt #done
 org/crosswire/common/compress/AbstractCompressor.kt
 org/crosswire/common/compress/BZip2.kt
 org/crosswire/common/compress/Compressor.kt

@@ -19,8 +19,9 @@
  */
 package org.crosswire.common.activate
 
-import java.util.Collections
-import java.util.IdentityHashMap
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import kotlin.jvm.JvmStatic
 
 /**
  * Manager for instances of Activatable.
@@ -58,8 +59,8 @@ private constructor() {
          */
         @JvmStatic
         fun activate(subject: Activatable?) {
-            synchronized(Activator::class.java) {
-                if (subject != null && !activated.contains(subject)) {
+            synchronized(activationLock) {
+                if (subject != null && activated.none { it === subject }) {
                     subject.activate(lock)
                     activated.add(subject)
                 }
@@ -87,17 +88,17 @@ private constructor() {
          */
         @JvmStatic
         fun deactivate(subject: Activatable?) {
-            synchronized(Activator::class.java) {
-                if (subject != null && activated.contains(subject)) {
+            synchronized(activationLock) {
+                if (subject != null && activated.any { it === subject }) {
                     subject.deactivate(lock)
-                    activated.remove(subject)
+                    activated.removeAll { it === subject }
                 }
             }
         }
 
         @JvmStatic
         fun deactivateAll() {
-            synchronized(Activator::class.java) {
+            synchronized(activationLock) {
                 // Deactivate directly (not via deactivate()) and clear afterwards so we
                 // don't remove entries while iterating the set.
                 for (item in activated) {
@@ -119,8 +120,8 @@ private constructor() {
          * every getKey() throw NoSuchKeyException and getGlobalKeyList() return an
          * empty list until something forced a deactivate/activate cycle.
          */
-        private var activated: MutableSet<Activatable> =
-            Collections.newSetFromMap(IdentityHashMap<Activatable, Boolean>())
+        private val activated = mutableListOf<Activatable>()
+        private val activationLock = SynchronizedObject()
 
         /**
          * The object we use to prevent others from
