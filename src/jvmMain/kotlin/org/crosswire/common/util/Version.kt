@@ -19,8 +19,7 @@
  */
 package org.crosswire.common.util
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+import kotlin.jvm.JvmField
 
 /**
  * Version is an immutable representation of dotted "number" consisting of 1 to 4 parts.
@@ -52,11 +51,11 @@ open class Version : Comparable<Version> {
         }
         this.original = version
         this.parts = intArrayOf(-1, -1, -1, -1)
-        val matcher: Matcher = VERSION_PATTERN.matcher(this.original)
-        if (matcher.matches()) {
-            val count = matcher.groupCount()
+        val matcher = VERSION_PATTERN.matchEntire(this.original)
+        if (matcher != null) {
+            val count = matcher.groups.size - 1
             for (i in 1..count) {
-                val part: String = matcher.group(i) ?: break
+                val part: String = matcher.groups[i]?.value ?: break
                 parts[i - 1] = part.toInt()
             }
         } else {
@@ -136,6 +135,6 @@ open class Version : Comparable<Version> {
 
     companion object {
         @JvmField
-        val VERSION_PATTERN: Pattern = Pattern.compile("^(\\d+)(?:.(\\d+))?(?:.(\\d+))?(?:.(\\d+))?$")
+        val VERSION_PATTERN: Regex = Regex("^(\\d+)(?:.(\\d+))?(?:.(\\d+))?(?:.(\\d+))?$")
     }
 }

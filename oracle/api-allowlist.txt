@@ -332,3 +332,5 @@ org.crosswire.jsword.versification.Versification + M public getPreferredNameInLo
 
 org.crosswire.jsword.book.sword.BookType - M protected abstract getBook(org.crosswire.jsword.book.sword.SwordBookMetaData,org.crosswire.jsword.book.sword.Backend): org.crosswire.jsword.book.Book throws [] # K4 seam: getBook delegates to JVM facade hook
 org.crosswire.jsword.book.sword.BookType + M protected getBook(org.crosswire.jsword.book.sword.SwordBookMetaData,org.crosswire.jsword.book.sword.Backend): org.crosswire.jsword.book.Book throws [] # K4 seam: getBook delegates to JVM facade hook
+org.crosswire.common.util.Version - F public static final VERSION_PATTERN: java.util.regex.Pattern # K4 split: legacy JDK pattern moved to VersionJvm; no external callers found.
+org.crosswire.common.util.Version + F public static final VERSION_PATTERN: kotlin.text.Regex # K4 split: common parser pattern replaces JDK field; legacy pattern retained in VersionJvm.

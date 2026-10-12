@@ -20,7 +20,7 @@ org/crosswire/common/progress/WorkListener.kt
 org/crosswire/common/util/CWProject.kt
 org/crosswire/common/util/DefaultURIFilter.kt
 org/crosswire/common/util/FileUtil.kt
-org/crosswire/common/util/Filter.kt
+org/crosswire/common/util/Filter.kt #done
 org/crosswire/common/util/IOUtil.kt
 org/crosswire/common/util/IniSection.kt
 org/crosswire/common/util/Language.kt
@@ -33,7 +33,7 @@ org/crosswire/common/util/ReporterEvent.kt
 org/crosswire/common/util/ReporterListener.kt
 org/crosswire/common/util/TimeGate.kt
 org/crosswire/common/util/URIFilter.kt
-org/crosswire/common/util/Version.kt
+org/crosswire/common/util/Version.kt #done
 org/crosswire/common/util/WebResource.kt
 org/crosswire/jsword/book/BookCategory.kt
 org/crosswire/jsword/book/BookException.kt
