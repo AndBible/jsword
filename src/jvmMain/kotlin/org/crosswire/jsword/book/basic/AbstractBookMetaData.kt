@@ -27,7 +27,7 @@ import org.crosswire.jsword.book.FeatureType
 import org.crosswire.jsword.book.KeyType
 import org.crosswire.jsword.index.IndexStatus
 import org.crosswire.common.kdom.Document
-import java.net.URI
+import org.crosswire.common.util.KUri
 
 /**
  * An implementation of the Property Change methods from BookMetaData.
@@ -145,18 +145,18 @@ abstract class AbstractBookMetaData : BookMetaData {
      * @see org.crosswire.jsword.book.BookMetaData#getLibrary()
      */
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.BookMetaData#setLibrary(java.net.URI)
+     * @see org.crosswire.jsword.book.BookMetaData#setLibrary(org.crosswire.common.util.KUri)
      */
     @set:Throws(BookException::class)
-    override var library: URI? = null
+    override var library: KUri? = null
 
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.BookMetaData#setLocation(java.net.URI)
+     * @see org.crosswire.jsword.book.BookMetaData#setLocation(org.crosswire.common.util.KUri)
      */
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getLocation()
      */
-    override var location: URI? = null
+    override var location: KUri? = null
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getIndexStatus()
@@ -199,7 +199,7 @@ abstract class AbstractBookMetaData : BookMetaData {
 
         // Check that that is the same as this
         // Don't use instanceof since that breaks inheritance
-        if (other.javaClass != this.javaClass) {
+        if (other::class != this::class) {
             return false
         }
 

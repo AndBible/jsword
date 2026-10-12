@@ -19,7 +19,7 @@
  */
 package org.crosswire.jsword.book
 
-import java.net.URI
+import org.crosswire.common.util.KUri
 
 import org.crosswire.common.util.Language
 import org.crosswire.jsword.index.IndexStatus
@@ -207,32 +207,32 @@ interface BookMetaData : Comparable<BookMetaData> {
     fun hasFeature(feature: FeatureType?): Boolean
 
     /**
-     * Get the base URI for library of this module.
+     * Get the base KUri for library of this module.
      *
-     * @return the base URI or null if there is none
+     * @return the base KUri or null if there is none
      */
     /**
-     * Set the base URI for library of this module.
+     * Set the base KUri for library of this module.
      *
      * @param library
-     *            the base URI or null if there is none
+     *            the base KUri or null if there is none
      * @throws BookException  indicates missing data files
      */
     @set:Throws(BookException::class)
-    var library: URI?
+    var library: KUri?
 
     /**
-     * Get the base URI for relative URIs in the document.
+     * Get the base KUri for relative URIs in the document.
      *
-     * @return the base URI or null if there is none
+     * @return the base KUri or null if there is none
      */
     /**
-     * Set the base URI for relative URIs in the document.
+     * Set the base KUri for relative URIs in the document.
      *
      * @param library
-     *            the base URI or null if there is none
+     *            the base KUri or null if there is none
      */
-    var location: URI?
+    var location: KUri?
 
     /**
      * If this BookMetaData is partially loaded, reload it fully.
