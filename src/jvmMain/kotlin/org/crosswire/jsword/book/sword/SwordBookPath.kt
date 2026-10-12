@@ -20,9 +20,7 @@
 package org.crosswire.jsword.book.sword
 
 import okio.Path
-import okio.Path.Companion.toPath
 import okio.IOException
-import org.crosswire.common.util.KFiles
 import org.crosswire.common.util.systemProperty
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.OSType
@@ -45,6 +43,15 @@ class SwordBookPath
  */
 private constructor() {
     companion object {
+        @JvmStatic @Throws(BookException::class)
+        fun setAugmentPath(dirs: Array<Path>?) = setAugmentLocations(dirs?.map { StorageLocation(it.toString()) }?.toTypedArray())
+        @JvmStatic fun getAugmentPath(): Array<Path> = getAugmentLocations().map { it.path }.toTypedArray()
+        @JvmStatic fun getSwordPath(): Array<Path> = getSwordLocations().map { it.path }.toTypedArray()
+        @JvmStatic fun getBookList(dir: Path): Array<String>? = getBookNames(StorageLocation(dir.toString()))
+        @JvmStatic fun getSwordDownloadDir(): Path = getSwordDownloadLocation().path
+        @JvmStatic fun getDownloadDir(): Path? = getDownloadLocation()?.path
+        @JvmStatic fun setDownloadDir(dir: Path) = setDownloadLocation(StorageLocation(dir.toString()))
+
         /**
          * Establish additional locations that Sword may hold books.
          *
@@ -54,7 +61,7 @@ private constructor() {
          */
         @JvmStatic
         @Throws(BookException::class)
-        fun setAugmentPath(theNewDirs: Array<Path>?) {
+        internal fun setAugmentLocations(theNewDirs: Array<StorageLocation>?) {
             val newDirs = theNewDirs
             if (newDirs == null) {
                 return
@@ -72,7 +79,7 @@ private constructor() {
          * @return The new Sword directory
          */
         @JvmStatic
-        fun getAugmentPath(): Array<Path> {
+        internal fun getAugmentLocations(): Array<StorageLocation> {
             return augmentPath.copyOf()
         }
 
@@ -84,11 +91,11 @@ private constructor() {
          * @return the array of Book locations.
          */
         @JvmStatic
-        fun getSwordPath(): Array<Path> {
-            val swordPath = mutableListOf<Path>()
+        internal fun getSwordLocations(): Array<StorageLocation> {
+            val swordPath = mutableListOf<StorageLocation>()
 
             // The first place to look for Books
-            swordPath.add(getSwordDownloadDir())
+            swordPath.add(getSwordDownloadLocation())
 
             // Then all the user's augments
             for (i in augmentPath.indices) {
@@ -118,7 +125,7 @@ private constructor() {
          * @return the list of books in that location
          */
         @JvmStatic
-        fun getBookList(bookDir: Path): Array<String>? {
+        internal fun getBookNames(bookDir: StorageLocation): Array<String>? {
             return storageListNames(bookDir)?.filter { !it.startsWith(PREFIX_GLOBALS) && it.endsWith(SwordConstants.EXTENSION_CONF) }?.toTypedArray()
         }
 
@@ -126,11 +133,11 @@ private constructor() {
          * Search all of the "standard" Sword locations for Books. Remember all the
          * locations.
          */
-        private fun getDefaultPaths(): Array<Path> {
+        private fun getDefaultPaths(): Array<StorageLocation> {
             // If possible migrate the old location to the new one
             migrateBookDir()
 
-            val bookDirs: MutableList<Path> = mutableListOf()
+            val bookDirs: MutableList<StorageLocation> = mutableListOf()
 
             val home = systemProperty(PROPERTY_USER_HOME)
 
@@ -172,23 +179,23 @@ private constructor() {
             val userDataArea = OSType.getOSType().getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)
 
             // Check look for mods.d in the sword user data area
-            testDefaultPath(bookDirs, userDataArea!!.getPath()!!.toPath())
+            testDefaultPath(bookDirs, userDataArea!!.getPath()!!)
 
             // JSword used to hold books in ~/.jsword (or its equivalent) but has
             // code that will
             // migrate it to ~/.sword (or its equivalent)
             // If the migration did not work then use the old area
-            testDefaultPath(bookDirs, CWProject.instance().writableProjectDir!!.getPath()!!.toPath())
+            testDefaultPath(bookDirs, CWProject.instance().writableProjectDir!!.getPath()!!)
 
             return bookDirs.toTypedArray()
         }
 
-        private fun readSwordConf(bookDirs: MutableList<Path>, swordConfDir: Path) {
+        private fun readSwordConf(bookDirs: MutableList<StorageLocation>, swordConfDir: StorageLocation) {
             val sysconfig = swordConfDir / SWORD_GLOBAL_CONF
             if (storageCanRead(sysconfig)) {
                 try {
                     val prop = PropertyMap()
-                    prop.load(KFiles.readBytes(sysconfig))
+                    prop.load(storageRead(sysconfig))
                     testDefaultPath(bookDirs, prop.get(DATA_PATH))
                     testDefaultPath(bookDirs, prop.get(AUGMENT_PATH))
                 } catch (ex: IOException) {
@@ -197,8 +204,8 @@ private constructor() {
             }
         }
 
-        private fun readSwordConf(bookDirs: MutableList<Path>, swordConfDir: String) {
-            readSwordConf(bookDirs, swordConfDir.toPath())
+        private fun readSwordConf(bookDirs: MutableList<StorageLocation>, swordConfDir: String) {
+            readSwordConf(bookDirs, StorageLocation(swordConfDir))
         }
 
         /**
@@ -210,13 +217,13 @@ private constructor() {
          * @param path
          *            the path to check
          */
-        private fun testDefaultPath(bookDirs: MutableList<Path>, path: Path?) {
+        private fun testDefaultPath(bookDirs: MutableList<StorageLocation>, path: StorageLocation?) {
             if (path == null) {
                 return
             }
 
             val mods = path / SwordConstants.DIR_CONF
-            if (KFiles.isDirectory(mods) && storageCanRead(mods)) {
+            if (storageDirectory(mods) && storageCanRead(mods)) {
                 bookDirs.add(path)
             }
         }
@@ -230,16 +237,16 @@ private constructor() {
          * @param path
          *            the path to check
          */
-        private fun testDefaultPath(bookDirs: MutableList<Path>, path: String?) {
+        private fun testDefaultPath(bookDirs: MutableList<StorageLocation>, path: String?) {
             if (path == null) {
                 return
             }
 
-            testDefaultPath(bookDirs, path.toPath())
+            testDefaultPath(bookDirs, StorageLocation(path))
         }
 
-        private fun getDefaultDownloadPath(): Path {
-            var path: Path? = null
+        private fun getDefaultDownloadPath(): StorageLocation {
+            var path: StorageLocation? = null
             val possiblePaths = getDefaultPaths()
 
             for (i in possiblePaths.indices) {
@@ -254,7 +261,7 @@ private constructor() {
             // be established
             if (path == null) {
                 val userDataArea = OSType.getOSType().getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)
-                path = userDataArea!!.getPath()!!.toPath()
+                path = StorageLocation(userDataArea!!.getPath()!!)
             }
 
             return path
@@ -264,33 +271,33 @@ private constructor() {
             // Books should be on this path
             val userDataArea = OSType.getOSType().getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)
 
-            val swordBookPath = userDataArea!!.getPath()!!.toPath()
+            val swordBookPath = StorageLocation(userDataArea!!.getPath()!!)
 
             // The "old" Book location might be in one of two locations
             // It might be ~/.jsword or the new project dir
-            var oldPath = CWProject.instance().deprecatedWritableProjectDir!!.getPath()!!.toPath()
+            var oldPath = StorageLocation(CWProject.instance().deprecatedWritableProjectDir!!.getPath()!!)
 
-            if (KFiles.isDirectory(oldPath)) {
+            if (storageDirectory(oldPath)) {
                 migrateBookDir(oldPath, swordBookPath)
                 return
             }
 
             // now trying the new project dir
-            oldPath = CWProject.instance().writableProjectDir!!.getPath()!!.toPath()
+            oldPath = StorageLocation(CWProject.instance().writableProjectDir!!.getPath()!!)
 
-            if (KFiles.isDirectory(oldPath)) {
+            if (storageDirectory(oldPath)) {
                 migrateBookDir(oldPath, swordBookPath)
                 return
             }
 
             // Finally, it might be ~/.sword
-            oldPath = OSType.DEFAULT.getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)!!.getPath()!!.toPath()
-            if (KFiles.isDirectory(oldPath)) {
+            oldPath = StorageLocation(OSType.DEFAULT.getUserAreaFolder(DIR_SWORD_CONF, DIR_SWORD_CONF_ALT)!!.getPath()!!)
+            if (storageDirectory(oldPath)) {
                 migrateBookDir(oldPath, swordBookPath)
             }
         }
 
-        private fun migrateBookDir(oldPath: Path, newPath: Path) {
+        private fun migrateBookDir(oldPath: StorageLocation, newPath: StorageLocation) {
             // move the modules and confs
             val oldDataDir = oldPath / SwordConstants.DIR_DATA
             val newDataDir = newPath / SwordConstants.DIR_DATA
@@ -309,18 +316,18 @@ private constructor() {
             }
         }
 
-        private fun migrate(oldPath: Path, newPath: Path): Boolean {
-            if (oldPath == newPath || !KFiles.exists(oldPath)) {
+        private fun migrate(oldPath: StorageLocation, newPath: StorageLocation): Boolean {
+            if (oldPath == newPath || !storageExists(oldPath)) {
                 return true
             }
 
             // make sure the parent exists
             val parent = newPath.parent!!
-            if (!KFiles.exists(parent) && !storageMkdirs(parent)) {
+            if (!storageExists(parent) && !storageMkdirs(parent)) {
                 return false
             }
 
-            return KFiles.move(oldPath, newPath)
+            return storageMove(oldPath, newPath)
         }
 
         /**
@@ -330,7 +337,7 @@ private constructor() {
          * @return Returns the download directory.
          */
         @JvmStatic
-        fun getSwordDownloadDir(): Path {
+        internal fun getSwordDownloadLocation(): StorageLocation {
             if (overrideDownloadDir != null) {
                 return overrideDownloadDir!!
             }
@@ -341,7 +348,7 @@ private constructor() {
          * @return Returns the download directory that the user chose.
          */
         @JvmStatic
-        fun getDownloadDir(): Path? {
+        internal fun getDownloadLocation(): StorageLocation? {
             return overrideDownloadDir
         }
 
@@ -350,7 +357,7 @@ private constructor() {
          *            The download directory that the user specifies.
          */
         @JvmStatic
-        fun setDownloadDir(dlDir: Path) {
+        internal fun setDownloadLocation(dlDir: StorageLocation) {
             if ("" != dlDir.toString()) {
                 overrideDownloadDir = dlDir
                 log.debug("Setting sword download directory to: {}", dlDir)
@@ -415,17 +422,17 @@ private constructor() {
         /**
          * The directory URL
          */
-        private var augmentPath: Array<Path> = arrayOf()
+        private var augmentPath: Array<StorageLocation> = arrayOf()
 
         /**
          * The directory URL
          */
-        private var defaultDownloadDir: Path = getDefaultDownloadPath()
+        private var defaultDownloadDir: StorageLocation = getDefaultDownloadPath()
 
         /**
          * The directory URL
          */
-        private var overrideDownloadDir: Path? = null
+        private var overrideDownloadDir: StorageLocation? = null
 
         /**
          * The log stream

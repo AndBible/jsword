@@ -4,6 +4,6 @@ import java.io.File
 
 /** File boundary for JVM consumers; the locator owns the Path implementation. */
 object MetaDataLocatorJvm {
-    @JvmStatic fun getReadLocation(locator: MetaDataLocator): File? = locator.readLocation?.toFile()
-    @JvmStatic fun getWriteLocation(locator: MetaDataLocator): File? = locator.writeLocation?.toFile()
+    @JvmStatic fun getReadLocation(locator: MetaDataLocator): File? = locator.readLocationValue?.let { File(it.spelling) }
+    @JvmStatic fun getWriteLocation(locator: MetaDataLocator): File? = locator.writeLocationValue?.let { File(it.spelling) }
 }

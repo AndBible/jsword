@@ -12,8 +12,8 @@ import okio.Path.Companion.toPath
 /** File and Writer API boundary for metadata. */
 object SwordBookMetaDataJvm {
     @JvmStatic @Throws(IOException::class, BookException::class)
-    fun create(file: File, root: KUri?): SwordBookMetaData = SwordBookMetaData(file.path.toPath(), root)
-    @JvmStatic fun getConfigFile(metadata: SwordBookMetaData): File? = metadata.configFile?.toFile()
+    fun create(file: File, root: KUri?): SwordBookMetaData = SwordBookMetaData(StorageLocation(file.path), root)
+    @JvmStatic fun getConfigFile(metadata: SwordBookMetaData): File? = metadata.configLocation?.let { File(it.spelling) }
     @JvmStatic
         fun normalize(out: Writer?, config: IniSection, order: Array<String>) {
             var writer: PrintWriter? = null

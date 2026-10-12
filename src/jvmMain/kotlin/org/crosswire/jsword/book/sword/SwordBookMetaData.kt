@@ -20,10 +20,8 @@
 package org.crosswire.jsword.book.sword
 
 import okio.Path
-import okio.Path.Companion.toPath
 import okio.IOException
 import org.crosswire.common.util.KUri
-import org.crosswire.common.util.KFiles
 
 import org.crosswire.common.util.Filter
 import org.crosswire.common.util.IOUtil
@@ -93,9 +91,12 @@ class SwordBookMetaData : AbstractBookMetaData {
      *             indicates missing data files
      */
     @Throws(IOException::class, BookException::class)
-    constructor(file: Path, bookRootPath: KUri?) {
+    constructor(file: Path, bookRootPath: KUri?) : this(StorageLocation(file.toString()), bookRootPath)
+
+    @Throws(IOException::class, BookException::class)
+    internal constructor(file: StorageLocation, bookRootPath: KUri?) {
         this.installed = true
-        this.configFile = file
+        this.configLocation = file
         this.bookConfPath = file.name // something like kjv.conf
         library = bookRootPath
 
@@ -115,7 +116,7 @@ class SwordBookMetaData : AbstractBookMetaData {
     @Throws(IOException::class, BookException::class)
     constructor(buffer: ByteArray?, bookConf: String?) {
         this.installed = false
-        this.configFile = null
+        this.configLocation = null
         this.bookConfPath = bookConf // something like .../mods.d.zip!mods.d/kjv.conf
         this.supported = true
         this.configAll = IniSection()
@@ -273,7 +274,9 @@ class SwordBookMetaData : AbstractBookMetaData {
      *
      * @return Returns the conf file or null if loaded from a byte buffer.
      */
-    val configFile: Path?
+    val configFile: Path? get() = configLocation?.path
+
+    internal val configLocation: StorageLocation?
 
     /**
      * Get the book conf which is a name such as kjv.conf.
@@ -439,7 +442,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             return
         }
 
-        val writeLocation = metaDataLocator!!.writeLocation
+        val writeLocation = metaDataLocator!!.writeLocationValue
         // Properties are only saved if there is a place for saving
         if (writeLocation == null) {
             return
@@ -467,7 +470,7 @@ class SwordBookMetaData : AbstractBookMetaData {
         if (config != null) {
             config.replace(key, value)
             try {
-                config.save(metadataChildPath(writeLocation, bookConfPath), bookCharset)
+                storageSave(config, storageChild(writeLocation, bookConfPath), bookCharset)
             } catch (ex: IOException) {
                 LOGGER.error("Unable to save {}={}: conf file for [{}]; error={}", key, value, configAll.name, ex)
             }
@@ -486,11 +489,11 @@ class SwordBookMetaData : AbstractBookMetaData {
         filtered = keepers != null
 
         configAll.clear()
-        configAll.load(configFile!!, ENCODING_UTF8, keepers)
+        configAll.load(storageRead(configLocation!!), ENCODING_UTF8, keepers)
         val encoding = configAll.get(KEY_ENCODING)
         if (!ENCODING_UTF8.equals(encoding, ignoreCase = true)) {
             configAll.clear()
-            configAll.load(configFile!!, ENCODING_LATIN1, keepers)
+            configAll.load(storageRead(configLocation!!), ENCODING_LATIN1, keepers)
         }
     }
 
@@ -516,17 +519,17 @@ class SwordBookMetaData : AbstractBookMetaData {
 
     private fun addConfig(locator: MetaDataLocator): IniSection? {
         // The write location supersedes the read location
-        var conf = metadataChildPath(locator.writeLocation, bookConfPath)
-        if (!KFiles.exists(conf)) {
-            conf = metadataChildPath(locator.readLocation, bookConfPath)
+        var conf = storageChild(locator.writeLocationValue, bookConfPath)
+        if (!storageExists(conf)) {
+            conf = storageChild(locator.readLocationValue, bookConfPath)
         }
 
-        if (KFiles.exists(conf)) {
+        if (storageExists(conf)) {
             // The additional confs have the same encoding as the SWORD conf.
             val encoding = getProperty(KEY_ENCODING)
             try {
                 val config = IniSection()
-                config.load(conf, encoding)
+                config.load(storageRead(conf), encoding)
                 mergeConfig(config)
                 return config
             } catch (e: IOException) {
@@ -697,10 +700,10 @@ class SwordBookMetaData : AbstractBookMetaData {
         }
 
         var location = NetUtil.lengthenURI(library, datapath)
-        val bookDir = location!!.getPath()!!.toPath()
+        val bookDir = StorageLocation(location!!.getPath()!!)
         // For some modules, the last element of the DataPath
         // is a prefix for file names.
-        if (!KFiles.isDirectory(bookDir)) {
+        if (!storageDirectory(bookDir)) {
             if (isDirectoryPath) {
                 // TRANSLATOR: This indicates that the Book is only partially installed.
                 throw BookException(JSMsg.gettext("The book {0} is missing its data files", configAll.name))
@@ -709,7 +712,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             // not a directory path
             // try appending .dat on the end to see if we have a file, if not,
             // then
-            if (!KFiles.exists((location.getPath() + ".dat").toPath())) {
+            if (!storageExists(StorageLocation(location.getPath() + ".dat"))) {
                 // TRANSLATOR: This indicates that the Book is only partially
                 // installed.
                 throw BookException(JSMsg.gettext("The book {0} is missing its data files", configAll.name))

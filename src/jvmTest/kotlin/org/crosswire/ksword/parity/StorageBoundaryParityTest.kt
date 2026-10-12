@@ -13,6 +13,78 @@ import org.junit.Test
 
 /** Differential characterization of the actual old File implementation, not a reconstructed model. */
 class StorageBoundaryParityTest {
+    @Test fun reflectiveFailuresRetainDistinctUnderlyingCausesIncludingErrors() {
+        val method = CorpusProbe::class.java.getDeclaredMethod("fileMetadata", File::class.java, URI::class.java).apply { isAccessible = true }
+        val root = Files.createTempDirectory("probe failures").toFile()
+        try {
+            val missing = File(root, "missing.conf")
+            val malformed = File(root, "malformed.conf").apply { writeText("[Demo]\nModDrv=RawText\n") }
+            fun cause(file: File, uri: URI?): Throwable = try {
+                method.invoke(null, file, uri)
+                error("expected failure")
+            } catch (e: java.lang.reflect.InvocationTargetException) { e.targetException }
+            val a = cause(missing, null)
+            val b = cause(malformed, root.toURI())
+            assertFalse(a is java.lang.reflect.InvocationTargetException)
+            assertFalse(b is java.lang.reflect.InvocationTargetException)
+            assertNotEquals(a.javaClass.name + ":" + a.message, b.javaClass.name + ":" + b.message)
+            val throwTarget = CorpusProbe::class.java.getDeclaredMethod("throwTarget", Throwable::class.java).apply { isAccessible = true }
+            val target = AssertionError("actual error")
+            val wrapper = assertThrows(java.lang.reflect.InvocationTargetException::class.java) { throwTarget.invoke(null, target) }
+            assertSame(target, wrapper.targetException)
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun unixBackslashFileAndDotSpellingMatchBaselineWithoutNormalizing() {
+        if (File.separator != "/") return
+        val root = Files.createTempDirectory("lexical sword").toFile()
+        try {
+            val file = File(root, "dir\\name.conf").apply { writeText("[Literal]\nDescription=Literal\nModDrv=RawText\n") }
+            val oldType = Oracle.loader.loadClass("org.crosswire.jsword.book.sword.SwordBookMetaData")
+            val old = oldType.getConstructor(File::class.java, URI::class.java).newInstance(file, null)
+            val current = SwordBookMetaDataJvm.create(file, null)
+            assertEquals(oldType.getMethod("getBookConf").invoke(old), current.bookConf)
+            assertEquals(file, SwordBookMetaDataJvm.getConfigFile(current))
+            assertEquals("Literal", current.name)
+        } finally { root.deleteRecursively() }
+    }
+
+    @Test fun lexicalDownloadAndAugmentGettersMatchOldFileSpelling() {
+        val oldType = Oracle.loader.loadClass("org.crosswire.jsword.book.sword.SwordBookPath")
+        val oldOverride = oldType.getDeclaredField("overrideDownloadDir").apply { isAccessible = true }
+        val oldAugment = oldType.getDeclaredField("augmentPath").apply { isAccessible = true }
+        val savedOverride = oldOverride.get(null)
+        val savedAugment = oldAugment.get(null)
+        val currentType = org.crosswire.jsword.book.sword.SwordBookPath::class.java
+        val currentOverride = currentType.getDeclaredField("overrideDownloadDir").apply { isAccessible = true }
+        val savedCurrent = currentOverride.get(null)
+        val currentAugment = currentType.getDeclaredField("augmentPath").apply { isAccessible = true }
+        val savedCurrentAugment = currentAugment.get(null)
+        try {
+            val dot = File("./modules")
+            val plain = File("modules")
+            oldType.getMethod("setDownloadDir", File::class.java).invoke(null, dot)
+            SwordBookPathJvm.setDownloadDir(dot)
+            assertEquals(oldType.getMethod("getDownloadDir").invoke(null), SwordBookPathJvm.getDownloadDir())
+            // Observe the old defensive-copy getter without invoking its unrelated registration side effect.
+            oldAugment.set(null, arrayOf(dot, plain, File("dir\\name")))
+            val legacy = oldType.getMethod("getAugmentPath").invoke(null) as Array<*>
+            val locationType = Class.forName("org.crosswire.jsword.book.sword.StorageLocation")
+            val locations = java.lang.reflect.Array.newInstance(locationType, legacy.size)
+            legacy.forEachIndexed { index, value ->
+                java.lang.reflect.Array.set(locations, index, locationType.getConstructor(String::class.java).newInstance((value as File).path))
+            }
+            currentAugment.set(null, locations)
+            assertArrayEquals(legacy, SwordBookPathJvm.getAugmentPath())
+            assertEquals(listOf("./modules", "modules", "dir\\name"), legacy.map { (it as File).path })
+        } finally {
+            oldOverride.set(null, savedOverride)
+            oldAugment.set(null, savedAugment)
+            currentOverride.set(null, savedCurrent)
+            currentAugment.set(null, savedCurrentAugment)
+        }
+    }
+
     @Test fun fileMetadataParsingAndFilteredEncodingMatchBaseline() {
         val root = Files.createTempDirectory("storage oracle space \u00e4").toFile()
         try {

@@ -168,3 +168,23 @@ old/new selection), File metadata tests, BackupControl, InstallDeps,
 SwordEnvironmentInitialisation and the existing app download/backup tests.
 Null-only configFile checks in TtfBook, BackgroundImageBook and installer tests
 remain on the core and require no File conversion.
+
+### Task 6 File-boundary review fix 1: lexical location
+
+`StorageLocation` is an internal minimal String-backed value. Its spelling is
+authoritative for legacy JVM File identity, names, child joins, discovery,
+deduplication, migration and IO. Path getters/constructor APIs are projections
+for common Path callers only: okio cannot represent Unix literal backslashes
+or preserve dot spelling. JVM File holders never round-trip via those projections.
+No normalized-key cache or global Path-to-File map exists.
+
+`SwordStorageHooks.jvm.kt` now supplies lexical `storageChild`, `storageName`,
+`storageParent`, `storageRead`, `storageExists`, `storageDirectory`,
+`storageCanRead/Write`, `storageMkdirs`, `storageListNames`, `storageMove`,
+`storageSave`, and `storageUriLocation` (File(URI) validation retained).
+The earlier Path-based metadataChildPath/access/list helpers are superseded.
+Task 16 must declare these hooks in common and implement iOS native literal-path
+handling. `metadataDefaultsView` and `storageSeparator` remain as inventoried.
+The internal lexical metadata constructor is JVM public and has one exact K4
+seam allowance; locator Path projection getters are concrete (exact allowances
+updated). No File signature is reintroduced into the common-ready classes.

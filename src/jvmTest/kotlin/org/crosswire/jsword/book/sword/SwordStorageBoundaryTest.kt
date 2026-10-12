@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.file.Files
 import okio.Path
 import okio.Path.Companion.toPath
+import org.crosswire.jsword.book.Books
 import org.crosswire.common.util.Filter
 import org.crosswire.common.util.KCharset
 import org.crosswire.common.util.IniSection
@@ -41,17 +42,28 @@ class SwordStorageBoundaryTest {
     @Test fun childJoiningMatchesFileIncludingNullRelativeAndAbsoluteChildren() {
         for (parent in listOf<File?>(null, File("relative space ä"), File("/tmp/parent"))) {
             for (child in listOf("child.conf", "/absolute.conf", "../other.conf", "")) {
-                assertEquals(File(parent, child).path.toPath(), metadataChildPath(parent?.path?.toPath(), child))
+                assertEquals(File(parent, child).path, storageChild(parent?.let { StorageLocation(it.path) }, child).spelling)
             }
         }
-        assertThrows(NullPointerException::class.java) { metadataChildPath(null, null) }
+        assertThrows(NullPointerException::class.java) { storageChild(null, null) }
     }
 
     @Test fun fileSettersCopyAugmentsIgnoreEmptyDownloadAndKeepPriority() = temporary { root ->
-        val oldDownload = SwordBookPathJvm.getDownloadDir()
-        val oldAugment = SwordBookPathJvm.getAugmentPath()
+        val registry = Books.installed()
+        val fields = listOf("books", "initials", "names", "driverSet").map {
+            Books::class.java.getDeclaredField(it).apply { isAccessible = true }
+        }
+        val savedRegistry = fields.map { it.get(registry) }
+        val registryContents = savedRegistry.map { if (it is Map<*, *>) it.toMap() else (it as Collection<*>).toList() }
+        val augment = SwordBookPath::class.java.getDeclaredField("augmentPath").apply { isAccessible = true }
+        val savedAugment = augment.get(null)
         val override = SwordBookPath::class.java.getDeclaredField("overrideDownloadDir").apply { isAccessible = true }
+        val savedDownload = override.get(null)
         try {
+            fields[0].set(registry, java.util.TreeSet<org.crosswire.jsword.book.Book>())
+            fields[1].set(registry, HashMap<String, org.crosswire.jsword.book.Book>())
+            fields[2].set(registry, HashMap<String, org.crosswire.jsword.book.Book>())
+            fields[3].set(registry, HashSet<org.crosswire.jsword.book.BookDriver>())
             val download = File(root, "download")
             val other = File(root, "relative space ä")
             SwordBookPathJvm.setDownloadDir(download)
@@ -67,10 +79,35 @@ class SwordStorageBoundaryTest {
             SwordBookPathJvm.setAugmentPath(null)
             assertArrayEquals(arrayOf(download, other, other), SwordBookPathJvm.getAugmentPath())
             assertEquals(listOf(download, other), SwordBookPathJvm.getSwordPath().take(2))
+            val dot = File(root.path + "/./modules")
+            val plain = File(root, "modules")
+            val literal = File(root, "dir\\name")
+            SwordBookPathJvm.setDownloadDir(dot)
+            SwordBookPathJvm.setAugmentPath(arrayOf(plain, literal))
+            assertEquals(dot, SwordBookPathJvm.getDownloadDir())
+            assertArrayEquals(arrayOf(plain, literal), SwordBookPathJvm.getAugmentPath())
+            assertEquals(listOf(dot, plain, literal), SwordBookPathJvm.getSwordPath().take(3))
         } finally {
-            override.set(null, oldDownload?.path?.toPath())
-            SwordBookPathJvm.setAugmentPath(oldAugment)
+            override.set(null, savedDownload)
+            augment.set(null, savedAugment)
+            fields.zip(savedRegistry).forEach { (field, original) -> field.set(registry, original) }
         }
+        fields.zip(savedRegistry).forEach { (field, original) -> assertSame(field.name, original, field.get(registry)) }
+        assertEquals(registryContents, fields.map { val v = it.get(registry); if (v is Map<*, *>) v.toMap() else (v as Collection<*>).toList() })
+        assertSame(savedAugment, augment.get(null))
+        assertSame(savedDownload, override.get(null))
+
+    }
+
+    @Test fun lexicalChildrenReachLiteralBackslashTargets() = temporary { root ->
+        val parent = File(root, "dir\\name").apply { mkdir() }
+        val child = storageChild(StorageLocation(parent.path), "./child\\file.conf")
+        val expected = File(parent, "./child\\file.conf")
+        expected.writeText("literal")
+        assertEquals(expected.path, child.spelling)
+        assertEquals("literal", storageRead(child).toString(Charsets.UTF_8))
+        assertFalse(File(root, "dir/name/child/file.conf").exists())
+        assertThrows(NullPointerException::class.java) { storageChild(null, null) }
     }
 
     @Test fun listingPreservesNullAndActualFilenameFilter() = temporary { root ->
@@ -82,14 +119,14 @@ class SwordStorageBoundaryTest {
     }
 
     @Test fun migrationMovesBothTreesAndRestoresDataWhenConfMoveFails() = temporary { root ->
-        val migrate = SwordBookPath.Companion::class.java.getDeclaredMethod("migrateBookDir", Path::class.java, Path::class.java).apply { isAccessible = true }
+        val migrate = SwordBookPath.Companion::class.java.getDeclaredMethod("migrateBookDir", StorageLocation::class.java, StorageLocation::class.java).apply { isAccessible = true }
         val old = File(root, "old").apply { mkdirs() }
         val target = File(root, "target")
         File(old, "modules").mkdir()
         File(old, "modules/data").writeText("data")
         File(old, "mods.d").mkdir()
         File(old, "mods.d/demo.conf").writeText("conf")
-        migrate.invoke(SwordBookPath.Companion, old.path.toPath(), target.path.toPath())
+        migrate.invoke(SwordBookPath.Companion, StorageLocation(old.path), StorageLocation(target.path))
         assertEquals("data", File(target, "modules/data").readText())
         assertEquals("conf", File(target, "mods.d/demo.conf").readText())
         assertFalse(File(old, "modules").exists())
@@ -100,7 +137,7 @@ class SwordStorageBoundaryTest {
         File(second, "mods.d/new.conf").writeText("new")
         // Existing non-empty conf target makes the conf rename fail, after data has moved.
         File(target, "modules").deleteRecursively()
-        migrate.invoke(SwordBookPath.Companion, second.path.toPath(), target.path.toPath())
+        migrate.invoke(SwordBookPath.Companion, StorageLocation(second.path), StorageLocation(target.path))
         assertEquals("restore", File(second, "modules/second").readText())
         assertTrue(File(second, "mods.d/new.conf").exists())
         assertFalse(File(target, "modules").exists())

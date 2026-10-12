@@ -19,10 +19,10 @@
 package org.crosswire.jsword.book
 
 import okio.Path
-import okio.IOException
 import org.crosswire.common.util.KUri
-import org.crosswire.common.util.KFiles
-import org.crosswire.common.util.validatedFileUriPath
+import org.crosswire.jsword.book.sword.StorageLocation
+import org.crosswire.jsword.book.sword.storageUriLocation
+import org.crosswire.jsword.book.sword.storageMkdirs
 
 import org.crosswire.common.util.CWProject
 
@@ -34,42 +34,43 @@ import org.crosswire.common.util.CWProject
  */
 enum class MetaDataLocator {
     TRANSIENT {
-        override val readLocation: Path?
+        override val readLocationValue: StorageLocation?
             get() = null
 
-        override val writeLocation: Path?
+        override val writeLocationValue: StorageLocation?
             get() = null
     },
     JSWORD {
-        override val readLocation: Path?
+        override val readLocationValue: StorageLocation?
             get() {
                 val dirs = CWProject.instance().projectResourceDirs
                 if (dirs.size > 1) {
-                    return getPath(dirs[1])
+                    return getLocation(dirs[1])
                 }
                 return null
             }
 
-        override val writeLocation: Path?
+        override val writeLocationValue: StorageLocation?
             get() {
                 val dirs = CWProject.instance().projectResourceDirs
                 if (dirs.size > 0) {
-                    return getPath(dirs[0])
+                    return getLocation(dirs[0])
                 }
                 return null
             }
     },
     FRONTEND {
-        override val readLocation: Path?
-            get() = getPath(CWProject.instance().readableFrontendProjectDir)
+        override val readLocationValue: StorageLocation?
+            get() = getLocation(CWProject.instance().readableFrontendProjectDir)
 
-        override val writeLocation: Path?
-            get() = getPath(CWProject.instance().writableFrontendProjectDir)
+        override val writeLocationValue: StorageLocation?
+            get() = getLocation(CWProject.instance().writableFrontendProjectDir)
     };
 
-    abstract val readLocation: Path?
-
-    abstract val writeLocation: Path?
+    val readLocation: Path? get() = readLocationValue?.path
+    val writeLocation: Path? get() = writeLocationValue?.path
+    internal abstract val readLocationValue: StorageLocation?
+    internal abstract val writeLocationValue: StorageLocation?
 
     companion object {
         /**
@@ -79,18 +80,16 @@ enum class MetaDataLocator {
          * @return the file representing the config
          */
         @JvmStatic
-        protected fun getPath(u: KUri?): Path? {
+        protected fun getPath(u: KUri?): Path? = getLocation(u)?.path
+
+        private fun getLocation(u: KUri?): StorageLocation? {
             if (u == null) {
                 return null
             }
 
-            val parent = validatedFileUriPath(u)
+            val parent = storageUriLocation(u)
             val override = parent / DIR_CONF_OVERRIDE
-            try {
-                KFiles.createDirectories(override)
-            } catch (_: IOException) {
-                // File.mkdirs failure never prevented returning the location.
-            }
+            storageMkdirs(override)
             return override
         }
 

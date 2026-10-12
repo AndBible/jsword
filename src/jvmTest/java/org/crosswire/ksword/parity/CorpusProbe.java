@@ -44,12 +44,34 @@ final class CorpusProbe {
     private CorpusProbe() {
     }
 
+    private static void throwTarget(Throwable target) throws Exception {
+        if (target instanceof Exception) throw (Exception) target;
+        if (target instanceof Error) throw (Error) target;
+        CorpusProbe.<RuntimeException>rethrow(target);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void rethrow(Throwable target) throws T { throw (T) target; }
+
+    private static Object invokeTarget(java.lang.reflect.Method method, Object... args) throws Exception {
+        try { return method.invoke(null, args); }
+        catch (java.lang.reflect.InvocationTargetException failure) {
+            throwTarget(failure.getTargetException());
+            throw new AssertionError("unreachable");
+        }
+    }
+
     private static SwordBookMetaData fileMetadata(File file, java.net.URI root) throws Exception {
         try {
             Class<?> holder = Class.forName("org.crosswire.jsword.book.sword.SwordBookMetaDataJvm");
-            return (SwordBookMetaData) holder.getMethod("create", File.class, java.net.URI.class).invoke(null, file, root);
+            return (SwordBookMetaData) invokeTarget(holder.getMethod("create", File.class, java.net.URI.class), file, root);
         } catch (ClassNotFoundException oldApi) {
-            return SwordBookMetaData.class.getConstructor(File.class, java.net.URI.class).newInstance(file, root);
+            try {
+                return SwordBookMetaData.class.getConstructor(File.class, java.net.URI.class).newInstance(file, root);
+            } catch (java.lang.reflect.InvocationTargetException failure) {
+                throwTarget(failure.getTargetException());
+                throw new AssertionError("unreachable");
+            }
         }
     }
 
@@ -59,11 +81,11 @@ final class CorpusProbe {
     }
 
     private static File downloadDir() throws Exception {
-        return (File) pathBoundary().getMethod("getSwordDownloadDir").invoke(null);
+        return (File) invokeTarget(pathBoundary().getMethod("getSwordDownloadDir"));
     }
 
     private static void setDownloadDir(File dir) throws Exception {
-        pathBoundary().getMethod("setDownloadDir", File.class).invoke(null, dir);
+        invokeTarget(pathBoundary().getMethod("setDownloadDir", File.class), dir);
     }
 
     static String apply(String op, List<String> args) throws Exception {
