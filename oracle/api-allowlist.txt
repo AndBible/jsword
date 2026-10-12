@@ -329,3 +329,6 @@ org.crosswire.jsword.versification.BookName + K public (org.crosswire.common.uti
 org.crosswire.jsword.versification.BookName + M public static normalize(java.lang.String,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
 org.crosswire.jsword.versification.Versification - M public getPreferredNameInLocale(org.crosswire.jsword.versification.BibleBook,java.util.Locale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
 org.crosswire.jsword.versification.Versification + M public getPreferredNameInLocale(org.crosswire.jsword.versification.BibleBook,org.crosswire.common.util.KLocale): java.lang.String throws [] # K3 D3 (common locale/regex boundary)
+
+org.crosswire.jsword.book.sword.BookType - M protected abstract getBook(org.crosswire.jsword.book.sword.SwordBookMetaData,org.crosswire.jsword.book.sword.Backend): org.crosswire.jsword.book.Book throws [] # K4 seam: getBook delegates to JVM facade hook
+org.crosswire.jsword.book.sword.BookType + M protected getBook(org.crosswire.jsword.book.sword.SwordBookMetaData,org.crosswire.jsword.book.sword.Backend): org.crosswire.jsword.book.Book throws [] # K4 seam: getBook delegates to JVM facade hook

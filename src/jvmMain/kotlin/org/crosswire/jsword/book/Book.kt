@@ -132,7 +132,7 @@ import org.jdom2.Document
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface Book : Activatable, Comparable<Book> {
+actual interface Book : Activatable, Comparable<Book> {
     /**
      * Get a complete list of index entries. Create a Key that encompasses all
      * of the known valid keys for the given context. For a dictionary this will

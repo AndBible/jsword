@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.book.sword
 
-import org.crosswire.common.icu.DateFormatter
 import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg
@@ -36,8 +35,6 @@ import java.nio.charset.Charset
 import java.text.DecimalFormat
 import org.crosswire.common.util.KswordLocale
 import org.crosswire.common.util.MessageFormatLite
-import java.util.Calendar
-import java.util.GregorianCalendar
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -363,14 +360,8 @@ open class RawLDBackend<T : RawLDBackendState>
             if (m.matches()) {
                 return keytitle
             }
-            val greg = GregorianCalendar()
-            val nameDF = DateFormatter.getDateInstance()
-            nameDF.setLenient(true)
-            val date = nameDF.parse(keytitle)
-            greg.setTime(date)
-            val objs = arrayOf<Any>(
-                Integer.valueOf(1 + greg.get(Calendar.MONTH)), Integer.valueOf(greg.get(Calendar.DATE))
-            )
+            val (month, day) = DevotionDateFormat.parseMonthDay(keytitle)!!
+            val objs = arrayOf<Any>(Integer.valueOf(month), Integer.valueOf(day))
             return MessageFormatLite.format(DATE_KEY_FORMAT, KswordLocale.default(), objs)
         }
 
@@ -474,12 +465,8 @@ open class RawLDBackend<T : RawLDBackendState>
         val bmd = bookMetaData
         var keytitle: String? = internalKey
         if (BookCategory.DAILY_DEVOTIONS == bmd.bookCategory && internalKey.length >= 3) {
-            val greg = GregorianCalendar()
-            val nameDF = DateFormatter.getDateInstance()
             val spec = StringUtil.splitAll(internalKey, '.')
-            greg.set(Calendar.MONTH, Integer.parseInt(spec[0]) - 1)
-            greg.set(Calendar.DATE, Integer.parseInt(spec[1]))
-            keytitle = nameDF.format(greg.time)
+            keytitle = DevotionDateFormat.format(Integer.parseInt(spec[0]), Integer.parseInt(spec[1]))
         }
         return keytitle
     }

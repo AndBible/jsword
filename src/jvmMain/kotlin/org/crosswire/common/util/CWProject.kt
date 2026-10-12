@@ -240,7 +240,7 @@ private constructor() {
 
             // Now that we know the "home" we can set other global notions of home.
             // TODO(dms): refactor this to CWClassLoader and NetUtil.
-            CWClassLoader.setHome(projectResourceDirs)
+            setResourceHome(projectResourceDirs)
 
             try {
                 val uricache = getWritableProjectSubdir(DIR_NETCACHE, true)

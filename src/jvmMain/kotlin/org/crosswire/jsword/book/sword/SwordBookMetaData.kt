@@ -25,7 +25,6 @@ import java.io.PrintWriter
 import java.io.Writer
 import java.net.URI
 import java.util.ArrayList
-import java.util.Arrays
 
 import java.util.Collections
 import java.util.HashMap
@@ -38,7 +37,6 @@ import org.crosswire.common.util.IniSection
 import org.crosswire.common.util.Language
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.PropertyMap
-import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.BookCategory
 import org.crosswire.jsword.book.BookException
@@ -46,13 +44,10 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.FeatureType
 import org.crosswire.jsword.book.KeyType
 import org.crosswire.jsword.book.MetaDataLocator
-import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.basic.AbstractBookMetaData
 import org.crosswire.jsword.book.filter.SourceFilter
-import org.crosswire.jsword.book.filter.SourceFilterFactory
 import org.crosswire.jsword.versification.system.Versifications
-import org.jdom2.Document
-import org.jdom2.Element
+import org.crosswire.common.kdom.Document
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -272,7 +267,7 @@ class SwordBookMetaData : AbstractBookMetaData {
     val filter: SourceFilter
         get() {
             val sourcetype = getProperty(KEY_SOURCE_TYPE)
-            return SourceFilterFactory.getFilter(sourcetype)
+            return sourceFilterFor(sourcetype)
         }
 
     /**
@@ -320,34 +315,7 @@ class SwordBookMetaData : AbstractBookMetaData {
      * (non-Javadoc)
      * @see org.crosswire.jsword.book.basic.AbstractBookMetaData#toOSIS()
      */
-    override fun toOSIS(): Document {
-        val knownKeys: MutableList<String> = ArrayList(configAll.keys)
-        val factory = OSISUtil.factory()
-        val table = factory.createTable()
-        var row: Element? = toRow(factory, "Initials", initials)
-        table.addContent(row)
-        // Each key gets one row.
-        for (key in OSIS_INFO) {
-            knownKeys.remove(key)
-            row = toRow(factory, key)
-            if (row != null) {
-                table.addContent(row)
-            }
-        }
-        // Output the rest in the order that they are in the conf
-        // however, don't show those that should be hidden.
-        val hide = Arrays.asList(*HIDDEN)
-        for (key in knownKeys) {
-            if (hide.contains(key)) {
-                continue
-            }
-            row = toRow(factory, key)
-            if (row != null) {
-                table.addContent(row)
-            }
-        }
-        return Document(table)
-    }
+    override fun toOSIS(): Document = swordMetaDataToOsis(this)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getInitials()
@@ -607,65 +575,6 @@ class SwordBookMetaData : AbstractBookMetaData {
         return if (ce == null) null else type.convert(ce)
     }
 
-    private fun toRow(factory: OSISUtil.OSISFactory, key: String, value: String): Element {
-        val nameEle = toKeyCell(factory, key)
-
-        val valueElement = factory.createCell()
-        valueElement.addContent(value)
-
-        // Each key gets one row.
-        val rowEle = factory.createRow()
-        rowEle.addContent(nameEle)
-        rowEle.addContent(valueElement)
-        return rowEle
-    }
-
-    private fun toRow(factory: OSISUtil.OSISFactory, key: String): Element? {
-        val size = configAll.size(key)
-        if (size == 0) {
-            return null
-        }
-
-        // See if it is a predefined type
-        val type = ConfigEntryType.fromString(key)
-        val nameEle = toKeyCell(factory, key)
-
-        val valueElement = factory.createCell()
-        for (j in 0 until size) {
-            if (j > 0) {
-                valueElement.addContent(factory.createLB())
-            }
-
-            var text = configAll.get(key, j)
-            if (type != null && !type.isText() && type.isAllowed(text)) {
-                text = type.convert(text)!!.toString()
-            }
-            text = XMLUtil.escape(text)
-            if (type != null && type.allowsRTF()) {
-                valueElement.addContent(OSISUtil.rtfToOsis(text!!))
-            } else {
-                valueElement.addContent(text)
-            }
-        }
-
-        // Each key gets one row.
-        val rowEle = factory.createRow()
-        rowEle.addContent(nameEle)
-        rowEle.addContent(valueElement)
-
-        return rowEle
-    }
-
-    private fun toKeyCell(factory: OSISUtil.OSISFactory, key: String): Element {
-        val nameEle = factory.createCell()
-        val hiEle = factory.createHI()
-        hiEle.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD)
-        nameEle.addContent(hiEle)
-        // I18N(DMS): use name to lookup translation.
-        hiEle.addContent(key)
-        return nameEle
-    }
-
     @Throws(BookException::class)
     private fun adjustConfig() {
         adjustLocation()
@@ -842,6 +751,9 @@ class SwordBookMetaData : AbstractBookMetaData {
      * The configAll IniSection holds the merged view of the SWORD config,
      * configJSword, and configFrontend.
      */
+    internal val osisConfig: IniSection
+        get() = configAll
+
     private val configAll: IniSection
 
     /**
@@ -1188,7 +1100,7 @@ class SwordBookMetaData : AbstractBookMetaData {
 
         private var keyKeepers: Filter<String>? = null
 
-        private val OSIS_INFO = arrayOf(
+        internal val OSIS_INFO = arrayOf(
             KEY_ABBREVIATION,
             KEY_DESCRIPTION,
             BookMetaData.KEY_LANG,
@@ -1247,7 +1159,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             BookMetaData.KEY_BOOKLIST
         )
 
-        private val HIDDEN = arrayOf(
+        internal val HIDDEN = arrayOf(
             KEY_CIPHER_KEY,
             BookMetaData.KEY_LANGUAGE
         )

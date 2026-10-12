@@ -23,7 +23,7 @@ import java.net.URI
 
 import org.crosswire.common.util.Language
 import org.crosswire.jsword.index.IndexStatus
-import org.jdom2.Document
+import org.crosswire.common.kdom.Document
 
 /**
  * A BookMetaData represents a method of translating the Bible. All Books with

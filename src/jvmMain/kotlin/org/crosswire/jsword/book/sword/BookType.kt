@@ -82,7 +82,8 @@ abstract class BookType
     /**
      * Create a Book with the given backend
      */
-    protected abstract fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book
+    protected open fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book =
+        createSwordBook(this, sbmd, backend)
 
     /**
      * Create a the appropriate backend for this type of book
@@ -102,10 +103,6 @@ abstract class BookType
          * Uncompressed Bibles
          */
         private val rawText: BookType = object : BookType("RawText", BookCategory.BIBLE, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawBackend<RawBackendState>(sbmd, 2)
@@ -116,10 +113,6 @@ abstract class BookType
          * Compressed Bibles
          */
         private val zText: BookType = object : BookType("zText", BookCategory.BIBLE, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 val blockType = BlockType.fromString(sbmd.getProperty(SwordBookMetaData.KEY_BLOCK_TYPE))
@@ -131,10 +124,6 @@ abstract class BookType
          * Compressed Bibles
          */
         private val zText4: BookType = object : BookType("zText4", BookCategory.BIBLE, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 val blockType = BlockType.fromString(sbmd.getProperty(SwordBookMetaData.KEY_BLOCK_TYPE))
@@ -146,10 +135,6 @@ abstract class BookType
          * Uncompressed Commentaries
          */
         private val rawCom: BookType = object : BookType("RawCom", BookCategory.COMMENTARY, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawBackend<RawBackendState>(sbmd, 2)
@@ -157,10 +142,6 @@ abstract class BookType
         }
 
         private val rawCom4: BookType = object : BookType("RawCom4", BookCategory.COMMENTARY, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawBackend<RawBackendState>(sbmd, 4)
@@ -171,10 +152,6 @@ abstract class BookType
          * Compressed Commentaries
          */
         private val zCom: BookType = object : BookType("zCom", BookCategory.COMMENTARY, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 val blockType = BlockType.fromString(sbmd.getProperty(SwordBookMetaData.KEY_BLOCK_TYPE))
@@ -186,10 +163,6 @@ abstract class BookType
          * Compressed Commentaries
          */
         private val zCom4: BookType = object : BookType("zCom4", BookCategory.COMMENTARY, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 val blockType = BlockType.fromString(sbmd.getProperty(SwordBookMetaData.KEY_BLOCK_TYPE))
@@ -201,10 +174,6 @@ abstract class BookType
          * Uncompresses HREF Commentaries
          */
         private val hrefCom: BookType = object : BookType("HREFCom", BookCategory.COMMENTARY, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawBackend<RawBackendState>(sbmd, 2)
@@ -215,10 +184,6 @@ abstract class BookType
          * Uncompressed Commentaries
          */
         private val rawFiles: BookType = object : BookType("RawFiles", BookCategory.COMMENTARY, KeyType.VERSE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawFileBackend(sbmd, 2)
@@ -229,13 +194,6 @@ abstract class BookType
          * 2-Byte Index Uncompressed Dictionaries
          */
         private val rawLd: BookType = object : BookType("RawLD", BookCategory.DICTIONARY, KeyType.LIST) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                if (sbmd.bookCategory == BookCategory.DAILY_DEVOTIONS) {
-                    return SwordDailyDevotion(sbmd, backend)
-                }
-                return SwordDictionary(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawLDBackend<RawLDBackendState>(sbmd, 2)
@@ -246,13 +204,6 @@ abstract class BookType
          * 4-Byte Index Uncompressed Dictionaries
          */
         private val rawLd4: BookType = object : BookType("RawLD4", BookCategory.DICTIONARY, KeyType.LIST) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                if (sbmd.bookCategory == BookCategory.DAILY_DEVOTIONS) {
-                    return SwordDailyDevotion(sbmd, backend)
-                }
-                return SwordDictionary(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return RawLDBackend<RawLDBackendState>(sbmd, 4)
@@ -263,13 +214,6 @@ abstract class BookType
          * Compressed Dictionaries
          */
         private val zLd: BookType = object : BookType("zLD", BookCategory.DICTIONARY, KeyType.LIST) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                if (sbmd.bookCategory == BookCategory.DAILY_DEVOTIONS) {
-                    return SwordDailyDevotion(sbmd, backend)
-                }
-                return SwordDictionary(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return ZLDBackend(sbmd)
@@ -280,10 +224,6 @@ abstract class BookType
          * Generic Books
          */
         private val rawGenBook: BookType = object : BookType("RawGenBook", BookCategory.GENERAL_BOOK, KeyType.TREE) {
-            override fun getBook(sbmd: SwordBookMetaData, backend: Backend<*>): Book {
-                return SwordGenBook(sbmd, backend)
-            }
-
             @Throws(BookException::class)
             override fun getBackend(sbmd: SwordBookMetaData): Backend<*> {
                 return GenBookBackend(sbmd)

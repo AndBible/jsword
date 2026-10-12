@@ -36,7 +36,7 @@ import org.jdom2.Content
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface SourceFilter : Cloneable {
+actual interface SourceFilter : Cloneable {
     /**
      * Converter from plain (encoded) text to OSIS data
      * 

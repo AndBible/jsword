@@ -14,7 +14,70 @@
 
 ## Task status
 
-Task 2 introduces Content, Document and KUri. Other rows describe planned seams and are not implemented by Task 2. Content/Document retain final identity equality on both platforms; native placeholders have no public constructor.
+Task 2 introduces Content, Document and KUri. Content/Document retain final identity equality on both platforms; native placeholders have no public constructor.
+
+Task 3 introduces Book/BookDriver/SourceFilter forward declarations. Book currently extends only Comparable<Book> in common/iOS; add Activatable to the expect and iOS actual in Task 16 when Activatable moves. JVM retains Activatable and all existing members.
+
+Task 3 behavior hooks, ResourceHomeHook and DevotionDateFormat are deliberately plain JVM declarations: SwordBookMetaData, BookType, Backend and CWProject are not visible to commonMain yet. In Task 16 add common expects and actual modifiers to the JVM declarations, then add the iOS bodies below. No prematurely uncompilable common/iOS behavior files are created here. The ResourceHomeHook signature must be `Array<KUri?>`, not the table's original `Array<KUri>`: HEAD's projectResourceDirs and CWClassLoader.setHome both accept nullable elements.
+
+The only API parity allowance is BookType.getBook becoming protected open instead of protected abstract (K4 seam). Custom BookType subclasses can still override getBook. Built-ins retain the thirteen mappings characterized at d2759f58; HREFCom and RawFiles both create SwordBook. RawLD, RawLD4 and zLD each create SwordDailyDevotion only for DAILY_DEVOTIONS, otherwise SwordDictionary.
+
+### Task 16 iOS implementation handoff
+
+```kotlin
+// SwordFacadeHooks.ios.kt, package org.crosswire.jsword.book.sword
+internal actual fun swordMetaDataToOsis(md: SwordBookMetaData): Document =
+    throw UnsupportedOperationException("K5b: SwordBookMetaData.toOSIS needs the OSIS facade")
+internal actual fun sourceFilterFor(sourceType: String?): SourceFilter =
+    throw UnsupportedOperationException("K5b: source filters")
+internal actual fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book =
+    throw UnsupportedOperationException("K5b: book facade")
+internal actual fun registerSwordDriver() {
+    // No JVM SwordBookDriver registry on iOS until K5b.
+}
+
+// ResourceHomeHook.ios.kt, package org.crosswire.common.util
+internal actual fun setResourceHome(dirs: Array<KUri?>) {
+    // Resources are embedded; no class-loader home on iOS.
+}
+```
+
+DevotionDateFormat's JVM body keeps DateFormatter's default-locale medium style, current year, leniency and exceptions verbatim. Formatting February 29 in a non-leap current year normalizes to March 1; tests compare parsed normalized reference results, not an impossible February 29 identity. DateFormatter currently asserts on its reflective parse failure when JVM assertions are enabled, and falls back to the current date when disabled; this is not changed to a null result or ParseException.
+
+The Task 16 iOS body uses a fixed leap year 2000 for formatting (a deliberate platform difference), NSDateFormatterMediumStyle and lenient parsing. Use the Foundation imports and ExperimentalForeignApi opt-in as needed at that move's compile gate:
+
+```kotlin
+// DevotionDateFormat.ios.kt, package org.crosswire.jsword.book.sword
+actual object DevotionDateFormat {
+    actual fun format(month: Int, day: Int): String {
+        val calendar = NSCalendar.currentCalendar
+        val components = NSDateComponents().apply {
+            year = 2000
+            this.month = month.toLong()
+            this.day = day.toLong()
+        }
+        val formatter = NSDateFormatter().apply {
+            dateStyle = NSDateFormatterMediumStyle
+            lenient = true
+        }
+        return formatter.stringFromDate(calendar.dateFromComponents(components)!!)
+    }
+
+    actual fun parseMonthDay(text: String): Pair<Int, Int>? {
+        val formatter = NSDateFormatter().apply {
+            dateStyle = NSDateFormatterMediumStyle
+            lenient = true
+        }
+        val date = formatter.dateFromString(text) ?: return null
+        val components = NSCalendar.currentCalendar.components(
+            NSCalendarUnitMonth or NSCalendarUnitDay, date
+        )
+        return components.month.toInt() to components.day.toInt()
+    }
+}
+```
+
+Other rows remain planned seams for later tasks.
 
 ## KUri inventory
 
