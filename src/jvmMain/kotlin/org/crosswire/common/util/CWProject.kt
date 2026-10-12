@@ -19,9 +19,7 @@
  */
 package org.crosswire.common.util
 
-import java.io.File
-import java.io.IOException
-import java.net.URI
+import okio.IOException
 import okio.Path
 import okio.Path.Companion.toPath
 
@@ -79,7 +77,7 @@ private constructor() {
      * @return the writable home for the front-end settings, that can be kept separate from JSword's
      * configuration, as well from other front-ends.
      */
-    val writableFrontendProjectDir: URI?
+    val writableFrontendProjectDir: KUri?
         get() {
             establishProjectHome()
             return this.writableFrontEndHome
@@ -89,7 +87,7 @@ private constructor() {
      * @return the readable home for the front-end settings, that can be kept separate from JSword's
      * configuration, as well from other front-ends.
      */
-    val readableFrontendProjectDir: URI?
+    val readableFrontendProjectDir: KUri?
         get() {
             establishProjectHome()
             return this.frontendReadHome
@@ -101,7 +99,7 @@ private constructor() {
      *
      * @return the writable user project directory.
      */
-    val writableProjectDir: URI?
+    val writableProjectDir: KUri?
         get() {
             establishProjectHome()
             return writeHome
@@ -128,17 +126,17 @@ private constructor() {
     fun getWritableProjectSubdirPath(subject: String, create: Boolean): Path? =
         getWritableProjectSubdir(subject, create)?.toOkioPath()
 
-    private fun URI.toOkioPath(): Path = path.toPath()
+    private fun KUri.toOkioPath(): Path = getPath()!!.toPath()
 
     /**
      * Get the locations where project resources can be found.
      *
      * @return an array of URIs which can be used to look up resources.
      */
-    val projectResourceDirs: Array<URI?>
+    val projectResourceDirs: Array<KUri?>
         get() {
             establishProjectHome()
-            return homes!!.clone()
+            return homes!!.copyOf()
         }
 
     /**
@@ -146,7 +144,7 @@ private constructor() {
      *
      * @return ~/.jsword
      */
-    val deprecatedWritableProjectDir: URI?
+    val deprecatedWritableProjectDir: KUri?
         get() = OSType.DEFAULT.getUserAreaFolder(homeDirectory, homeAltDirectory)
 
     /**
@@ -164,7 +162,7 @@ private constructor() {
      *            list of popular extensions.
      * @return The resource as a URI
      */
-    fun getWritableURI(subject: String?, extension: String?): URI? {
+    fun getWritableURI(subject: String?, extension: String?): KUri? {
         return NetUtil.lengthenURI(writableProjectDir!!, subject + extension)
     }
 
@@ -174,11 +172,11 @@ private constructor() {
      * @param subject
      *            A name for the subdirectory of the Project directory.
      * @param create whether to create the directory if it does not exist
-     * @return A file: URI pointing at a local writable directory.
+     * @return A file: KUri pointing at a local writable directory.
      * @throws IOException
      */
     @Throws(IOException::class)
-    fun getWritableProjectSubdir(subject: String?, create: Boolean): URI? {
+    fun getWritableProjectSubdir(subject: String?, create: Boolean): KUri? {
         val temp = NetUtil.lengthenURI(writableProjectDir!!, subject!!)
 
         if (create && !NetUtil.isDirectory(temp!!)) {
@@ -209,9 +207,9 @@ private constructor() {
     private fun establishProjectHome() {
         if (writeHome == null && readHome == null) {
             // if there is a property set for the jsword home directory
-            val cwHome = System.getProperty(homeProperty)
+            val cwHome = systemProperty(homeProperty)
             if (cwHome != null) {
-                val home = NetUtil.getURI(File(cwHome))
+                val home = pathUri(cwHome.toPath())
                 if (NetUtil.canWrite(home)) {
                     writeHome = home
                 } else if (NetUtil.canRead(home)) {
@@ -244,8 +242,7 @@ private constructor() {
 
             try {
                 val uricache = getWritableProjectSubdir(DIR_NETCACHE, true)
-                val filecache = File(uricache!!.path)
-                NetUtil.setURICacheDir(filecache)
+                setUriCachePath(uricache!!.getPath()!!.toPath())
             } catch (ex: IOException) {
                 // This isn't fatal, it just means that NetUtil will try to use $TMP
                 // in place of a more permanent solution.
@@ -277,20 +274,20 @@ private constructor() {
      *            the path to the new location
      * @return newPath if the migration was possible or not needed.
      */
-    private fun migrateUserProjectDir(oldPath: URI, newPath: URI): URI {
+    private fun migrateUserProjectDir(oldPath: KUri, newPath: KUri): KUri {
         if (oldPath.toString() == newPath.toString()) {
             return newPath
         }
 
         if (NetUtil.isDirectory(oldPath)) {
-            val oldDir = File(oldPath.path)
-            val newDir = File(newPath.path)
+            val oldDir = oldPath.getPath()!!.toPath()
+            val newDir = newPath.getPath()!!.toPath()
 
             // renameTo will return false if it could not rename.
             // This will happen if the directory already exists.
             // So ensure that the directory does not currently exist.
             if (!NetUtil.isDirectory(newPath)) {
-                if (oldDir.renameTo(newDir)) {
+                if (KFiles.move(oldDir, newDir)) {
                     return newPath
                 }
                 return oldPath
@@ -303,12 +300,12 @@ private constructor() {
      * The homes for this application: first is writable, second (if present) is
      * read-only and specified by the system property jsword.home.
      */
-    private var homes: Array<URI?>? = null
+    private var homes: Array<KUri?>? = null
 
     /**
      * The writable home for this application.
      */
-    private var writeHome: URI? = null
+    private var writeHome: KUri? = null
 
     /**
      * The name of the front-end application. This allows front-ends to store information
@@ -320,17 +317,17 @@ private constructor() {
      * The readable home for this application, specified by the system property
      * jsword.home. Null, if jsword.home is also writable.
      */
-    private var readHome: URI? = null
+    private var readHome: KUri? = null
 
     /**
      * Front-end home, where the app can write information to it. Could be null if failed to create
      */
-    private var writableFrontEndHome: URI? = null
+    private var writableFrontEndHome: KUri? = null
 
     /**
      * Front-end read home, could be null if not present
      */
-    private var frontendReadHome: URI? = null
+    private var frontendReadHome: KUri? = null
 
     companion object {
         /**

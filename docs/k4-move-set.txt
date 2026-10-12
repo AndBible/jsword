@@ -17,17 +17,17 @@ org/crosswire/common/progress/Progress.kt
 org/crosswire/common/progress/ProgressMode.kt
 org/crosswire/common/progress/WorkEvent.kt
 org/crosswire/common/progress/WorkListener.kt
-org/crosswire/common/util/CWProject.kt
+org/crosswire/common/util/CWProject.kt #done
 org/crosswire/common/util/DefaultURIFilter.kt
 org/crosswire/common/util/FileUtil.kt
 org/crosswire/common/util/Filter.kt #done
 org/crosswire/common/util/IOUtil.kt
-org/crosswire/common/util/IniSection.kt
-org/crosswire/common/util/Language.kt
-org/crosswire/common/util/Languages.kt
+org/crosswire/common/util/IniSection.kt #done
+org/crosswire/common/util/Language.kt #done
+org/crosswire/common/util/Languages.kt #done
 org/crosswire/common/util/NetUtil.kt
-org/crosswire/common/util/OSType.kt
-org/crosswire/common/util/PropertyMap.kt
+org/crosswire/common/util/OSType.kt #done
+org/crosswire/common/util/PropertyMap.kt #done
 org/crosswire/common/util/Reporter.kt
 org/crosswire/common/util/ReporterEvent.kt
 org/crosswire/common/util/ReporterListener.kt

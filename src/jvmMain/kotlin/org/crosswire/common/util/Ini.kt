@@ -437,7 +437,7 @@ internal constructor() {
 
         for (sectionName in list) {
             val section = doGetSection(sectionName)
-            section!!.save(writer)
+            IniSectionJvm.save(section!!, writer)
         }
     }
 

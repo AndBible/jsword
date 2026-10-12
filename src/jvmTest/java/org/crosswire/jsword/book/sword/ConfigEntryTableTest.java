@@ -108,7 +108,7 @@ public class ConfigEntryTableTest {
 
         File configFile = new File("testconfig.conf");
         try {
-            table.save(configFile, "UTF-8");
+            org.crosswire.common.util.IniSectionJvm.save(table, configFile, "UTF-8");
         } catch (IOException e) {
             Assert.assertTrue(false);
         } finally {

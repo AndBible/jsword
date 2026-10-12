@@ -19,10 +19,9 @@
  */
 package org.crosswire.common.util
 
-import java.io.IOException
-import java.util.HashMap
-import java.util.HashSet
-import org.crosswire.jsword.internationalisation.LocaleProviderManager
+import okio.IOException
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /**
  * A utility class that converts bcp-47 codes as supported by {@link Language} to their
@@ -59,10 +58,10 @@ object Languages {
      * @return the localised common languages
      */
     private fun getLocalisedCommonLanguages(): KBundle? {
-        val locale = LocaleProviderManager.getLocale()
+        val locale = KswordLocale.current()
         var langs = localisedCommonLanguages.get(locale)
         if (langs == null) {
-            synchronized(Languages::class.java) {
+            synchronized(languageLock) {
                 langs = localisedCommonLanguages.get(locale)
                 if (langs == null) {
                     langs = initLanguages(locale)
@@ -179,6 +178,8 @@ object Languages {
             }
         }
     }
+
+    private val languageLock = SynchronizedObject()
 
     private val localisedCommonLanguages: MutableMap<KLocale, KBundle> = HashMap()
 

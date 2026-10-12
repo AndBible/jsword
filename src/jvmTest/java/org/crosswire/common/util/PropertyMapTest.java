@@ -53,7 +53,7 @@ public class PropertyMapTest {
         InputStream in = null;
         try {
             in = ResourceUtil.getResourceAsStream(this.getClass(), "PropertyMap.properties");
-            m.load(in);
+            PropertyMapJvm.load(m, in);
         } catch (MissingResourceException e) {
             Assert.fail("Unable to find PropertyMap.properties");
         } catch (IOException e) {
@@ -68,7 +68,7 @@ public class PropertyMapTest {
         InputStream in = null;
         try {
             in = ResourceUtil.getResourceAsStream(this.getClass(), "PropertyMap.properties");
-            m.load(in);
+            PropertyMapJvm.load(m, in);
         } catch (MissingResourceException e) {
             Assert.fail("Unable to find PropertyMap.properties");
         } catch (IOException e) {
@@ -87,7 +87,7 @@ public class PropertyMapTest {
         OutputStream out = null;
         try {
             out = NetUtil.getOutputStream(uri);
-            m.store(out, "Test data can be deleted at any time");
+            PropertyMapJvm.store(m, out, "Test data can be deleted at any time");
         } catch (IOException e) {
             Assert.fail("Unable to save test.properties");
         } finally {
@@ -103,7 +103,7 @@ public class PropertyMapTest {
         URI uri = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES);
         try {
             is = NetUtil.getInputStream(uri);
-            m.load(is);
+            PropertyMapJvm.load(m, is);
         } catch (IOException e) {
             Assert.fail("Unable to reload test.properties");
         } finally {

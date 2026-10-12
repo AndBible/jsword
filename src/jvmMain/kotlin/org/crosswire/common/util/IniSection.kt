@@ -18,21 +18,9 @@
  */
 package org.crosswire.common.util
 
-import java.io.BufferedReader
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.io.PrintWriter
-import java.io.Reader
-import java.io.Writer
-import java.util.ArrayList
-import java.util.Collections
-import java.util.HashMap
+import okio.IOException
+import okio.Path
+import okio.Buffer
 
 /**
  * A utility class for a section of an INI style configuration file.
@@ -112,7 +100,7 @@ class IniSection : Iterable<Any?> {
     fun clear() {
         section.clear()
         warnings!!.setLength(0)
-        warnings!!.trimToSize()
+
         report = ""
     }
 
@@ -159,7 +147,7 @@ class IniSection : Iterable<Any?> {
      * @return the set of keys
      */
     val keys: Collection<String>
-        get() = Collections.unmodifiableSet(section.keys)
+        get() = ReadOnlyIniSet(section.keys)
 
     /**
      * Returns {@code true} if the IniSection contains any values for the specified key.
@@ -229,7 +217,7 @@ class IniSection : Iterable<Any?> {
      */
     fun getValues(key: String?): Collection<String>? {
         if (containsKey(key)) {
-            return Collections.unmodifiableCollection(valuesOf(key))
+            return ReadOnlyIniCollection(valuesOf(key)!!)
         }
         return null
     }
@@ -313,74 +301,12 @@ class IniSection : Iterable<Any?> {
         return values.add(value!!)
     }
 
-    /**
-     * Load the INI from an InputStream using the given encoding.
-     *
-     * @param is the InputStream to read from
-     * @param encoding the encoding of the file
-     * @throws IOException
-     */
+    /** Loads a file and remembers its path and encoding for save(). */
     @Throws(IOException::class)
-    fun load(`is`: InputStream?, encoding: String?) {
-        load(`is`, encoding, null)
-    }
-
-    /**
-     * Load the INI from an InputStream using the given encoding. Filter keys as specified.
-     *
-     * @param is the InputStream to read from
-     * @param encoding the encoding of the file
-     * @param filter the filter, possibly null, for the desired keys
-     * @throws IOException
-     */
-    @Throws(IOException::class)
-    fun load(`is`: InputStream?, encoding: String?, filter: Filter<String>?) {
-        var reader: Reader? = null
-        try {
-            reader = InputStreamReader(`is`, encoding)
-            doLoad(reader, filter)
-        } finally {
-            if (reader != null) {
-                reader.close()
-                reader = null
-            }
-        }
-    }
-
-    /**
-     * Load the INI from a file using the given encoding.
-     *
-     * @param file the file to load
-     * @param encoding the encoding of the file
-     * @throws IOException
-     */
-    @Throws(IOException::class)
-    fun load(file: File?, encoding: String?) {
-        load(file, encoding, null)
-    }
-
-    /**
-     * Load the INI from a file using the given encoding. Filter keys as specified.
-     *
-     * @param file the file to load
-     * @param encoding the encoding of the file
-     * @param filter the filter, possibly null, for the desired keys
-     * @throws IOException
-     */
-    @Throws(IOException::class)
-    fun load(file: File?, encoding: String?, filter: Filter<String>?) {
-        this.configFile = file
-        this.charset = encoding
-        var input: InputStream? = null
-        try {
-            input = FileInputStream(file)
-            load(input, encoding, filter)
-        } finally {
-            if (input != null) {
-                input.close()
-                input = null
-            }
-        }
+    fun load(path: Path, encoding: String?, filter: Filter<String>? = null) {
+        configFile = path
+        charset = encoding
+        load(KFiles.readBytes(path), encoding, filter)
     }
 
     /**
@@ -407,16 +333,8 @@ class IniSection : Iterable<Any?> {
      */
     @Throws(IOException::class)
     fun load(buffer: ByteArray?, encoding: String?, filter: Filter<String>?) {
-        var input: InputStream? = null
-        try {
-            input = ByteArrayInputStream(buffer)
-            load(input, encoding, filter)
-        } finally {
-            if (input != null) {
-                input.close()
-                input = null
-            }
-        }
+        val bytes = buffer!!
+        doLoad(Buffer().writeUtf8(KCharset.decode(bytes, 0, bytes.size, encoding)), filter)
     }
 
     /**
@@ -428,73 +346,33 @@ class IniSection : Iterable<Any?> {
         jswordAssert(configFile != null) { "" }
         jswordAssert(charset != null) { "" }
         if (configFile != null && charset != null) {
-            save(configFile, charset)
+            save(configFile!!, charset)
         }
     }
 
-    /**
-     * Save the INI to a file using the given encoding.
-     *
-     * @param file the file to load
-     * @param encoding the encoding of the file
-     * @throws IOException
-     */
+    /** Saves to a path, remembering it for subsequent save() calls. */
     @Throws(IOException::class)
-    fun save(file: File?, encoding: String?) {
-        this.configFile = file
-        this.charset = encoding
-        var out: Writer? = null
-        try {
-            out = OutputStreamWriter(FileOutputStream(file), encoding)
-            save(out)
-        } finally {
-            if (out != null) {
-                out.close()
-                out = null
-            }
-        }
+    fun save(path: Path, encoding: String?) {
+        configFile = path
+        charset = encoding
+        val output = StringBuilder()
+        save(output)
+        KFiles.write(path, KCharset.encode(output.toString(), encoding))
     }
 
-    /**
-     * Output this section using the print writer. The section ends with a blank line.
-     * The items are output in insertion order.
-     *
-     * @param out the output stream
-     */
-    fun save(out: Writer?) {
-        var writer: PrintWriter? = null
-        if (out is PrintWriter) {
-            writer = out
-        } else {
-            writer = PrintWriter(out)
-        }
-
-        writer.print("[")
-        writer.print(name)
-        writer.print("]")
-        writer.println()
-
+    /** Outputs the legacy section format without closing the destination. */
+    fun save(out: Appendable) {
+        out.append("[").append(name ?: "null").append("]\n")
         var first = true
-        val keys = section.keys.iterator()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            val values = section[key]!!
-            val iter = values.iterator()
-            var value: String
-            while (iter.hasNext()) {
+        for ((key, values) in section) {
+            for (value in values) {
                 if (!first) {
-                    writer.println()
+                    out.append('\n')
                     first = false
                 }
-                value = iter.next()
-                writer.print(key)
-                writer.print(" = ")
-                writer.print(format(value))
-                writer.println()
+                out.append(key).append(" = ").append(format(value)).append('\n')
             }
         }
-
-        writer.flush()
     }
 
     /**
@@ -537,19 +415,8 @@ class IniSection : Iterable<Any?> {
     }
 
     @Throws(IOException::class)
-    private fun doLoad(`in`: Reader, filter: Filter<String>?) {
-        var bin: BufferedReader? = null
+    private fun doLoad(bin: Buffer, filter: Filter<String>?) {
         try {
-            if (`in` is BufferedReader) {
-                bin = `in`
-            } else {
-                // Quiet Android from complaining about using the default
-                // BufferReader buffer size.
-                // The actual buffer size is undocumented. So this is a good
-                // idea any way.
-                bin = BufferedReader(`in`, MAX_BUFF_SIZE)
-            }
-
             while (true) {
                 val line = advance(bin) ?: break
 
@@ -575,12 +442,9 @@ class IniSection : Iterable<Any?> {
             }
             report = warnings!!.toString()
             warnings!!.setLength(0)
-            warnings!!.trimToSize()
+
         } finally {
-            if (bin != null) {
-                bin.close()
-                bin = null
-            }
+            bin.close()
         }
     }
 
@@ -592,10 +456,10 @@ class IniSection : Iterable<Any?> {
      * @throws IOException if encountered
      */
     @Throws(IOException::class)
-    private fun advance(bin: BufferedReader): String? {
+    private fun advance(bin: Buffer): String? {
         // Get the next non-blank, non-comment line
         var trimmed: String? = null
-        var line = bin.readLine()
+        var line = readLine(bin)
         while (line != null) {
             // Remove leading and trailing whitespace
             trimmed = line.trim { it <= ' ' }
@@ -606,9 +470,25 @@ class IniSection : Iterable<Any?> {
             if (!isCommentLine(trimmed)) {
                 return trimmed
             }
-            line = bin.readLine()
+            line = readLine(bin)
         }
         return null
+    }
+
+    // BufferedReader accepts CR, LF and CRLF, including a final unterminated line.
+    private fun readLine(input: Buffer): String? {
+        if (input.exhausted()) return null
+        val line = Buffer()
+        while (!input.exhausted()) {
+            val byte = input.readByte()
+            if (byte == 10.toByte()) break
+            if (byte == 13.toByte()) {
+                if (!input.exhausted() && input[0] == 10.toByte()) input.readByte()
+                break
+            }
+            line.writeByte(byte.toInt())
+        }
+        return line.readUtf8()
     }
 
     /**
@@ -653,7 +533,7 @@ class IniSection : Iterable<Any?> {
      * Get continuation lines, if any.
      */
     @Throws(IOException::class)
-    private fun more(bin: BufferedReader, value: String): String {
+    private fun more(bin: Buffer, value: String): String {
         var moreCowBell = false
         var line: String? = value
         val buf = StringBuilder()
@@ -699,7 +579,7 @@ class IniSection : Iterable<Any?> {
      */
     private var section: MutableMap<String, MutableList<String>>
 
-    private var configFile: File? = null
+    private var configFile: Path? = null
 
     private var charset: String? = null
 
@@ -721,10 +601,5 @@ class IniSection : Iterable<Any?> {
             val length = line.length
             return length > 0 && line[length - 1] == '\\'
         }
-
-        /**
-         * Buffer size is based on file size but keep it with within reasonable limits
-         */
-        private const val MAX_BUFF_SIZE = 2 * 1024
     }
 }

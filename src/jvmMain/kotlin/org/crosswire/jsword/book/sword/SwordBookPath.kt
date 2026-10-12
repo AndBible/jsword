@@ -208,7 +208,7 @@ private constructor() {
                 try {
                     val prop = PropertyMap()
                     `is` = FileInputStream(sysconfig)
-                    prop.load(`is`)
+                    org.crosswire.common.util.PropertyMapJvm.load(prop, `is`!!)
                     var datapath = prop.get(DATA_PATH)
                     testDefaultPath(bookDirs, datapath)
                     datapath = prop.get(AUGMENT_PATH)

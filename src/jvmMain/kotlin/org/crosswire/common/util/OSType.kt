@@ -19,8 +19,7 @@
  */
 package org.crosswire.common.util
 
-import java.io.File
-import java.net.URI
+import okio.Path.Companion.toPath
 
 /**
  * Types of Operating Systems for which specialized behavior is needed.
@@ -36,33 +35,33 @@ enum class OSType
  */
 (private val osName: String) {
     MAC("Mac") {
-        override val userArea: URI?
+        override val userArea: KUri?
             get() = NetUtil.lengthenURI(getUserHome(), MAC_USER_DATA_AREA)
 
-        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI? {
+        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): KUri? {
             return NetUtil.lengthenURI(userArea!!, visibleFolderName!!)
         }
     },
 
     WIN32("Win") {
-        override val userArea: URI?
+        override val userArea: KUri?
             get() {
-                if ("Windows 10".equals(System.getProperty("os.name"), ignoreCase = true)) {
+                if ("Windows 10".equals(currentOsName, ignoreCase = true)) {
                     return NetUtil.lengthenURI(getUserHome(), WIN32_V10_USER_DATA_AREA)
                 }
                 return NetUtil.lengthenURI(getUserHome(), WIN32_USER_DATA_AREA)
             }
 
-        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI? {
+        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): KUri? {
             return NetUtil.lengthenURI(userArea!!, visibleFolderName!!)
         }
     },
 
     DEFAULT("*nix") {
-        override val userArea: URI?
+        override val userArea: KUri?
             get() = getUserHome()
 
-        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI? {
+        override fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): KUri? {
             return NetUtil.lengthenURI(userArea!!, hiddenFolderName!!)
         }
     };
@@ -72,7 +71,7 @@ enum class OSType
      *
      * @return the user area
      */
-    abstract val userArea: URI?
+    abstract val userArea: KUri?
 
     /**
      * A folder in the user area. This osType will determine which to use in
@@ -85,7 +84,7 @@ enum class OSType
      *
      * @return the user area folder
      */
-    abstract fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): URI?
+    abstract fun getUserAreaFolder(hiddenFolderName: String?, visibleFolderName: String?): KUri?
 
     /* (non-Javadoc)
      * @see java.lang.Enum#toString()
@@ -99,8 +98,8 @@ enum class OSType
          * @return the URI of the user home
          */
         @JvmStatic
-        fun getUserHome(): URI {
-            return NetUtil.getURI(File(System.getProperty("user.home")))
+        fun getUserHome(): KUri {
+            return pathUri(systemProperty("user.home")!!.toPath())
         }
 
         /**
@@ -144,6 +143,8 @@ enum class OSType
         /**
          * The machine's osType
          */
-        private var osType: OSType = fromString(System.getProperty("os.name"))
+        internal var currentOsName: String? = platformOsName()
+
+        private var osType: OSType = fromString(currentOsName!!)
     }
 }

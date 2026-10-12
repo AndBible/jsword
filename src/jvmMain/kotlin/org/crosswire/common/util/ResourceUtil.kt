@@ -165,7 +165,7 @@ object ResourceUtil {
             val `in` = getResourceAsStream(clazz, lookup)
 
             val prop = PropertyMap()
-            prop.load(`in`)
+            PropertyMapJvm.load(prop, `in`!!)
             return prop
         } catch (e: MissingResourceException) {
             return PropertyMap()

@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.util
 
-import java.util.Locale
 
 /**
  * An immutable Language by specification. The specifier consists of up to three parts:
@@ -208,7 +207,7 @@ open class Language(specification: String?) : Comparable<Language> {
                 // See if Java has one.
                 if (more) {
                     lookup = languageCode
-                    result = Locale(lookup).displayLanguage
+                    result = platformDisplayLanguage(lookup)
                     more = lookup == result
                 }
 
@@ -271,7 +270,7 @@ open class Language(specification: String?) : Comparable<Language> {
             return true
         }
 
-        if (other == null || javaClass != other.javaClass) {
+        if (other == null || this::class != other::class) {
             return false
         }
 

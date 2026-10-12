@@ -100,3 +100,19 @@ Comments add three toURL mentions (13 total). Unqualified receiver `path` in CWP
 ## Native URI behavior
 
 KUriModel is the common implementation core exercised against java.net.URI on JVM and delegated to by the iOS actual. Parsed text is retained, with UTF-8 percent decoding for getters; opaque URIs have null hierarchical components. Component builders quote percent signs and illegal characters separately for path, user info, query and fragment. Non-ASCII letters remain literal. Equality folds scheme/server-host case and percent-escape hex case, distinguishes opaque/hierarchical forms and retains raw component semantics (no path normalization). Hashing uses the same canonical components. Invalid server names in parsed input can remain registry authorities with a null host; component constructors require a valid server authority. JVM actuals remain typealiases, so existing Java-facing URI/JDOM signatures are unchanged.
+
+### Task 6 util plain JVM boundaries (Task 16 expects deferred)
+
+`ResourceHomeHook.jvm.kt` now also provides `systemProperty(String?): String?`,
+`platformOsName(): String?`, `platformDisplayLanguage(String): String`,
+`pathUri(Path): KUri`, and `setUriCachePath(Path?)`. Preserve JDK default DISPLAY
+locale for the language fallback; it is not the JSword locale. iOS supplies host
+home/null system properties, iOS OS name, and path/cache equivalents at the move.
+
+`PropertyMapJvm` owns stream load/store. `legacyPropertyEntries` retains JDK
+Properties key enumeration order, and `legacyPropertyBytes` retains escaping,
+comments and the generated timestamp. These plain JVM helpers need platform
+implementations at Task 16, not a new common parser with changed ordering.
+`IniSectionJvm` owns File/InputStream/Writer overloads; IniSection consumes
+Path/ByteArray/Appendable. Necessary JVM callers and BibleApplication's resource
+stream call were qualified mechanically now rather than waiting for Task 14.

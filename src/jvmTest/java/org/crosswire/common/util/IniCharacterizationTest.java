@@ -310,9 +310,9 @@ public class IniCharacterizationTest {
     public void testSectionSaveAndReloadRoundTrip() throws IOException {
         IniSection s = loaded();
         File file = folder.newFile("round.conf");
-        s.save(file, UTF8);
+        IniSectionJvm.save(s, file, UTF8);
         IniSection back = new IniSection();
-        back.load(file, UTF8);
+        IniSectionJvm.load(back, file, UTF8);
         Assert.assertEquals(s.getName(), back.getName());
         Assert.assertEquals(new HashSet<String>(s.getKeys()), new HashSet<String>(back.getKeys()));
         for (String key : s.getKeys()) {
@@ -323,7 +323,7 @@ public class IniCharacterizationTest {
         back.replace("key", "changed");
         back.save();
         IniSection again = new IniSection();
-        again.load(file, UTF8);
+        IniSectionJvm.load(again, file, UTF8);
         Assert.assertEquals("changed", again.get("key"));
     }
 

@@ -334,3 +334,18 @@ org.crosswire.jsword.book.sword.BookType - M protected abstract getBook(org.cros
 org.crosswire.jsword.book.sword.BookType + M protected getBook(org.crosswire.jsword.book.sword.SwordBookMetaData,org.crosswire.jsword.book.sword.Backend): org.crosswire.jsword.book.Book throws [] # K4 seam: getBook delegates to JVM facade hook
 org.crosswire.common.util.Version - F public static final VERSION_PATTERN: java.util.regex.Pattern # K4 split: legacy JDK pattern moved to VersionJvm; no external callers found.
 org.crosswire.common.util.Version + F public static final VERSION_PATTERN: kotlin.text.Regex # K4 split: common parser pattern replaces JDK field; legacy pattern retained in VersionJvm.
+
+org.crosswire.common.util.IniSection - M public final load(java.io.File,java.lang.String): void throws [java.io.IOException] # K4 split: JVM stream/file entry point retained in IniSectionJvm.
+org.crosswire.common.util.IniSection - M public final load(java.io.File,java.lang.String,org.crosswire.common.util.Filter): void throws [java.io.IOException] # K4 split: JVM stream/file entry point retained in IniSectionJvm.
+org.crosswire.common.util.IniSection - M public final load(java.io.InputStream,java.lang.String): void throws [java.io.IOException] # K4 split: JVM stream/file entry point retained in IniSectionJvm.
+org.crosswire.common.util.IniSection - M public final load(java.io.InputStream,java.lang.String,org.crosswire.common.util.Filter): void throws [java.io.IOException] # K4 split: JVM stream/file entry point retained in IniSectionJvm.
+org.crosswire.common.util.IniSection - M public final save(java.io.File,java.lang.String): void throws [java.io.IOException] # K4 split: JVM stream/file entry point retained in IniSectionJvm.
+org.crosswire.common.util.IniSection - M public final save(java.io.Writer): void throws [] # K4 split: JVM stream/file entry point retained in IniSectionJvm.
+org.crosswire.common.util.IniSection + M public final load(okio.Path,java.lang.String,org.crosswire.common.util.Filter): void throws [java.io.IOException] # K4 stream: common Path/Appendable replaces JVM IO.
+org.crosswire.common.util.IniSection + M public final save(java.lang.Appendable): void throws [] # K4 stream: common Path/Appendable replaces JVM IO.
+org.crosswire.common.util.IniSection + M public final save(okio.Path,java.lang.String): void throws [java.io.IOException] # K4 stream: common Path/Appendable replaces JVM IO.
+org.crosswire.common.util.PropertyMap - F private-or-package static final serialVersionUID: long = 2821277155924802795 # K4 seam: unused serialization field removed for common readiness.
+org.crosswire.common.util.PropertyMap - M public load(java.io.InputStream): void throws [java.io.IOException] # K4 split: stream entry point retained in PropertyMapJvm; JDK Properties semantics preserved by helpers.
+org.crosswire.common.util.PropertyMap - M public store(java.io.OutputStream,java.lang.String): void throws [java.io.IOException] # K4 split: stream entry point retained in PropertyMapJvm; JDK Properties semantics preserved by helpers.
+org.crosswire.common.util.PropertyMap + M public load(byte[]): void throws [] # K4 stream: byte-array entry point delegates to legacy JVM Properties helper.
+org.crosswire.common.util.PropertyMap + M public store(java.lang.String): byte[] throws [] # K4 stream: byte-array entry point delegates to legacy JVM Properties helper.

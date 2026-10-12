@@ -673,7 +673,7 @@ private constructor() {
             try {
                 ins = getInputStream(uri)
                 val prop = PropertyMap()
-                prop.load(ins)
+                PropertyMapJvm.load(prop, ins!!)
                 ins.close()
                 return prop
             } finally {
@@ -702,7 +702,7 @@ private constructor() {
                 out = getOutputStream(uri)
                 val temp = PropertyMap()
                 temp.putAll(properties!!)
-                temp.store(out, title)
+                PropertyMapJvm.store(temp, out!!, title)
             } finally {
                 IOUtil.close(out)
             }

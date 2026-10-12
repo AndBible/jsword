@@ -473,7 +473,7 @@ class SwordBookMetaData : AbstractBookMetaData {
         if (config != null) {
             config.replace(key, value)
             try {
-                config.save(File(writeLocation, bookConfPath), bookCharset)
+                org.crosswire.common.util.IniSectionJvm.save(config, File(writeLocation, bookConfPath), bookCharset)
             } catch (ex: IOException) {
                 LOGGER.error("Unable to save {}={}: conf file for [{}]; error={}", key, value, configAll.name, ex)
             }
@@ -492,11 +492,11 @@ class SwordBookMetaData : AbstractBookMetaData {
         filtered = keepers != null
 
         configAll.clear()
-        configAll.load(configFile, ENCODING_UTF8, keepers)
+        org.crosswire.common.util.IniSectionJvm.load(configAll, configFile, ENCODING_UTF8, keepers)
         val encoding = configAll.get(KEY_ENCODING)
         if (!ENCODING_UTF8.equals(encoding, ignoreCase = true)) {
             configAll.clear()
-            configAll.load(configFile, ENCODING_LATIN1, keepers)
+            org.crosswire.common.util.IniSectionJvm.load(configAll, configFile, ENCODING_LATIN1, keepers)
         }
     }
 
@@ -532,7 +532,7 @@ class SwordBookMetaData : AbstractBookMetaData {
             val encoding = getProperty(KEY_ENCODING)
             try {
                 val config = IniSection()
-                config.load(conf, encoding)
+                org.crosswire.common.util.IniSectionJvm.load(config, conf, encoding)
                 mergeConfig(config)
                 return config
             } catch (e: IOException) {

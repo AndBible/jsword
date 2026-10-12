@@ -73,7 +73,7 @@ public class RawFileBackendTest {
         table.add(SwordBookMetaData.KEY_DATA_PATH, "test");
         table.add(SwordBookMetaData.KEY_ENCODING, "UTF-8");
         try {
-            table.save(configFile, "UTF-8");
+            org.crosswire.common.util.IniSectionJvm.save(table, configFile, "UTF-8");
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
