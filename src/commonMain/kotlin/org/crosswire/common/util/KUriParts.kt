@@ -9,8 +9,17 @@ internal object KUriParts {
     private val hex = "0123456789ABCDEF"
 
     fun parse(s: String): Parts? {
-        if (!validCharacters(s)) return null
         val m = syntax.matchEntire(s) ?: return null
+        // Java's bracketed IPv6 scope IDs use a literal percent, not URI escapes.
+        val authorityGroup = m.groups[4]
+        val scopeRange = authorityGroup?.let {
+            val hostStart = it.value.lastIndexOf('@') + 1
+            val close = it.value.indexOf(']', hostStart)
+            val percent = it.value.indexOf('%', hostStart)
+            if (it.value.getOrNull(hostStart) == '[' && percent in hostStart until close)
+                (it.range.first + percent) until (it.range.first + close) else null
+        }
+        if (!validCharacters(s, scopeRange)) return null
         val scheme = m.groups[2]?.value
         if (scheme != null && !schemeSyntax.matches(scheme)) return null
         val fragment = m.groups[9]?.value
@@ -30,13 +39,20 @@ internal object KUriParts {
         return Parts(scheme, ssp, authority, server?.first, server?.second, server?.third ?: -1, path, m.groups[7]?.value, fragment)
     }
 
-    private fun validCharacters(s: String): Boolean {
+    private fun hexDigit(c: Char): Int? = when (c) {
+        in '0'..'9' -> c - '0'
+        in 'A'..'F' -> c - 'A' + 10
+        in 'a'..'f' -> c - 'a' + 10
+        else -> null
+    }
+
+    private fun validCharacters(s: String, scopeRange: IntRange?): Boolean {
         var i = 0
         while (i < s.length) {
             val c = s[i]
             if (c.code <= 32 || c.code == 127 || c in "\"<>\\^`{|}" || c.isWhitespace() || c.code in 128..159) return false
-            if (c == '%') {
-                if (i + 2 >= s.length || s[i + 1].digitToIntOrNull(16) == null || s[i + 2].digitToIntOrNull(16) == null) return false
+            if (c == '%' && (scopeRange == null || i !in scopeRange)) {
+                if (i + 2 >= s.length || hexDigit(s[i + 1]) == null || hexDigit(s[i + 2]) == null) return false
                 i += 2
             }
             i++
@@ -47,7 +63,7 @@ internal object KUriParts {
     private fun parseServer(a: String): Triple<String?, String, Int>? {
         val at = a.lastIndexOf('@')
         val user = if (at < 0) null else a.substring(0, at)
-        if (user?.contains('@') == true) return null
+        if (user != null && quote(user, ":%").let { it != user }) return null
         val hp = a.substring(at + 1)
         val host: String
         val portText: String?
@@ -55,7 +71,12 @@ internal object KUriParts {
             val end = hp.indexOf(']')
             if (end < 0) return null
             host = hp.substring(0, end + 1)
-            val address = host.substring(1, host.length - 1).substringBefore('%')
+            val literal = host.substring(1, host.length - 1)
+            val address = literal.substringBefore('%')
+            if (literal.contains('%')) {
+                val scope = literal.substringAfter('%')
+                if (scope.isEmpty() || scope.any { it !in 'A'..'Z' && it !in 'a'..'z' && it !in '0'..'9' && it != '_' && it != '.' }) return null
+            }
             if (!validIpv6(address)) return null
             val tail = hp.substring(end + 1)
             if (tail.isNotEmpty() && !tail.startsWith(':')) return null
@@ -78,17 +99,26 @@ internal object KUriParts {
     }
 
     private fun validIpv6(s: String): Boolean {
-        if (!s.contains(':') || s.count { it == ':' } > 7 && !s.contains("::")) return false
-        if (s.indexOf("::") != s.lastIndexOf("::")) return false
-        val groups = s.split(':').filter { it.isNotEmpty() }
+        if (!s.contains(':')) return false
+        val compression = s.indexOf("::")
+        if (compression != s.lastIndexOf("::")) return false
+        val groups = if (compression >= 0) {
+            val left = s.substring(0, compression)
+            val right = s.substring(compression + 2)
+            if (left.endsWith(':') || left.startsWith(':') || right.startsWith(':') || right.endsWith(':')) return false
+            (if (left.isEmpty()) emptyList() else left.split(':')) +
+                (if (right.isEmpty()) emptyList() else right.split(':'))
+        } else s.split(':')
+        if (groups.any { it.isEmpty() }) return false
         var units = 0
         for (g in groups) {
             if (g.contains('.')) {
                 val bytes = g.split('.')
-                if (g != groups.last() || bytes.size != 4 || bytes.any { it.toIntOrNull() !in 0..255 }) return false
+                if (g != groups.last() || !s.endsWith(g) || bytes.size != 4 ||
+                    bytes.any { b -> b.isEmpty() || b.any { it !in '0'..'9' } || b.toIntOrNull() !in 0..255 }) return false
                 units += 2
             } else {
-                if (g.length > 4 || g.any { it.digitToIntOrNull(16) == null }) return false
+                if (g.length > 4 || g.any { hexDigit(it) == null }) return false
                 units++
             }
         }
@@ -114,8 +144,8 @@ internal object KUriParts {
             if (s[i] != '%') { append(s[i++]); continue }
             val bytes = mutableListOf<Byte>()
             while (i + 2 < s.length && s[i] == '%') {
-                val a = s[i + 1].digitToIntOrNull(16) ?: break
-                val b = s[i + 2].digitToIntOrNull(16) ?: break
+                val a = hexDigit(s[i + 1]) ?: break
+                val b = hexDigit(s[i + 2]) ?: break
                 bytes.add(((a shl 4) or b).toByte()); i += 3
             }
             if (bytes.isEmpty()) append(s[i++]) else append(bytes.toByteArray().decodeToString())
@@ -169,7 +199,7 @@ internal class KUriModel private constructor(private val text: String, private v
                 if (fragment != null) { append('#'); append(KUriParts.quote(fragment, ":@/?[]")) }
             }
             val result = parse(text)
-            require(host == null || result.parts.host != null) { "Invalid server authority: $host" }
+            require(result.parts.rawAuthority == null || result.parts.host != null) { "Invalid server authority: ${result.parts.rawAuthority}" }
             return result
         }
     }

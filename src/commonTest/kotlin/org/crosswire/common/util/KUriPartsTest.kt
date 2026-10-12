@@ -50,6 +50,23 @@ class KUriPartsTest {
         }
     }
 
+    @Test fun unicodeDigitsAreNotPercentHexDigits() {
+        for (s in listOf("file:/%ＦＦ", "file:/%١١")) assertNull(KUriParts.parse(s), s)
+    }
+
+    @Test fun literalBracketsInUserInfoAreRejected() {
+        for (s in listOf("http://u[foo]@h.org/x", "http://u]@h.org/x")) assertNull(KUriParts.parse(s), s)
+    }
+
+    @Test fun malformedIpv6AddressOrScopeIsRejected() {
+        for (s in listOf("http://[1::2:]/x", "http://[:1:2:3:4:5::]/x", "http://[::ffff:+1.2.3.4]/x",
+            "http://[::1%25a-b]/x")) assertNull(KUriParts.parse(s), s)
+    }
+
+    @Test fun validScopedIpv6KeepsHost() {
+        assertEquals("[fe80::1%eth0]", KUriParts.parse("http://[fe80::1%eth0]/x")!!.host)
+    }
+
     @Test fun decodeKeepsLiteralPlusAndReplacesInvalidUtf8() {
         assertEquals("/a+b+c", KUriParts.decode("/a%2Bb+c"))
         assertEquals("/�(", KUriParts.decode("/%C3%28"))

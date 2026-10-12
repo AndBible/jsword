@@ -102,6 +102,48 @@ class KUriDifferentialTest {
         }
     }
 
+    @Test fun percentEscapeDigitsMustBeAscii() {
+        for (s in listOf("file:/%ＦＦ", "file:/%١١")) assertParseOutcome(s)
+    }
+
+    @Test fun parsedUserInfoBracketsMatchJava() {
+        for (s in listOf("http://u[foo]@h.org/x", "http://u]@h.org/x", "http://u%5Bfoo%5D@h.org/x")) assertParseOutcome(s)
+    }
+
+    @Test fun ipv6CompressionAndIpv4GrammarMatchJava() {
+        for (s in listOf("http://[1::2:]/x", "http://[:1:2:3:4:5::]/x", "http://[::ffff:+1.2.3.4]/x",
+            "http://[::ffff:١.2.3.4]/x", "http://[1::2]/x", "http://[::ffff:1.2.3.4]/x")) assertParseOutcome(s)
+    }
+
+    @Test fun ipv6ScopeSyntaxMatchesJava() {
+        for (s in listOf("http://[::1%25a-b]/x", "http://[fe80::1%eth0]/x", "http://[fe80::1%25eth0]/x",
+            "http://[fe80::1%]/x", "http://[fe80::1%eth_0]/x")) assertParseOutcome(s)
+        val j = java.net.URI("http", null, "[fe80::1%eth0]", -1, "/x", null, null)
+        assertMembers(j, KUriModel.build("http", null, "[fe80::1%eth0]", -1, "/x", null, null), "built scoped host")
+    }
+
+    @Test fun resultingConstructorAuthorityMatchesJava() {
+        for (host in listOf(null, "")) for (path in listOf("/x", "//registry_name/x", "//h.org:abc/x", "//h.org/x")) {
+            val j4 = runCatching { java.net.URI("file", host, path, null) }
+            val k4 = runCatching { KUriModel.build("file", host, path, null) }
+            assertEquals(j4.isSuccess, k4.isSuccess, "four components host=$host path=$path")
+            if (j4.isSuccess) assertMembers(j4.getOrThrow(), k4.getOrThrow(), "four components host=$host path=$path")
+            val j7 = runCatching { java.net.URI("file", null, host, -1, path, null, null) }
+            val k7 = runCatching { KUriModel.build("file", null, host, -1, path, null, null) }
+            assertEquals(j7.isSuccess, k7.isSuccess, "seven components host=$host path=$path")
+            if (j7.isSuccess) assertMembers(j7.getOrThrow(), k7.getOrThrow(), "seven components host=$host path=$path")
+        }
+        assertParseOutcome("file://registry_name/x")
+        assertParseOutcome("file://h.org:abc/x")
+    }
+
+    private fun assertParseOutcome(s: String) {
+        val j = runCatching { java.net.URI(s) }
+        val k = runCatching { KUriModel.parse(s) }
+        assertEquals(j.isSuccess, k.isSuccess, s)
+        if (j.isSuccess) assertMembers(j.getOrThrow(), k.getOrThrow(), s)
+    }
+
     @Test fun equalityLikeJava() {
         val pairs = listOf(
             "HTTPS://H.ORG/a" to "https://h.org/a", "https://h.org/a" to "https://h.org/A", "file:/a%20b" to "file:/a%20b",

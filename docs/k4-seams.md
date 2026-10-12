@@ -18,7 +18,7 @@ Task 2 introduces Content, Document and KUri. Other rows describe planned seams 
 
 ## KUri inventory
 
-Inventory at jsword 30882a72 over the 83 move-set files. The plan matcher misses bare `uri` and `orig`; a supplementary identifier matcher yields the following counts, excluding comments.
+Inventory at jsword 30882a72 over the 82 move-set data paths (plus one header line). The plan matcher misses bare `uri` and `orig`; a supplementary identifier matcher yields the following counts, excluding comments.
 
 | Member | Code occurrences | Seam treatment |
 |---|---:|---|
@@ -32,7 +32,7 @@ Inventory at jsword 30882a72 over the 83 move-set files. The plan matcher misses
 | query | 1 | getQuery() |
 | fragment | 1 | getFragment() |
 
-Comments add three toURL mentions (13 total). Unqualified receiver `path` in CWProject and `NetUtil.lengthenURI(...).path` are outside identifier counts but require no additional seam member. Direct constructors are URI(String) (NetUtil lines 147/940) and seven components (425/461); the four-component overload remains part of the required seam and is tested. getRawPath(), isAbsolute(), equals() and hashCode() are also declared for construction/behavior verification. No resolve/normalize/relativize call appeared in the move set. Common code must use explicit getter functions.
+Comments add three toURL mentions (13 total). Unqualified receiver `path` in CWProject and `NetUtil.lengthenURI(...).path` are outside identifier counts but require no additional seam member. Direct constructors are URI(String) (NetUtil lines 147/940) and seven components (425/461); the four-component overload remains part of the required seam and is tested. getRawPath(), isAbsolute(), equals() and hashCode() are also declared for construction/behavior verification. No resolve/normalize/relativize call appeared in the move set. Common code must use explicit getter functions. Controller ruling: the approved Task 2 contract is inventory-limited and does not include resolve; the incidental resolve mention in spec section 4.2 will be aligned with this contract in Task 18, not implemented as an unrequested API expansion here.
 
 ## Native URI behavior
 
