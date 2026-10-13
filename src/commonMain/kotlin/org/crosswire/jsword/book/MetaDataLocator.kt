@@ -18,6 +18,8 @@
  */
 package org.crosswire.jsword.book
 
+import kotlin.jvm.JvmStatic
+
 import okio.Path
 import org.crosswire.common.util.KUri
 import org.crosswire.jsword.book.sword.StorageLocation

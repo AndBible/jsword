@@ -21,8 +21,9 @@ package org.crosswire.common.compress
 
 import okio.Buffer
 import okio.GzipSink
+import okio.use
 import okio.IOException
-import kotlin.jvm.Throws
+import kotlin.Throws
 
 /** Gzip block compressor; JVM decoding retains the legacy first-member contract. */
 open class Gzip(input: ByteArray) : AbstractCompressor(input) {

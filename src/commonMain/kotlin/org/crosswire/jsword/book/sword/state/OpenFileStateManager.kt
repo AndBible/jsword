@@ -22,6 +22,8 @@
  */
 package org.crosswire.jsword.book.sword.state
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.jsword.book.BookException
 import org.crosswire.common.util.currentTimeMillis
 import org.crosswire.jsword.book.BookMetaData

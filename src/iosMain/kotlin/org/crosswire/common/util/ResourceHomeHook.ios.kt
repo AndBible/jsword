@@ -1,5 +1,7 @@
 package org.crosswire.common.util
 
+import platform.Foundation.currentLocale
+
 import okio.Path
 import okio.Path.Companion.toPath
 import platform.Foundation.NSHomeDirectory

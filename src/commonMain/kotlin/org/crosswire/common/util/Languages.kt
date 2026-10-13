@@ -19,6 +19,9 @@
  */
 package org.crosswire.common.util
 
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmField
+
 import okio.IOException
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized

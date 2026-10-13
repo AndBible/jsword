@@ -47,7 +47,7 @@ open class DataEntry {
      */
     constructor(name: String?, data: ByteArray, charset: String?) {
         this.name = name
-        this.data = data.clone()
+        this.data = data.copyOf()
         this.charset = charset
         // The key always ends with \n, typically \r\n
         this.keyEnd = SwordUtil.findByte(this.data, SEP_NL)

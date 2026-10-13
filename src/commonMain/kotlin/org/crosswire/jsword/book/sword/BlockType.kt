@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.jsword.JSOtherMsg
 
 /**

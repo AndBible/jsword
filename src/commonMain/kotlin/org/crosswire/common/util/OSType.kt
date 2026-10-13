@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.util
 
+import kotlin.jvm.JvmStatic
+
 import okio.Path.Companion.toPath
 
 /**

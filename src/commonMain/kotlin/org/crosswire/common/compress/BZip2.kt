@@ -20,7 +20,7 @@
 package org.crosswire.common.compress
 
 import okio.IOException
-import kotlin.jvm.Throws
+import kotlin.Throws
 
 /**
  * BZip2 manages the compression and uncompression of BZip2 data.

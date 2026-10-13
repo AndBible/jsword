@@ -23,7 +23,7 @@
 package org.crosswire.common.compress
 
 import okio.IOException
-import kotlin.jvm.Throws
+import kotlin.Throws
 
 /**
  * A compressor provides the ability to compress and uncompress block text.

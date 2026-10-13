@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.util
 
+import kotlin.jvm.JvmStatic
+
 import okio.IOException
 import okio.Path
 import okio.Path.Companion.toPath

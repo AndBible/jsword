@@ -20,7 +20,7 @@
 package org.crosswire.common.compress
 
 import okio.IOException
-import kotlin.jvm.Throws
+import kotlin.Throws
 
 /**
  * XZ manages the compression and uncompression of XZ data.

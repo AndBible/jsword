@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword.state
 
+import kotlin.jvm.JvmField
+
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.common.util.jswordAssert

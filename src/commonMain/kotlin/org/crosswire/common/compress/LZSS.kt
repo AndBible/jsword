@@ -21,7 +21,7 @@ package org.crosswire.common.compress
 
 import okio.Buffer
 import okio.IOException
-import kotlin.jvm.Throws
+import kotlin.Throws
 import org.crosswire.common.util.jswordAssert
 
 /**

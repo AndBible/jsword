@@ -19,6 +19,9 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmField
+
 import okio.Path
 import okio.IOException
 import org.crosswire.common.util.KUri
@@ -371,7 +374,7 @@ class SwordBookMetaData : AbstractBookMetaData {
         // Many "features" are GlobalOptionFilters, which in the Sword C++ API
         // indicate a class to use for filtering.
         // These mostly have the source type prepended to the feature
-        val buffer = StringBuilder(getProperty(KEY_SOURCE_TYPE))
+        val buffer = StringBuilder(getProperty(KEY_SOURCE_TYPE)!!)
         buffer.append(name)
         if (configAll.containsValue(KEY_GLOBAL_OPTION_FILTER, buffer.toString())) {
             return true
@@ -935,7 +938,7 @@ class SwordBookMetaData : AbstractBookMetaData {
 
         @JvmStatic
         fun report(config: IniSection) {
-            val buf = StringBuilder(config.report())
+            val buf = StringBuilder(config.report()!!)
             for (key in config.keys) {
                 var type = ConfigEntryType.fromString(key)
 

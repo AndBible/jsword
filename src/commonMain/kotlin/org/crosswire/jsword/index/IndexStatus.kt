@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.index
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.common.util.jswordAssert
 
 /**

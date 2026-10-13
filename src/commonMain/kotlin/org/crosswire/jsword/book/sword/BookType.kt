@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookCategory
 import org.crosswire.jsword.book.BookException

@@ -1,5 +1,7 @@
 package org.crosswire.jsword.book.install
 
+import kotlin.jvm.JvmField
+
 import org.crosswire.common.util.KUri
 
 open class DownloadException : InstallException {

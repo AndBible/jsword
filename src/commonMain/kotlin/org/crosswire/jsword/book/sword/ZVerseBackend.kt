@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.jvm.JvmField
+
 import org.crosswire.common.compress.CompressorType
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg

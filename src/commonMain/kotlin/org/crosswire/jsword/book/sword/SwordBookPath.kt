@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.jvm.JvmStatic
+
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.IOException

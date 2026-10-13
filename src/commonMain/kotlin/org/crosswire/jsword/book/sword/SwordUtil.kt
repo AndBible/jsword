@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.common.util.NetUtil
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.BookException

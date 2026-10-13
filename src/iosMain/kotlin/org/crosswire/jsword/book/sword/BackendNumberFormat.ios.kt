@@ -1,5 +1,7 @@
 package org.crosswire.jsword.book.sword
 
+import platform.Foundation.currentLocale
+
 import platform.Foundation.NSLocale
 import platform.Foundation.NSNumber
 import platform.Foundation.NSNumberFormatter

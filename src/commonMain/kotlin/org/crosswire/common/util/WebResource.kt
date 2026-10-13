@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.util
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.common.progress.Progress
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.install.DownloadCancelledException

@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.progress
 
+import kotlin.jvm.JvmStatic
+
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 

@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.util
 
+import kotlin.jvm.JvmField
+
 
 /**
  * An immutable Language by specification. The specifier consists of up to three parts:
@@ -435,7 +437,7 @@ open class Language(specification: String?) : Comparable<Language> {
             for (j in start until end) {
                 buf[i++] = if (j < first) specification[j] else toLowerASCII(specification[j])
             }
-            return String(buf)
+            return buf.concatToString()
         }
 
         /**
@@ -477,7 +479,7 @@ open class Language(specification: String?) : Comparable<Language> {
             for (j in start until end) {
                 buf[i++] = if (j < first) specification[j] else toUpperASCII(specification[j])
             }
-            return String(buf)
+            return buf.concatToString()
         }
 
         /**
@@ -522,7 +524,7 @@ open class Language(specification: String?) : Comparable<Language> {
             for (j in start + 1 until end) {
                 buf[i++] = if (j < first) specification[j] else toLowerASCII(specification[j])
             }
-            return String(buf)
+            return buf.concatToString()
         }
 
         /**

@@ -218,6 +218,8 @@ interface BookMetaData : Comparable<BookMetaData> {
      *            the base KUri or null if there is none
      * @throws BookException  indicates missing data files
      */
+    // Native Throws excludes setters; retain the JVM checked-exception contract.
+    @Suppress("WRONG_ANNOTATION_TARGET", "WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET")
     @set:Throws(BookException::class)
     var library: KUri?
 
