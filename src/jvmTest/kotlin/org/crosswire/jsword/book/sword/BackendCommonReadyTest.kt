@@ -69,10 +69,10 @@ class BackendCommonReadyTest {
     }
 
     @Test fun paddingPreservesJdkDefaultLocaleDigitsAndGreedyPattern() {
-        val original = Locale.getDefault()
+        val original = Locale.getDefault(Locale.Category.FORMAT)
         try {
             for (locale in listOf("en-US", "ar", "fa", "bn", "th-TH-u-nu-thai")) {
-                Locale.setDefault(Locale.forLanguageTag(locale))
+                Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag(locale))
                 val backend = Probe(metadata("Feature=GreekDef\nStrongsPadding=true\n"))
                 for (number in listOf(0, 1, 25, 8674, Int.MAX_VALUE)) {
                     val key = "G$number"
@@ -97,7 +97,16 @@ class BackendCommonReadyTest {
                     assertTrue(e.cause is NumberFormatException)
                 }
             }
-        } finally { Locale.setDefault(original) }
+        } finally { Locale.setDefault(Locale.Category.FORMAT, original) }
+    }
+
+    @Test fun devotionInternalPatternRetainsFullMatchAndOutOfRangeAcceptance() {
+        val field = RawLDBackend::class.java.getDeclaredField("DEVOTION_PATTERN").apply { isAccessible = true }
+        val current = field.get(null) as Regex
+        val frozen = java.util.regex.Pattern.compile("^\\d\\d\\.\\d\\d$")
+        for (key in listOf("01.01", "99.99", "00.00", "1.01", "01.01\n", "x01.01", "٠١.٠١")) {
+            assertEquals(key, frozen.matcher(key).matches(), current.matches(key))
+        }
     }
 
     @Test fun debugOutputPreservesHeaderAndEmptyImp() {
