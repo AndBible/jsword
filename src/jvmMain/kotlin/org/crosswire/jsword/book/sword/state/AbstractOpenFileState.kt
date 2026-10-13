@@ -19,6 +19,10 @@
  */
 package org.crosswire.jsword.book.sword.state
 
+import okio.IOException
+import org.crosswire.common.util.LoggerFactory
+import org.crosswire.common.util.RandomAccessSource
+import org.crosswire.common.util.currentTimeMillis
 import org.crosswire.jsword.book.BookMetaData
 
 /**
@@ -40,7 +44,7 @@ abstract class AbstractOpenFileState
 
     internal fun markResourcesClosed() { closedForTest = true }
 
-    private var lastAccess: Long = System.currentTimeMillis()
+    private var lastAccess: Long = currentTimeMillis()
 
     /**
      * The BookMetaData for this OpenFileState. Used to locate files.
@@ -48,7 +52,7 @@ abstract class AbstractOpenFileState
     private val bookMetaData: BookMetaData = bmd
 
     init {
-        lastAccess = System.currentTimeMillis()
+        lastAccess = currentTimeMillis()
     }
 
     /**
@@ -79,5 +83,14 @@ abstract class AbstractOpenFileState
      */
     override fun setLastAccess(lastAccess: Long) {
         this.lastAccess = lastAccess
+    }
+}
+
+/** Match IOUtil.close's suppressed IOException and logger identity for owned state handles. */
+internal fun closeStateSource(source: RandomAccessSource?) {
+    try {
+        source?.close()
+    } catch (ex: IOException) {
+        LoggerFactory.getLogger("org.crosswire.common.util.IOUtil").error("close", ex)
     }
 }

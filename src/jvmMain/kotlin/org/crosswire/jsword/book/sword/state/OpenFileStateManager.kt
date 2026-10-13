@@ -23,6 +23,7 @@
 package org.crosswire.jsword.book.sword.state
 
 import org.crosswire.jsword.book.BookException
+import org.crosswire.common.util.currentTimeMillis
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.BlockType
 import org.crosswire.common.util.Logger
@@ -69,7 +70,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
 
     private val monitoringThread = scheduleRepeating(cleanupIntervalSeconds * 1000L) {
         synchronized(lock) {
-            val currentTime = System.currentTimeMillis()
+            val currentTime = currentTimeMillis()
             for (states in metaToStates.values) {
                 val iterator = states.iterator()
                 while (iterator.hasNext()) {
@@ -170,14 +171,14 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     @Suppress("UNCHECKED_CAST")
     private fun <T : OpenFileState> getInstance(metadata: BookMetaData): T? = synchronized(lock) {
         val state = metaToStates.getOrPut(metadata) { ArrayDeque() }.removeFirstOrNull() as T?
-        state?.setLastAccess(System.currentTimeMillis())
+        state?.setLastAccess(currentTimeMillis())
         state
     }
 
     fun release(fileState: OpenFileState?) {
         if (fileState == null) return
         synchronized(lock) {
-            fileState.setLastAccess(System.currentTimeMillis())
+            fileState.setLastAccess(currentTimeMillis())
             val metadata = fileState.getBookMetaData()
             LOGGER.trace("Offering to releasing: {}", metadata.initials)
             metaToStates.getOrPut(metadata) { ArrayDeque() }.addLast(fileState)

@@ -280,8 +280,9 @@ New JVM hook `storageAbsolute(StorageLocation): String` delegates to
 Task 16 must declare a common expect and supply Native absolute spelling against
 the platform working directory without canonicalizing dot segments or backslashes.
 Existing permission/existence/separator and lexical open hooks are reused.
-`closeStateSource` is portable Kotlin/okio, suppressing IOException under the legacy
-IOUtil logger; it needs no platform actual.
+`closeStateSource` is in listed AbstractOpenFileState.kt (standalone StateSource.kt
+removed), portable Kotlin/okio suppressing IOException under the legacy IOUtil
+logger. It moves with that listed file in Task 16 and needs no platform actual.
 
 File accessors moved to `RawBackendStateJvm`, `RawLDBackendStateJvm` and
 `RawFileBackendStateJvm` (StateFilesJvm.kt); the latter also adapts the incfile
@@ -290,3 +291,20 @@ No app caller of these state File accessors or RAF helpers exists. RawFileBacken
 is the sole production File-accessor caller. Protected File fields were removed;
 source fields retain protected visibility. Exact API removals/replacements have
 K4 split/stream entries in api-allowlist.txt.
+
+### Task 8 fix-round closure
+
+Plain JVM `currentTimeMillis(): Long` in common/util/Time.jvm.kt returns
+System.currentTimeMillis. All state wall-clock calls consume it. Task 16 adds
+common `expect fun currentTimeMillis(): Long` in Time.kt and actual modifiers on
+Time.jvm.kt, plus Time.ios.kt returning NSDate.timeIntervalSince1970 * 1000
+converted to Long (epoch milliseconds, NOT monotonic elapsed time). Tasks 11/12
+may consume this same hook. All nine listed state files are now #done; no new
+move-set entry was added (82 retained). JVM File holders remain JVM-only.
+
+RandomAccessSource internal readNext now advances its cursor after each successful
+read chunk, including progress before EOF/IOException. Public positional read
+still does not mutate cursor. Internal readStream(ByteArray): Int is one direct
+FileHandle read with no Sword record EOF logging, used only by incfile to retain
+FileInputStream's single-read byte count and old diagnostic events. Both are
+portable Kotlin/okio and introduce no Native platform hook.

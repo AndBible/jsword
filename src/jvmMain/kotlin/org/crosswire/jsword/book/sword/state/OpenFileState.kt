@@ -20,7 +20,7 @@
 package org.crosswire.jsword.book.sword.state
 
 import org.crosswire.jsword.book.BookMetaData
-import java.io.Closeable
+import okio.Closeable
 
 /**
  * Marker interface for objects holding open files that should be freed up upon finishing

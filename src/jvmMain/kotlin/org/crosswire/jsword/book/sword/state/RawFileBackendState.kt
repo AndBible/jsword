@@ -98,8 +98,8 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
             var fis: RandomAccessSource? = null
             try {
                 fis = storageOpenRandomAccess(this.incfile!!, false)
-                val buffer = fis.readNext(4)
-                if (buffer.size != 4) {
+                val buffer = ByteArray(4)
+                if (fis.readStream(buffer) != 4) {
                     LOGGER.error("Read data is not of appropriate size of 4 bytes!")
                     throw IOException("Incfile is not 4 bytes long")
                 }

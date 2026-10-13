@@ -40,7 +40,15 @@ class RandomAccessSource(private val handle: FileHandle) : Closeable {
         checkOpen()
         // Legacy readNextRAF checks the handle even for a zero-sized request.
         handle.size()
-        return read(cursor, size).also { cursor += it.size }
+        return readBytes(cursor, size, advanceCursor = true)
+    }
+
+    /** One stream-style read, without Sword record EOF diagnostics or readFully semantics. */
+    internal fun readStream(buffer: ByteArray): Int {
+        checkOpen()
+        val count = handle.read(cursor, buffer, 0, buffer.size)
+        if (count > 0) cursor += count
+        return count
     }
 
     internal fun readUntil(stopByte: Byte): ByteArray {
@@ -76,7 +84,9 @@ class RandomAccessSource(private val handle: FileHandle) : Closeable {
         if (closed) throw okio.IOException("Stream Closed")
     }
 
-    fun read(offset: Long, size: Int): ByteArray {
+    fun read(offset: Long, size: Int): ByteArray = readBytes(offset, size, advanceCursor = false)
+
+    private fun readBytes(offset: Long, size: Int, advanceCursor: Boolean): ByteArray {
         // It is common to have an entry that points to nothing. That is the equivalent of an empty string.
         if (size == 0) return ByteArray(0)
         val length = handle.size()
@@ -99,6 +109,8 @@ class RandomAccessSource(private val handle: FileHandle) : Closeable {
             val r = handle.read(offset + done, result, done, n - done)
             if (r <= 0) throw okio.EOFException("Unexpected end of file at offset ${offset + done}")
             done += r
+            // readFully consumes each successful chunk even if the following read fails.
+            if (advanceCursor) cursor += r
         }
         return result
     }

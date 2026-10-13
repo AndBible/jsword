@@ -71,10 +71,10 @@ org/crosswire/jsword/book/sword/ZLDBackend.kt
 org/crosswire/jsword/book/sword/ZVerseBackend.kt
 org/crosswire/jsword/book/sword/processing/NoOpRawTextProcessor.kt
 org/crosswire/jsword/book/sword/processing/RawTextToXmlProcessor.kt
-org/crosswire/jsword/book/sword/state/AbstractOpenFileState.kt
+org/crosswire/jsword/book/sword/state/AbstractOpenFileState.kt #done
 org/crosswire/jsword/book/sword/state/GenBookBackendState.kt #done
-org/crosswire/jsword/book/sword/state/OpenFileState.kt
-org/crosswire/jsword/book/sword/state/OpenFileStateManager.kt
+org/crosswire/jsword/book/sword/state/OpenFileState.kt #done
+org/crosswire/jsword/book/sword/state/OpenFileStateManager.kt #done
 org/crosswire/jsword/book/sword/state/RawBackendState.kt #done
 org/crosswire/jsword/book/sword/state/RawFileBackendState.kt #done
 org/crosswire/jsword/book/sword/state/RawLDBackendState.kt #done
