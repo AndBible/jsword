@@ -3,9 +3,14 @@ package org.crosswire.common.util
 import okio.BufferedSource
 import okio.Closeable
 import okio.IOException
+import okio.buffer
 
 /** Sequential ustar reader, including GNU long names and per-entry PAX paths. */
-class TarReader(private val source: BufferedSource) : Closeable {
+class TarReader private constructor(private val source: BufferedSource, private val installerSource: okio.Source?) : Closeable {
+    constructor(source: BufferedSource) : this(source,null)
+    internal constructor(source: okio.Source) : this(source.buffer(),source)
+
+    private fun readInstaller(buffer: okio.Buffer, count: Long): Long = (installerSource ?: source).read(buffer,count)
     class Entry(val name: String, val size: Long, val isDirectory: Boolean)
     private var remaining = 0L
     private var padding = 0L
@@ -17,7 +22,7 @@ class TarReader(private val source: BufferedSource) : Closeable {
         var left = (10240 - consumed % 10240) % 10240
         val scratch = okio.Buffer()
         while (left > 0) {
-            val count = source.read(scratch, minOf(left, 4096))
+            val count = readInstaller(scratch, minOf(left, 4096))
             if (count == -1L) break
             scratch.clear()
             left -= count
@@ -28,8 +33,28 @@ class TarReader(private val source: BufferedSource) : Closeable {
 
     private fun next(installer: Boolean): Entry? {
         if (ended) return null
-        source.skip(remaining + padding)
-        consumed += remaining + padding
+        if (installer && remaining == 0L) {
+            val scratch = okio.Buffer()
+            var left = padding
+            while (left > 0) {
+                val count = readInstaller(scratch,left)
+                if (count == -1L) break
+                scratch.clear()
+                consumed += count
+                left -= count
+            }
+        } else if (installer) {
+            val scratch = okio.Buffer()
+            var left = remaining+padding
+            while (left > 0) {
+                val count = readInstaller(scratch,left)
+                if (count == -1L) throw okio.EOFException("Truncated TAR archive")
+                scratch.clear(); consumed += count; left -= count
+            }
+        } else {
+            source.skip(remaining + padding)
+            consumed += remaining + padding
+        }
         remaining = 0
         padding = 0
         var longName: String? = null
@@ -39,7 +64,7 @@ class TarReader(private val source: BufferedSource) : Closeable {
                 if (!installer) return source.readByteArray(512).also { consumed += 512 }
                 val buffer = okio.Buffer()
                 while (buffer.size < 512) {
-                    val count = source.read(buffer,512-buffer.size)
+                    val count = readInstaller(buffer,512-buffer.size)
                     if (count == -1L) return null
                     consumed += count
                 }
@@ -83,7 +108,7 @@ class TarReader(private val source: BufferedSource) : Closeable {
         if (remaining > Int.MAX_VALUE) throw IOException("Tar entry too large")
         val buffer = okio.Buffer()
         while (remaining > 0) {
-            val count = source.read(buffer, remaining)
+            val count = readInstaller(buffer, remaining)
             if (count == -1L) break
             consumed += count
             remaining -= count

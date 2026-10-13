@@ -524,7 +524,9 @@ Internal `readInstallerEntry(): ByteArray` permits the original short body write
 `nextInstaller(): Entry?` preserves the later IOException for an incomplete body.
 Public `readEntry()` and `next()` remain strict EOFException/two-zero terminator.
 Installer `nextInstaller()` independently permits absent/short next records and optional,
-nonvalidating second EOF records, retaining 10240-byte consumption. Partial-cache differential pins
+nonvalidating second EOF records and short padding after a completed body, retaining
+actual consumed counts and 10240-byte consumption. Internal Source constructor leaves
+public BufferedSource constructor/strict policy unchanged. Partial-cache differential pins
 first entry plus 4300 bytes of a truncated later entry and finalized directory.
 
 `ArchivePlatform.jvm.kt` supplies plain internal helpers; Task 16 adds matching
@@ -532,10 +534,13 @@ common expects and JVM actual modifiers, and supported Native actuals:
 
 - `archiveRead(String): ByteArray`, `archiveSink(String): BufferedSink` preserve
   lexical File spelling, owned output close and filesystem errors.
-- `archiveGzipSource(String): BufferedSource` owns File input plus the original
+- `archiveGzipSource(String): Source` owns File input plus the original
   first-member-only commons gzip wrapper. Native must support gzip (not throw
   unsupported), trailing/concatenated-member acceptance, incremental validation
-  and read-consumption/error timing. Do not drain past legacy tar block padding.
+  and read-consumption/error timing. Installer reads use raw requested-count bounds,
+  never BufferedSource 8192-byte read-ahead across body/header/padding boundaries;
+  truncated trailer/CRC failures retain the preceding completed cache entry.
+  Do not drain past legacy tar block padding.
 - `archiveLowercase(String): String` uses JVM Locale.getDefault(), NOT JSword
   locale. Filter strings/output names remain unchanged; the Boolean is include.
 - `archiveZipName(ByteArray, Boolean): String` retains commons' default UTF-8
@@ -550,11 +555,15 @@ common expects and JVM actual modifiers, and supported Native actuals:
 - `archiveInflateSource(ByteArray): Source` uses InflaterInputStream with raw
   Inflater(true), preserving ZipException and successful chunks before late failure.
   Native uses negative-windowBits zlib with equivalent streaming/error behavior.
-- `archiveUnsupportedZipFeature(String, Int, Boolean): Nothing` raises the original
-  commons UnsupportedZipFeatureException at selected-source opening, retaining entry
-  name/method/encryption, feature and known-method message. Native needs a typed
-  IOException-facing unsupported-feature outcome with equivalent metadata/timing,
-  not a commons dependency. Skipped central entries/directories do not validate features.
+- `archiveUnsupportedZipFeature(String, Int): Nothing` takes archive literal spelling
+  and central enumeration index. Error-only JVM reopen uses the actual commons ZipFile
+  entry/getInputStream exception, preserving all attached central/local metadata,
+  feature and message (including duplicate names). No successful-body delegation.
+  It closes the reopened archive/any unexpectedly returned stream; primary exception
+  survives close failure. Extra error-path reopen has a concurrent-file-change/snapshot
+  limitation. Native needs a typed IOException-facing unsupported-feature outcome with
+  actual central/local metadata and equivalent timing, not a commons dependency.
+  Skipped central entries/directories do not validate features.
 - `archiveExtract(String, String, Boolean, () -> Source): Unit` performs lexical File
   child joins, canonical containment check against existing symlinks, legacy
   parent mkdir/error text, output case preservation and owned output close.
@@ -565,7 +574,10 @@ unpackZip central-directory order, retaining duplicates and nonalphabetical orde
 Internal `visitConfZipSpelling(String, (String, ByteArray) -> Unit)` preserves the
 actual installer declared-size loop (zero skip, undersized prefix, oversized read
 failure, descriptor -1 NegativeArraySizeException), metadata processing and earlier
-registrations before later failures. Public readConfZip List remains the generic
+registrations before later failures. Raw Source reads request only the remaining
+prefix; seekable unread compressed suffixes are skipped without inflation exactly as
+old closeEntry does. A throwing callback occurs before any suffix advance.
+Public readConfZip List remains the generic
 body API, not the installer oracle. Logger category uses the exact FQN string with
 no dependency on the JVM-only installer class.
 Cache streams ignore central CRC/sizes; extraction ignores local names/flags/method/

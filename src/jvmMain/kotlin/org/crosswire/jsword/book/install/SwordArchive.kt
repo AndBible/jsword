@@ -57,14 +57,18 @@ object SwordArchive {
             val size = entry.declaredSize.toInt()
             if (size == 0) { log.error("Empty entry: {}",entry.name); continue }
             val body = ByteArray(size)
-            entry.source().buffer().use { input ->
-                var offset = 0
-                while (offset < size) {
-                    val count = input.read(body,offset,size-offset)
-                    offset += count
-                }
+            val input = entry.source()
+            val scratch = Buffer()
+            var offset = 0
+            while (offset < size) {
+                if (offset < 0) throw org.crosswire.common.util.ArrayIndexOutOfBoundsException()
+                val count = input.read(scratch,(size-offset).toLong())
+                if (count == -1L) offset--
+                else offset += scratch.read(body,offset,count.toInt())
             }
             visit(entry.name,body)
+            // Seekable local entries skip the remaining compressed bytes without inflation.
+            input.close()
         }
     }
 
@@ -73,7 +77,7 @@ object SwordArchive {
         unpackZipSpelling(zip.toString(), dest.toString(), include, *dirs)
 
     internal fun unpackZipSpelling(zip: String, dest: String, include: Boolean, vararg dirs: String) {
-        for (entry in readZip(archiveRead(zip))) {
+        for (entry in readZip(archiveRead(zip),zip)) {
             if (!safeName(entry.name)) throw IOException("Unsafe archive entry: ${entry.name}")
             if (dirs.isNotEmpty()) {
                 val matches = dirs.any { archiveLowercase(entry.name).startsWith(it) }
@@ -163,7 +167,7 @@ object SwordArchive {
     }
 
     /** Central directory drives iteration, not pathname lookup (which loses duplicate names). */
-    private fun readZip(bytes: ByteArray): List<ZipEntry> {
+    private fun readZip(bytes: ByteArray, archiveSpelling: String): List<ZipEntry> {
         fun need(offset: Int, count: Int) { if (offset < 0 || count < 0 || offset > bytes.size - count) throw okio.EOFException("Truncated ZIP") }
         fun u16(offset: Int): Int { need(offset, 2); return (bytes[offset].toInt() and 255) or ((bytes[offset + 1].toInt() and 255) shl 8) }
         fun u32(offset: Int): Long { need(offset, 4); return (0..3).fold(0L) { value, i -> value or ((bytes[offset+i].toLong() and 255) shl (8*i)) } }
@@ -186,7 +190,7 @@ object SwordArchive {
         if (start > end || centralSize > end - start) throw IOException("Invalid central directory")
         var cursor = start
         return buildList {
-            repeat(count) {
+            repeat(count) { centralIndex ->
                 need(cursor, 46)
                 if (u32(cursor) != 0x02014b50L) throw IOException("Invalid ZIP central header")
                 val flags = u16(cursor+8); val method = u16(cursor+10)
@@ -221,7 +225,7 @@ object SwordArchive {
                 if (data.toLong()+compressed > start) throw IOException("ZIP body overlaps central directory")
                 // Data descriptors belong to the sequential reader, not ZipFile extraction.
                 add(ZipEntry(name, name.endsWith('/')) {
-                    if (flags and 1 != 0 || method !in listOf(0,8)) archiveUnsupportedZipFeature(name,method,flags and 1 != 0)
+                    if (flags and 1 != 0 || method !in listOf(0,8)) archiveUnsupportedZipFeature(archiveSpelling,centralIndex)
                     val payload = bytes.copyOfRange(data,data+compressed)
                     if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
                 })

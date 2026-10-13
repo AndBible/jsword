@@ -179,6 +179,77 @@ class SwordArchiveTest {
         assertEquals(expected,installer.snapshot())
     }
 
+    @Test fun unsupportedDuplicateEntryRetainsActualCentralMetadata() = temp { root ->
+        val file = File(root,"input.zip")
+        org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(file).use { zip ->
+            for (index in 0..1) {
+                val entry = org.apache.commons.compress.archivers.zip.ZipArchiveEntry("duplicate.conf")
+                entry.time = 1600000000000L+index*2000; entry.comment = "central-$index"; entry.unixMode = 420+index
+                zip.putArchiveEntry(entry); zip.write(ByteArray(index+1) { (index+65).toByte() }); zip.closeArchiveEntry()
+            }
+        }
+        val bytes = file.readBytes()
+        val central = (0..bytes.size-4).filter { bytes[it] == 80.toByte() && bytes[it+1] == 75.toByte() && bytes[it+2] == 1.toByte() && bytes[it+3] == 2.toByte() }.last()
+        bytes[central+10]=99; file.writeBytes(bytes)
+        val old = File(root,"old").apply { mkdirs() }; val new = File(root,"new").apply { mkdirs() }
+        val reference = runCatching { LegacyArchiveReference.unpackZip(file,old) }.exceptionOrNull() as org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException
+        val actual = runCatching { SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true) }.exceptionOrNull() as org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException
+        assertEquals(2,reference.entry.size)
+        assertEquals(reference.entry.size,actual.entry.size)
+        assertEquals(reference.entry.compressedSize,actual.entry.compressedSize)
+        assertEquals(reference.entry.crc,actual.entry.crc)
+        assertEquals(reference.entry.time,actual.entry.time)
+        assertEquals(reference.entry.comment,actual.entry.comment)
+        assertEquals(reference.entry.externalAttributes,actual.entry.externalAttributes)
+        assertEquals(reference.entry.rawName.toList(),actual.entry.rawName.toList())
+        assertEquals(reference.message,actual.message)
+        assertEquals(tree(old),tree(new))
+    }
+
+    @Test fun installerCompleteBodyShortPaddingMatchesOldWithoutHidingGzipErrors() = temp { root ->
+        val complete = org.crosswire.common.util.TarReaderTest.tarRecord("a.conf",byteArrayOf(1)).copyOf(513)
+        for (padding in listOf(0,1,100,510)) for (variant in listOf("valid","truncated","crc")) {
+            val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(complete+ByteArray(padding)) } }.toByteArray()
+            val input = File(root,"input.gz").apply { writeBytes(when (variant) { "truncated" -> gzip.copyOf(gzip.size-8); "crc" -> gzip.copyOf().apply { this[size-8] = (this[size-8].toInt() xor 1).toByte() }; else -> gzip }) }
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"padding=$padding/variant=$variant")
+            if (variant == "valid") assertTrue(reference.isSuccess)
+            assertEquals(confs(File(old,"mods.d.zip")),confs(File(new,"mods.d.zip")))
+        }
+    }
+
+    @Test fun actualCallerBoundedPrefixBeforeMalformedSuffixAndThrowingCallback() = temp { root ->
+        val body = "[First]\nDescription=First book\nModDrv=RawText\nDataPath=./modules/texts/rawtext/first/\nLang=en\n".toByteArray()
+        val length = body.size
+        val blockSize = length+5000
+        val payload = byteArrayOf(0,blockSize.toByte(),(blockSize ushr 8).toByte(),blockSize.inv().toByte(),(blockSize.inv() ushr 8).toByte()) + body + ByteArray(5000) { 32 } + byteArrayOf(7)
+        val buffer = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(buffer,listOf("first.conf" to payload))
+        val bytes = buffer.readByteArray()
+        val central = (0..bytes.size-4).first { bytes[it] == 80.toByte() && bytes[it+1] == 75.toByte() && bytes[it+2] == 1.toByte() && bytes[it+3] == 2.toByte() }
+        bytes[8]=8; bytes[central+10]=8
+        repeat(4) { bytes[22+it]=(length ushr (8*it)).toByte(); bytes[central+24+it]=(length ushr (8*it)).toByte() }
+        val file = File(root,"mods.d.zip").apply { writeBytes(bytes) }
+        File(root,"mods.d.tar.gz").writeBytes(byteArrayOf(1))
+        val expected = mutableListOf<String>()
+        val reference = runCatching { LegacyArchiveReference.loadConfZip(file) { _,data -> expected.add(data.decodeToString()) } }
+        val actualContents = mutableListOf<String>()
+        val actual = runCatching { SwordArchive.visitConfZipSpelling(file.path) { _,data -> actualContents.add(data.decodeToString()) } }
+        assertEquals(listOf(body.decodeToString()),expected)
+        assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
+        assertEquals(expected,actualContents)
+        val installer = CacheInstaller(root); val installed = runCatching { installer.load() }
+        assertEquals(reference.exceptionOrNull()?.javaClass,installed.exceptionOrNull()?.javaClass)
+        assertEquals(listOf("First"),installer.snapshot())
+        val callbackError = IllegalStateException("metadata callback")
+        val oldThrow = runCatching { LegacyArchiveReference.loadConfZip(file) { _,_ -> throw callbackError } }
+        val newThrow = runCatching { SwordArchive.visitConfZipSpelling(file.path) { _,_ -> throw callbackError } }
+        assertEquals(callbackError,oldThrow.exceptionOrNull())
+        assertEquals(callbackError,newThrow.exceptionOrNull())
+    }
+
     @Test fun actualInstallerLateBodyAndEarlierMetadataErrorOrder() = temp { root ->
         val valid = "[First]\nDescription=First book\nModDrv=RawText\nDataPath=./modules/texts/rawtext/first/\nLang=en\n".toByteArray()
         for (badFirst in listOf(false,true)) {
@@ -252,6 +323,18 @@ class SwordArchiveTest {
             assertEquals(oldError.entry.name,newError.entry.name)
             assertEquals(oldError.entry.method,newError.entry.method)
             assertEquals(oldError.entry.generalPurposeBit.usesEncryption(),newError.entry.generalPurposeBit.usesEncryption())
+            assertEquals(oldError.entry.size,newError.entry.size)
+            assertEquals(oldError.entry.compressedSize,newError.entry.compressedSize)
+            assertEquals(oldError.entry.crc,newError.entry.crc)
+            assertEquals(oldError.entry.time,newError.entry.time)
+            assertEquals(oldError.entry.rawName.toList(),newError.entry.rawName?.toList())
+            assertEquals(oldError.entry.rawFlag,newError.entry.rawFlag)
+            assertEquals(oldError.entry.platform,newError.entry.platform)
+            assertEquals(oldError.entry.internalAttributes,newError.entry.internalAttributes)
+            assertEquals(oldError.entry.externalAttributes,newError.entry.externalAttributes)
+            assertEquals(oldError.entry.comment,newError.entry.comment)
+            assertEquals(oldError.entry.centralDirectoryExtra.toList(),newError.entry.centralDirectoryExtra.toList())
+            assertEquals(oldError.entry.localFileDataExtra.toList(),newError.entry.localFileDataExtra.toList())
             assertEquals(tree(old),tree(new))
         }
     }

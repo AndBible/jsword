@@ -16,7 +16,7 @@ import java.util.zip.Inflater
 // Lexical File spelling must never round-trip through okio.Path on Unix.
 internal fun archiveRead(path: String): ByteArray = File(path).readBytes()
 internal fun archiveSink(path: String): BufferedSink = File(path).outputStream().sink().buffer()
-internal fun archiveGzipSource(path: String): BufferedSource = GzipCompressorInputStream(File(path).inputStream()).source().buffer()
+internal fun archiveGzipSource(path: String): okio.Source = GzipCompressorInputStream(File(path).inputStream()).source()
 internal fun archiveLowercase(name: String): String = name.lowercase(Locale.getDefault())
 internal fun archiveZipName(bytes: ByteArray, utf8: Boolean): String = String(bytes, Charsets.UTF_8).replace('\\', '/')
 
@@ -34,18 +34,15 @@ internal fun archiveDescriptorSource(bytes: ByteArray, offset: Int, consumed: (I
     }.source()
 }
 
-internal fun archiveUnsupportedZipFeature(name: String, method: Int, encrypted: Boolean): Nothing {
-    val entry = org.apache.commons.compress.archivers.zip.ZipArchiveEntry(name)
-    entry.method = method
-    val flags = org.apache.commons.compress.archivers.zip.GeneralPurposeBit()
-    flags.useEncryption(encrypted)
-    entry.generalPurposeBit = flags
-    if (encrypted) throw org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException(
-        org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException.Feature.ENCRYPTION,entry)
-    val known = org.apache.commons.compress.archivers.zip.ZipMethod.getMethodByCode(method)
-    if (known != null) throw org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException(known,entry)
-    throw org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException(
-        org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException.Feature.METHOD,entry)
+/** Error-only reopen retains the actual central entry attached to the legacy exception. */
+internal fun archiveUnsupportedZipFeature(archiveSpelling: String, centralIndex: Int): Nothing {
+    org.apache.commons.compress.archivers.zip.ZipFile(File(archiveSpelling)).use { zip ->
+        val entries = zip.entries
+        repeat(centralIndex) { entries.nextElement() }
+        val entry = entries.nextElement()
+        zip.getInputStream(entry).use { }
+        throw IOException("ZIP feature changed while opening archive")
+    }
 }
 
 internal fun archiveInflateSource(bytes: ByteArray): okio.Source = java.util.zip.InflaterInputStream(bytes.inputStream(), Inflater(true)).source()
