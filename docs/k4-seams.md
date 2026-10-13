@@ -533,9 +533,22 @@ Unlike ordinary selected bodies, incomplete declared GNU/PAX extension bodies fa
 with IOException before padding/parsing or same-call next-header EOF; frozen old
 installer differentials cover empty/partial extension bodies with/without an earlier
 cache entry. Fully consumed GNU bodies still permit short padding (0/1/100 bytes).
-A terminal fully consumed PAX header with no following entry remains a known
-compatibility gap: old commons throws NullPointerException (path or comment record),
-while this reader ends successfully. This is distinct from incomplete-body handling.
+A terminal fully consumed local PAX x header with no following entry fails with
+portable stdlib NullPointerException in the internal installer path, preserving
+commons' recursive next-entry dereference even for ignored comment records.
+A 24-case actual frozen installer differential pins complete path/comment bodies,
+absent/1/100/full padding and one/two zero terminators, with/without first.conf[1];
+both caches finalize empty or with that earlier name/payload despite the failure.
+On a zero terminator, the existing 10240-byte block-padding consumption precedes
+this failure: twelve further cases pin NPE for valid gzip, EOFException for a
+missing trailer, and IOException for corrupt CRC. Raw missing-header EOF does not
+add a block drain. Normal PAX with a following entry, completed GNU short-padding,
+incomplete-extension IOException and public strict EOF/terminator remain unchanged.
+The old JVM-generated setName/isOldGNUSparse dereference messages are recorded
+separately, not emulated or claimed identical; no platform error seam is added.
+Native must retain this internal failure class/cache/error-priority policy and
+raw consumed-count bounds; these JVM cases do not establish Native runtime parity.
+This is legacy preservation, not generalized parser hardening.
 Partial-cache differential pins
 first entry plus 4300 bytes of a truncated later entry and finalized directory.
 

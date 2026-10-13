@@ -237,6 +237,92 @@ class SwordArchiveTest {
 
     @Test fun installerIncompletePaxBodyFailsLikeFrozenLegacy() = incompleteInstallerExtension('x')
 
+    @Test fun installerTerminalPaxPathFailsLikeFrozenLegacy() = terminalInstallerPax("25 path=mods.d/long.conf\n")
+
+    @Test fun installerTerminalPaxCommentFailsLikeFrozenLegacy() = terminalInstallerPax("13 comment=a\n")
+
+    private fun terminalInstallerPax(record: String) = temp { root ->
+        val body = record.toByteArray()
+        val fullPadding = (512-body.size%512)%512
+        val endings = listOf("no-padding" to byteArrayOf(), "one-padding" to ByteArray(1),
+            "short-padding" to ByteArray(100), "full-padding" to ByteArray(fullPadding),
+            "one-terminator" to ByteArray(fullPadding+512), "two-terminators" to ByteArray(fullPadding+1024))
+        val mismatches = mutableListOf<String>()
+        for (earlier in listOf(false,true)) for ((ending,tail) in endings) {
+            val extension = org.crosswire.common.util.TarReaderTest.tarRecord("extension",body,'x').copyOf(512+body.size)
+            val prefix = if (earlier) org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/first.conf",byteArrayOf(1)) else byteArrayOf()
+            val tar = prefix+extension+tail
+            val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(tar) } }.toByteArray()
+            val input = File(root,"input.gz").apply { writeBytes(gzip) }
+            assertEquals(tar.toList(),GZIPInputStream(input.inputStream()).use { it.readBytes().toList() })
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            val context = "record=${record.trim()}/earlier=$earlier/ending=$ending"
+            // JVM-generated dereference messages are characterized, not part of the portable contract.
+            println("TERMINAL PAX $context old=${reference.exceptionOrNull()} new=${actual.exceptionOrNull()}")
+            val expected = if (earlier) listOf("mods.d/first.conf" to listOf<Byte>(1)) else emptyList()
+            runCatching {
+                assertTrue(reference.exceptionOrNull()?.javaClass == NullPointerException::class.java,context)
+                assertEquals(expected,confs(File(old,"mods.d.zip")),context)
+                assertEquals(expected,confs(File(new,"mods.d.zip")),context)
+                assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,context)
+            }.exceptionOrNull()?.let { mismatches.add("$context: ${it.message}") }
+        }
+        assertTrue(mismatches.isEmpty(),"Terminal PAX failure/cache contract was not preserved: $mismatches")
+    }
+
+    @Test fun installerTerminalPaxTerminatorRetainsBlockPaddingErrorOrder() = temp { root ->
+        val mismatches = mutableListOf<String>()
+        for (record in listOf("25 path=mods.d/long.conf\n","13 comment=a\n")) for (earlier in listOf(false,true)) {
+            val prefix = if (earlier) org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/first.conf",byteArrayOf(1)) else byteArrayOf()
+            val extension = org.crosswire.common.util.TarReaderTest.tarRecord("extension",record.toByteArray(),'x')
+            val tar = (prefix+extension+ByteArray(1024)).copyOf(10240)
+            val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(tar) } }.toByteArray()
+            for (variant in listOf("valid","truncated","crc")) {
+                val bytes = when (variant) {
+                    "truncated" -> gzip.copyOf(gzip.size-8)
+                    "crc" -> gzip.copyOf().apply { this[size-8] = (this[size-8].toInt() xor 1).toByte() }
+                    else -> gzip
+                }
+                val input = File(root,"input.gz").apply { writeBytes(bytes) }
+                val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+                val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+                val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+                val context = "record=${record.trim()}/earlier=$earlier/block-padding/$variant"
+                println("TERMINAL PAX $context old=${reference.exceptionOrNull()} new=${actual.exceptionOrNull()}")
+                val expected = if (earlier) listOf("mods.d/first.conf" to listOf<Byte>(1)) else emptyList()
+                runCatching {
+                    val failureClass = when (variant) {
+                        "valid" -> NullPointerException::class.java
+                        "truncated" -> java.io.EOFException::class.java
+                        else -> IOException::class.java
+                    }
+                    assertTrue(reference.exceptionOrNull()?.javaClass == failureClass,context)
+                    assertEquals(expected,confs(File(old,"mods.d.zip")),context)
+                    assertEquals(expected,confs(File(new,"mods.d.zip")),context)
+                    assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,context)
+                }.exceptionOrNull()?.let { mismatches.add("$context: ${it.message}") }
+            }
+        }
+        assertTrue(mismatches.isEmpty(),"Terminal PAX block-padding error order was not preserved: $mismatches")
+    }
+
+    @Test fun installerIgnoredPaxWithFollowingEntryStillMatchesFrozenLegacy() = temp { root ->
+        val tar = org.crosswire.common.util.TarReaderTest.tarRecord("extension","13 comment=a\n".toByteArray(),'x') +
+            org.crosswire.common.util.TarReaderTest.tarRecord("short.conf",byteArrayOf(1)) +
+            org.crosswire.common.util.TarReaderTest.tarRecord("ignored.txt",byteArrayOf(2)) +
+            org.crosswire.common.util.TarReaderTest.tarRecord("last.conf",byteArrayOf(3)) + ByteArray(1024)
+        val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(tar) } }.toByteArray()
+        val input = File(root,"input.gz").apply { writeBytes(gzip) }
+        val old = File(root,"old").apply { mkdirs() }; val new = File(root,"new").apply { mkdirs() }
+        LegacyArchiveReference.unpack(old.toURI(),input.toURI())
+        SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath())
+        val expected = listOf("short.conf" to listOf<Byte>(1),"last.conf" to listOf<Byte>(3))
+        assertEquals(expected,confs(File(old,"mods.d.zip")))
+        assertEquals(expected,confs(File(new,"mods.d.zip")))
+    }
+
     private fun incompleteInstallerExtension(type: Char) = temp { root ->
         val completeBody = if (type == 'L') "mods.d/long.conf\u0000".toByteArray() else "25 path=mods.d/long.conf\n".toByteArray()
         val mismatches = mutableListOf<String>()

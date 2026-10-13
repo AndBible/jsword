@@ -50,6 +50,18 @@ class TarReaderTest {
         }
     }
 
+    @Test fun terminalPaxKeepsPublicStrictEofAndTerminatorContract() {
+        for (record in listOf("25 path=mods.d/long.conf\n","13 comment=a\n")) {
+            val body = record.encodeToByteArray()
+            val extension = tarRecord("extension",body,'x')
+            for (bytes in listOf(extension.copyOf(512+body.size),extension.copyOf(513+body.size),
+                extension,extension+ByteArray(512))) {
+                assertFailsWith<EOFException> { TarReader(Buffer().write(bytes)).use { it.next() } }
+            }
+            TarReader(Buffer().write(extension+ByteArray(1024))).use { assertNull(it.next()) }
+        }
+    }
+
     companion object {
         fun tarRecord(name: String, body: ByteArray, type: Char = '0', prefix: String = ""): ByteArray {
             val header = ByteArray(512)

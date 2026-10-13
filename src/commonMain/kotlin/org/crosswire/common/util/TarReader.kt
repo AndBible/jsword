@@ -59,6 +59,11 @@ class TarReader private constructor(private val source: BufferedSource, private 
         padding = 0
         var longName: String? = null
         var paxPath: String? = null
+        var pendingPax = false
+        // Commons recurses for local PAX and dereferences the missing next entry, even for ignored keys.
+        fun rejectTerminalPax() {
+            if (installer && pendingPax) throw NullPointerException()
+        }
         while (true) {
             fun record(): ByteArray? {
                 if (!installer) return source.readByteArray(512).also { consumed += 512 }
@@ -70,11 +75,16 @@ class TarReader private constructor(private val source: BufferedSource, private 
                 }
                 return buffer.readByteArray()
             }
-            val header = record() ?: run { ended = true; return null }
+            val header = record() ?: run { ended = true; rejectTerminalPax(); return null }
             if (header.all { it == 0.toByte() }) {
                 val second = record()
                 if (!installer && second!!.any { it != 0.toByte() }) throw IOException("Invalid tar terminator")
                 ended = true
+                if (installer && pendingPax) {
+                    // Legacy zero-record handling consumes block padding before the PAX dereference.
+                    consumeLegacyBlockPadding()
+                    rejectTerminalPax()
+                }
                 return null
             }
             fun text(start: Int, count: Int): String {
@@ -106,7 +116,10 @@ class TarReader private constructor(private val source: BufferedSource, private 
                 }
                 padding = 0
                 if (type == 'L') longName = body.decodeToString().trimEnd('\u0000', '\n')
-                else paxPath = paxPath(body) ?: paxPath
+                else {
+                    paxPath = paxPath(body) ?: paxPath
+                    pendingPax = true
+                }
                 continue
             }
             val prefix = text(345, 155)
