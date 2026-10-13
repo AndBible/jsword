@@ -25,11 +25,19 @@ internal actual fun platformOsName(): String? = "iOS"
 internal actual fun platformDisplayLanguage(code: String): String =
     NSLocale.currentLocale.displayNameForKey(platform.Foundation.NSLocaleLanguageCode, code) ?: code
 internal actual fun setUriCachePath(path: Path?) { uriCachePath = path }
-internal actual fun pathUri(path: Path): KUri = KUri("file", null, path.toString(), null)
-internal actual fun validatedFileUriPath(uri: KUri): Path {
+internal fun nativeUriCachePath(): Path? = uriCachePath
+internal actual fun pathUri(path: Path): KUri {
+    var absolute = NativeLexicalFiles.absolute(path.toString())
+    if (!absolute.endsWith('/') && NativeLexicalFiles.directory(absolute)) absolute += "/"
+    return KUri("file", null, absolute, null)
+}
+internal actual fun validatedFileUriPath(uri: KUri): Path = nativeFileUriSpelling(uri).toPath()
+
+/** Validate before projecting to Path: registry authorities need not have a host. */
+internal fun nativeFileUriSpelling(uri: KUri): String {
     require(uri.isAbsolute() && uri.getScheme() == "file") { "URI is not an absolute file URI" }
     require(uri.getRawPath() != null && uri.getPath()!!.startsWith('/')) { "URI is not hierarchical" }
-    require(uri.getHost() == null && uri.getUserInfo() == null && uri.getPort() == -1) { "URI has an authority" }
+    require(uri.rawAuthority().isNullOrEmpty()) { "URI has an authority" }
     require(uri.getQuery() == null && uri.getFragment() == null) { "URI has a query or fragment" }
-    return uri.getPath()!!.toPath()
+    return NativeLexicalFiles.spelling(uri.getPath()!!)
 }

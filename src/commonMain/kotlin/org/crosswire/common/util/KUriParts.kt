@@ -156,6 +156,7 @@ internal object KUriParts {
 /** Native URI value; raw escaped components govern equality, not decoded strings. */
 internal class KUriModel private constructor(private val text: String, private val parts: KUriParts.Parts) {
     fun getScheme(): String? = parts.scheme
+    internal fun rawAuthority(): String? = parts.rawAuthority
     fun getUserInfo(): String? = parts.rawUserInfo?.let(KUriParts::decode)
     fun getHost(): String? = parts.host
     fun getPort(): Int = parts.port

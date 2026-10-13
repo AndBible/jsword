@@ -4,6 +4,7 @@ actual class KUri private constructor(private val model: KUriModel) {
     actual constructor(str: String) : this(KUriModel.parse(str))
     actual constructor(scheme: String?, userInfo: String?, host: String?, port: Int, path: String?, query: String?, fragment: String?) : this(KUriModel.build(scheme, userInfo, host, port, path, query, fragment))
     actual constructor(scheme: String?, host: String?, path: String?, fragment: String?) : this(KUriModel.build(scheme, host, path, fragment))
+    internal fun rawAuthority(): String? = model.rawAuthority()
     actual fun getScheme(): String? = model.getScheme()
     actual fun getUserInfo(): String? = model.getUserInfo()
     actual fun getHost(): String? = model.getHost()
