@@ -160,7 +160,7 @@ class WebResourceCharacterizationTest {
         val projection = NetUtil.toPath(dest.toURI())
         assertEquals(directory.resolve("a/b").path, projection.toString())
         assertFailsWith<java.io.IOException> { okio.FileSystem.SYSTEM.sink(projection).close() }
-        NetUtil.getOutputStream(dest.toURI()).use { it.write("legacy".toByteArray()) }
+        NetUtilJvm.getOutputStream(dest.toURI()).use { it.write("legacy".toByteArray()) }
         assertEquals("legacy", dest.readText())
     }
 

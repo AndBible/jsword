@@ -18,21 +18,21 @@ org/crosswire/common/progress/ProgressMode.kt #done
 org/crosswire/common/progress/WorkEvent.kt #done
 org/crosswire/common/progress/WorkListener.kt #done
 org/crosswire/common/util/CWProject.kt #done
-org/crosswire/common/util/DefaultURIFilter.kt
-org/crosswire/common/util/FileUtil.kt
+org/crosswire/common/util/DefaultURIFilter.kt #done
+org/crosswire/common/util/FileUtil.kt #done
 org/crosswire/common/util/Filter.kt #done
-org/crosswire/common/util/IOUtil.kt
+org/crosswire/common/util/IOUtil.kt #done
 org/crosswire/common/util/IniSection.kt #done
 org/crosswire/common/util/Language.kt #done
 org/crosswire/common/util/Languages.kt #done
-org/crosswire/common/util/NetUtil.kt
+org/crosswire/common/util/NetUtil.kt #done
 org/crosswire/common/util/OSType.kt #done
 org/crosswire/common/util/PropertyMap.kt #done
 org/crosswire/common/util/Reporter.kt #done
 org/crosswire/common/util/ReporterEvent.kt #done
 org/crosswire/common/util/ReporterListener.kt #done
 org/crosswire/common/util/TimeGate.kt #done
-org/crosswire/common/util/URIFilter.kt
+org/crosswire/common/util/URIFilter.kt #done
 org/crosswire/common/util/Version.kt #done
 org/crosswire/common/util/WebResource.kt #done
 org/crosswire/jsword/book/BookCategory.kt #done

@@ -21,7 +21,7 @@ class NetUtilFileCharacterizationTest {
     @get:Rule
     val tmp = TemporaryFolder()
 
-    private fun uri(f: File): URI = NetUtil.getURI(f)
+    private fun uri(f: File): URI = NetUtilJvm.getURI(f)
 
     @Test
     fun isFileAndIsDirectory() {
@@ -188,17 +188,17 @@ class NetUtilFileCharacterizationTest {
         File(root, "a/f1").writeText("1")
         File(root, "a/b/f2").writeText("2")
         File(root, "f3").writeText("3")
-        assertEquals(emptyList(), FileUtil.delete(root))
+        assertEquals(emptyList(), FileUtilJvm.delete(root))
         assertFalse(root.exists())
     }
 
     @Test
     fun fileUtilDeleteSingleFileAndMissing() {
         val f = tmp.newFile("f")
-        assertEquals(emptyList(), FileUtil.delete(f))
+        assertEquals(emptyList(), FileUtilJvm.delete(f))
         assertFalse(f.exists())
         val missing = File(tmp.root, "nope")
-        assertEquals(listOf(missing), FileUtil.delete(missing))
+        assertEquals(listOf(missing), FileUtilJvm.delete(missing))
     }
 
     @Test
@@ -213,7 +213,7 @@ class NetUtilFileCharacterizationTest {
                 runCatching { it.createNewFile() }.getOrDefault(false).also { _ -> it.delete() }
             }
             Assume.assumeTrue("running as root: permissions are not enforced, nothing to pin", permissionsEnforced)
-            val failures = FileUtil.delete(root)
+            val failures = FileUtilJvm.delete(root)
             // children first (inner, then the read-only dir), then the root which is non-empty now
             assertEquals(listOf(inner, ro, root), failures)
             assertFalse(other.exists())
@@ -253,10 +253,10 @@ class NetUtilFileCharacterizationTest {
         val u = URI("file:" + file.toURI().rawPath) // percent-encoded form, as it arrives from the outside
         assertTrue(u.rawPath.contains("%20"), u.rawPath)
         assertTrue(NetUtil.isFile(u))
-        assertTrue(NetUtil.isDirectory(NetUtil.getURI(dir)))
+        assertTrue(NetUtil.isDirectory(NetUtilJvm.getURI(dir)))
         assertEquals(7, NetUtil.getSize(u))
         assertEquals(file.lastModified(), NetUtil.getLastModified(u))
-        assertEquals(setOf(file.name), NetUtil.listByFile(NetUtil.getURI(dir), DefaultURIFilter())!!.toSet())
+        assertEquals(setOf(file.name), NetUtil.listByFile(NetUtilJvm.getURI(dir), DefaultURIFilter())!!.toSet())
         val moved = File(dir, "uusi \u00e5.txt")
         assertTrue(NetUtil.move(u, uri(moved)))
         assertTrue(moved.isFile)

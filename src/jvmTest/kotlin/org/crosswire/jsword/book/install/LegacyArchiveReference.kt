@@ -3,6 +3,7 @@ package org.crosswire.jsword.book.install
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.NetUtilJvm
 import org.crosswire.jsword.JSMsg
 import java.io.File
 import java.net.MalformedURLException
@@ -49,7 +50,7 @@ internal object LegacyArchiveReference {
         try {
             // The following is faster if it is passed a file.
             zout = ZipArchiveOutputStream(File(cacheDir!!.path, "mods.d.zip"))
-            fin = NetUtil.getInputStream(cache!!)
+            fin = NetUtilJvm.getInputStream(cache!!)
             gin = GzipCompressorInputStream(fin)
             tin = TarArchiveInputStream(gin)
             while (true) {
@@ -144,9 +145,9 @@ internal object LegacyArchiveReference {
                     // write entryFile from zip to filesystem but avoid writing dir entries out as files
                     if (!entry.isDirectory) {
 
-                        val child = NetUtil.getURI(entryFile)
+                        val child = NetUtilJvm.getURI(entryFile)
 
-                        val dataOut = NetUtil.getOutputStream(child)
+                        val dataOut = NetUtilJvm.getOutputStream(child)
                         val dataIn = zf.getInputStream(entry)
 
                         while (true) {

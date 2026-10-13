@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.crosswire.common.util.IOUtil
+import org.crosswire.common.util.IOUtilJvm
 import org.crosswire.jsword.book.install.sword.HttpSwordInstaller
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -69,13 +70,13 @@ class ArchiveLegacyCharacterizationTest {
                 Locale.setDefault(locale)
                 for (include in listOf(true, false)) {
                     val dest = File(root, "${locale.language}-$include").apply { mkdirs() }
-                    IOUtil.unpackZip(zip, dest, include, "mods.d", "modules", "images")
+                    IOUtilJvm.unpackZip(zip, dest, include, "mods.d", "modules", "images")
                     val names = dest.walkTopDown().filter { it.isFile }.map { it.relativeTo(dest).path }.toList().sorted()
                     val included = if (locale.language == "tr") listOf("MODULES/UPPER", "Mods.D/Mixed.conf") else listOf("Images/Icon", "MODULES/UPPER", "Mods.D/Mixed.conf")
                     assertEquals(if (include) included.sorted() else (listOf("Mods.D/Mixed.conf", "MODULES/UPPER", "Images/Icon", "other") - included.toSet()).sorted(), names)
                 }
                 val upper = File(root, "${locale.language}-upper").apply { mkdirs() }
-                IOUtil.unpackZip(zip, upper, true, "MODS.D")
+                IOUtilJvm.unpackZip(zip, upper, true, "MODS.D")
                 assertTrue(upper.listFiles()!!.isEmpty())
             }
         } finally { Locale.setDefault(previous); root.deleteRecursively() }

@@ -98,7 +98,7 @@ class CWClassLoader : ClassLoader {
         if (resource == null) {
             val homeResource = findHomeResource(search)
             if (homeResource != null) {
-                resource = NetUtil.toURL(homeResource)
+                resource = NetUtilJvm.toURL(homeResource)
             }
         }
 

@@ -6,7 +6,7 @@ import okio.Timeout
 
 /** Preserve lexical output names and FileOutputStream's writes even on an interrupted thread. */
 internal fun webResourceOutputSink(uri: KUri): Sink {
-    val output = outputCancelled { NetUtil.getOutputStream(uri) }
+    val output = outputCancelled { NetUtilJvm.getOutputStream(uri) }
     // OutputStream.sink() checks Thread.interrupted on write, losing legacy partial downloads on close.
     return object : Sink {
         override fun write(source: Buffer, byteCount: Long) { outputCancelled { output.write(source.readByteArray(byteCount)) } }

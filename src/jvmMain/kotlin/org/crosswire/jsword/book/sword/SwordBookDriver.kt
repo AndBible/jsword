@@ -25,7 +25,9 @@ import java.net.URI
 import java.util.HashSet
 
 import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.FileUtilJvm
 import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.NetUtilJvm
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.Book
@@ -83,7 +85,7 @@ open class SwordBookDriver
         val bookConfs = SwordBookPathJvm.getBookList(mods)
 
         // Loop through the entries in this mods.d directory
-        val bookDirURI = NetUtil.getURI(bookDir)
+        val bookDirURI = NetUtilJvm.getURI(bookDir)
         for (i in bookConfs!!.indices) {
             val bookConf = bookConfs[i]
             try {
@@ -155,12 +157,12 @@ open class SwordBookDriver
         }
 
         // Delete all conf files
-        var failures = FileUtil.delete(confFile)
+        var failures = FileUtilJvm.delete(confFile)
         if (failures.isEmpty()) {
             val loc = sbmd.location
             if (loc != null) {
                 val bookDir = File(loc.path)
-                failures = FileUtil.delete(bookDir)
+                failures = FileUtilJvm.delete(bookDir)
                 Books.installed().removeBook(dead)
             }
 

@@ -11,7 +11,7 @@ internal fun platformOsName(): String? = systemProperty("os.name")
 
 internal fun platformDisplayLanguage(code: String): String = java.util.Locale(code).displayLanguage
 
-internal fun setUriCachePath(path: okio.Path?) = NetUtil.setURICacheDir(path?.toFile())
+internal fun setUriCachePath(path: okio.Path?) = NetUtilJvm.setURICacheDir(path?.toFile())
 
 internal fun pathUri(path: okio.Path): KUri = path.toFile().toURI()
 

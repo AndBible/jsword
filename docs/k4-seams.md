@@ -631,6 +631,75 @@ ZIP symlink entries remain ordinary files as in the old extractor. No global
 Path-to-File map or IOUtil-wide split is introduced. File-facing callers pass
 literal spelling directly to internal adapter entry points; Path APIs are projections.
 
+## Task 14 member classification (before edits, base cdce9399)
+
+Controller rulings: the actual `getURI(File): URI` moves to `NetUtilJvm`;
+no unused Path overload is added. Reviewed HEAD Path operations stay Path-based;
+lexical stream/property behavior never round-trips through Path. Preserve Java
+MalformedURLException throws lists with a precise exception alias, not IOException
+widening. URI syntax classification must rethrow unrelated failures.
+
+| Members (all overloads unless stated) | Classification / actual callers outside move set |
+|---|---|
+| NetUtil private constructor; constants PROTOCOL_FILE/HTTP/HTTPS/FTP/JAR, INDEX_FILE, SEPARATOR, AUTH_SEPERATOR_USERNAME/PASSWORD; private isSeparator, LOGGER | common-ready unchanged; HTTP(S) installer constants, LuceneIndexManager separator; other constants have no external production caller |
+| NetUtil.copy, shortenURI, lengthenURI; IsDirectoryURIFilter constructor/accept/parent | KUri core; lengthenURI outside callers: AbstractSwordInstaller, CWClassLoader, LuceneIndexManager; copy/shortenURI/nested filter have no callers |
+| NetUtil.toPath | existing validatedFileUriPath projection; WebResourceCharacterizationTest and NetUtilPathTest only; never authoritative stream identity |
+| NetUtil.makeDirectory/makeFile/isDirectory/move/delete/listByFile; checkFileURI | retain HEAD KFiles/Path behavior and explicit KUri getters; external isDirectory LuceneIndexManager; delete GenericFileDownloader, LuceneIndexManagerTest; other production callers only CWProject/internal core |
+| NetUtil.isFile/canRead/canWrite | KUri core with bounded non-file existence/lexical access hooks; outside isFile AbstractSwordInstaller, canRead CWClassLoader and InstalledIndex; canWrite only CWProject |
+| NetUtil.list/listByIndexFile | KUri core, Source boundary for exact URI input; outside production none; IndexFilesDifferentialTest verifies listing |
+| NetUtil.loadProperties/storeProperties | KUri core; exact lexical property IO boundary preserving load explicit close then finally-close, store open-before-null/copy, Properties escaping/order/timestamp; outside callers InstallManager, CollectionUtil, Config, InstalledIndex (Java); Task12 Job retains these methods |
+| NetUtil.getSize/fileSizeToInt/getLastModified/isNewer | KUri core retains HEAD Path fast path, HTTP WebResource branch and exact URL/Jar fallback through bounded helpers; outside getSize MyBibleInstaller, HttpSwordInstaller, HttpsSwordInstaller; isNewer AbstractSwordInstaller; other overload callers none |
+| NetUtil.getTemporaryURI/TEMP_SUFFIX | KUri core delegates exact File.createTempFile boundary; external GenericFileDownloader, AbstractSwordInstaller |
+| NetUtil.getAsFile/getInputStream/getOutputStream(URI)/(URI,Boolean), toURI(URL), toURL(URI) | exact signatures move to object NetUtilJvm @JvmStatic; getAsFile outside AbstractSwordInstaller, LuceneIndex/Manager (Java), GenericFileDownloader; stream callers PropertyMapTest (Java), LegacyArchiveReference, WebResourceCharacterizationTest, Task11 WebResourceIo.jvm; toURL CWClassLoader; toURI no caller |
+| NetUtil.getURI(File)/getURICacheDir/setURICacheDir/private cachedir | JVM holder retains actual File spelling/state; external getURI SwordBookDriver, AbstractSwordInstaller, BackupControl, ModuleBackupRoundTripTest, CurrentPageManagerNoActivityTest, LegacyArchiveReference, NetUtilFileCharacterizationTest; cache ResourceHomeHook.jvm, installer characterization Java tests, MetadataUtilCharacterizationTest |
+| NetUtil.URIFilterFilenameFilter constructor/accept/filter | unused JVM FilenameFilter adapter moves as nested NetUtilJvm class (no facade leak); IsDirectoryURIFilter stays core |
+| IOUtil private constructor/log/close(Closeable) | common-ready okio.Closeable alias, exact IOException suppression/logger; outside CommonUtils, FileManager, LuceneIndex (Java), PropertyMapTest, RawFileBackendTest, LegacyArchiveReference |
+| IOUtil.unpackZip(File,File)/(File,File,Boolean,String...) | exact static signatures move to IOUtilJvm; outside AbstractSwordInstaller, LuceneIndexManager (Java), SwordArchiveTest, ArchiveLegacyCharacterizationTest; lexical SwordArchive.unpackZipSpelling unchanged |
+| IOUtil.getZipEntry(String) | only move-set SwordBookMetaData caller; common method delegates bounded platform zip-entry hook retaining actual commons lookup/read/close and exception behavior (no guessed generic SwordArchive semantics) |
+| FileUtil private constructor; EXTENSION_JAVA/PROPERTIES/PLUGIN/XSLT/XML; MODE_READ/WRITE | common constants unchanged; outside PropertyMapTest/InstalledIndex, InstallManager, ResourceUtil, XMLUtil; unused constants remain |
+| FileUtil.delete(File):MutableList<File> | exact static method moves FileUtilJvm, preserves HEAD KFiles projection algorithm; outside SwordBookDriver, AbstractSwordInstaller, LuceneIndex/Manager (Java), NetUtilFileCharacterizationTest; no unused core Path API added |
+| CWProject all members; URIFilter.accept; DefaultURIFilter.accept | already common-ready paths/hooks at HEAD; retain reviewed property/cache/migration Path projection behavior; no replay of Task6/8/9 holders |
+
+### Task 14 exact platform inventory
+
+`NetUtilPlatform.jvm.kt` contains plain internal helpers for Task16 common
+expects/JVM actuals/Native actuals: `netUriSyntaxFailure(Throwable): Boolean`
+(exact URISyntaxException only), `netCanRead(KUri): Boolean`,
+`netCanWrite(KUri): Boolean` (File(decoded path) access),
+`netCheckResource(KUri): Unit` (open and close non-file URL input),
+`netUrlSize(KUri): Int`, `netUrlLastModified(KUri): Long` (URLConnection,
+including JarURLConnection entry time), `netLoadProperties(KUri): PropertyMap`,
+`netStoreProperties(PropertyMap?, KUri, String?): Unit`,
+`netTemporaryUri(String, String?): KUri`, and
+`netListByIndexFile(KUri, URIFilter?): Array<String>`.
+Property hooks retain lexical URI stream input/output, explicit load-close plus
+finally-close, output-open before null/copy/store, JDK Properties format/order and
+owned IOUtil close suppression. Index hook retains UTF-8 decode and IndexFiles
+parsing, closing the actual stream even when the filter throws. Temporary URI
+retains prefix validation, null suffix default and real creation.
+`IOUtilPlatform.jvm.kt` contains `ioZipEntry(String): ByteArray`, retaining exact
+commons ZipFile lookup, size allocation, declared-size read loop and closure.
+Native must implement those actual behaviors without a JVM/commons dependency;
+non-file transport behavior is not silently replaced by Path filesystem IO.
+
+`internal typealias NetMalformedURLException = java.net.MalformedURLException`
+is plain JVM now; Task16 declares the internal expect IOException subclass with
+String constructor and JVM actual typealias, plus Native IOException subclass.
+Java throws lists are byte-for-byte unchanged (observed ApiParity has no exception
+allowance). Native KUri currently throws generic IllegalArgumentException; Task16
+must introduce a precise syntax failure subtype at its actual parser/constructor
+boundary, classify only that type in netUriSyntaxFailure, and rethrow unrelated
+IllegalArgumentException. Do not blanket-swallow that stdlib type.
+
+Task11 WebResourceIo now qualifies NetUtilJvm.getOutputStream directly, preserving
+its special non-interrupting sink adapter. ResourceHomeHook.setUriCachePath
+qualifies the exact JVM cache holder; its existing Path projection is unchanged.
+Task16 adds expects/actuals, Task17 supplies Native behavior tests. Exception alias
+is permanent; platform URI input/output/property/info operations retain non-file
+URL behavior on JVM. No native runtime claim is made by JVM characterization.
+All caller inventories include production/tests and existing holders; imports,
+comments and reference-only documentation are not calls.
+
 ## Task 11 HTTP transport handoff
 
 `HttpTransport` is common now; WebResource/install exceptions remain JVM until Task 16.

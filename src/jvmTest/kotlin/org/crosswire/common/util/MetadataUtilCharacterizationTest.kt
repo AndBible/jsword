@@ -107,7 +107,7 @@ class MetadataUtilCharacterizationTest {
         val home = java.nio.file.Files.createTempDirectory("k4-home").toFile()
         val projectCtor = CWProject::class.java.getDeclaredConstructor().apply { isAccessible = true }
         val oldProperty = System.getProperty("jsword.home")
-        val oldCache = NetUtil.getURICacheDir()
+        val oldCache = NetUtilJvm.getURICacheDir()
         try {
             System.setProperty("jsword.home", home.path)
             val project = projectCtor.newInstance()
@@ -119,7 +119,7 @@ class MetadataUtilCharacterizationTest {
             kotlin.test.assertTrue(java.io.File(child).isDirectory)
         } finally {
             if (oldProperty == null) System.clearProperty("jsword.home") else System.setProperty("jsword.home", oldProperty)
-            NetUtil.setURICacheDir(oldCache)
+            NetUtilJvm.setURICacheDir(oldCache)
             setResourceHome(CWProject.instance().projectResourceDirs)
             home.deleteRecursively()
         }

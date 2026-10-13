@@ -33,8 +33,11 @@ import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.CollectionUtil
 import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.FileUtilJvm
 import org.crosswire.common.util.IOUtil
+import org.crosswire.common.util.IOUtilJvm
 import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.NetUtilJvm
 import org.crosswire.common.util.StringUtil
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
@@ -115,7 +118,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             return false
         }
 
-        val configURI = NetUtil.getURI(conf)
+        val configURI = NetUtilJvm.getURI(conf)
 
         val remote = toRemoteURI(book)
         return NetUtil.isNewer(remote!!, configURI, proxyHost, proxyPort)
@@ -246,14 +249,14 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             if (!job.isFinished) {
                 //copy into mods.d and modules under SWORD_HOME
                 val dldir = SwordBookPathJvm.getSwordDownloadDir()
-                IOUtil.unpackZip(NetUtil.getAsFile(temp), dldir, true, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
+                IOUtilJvm.unpackZip(NetUtilJvm.getAsFile(temp), dldir, true, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
 
                 //copy everything else into JSWORD_HOME
-                val jswordHome = NetUtil.getAsFile(CWProject.instance().writableProjectDir!!)
-                IOUtil.unpackZip(NetUtil.getAsFile(temp), jswordHome, false, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
+                val jswordHome = NetUtilJvm.getAsFile(CWProject.instance().writableProjectDir!!)
+                IOUtilJvm.unpackZip(NetUtilJvm.getAsFile(temp), jswordHome, false, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
                 // TRANSLATOR: Progress label for installing the conf file for a book.
                 job.sectionName = JSMsg.gettext("Copying config file")
-                sbmd.library = NetUtil.getURI(dldir)
+                sbmd.library = NetUtilJvm.getURI(dldir)
                 SwordBookDriver.registerNewBook(sbmd)
             }
 
@@ -310,10 +313,10 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
                 val dirConfOld = File(confDirPathOld)
                 // Get rid of the old. It shouldn't be there, but just in case
                 if (dirConfOld.exists()) {
-                    FileUtil.delete(dirConfOld)
+                    FileUtilJvm.delete(dirConfOld)
                 }
                 if (!dirConf.renameTo(dirConfOld)) {
-                    errors = FileUtil.delete(File(confDirPath))
+                    errors = FileUtilJvm.delete(File(confDirPath))
                 }
                 // TODO(DM): list all that failed
                 if (errors != null && !errors.isEmpty()) {
@@ -324,7 +327,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
 
                 unpack(cacheDir, cache)
                 // Best effort to delete
-                FileUtil.delete(dirConfOld)
+                FileUtilJvm.delete(dirConfOld)
             }
 
             loaded = false
@@ -365,7 +368,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     @Throws(IOException::class)
     protected open fun unpack(cacheDir: URI?, cache: URI?) {
         org.crosswire.jsword.book.install.SwordArchive.tarGzConfsToZipSpelling(
-            NetUtil.getAsFile(cache!!).path, File(cacheDir!!.path, "mods.d.zip").path
+            NetUtilJvm.getAsFile(cache!!).path, File(cacheDir!!.path, "mods.d.zip").path
         )
     }
 
@@ -398,7 +401,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             unpack(cacheDir, cache)
         }
 
-        org.crosswire.jsword.book.install.SwordArchive.visitConfZipSpelling(NetUtil.getAsFile(confDir).path) { path, buffer ->
+        org.crosswire.jsword.book.install.SwordArchive.visitConfZipSpelling(NetUtilJvm.getAsFile(confDir).path) { path, buffer ->
                 // Set the path to something that gives the path to the zip and the entry in the zip
                 val sbmd = SwordBookMetaData(buffer, confDir.path + '!' + path)
                 sbmd.setDriver(fake)

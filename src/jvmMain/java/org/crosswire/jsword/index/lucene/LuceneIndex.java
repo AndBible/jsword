@@ -43,8 +43,10 @@ import org.apache.lucene.util.Version;
 import org.crosswire.common.progress.JobManager;
 import org.crosswire.common.progress.Progress;
 import org.crosswire.common.util.FileUtil;
+import org.crosswire.common.util.FileUtilJvm;
 import org.crosswire.common.util.IOUtil;
 import org.crosswire.common.util.NetUtil;
+import org.crosswire.common.util.NetUtilJvm;
 import org.crosswire.common.util.Reporter;
 import org.crosswire.jsword.JSMsg;
 import org.crosswire.jsword.book.Book;
@@ -153,7 +155,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
         this.book = book;
 
         try {
-            this.path = NetUtil.getAsFile(storage).getCanonicalPath();
+            this.path = NetUtilJvm.getAsFile(storage).getCanonicalPath();
         } catch (IOException ex) {
             // TRANSLATOR: Error condition: Could not initialize a search index.
             throw new BookException(JSMsg.gettext("Failed to initialize Lucene search engine."), ex);
@@ -175,7 +177,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
         this.book = book;
         File finalPath = null;
         try {
-            finalPath = NetUtil.getAsFile(storage);
+            finalPath = NetUtilJvm.getAsFile(storage);
             this.path = finalPath.getCanonicalPath();
         } catch (IOException ex) {
             // TRANSLATOR: Error condition: Could not initialize a search index. Lucene is the name of the search technology being used.
@@ -196,7 +198,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
         // Ensure that the temp path is gone
         // It is not good for it to have been leftover from before.
         if (tempPath.exists()) {
-            FileUtil.delete(tempPath);
+            FileUtilJvm.delete(tempPath);
         }
 
         // Lock on metadata to allow creation of multiple indexes, so long as they are on different books.
@@ -258,7 +260,7 @@ public class LuceneIndex extends AbstractIndex implements Closeable {
                 job.done();
                 // Ensure that the temp path is gone - errors can leave it there and cause further problems.
                 if (tempPath.exists()) {
-                    FileUtil.delete(tempPath);
+                    FileUtilJvm.delete(tempPath);
                 }
             }
         }

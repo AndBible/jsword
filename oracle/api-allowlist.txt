@@ -503,3 +503,17 @@ org.crosswire.common.progress.WorkListener - C interface public extends null imp
 org.crosswire.common.progress.WorkListener + C interface public extends null implements [] # K4 seam: common event/listener surface; Serializable marker and frozen UID retained, EventObject superclass descriptor intentionally replaced.
 org.crosswire.common.util.ReporterListener - C interface public extends null implements [java.util.EventListener] # K4 seam: common event/listener surface; Serializable marker and frozen UID retained, EventObject superclass descriptor intentionally replaced.
 org.crosswire.common.util.ReporterListener + C interface public extends null implements [] # K4 seam: common event/listener surface; Serializable marker and frozen UID retained, EventObject superclass descriptor intentionally replaced.
+
+org.crosswire.common.util.FileUtil - M public static delete(java.io.File): java.util.List throws [] # K4 split
+org.crosswire.common.util.IOUtil - M public static unpackZip(java.io.File,java.io.File): void throws [java.io.IOException] # K4 split
+org.crosswire.common.util.IOUtil - M public static varargs unpackZip(java.io.File,java.io.File,boolean,java.lang.String[]): void throws [java.io.IOException] # K4 split
+org.crosswire.common.util.NetUtil - M public static getAsFile(java.net.URI): java.io.File throws [java.io.IOException] # K4 split
+org.crosswire.common.util.NetUtil - M public static getInputStream(java.net.URI): java.io.InputStream throws [java.io.IOException] # K4 split
+org.crosswire.common.util.NetUtil - M public static getOutputStream(java.net.URI): java.io.OutputStream throws [java.io.IOException] # K4 split
+org.crosswire.common.util.NetUtil - M public static getOutputStream(java.net.URI,boolean): java.io.OutputStream throws [java.io.IOException] # K4 split
+org.crosswire.common.util.NetUtil - M public static getURI(java.io.File): java.net.URI throws [] # K4 split
+org.crosswire.common.util.NetUtil - M public static getURICacheDir(): java.io.File throws [] # K4 split
+org.crosswire.common.util.NetUtil - M public static setURICacheDir(java.io.File): void throws [] # K4 split
+org.crosswire.common.util.NetUtil - M public static toURI(java.net.URL): java.net.URI throws [] # K4 split
+org.crosswire.common.util.NetUtil - M public static toURL(java.net.URI): java.net.URL throws [] # K4 split
+org.crosswire.common.util.NetUtil$URIFilterFilenameFilter - <class> # K4 split

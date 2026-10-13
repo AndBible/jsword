@@ -104,7 +104,7 @@ class SwordArchiveTest {
         println("LEGACY STREAM BACKSLASH ${confs(archive).map { it.first }}")
         assertEquals(confs(archive), SwordArchive.readConfZipSpelling(archive.path).map { it.first to it.second.toList() })
         LegacyArchiveReference.unpackZip(archive, old)
-        org.crosswire.common.util.IOUtil.unpackZip(archive, new)
+        org.crosswire.common.util.IOUtilJvm.unpackZip(archive, new)
         assertEquals(tree(old), tree(new))
         assertTrue(File(new,"mods.d/literal.conf").isFile)
     }
@@ -143,13 +143,13 @@ class SwordArchiveTest {
         val file=File(root,"bad.zip").apply { writeBytes(bytes) }
         val old=File(root,"old").apply { mkdirs() }; val new=File(root,"new").apply { mkdirs() }
         val reference=runCatching { LegacyArchiveReference.unpackZip(file,old) }
-        val actual=runCatching { org.crosswire.common.util.IOUtil.unpackZip(file,new) }
+        val actual=runCatching { org.crosswire.common.util.IOUtilJvm.unpackZip(file,new) }
         println("LATE DEFLATE old=${reference.exceptionOrNull()?.javaClass?.name} new=${actual.exceptionOrNull()?.javaClass?.name} oldtree=${old.listFiles()!!.map { it.name to it.length() }}")
         assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
         assertTrue(File(old,"later.conf").length()>4096)
         assertEquals(tree(old),tree(new))
         val filtered=File(root,"filtered").apply { mkdirs() }
-        org.crosswire.common.util.IOUtil.unpackZip(file,filtered,true,"first")
+        org.crosswire.common.util.IOUtilJvm.unpackZip(file,filtered,true,"first")
         assertEquals(mapOf("first.conf" to listOf<Byte>(1)),tree(filtered))
     }
 

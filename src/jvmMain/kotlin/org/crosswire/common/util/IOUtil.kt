@@ -19,13 +19,9 @@
  */
 package org.crosswire.common.util
 
-import org.apache.commons.compress.archivers.zip.ZipFile
-import org.crosswire.jsword.JSMsg
-import java.io.Closeable
-import java.io.File
-import java.io.IOException
-import java.net.MalformedURLException
-import java.util.Locale
+import okio.Closeable
+import okio.IOException
+import kotlin.jvm.JvmStatic
 
 /**
  * .
@@ -40,44 +36,6 @@ class IOUtil
 private constructor() {
     companion object {
         /**
-         * Unpack a zip file to a given directory. Honor the paths as given in the
-         * zip file.
-         *
-         * @param file
-         *            The zip file to download
-         * @param destdir
-         *            The directory to unpack up
-         * @throws IOException
-         *             If there is an file error
-         */
-        @JvmStatic
-        @Throws(IOException::class)
-        fun unpackZip(file: File, destdir: File) {
-            unpackZip(file, destdir, true)
-        }
-
-        /**
-         * Unpack a zip file to a given directory. Honor the paths as given in the
-         * zip file.
-         *
-         * @param file
-         *            The zip file to download
-         * @param destdir
-         *            The directory to unpack up
-         * @param include
-         *            true to indicate the next arguments will be a filter that only includes what is specified.
-         * @param includeExcludes
-         *            a list of case insensitive patterns that will act as an inclusion or exclusion prefix
-         * @throws IOException
-         *            If there is an file error
-         */
-        @JvmStatic
-        @Throws(IOException::class)
-        fun unpackZip(file: File, destdir: File, include: Boolean, vararg includeExcludes: String) {
-            org.crosswire.jsword.book.install.SwordArchive.unpackZipSpelling(file.path, destdir.path, include, *includeExcludes)
-        }
-
-        /**
          * Get a zip entry by specification, returning a buffer of the contents.
          * If there is an error, return a zero length buffer.
          *
@@ -88,31 +46,7 @@ private constructor() {
         @JvmStatic
         @Throws(IOException::class)
         fun getZipEntry(entrySpec: String): ByteArray {
-            // Get the buffer
-            var buffer = ByteArray(0)
-            val parts = StringUtil.split(entrySpec, '!')
-            var zipFile: ZipFile? = null
-            var zin: java.io.InputStream? = null
-            try {
-                zipFile = ZipFile(parts[0])
-                val entry = zipFile.getEntry(parts[1])
-                zin = zipFile.getInputStream(entry)
-                val size = entry.size.toInt()
-                buffer = ByteArray(size)
-                // Repeatedly read until all has been read
-                var offset = 0
-                while (offset < size) {
-                    offset += zin.read(buffer, offset, size - offset)
-                }
-
-                if (offset != size) {
-                    log.error("Error: Could not read {} bytes, instead {}, for {} from {}", Integer.toString(size), Integer.toString(offset), parts[1], parts[0])
-                }
-            } finally {
-                IOUtil.close(zin)
-                IOUtil.close(zipFile)
-            }
-            return buffer
+            return ioZipEntry(entrySpec)
         }
 
         /**

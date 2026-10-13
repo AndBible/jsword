@@ -27,8 +27,11 @@ import java.util.Map;
 
 import org.crosswire.common.util.CWProject;
 import org.crosswire.common.util.FileUtil;
+import org.crosswire.common.util.FileUtilJvm;
 import org.crosswire.common.util.IOUtil;
+import org.crosswire.common.util.IOUtilJvm;
 import org.crosswire.common.util.NetUtil;
+import org.crosswire.common.util.NetUtilJvm;
 import org.crosswire.common.util.Reporter;
 import org.crosswire.jsword.JSMsg;
 import org.crosswire.jsword.book.Book;
@@ -146,7 +149,7 @@ public class LuceneIndexManager implements IndexManager {
             // todo implement: Installed.Index.Version.Book.XXX value add/update in metadata file after creation, use value getLatestIndexVersion(book)
 
             // We were successful if the directory exists.
-            if (NetUtil.getAsFile(storage).exists()) {
+            if (NetUtilJvm.getAsFile(storage).exists()) {
                 finalStatus = IndexStatus.DONE;
                 INDEXES.put(book, index);
 
@@ -168,8 +171,8 @@ public class LuceneIndexManager implements IndexManager {
     public void installDownloadedIndex(Book book, URI tempDest) throws BookException {
         try {
             URI storage = getStorageArea(book);
-            File zip = NetUtil.getAsFile(tempDest);
-            IOUtil.unpackZip(zip, NetUtil.getAsFile(storage));
+            File zip = NetUtilJvm.getAsFile(tempDest);
+            IOUtilJvm.unpackZip(zip, NetUtilJvm.getAsFile(storage));
             //todo Index.Version management??
         } catch (IOException ex) {
             // TRANSLATOR: The search index could not be moved to it's final location.
@@ -194,12 +197,12 @@ public class LuceneIndexManager implements IndexManager {
                 index.close();
             }
 
-            File storage = NetUtil.getAsFile(getStorageArea(book));
+            File storage = NetUtilJvm.getAsFile(getStorageArea(book));
             String finalCanonicalPath = storage.getCanonicalPath();
             tempPath = new File(finalCanonicalPath + '.' + IndexStatus.CREATING.toString());
 
             if (tempPath.exists()) {
-                FileUtil.delete(tempPath);
+                FileUtilJvm.delete(tempPath);
             }
 
             // Issues in at least Windows seem to create issues with reusing a file that's been deleted... 
@@ -220,7 +223,7 @@ public class LuceneIndexManager implements IndexManager {
             throw new BookException(JSMsg.gettext("Failed to delete search index."), ex);
         }
 
-        FileUtil.delete(tempPath);
+        FileUtilJvm.delete(tempPath);
     }
 
     /* (non-Javadoc)

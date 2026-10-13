@@ -86,7 +86,7 @@ public class PropertyMapTest {
         URI uri = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES);
         OutputStream out = null;
         try {
-            out = NetUtil.getOutputStream(uri);
+            out = NetUtilJvm.getOutputStream(uri);
             PropertyMapJvm.store(m, out, "Test data can be deleted at any time");
         } catch (IOException e) {
             Assert.fail("Unable to save test.properties");
@@ -102,7 +102,7 @@ public class PropertyMapTest {
         InputStream is = null;
         URI uri = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES);
         try {
-            is = NetUtil.getInputStream(uri);
+            is = NetUtilJvm.getInputStream(uri);
             PropertyMapJvm.load(m, is);
         } catch (IOException e) {
             Assert.fail("Unable to reload test.properties");

@@ -38,6 +38,7 @@ import org.crosswire.common.progress.Progress;
 import org.crosswire.common.util.CWClassLoader;
 import org.crosswire.common.util.CWProject;
 import org.crosswire.common.util.NetUtil;
+import org.crosswire.common.util.NetUtilJvm;
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.BookFilters;
 import org.crosswire.jsword.book.Books;
@@ -106,7 +107,7 @@ public class SwordInstallerCharacterizationTest {
         CWProject restored = (CWProject) savedInstance;
         CWClassLoader.setHome(restored.getProjectResourceDirs());
         URI writable = restored.getWritableProjectDir();
-        NetUtil.setURICacheDir(new File(new File(writable), "netcache"));
+        NetUtilJvm.setURICacheDir(new File(new File(writable), "netcache"));
 
         deleteRecursively(tempHome);
         deleteRecursively(work);

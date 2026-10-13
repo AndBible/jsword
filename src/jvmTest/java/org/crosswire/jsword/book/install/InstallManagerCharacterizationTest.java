@@ -33,6 +33,7 @@ import java.util.TreeSet;
 import org.crosswire.common.util.CWClassLoader;
 import org.crosswire.common.util.CWProject;
 import org.crosswire.common.util.NetUtil;
+import org.crosswire.common.util.NetUtilJvm;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -86,7 +87,7 @@ public class InstallManagerCharacterizationTest {
         CWProject restored = (CWProject) savedInstance;
         CWClassLoader.setHome(restored.getProjectResourceDirs());
         URI writable = restored.getWritableProjectDir();
-        NetUtil.setURICacheDir(new File(new File(writable), "netcache"));
+        NetUtilJvm.setURICacheDir(new File(new File(writable), "netcache"));
 
         deleteRecursively(tempHome);
     }
