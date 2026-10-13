@@ -81,3 +81,4 @@ org/crosswire/jsword/book/sword/state/RawLDBackendState.kt #done
 org/crosswire/jsword/book/sword/state/ZLDBackendState.kt #done
 org/crosswire/jsword/book/sword/state/ZVerseBackendState.kt #done
 org/crosswire/jsword/index/IndexStatus.kt #done
+org/crosswire/jsword/book/install/SwordArchive.kt

@@ -24,19 +24,10 @@ package org.crosswire.jsword.book.install.sword
 
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import java.net.URI
 import java.util.ArrayList
 import java.util.HashMap
 
-import org.apache.commons.compress.archivers.ArchiveEntry
-import org.apache.commons.compress.archivers.ArchiveInputStream
-import org.apache.commons.compress.archivers.ArchiveOutputStream
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.crosswire.common.progress.JobManager
 import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.CWProject
@@ -373,58 +364,9 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      */
     @Throws(IOException::class)
     protected open fun unpack(cacheDir: URI?, cache: URI?) {
-        var fin: InputStream? = null
-        var gin: GzipCompressorInputStream? = null
-        var tin: ArchiveInputStream? = null
-        var zout: ArchiveOutputStream? = null
-
-        try {
-            // The following is faster if it is passed a file.
-            zout = ZipArchiveOutputStream(File(cacheDir!!.path, "mods.d.zip"))
-            fin = NetUtil.getInputStream(cache!!)
-            gin = GzipCompressorInputStream(fin)
-            tin = TarArchiveInputStream(gin)
-            while (true) {
-                val entry: ArchiveEntry? = tin.nextEntry
-                if (entry == null) {
-                    break
-                }
-
-                // We'll create the mods.d directory elsewhere
-                if (entry.isDirectory) {
-                    continue
-                }
-
-                val path = entry.name
-
-                if (!path.endsWith(SwordConstants.EXTENSION_CONF)) {
-                    log.error("Not a SWORD config file: {}", path)
-                    continue
-                }
-
-                val size = entry.size.toInt()
-                // Every now and then an empty entry sneaks in
-                if (size == 0) {
-                    log.error("Empty entry: {}", path)
-                    continue
-                }
-
-                val zipEntry: ArchiveEntry = ZipArchiveEntry(path)
-                zout.putArchiveEntry(zipEntry)
-                val buffer = ByteArray(size)
-                val n = tin.read(buffer)
-                if (n != size) {
-                    log.error("Error: Could not read {} bytes for {} from {}", Integer.toString(size), path, cache.path)
-                }
-                zout.write(buffer, 0, n)
-                zout.closeArchiveEntry()
-            }
-        } finally {
-            IOUtil.close(tin)
-            IOUtil.close(gin)
-            IOUtil.close(fin)
-            IOUtil.close(zout)
-        }
+        org.crosswire.jsword.book.install.SwordArchive.tarGzConfsToZipSpelling(
+            NetUtil.getAsFile(cache!!).path, File(cacheDir!!.path, "mods.d.zip").path
+        )
     }
 
     /**
@@ -456,48 +398,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             unpack(cacheDir, cache)
         }
 
-        var fin: InputStream? = null
-        var zin: ZipArchiveInputStream? = null
-        try {
-            fin = NetUtil.getInputStream(confDir)
-            zin = ZipArchiveInputStream(fin)
-            while (true) {
-                val entry: ArchiveEntry? = zin.nextZipEntry
-                if (entry == null) {
-                    break
-                }
-
-                // We'll create the mods.d directory elsewhere
-                if (entry.isDirectory) {
-                    continue
-                }
-
-                val path = entry.name
-
-                if (!path.endsWith(SwordConstants.EXTENSION_CONF)) {
-                    log.error("Not a SWORD config file: {}", path)
-                    continue
-                }
-
-                val size = entry.size.toInt()
-                // Every now and then an empty entry sneaks in
-                if (size == 0) {
-                    log.error("Empty entry: {}", path)
-                    continue
-                }
-
-                // Create a buffer of the right size
-                val buffer = ByteArray(size)
-                // Repeatedly read until all has been read
-                var offset = 0
-                while (offset < size) {
-                    offset += zin.read(buffer, offset, size - offset)
-                }
-
-                if (offset != size) {
-                    log.error("Error: Could not read {} bytes, instead {}, for {} from {}", Integer.toString(size), Integer.toString(offset), path, cache.path)
-                }
-
+        for ((path, buffer) in org.crosswire.jsword.book.install.SwordArchive.readConfZipSpelling(NetUtil.getAsFile(confDir).path)) {
                 // Set the path to something that gives the path to the zip and the entry in the zip
                 val sbmd = SwordBookMetaData(buffer, confDir.path + '!' + path)
                 sbmd.setDriver(fake)
@@ -509,10 +410,6 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
 
                 val book: Book = SwordBook(sbmd, nullBackend)
                 entries[book.initials + book.name] = book
-            }
-        } finally {
-            IOUtil.close(fin)
-            IOUtil.close(zin)
         }
         loaded = true
     }

@@ -1,0 +1,33 @@
+K4 Task 13 archive fixtures, retrieved 2026-10-13
+
+mods.d.tar.gz
+Source: https://crosswire.org/ftpmirror/pub/sword/raw/mods.d.tar.gz
+Size: 206219 bytes
+SHA-256: e172d430bdc51e9c574a502de1287508333e9ffa16e41cc429c8585a486aae7c
+429 members (428 regular .conf files and one directory).
+This is a repository metadata catalog, not module text or a repository census.
+
+ASV.zip
+Source: https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/ASV.zip
+Size: 3285762 bytes
+SHA-256: 8f3d708510f7122a947a1c3eaa775a03c8ef5b1d456833abf506b78e689fcf18
+Seven DEFLATED entries. mods.d/asv.conf declares DistributionLicense=Public Domain.
+The American Standard Version (1901) text is public domain.
+
+legacy-mods.d.zip
+Size: 473109 bytes
+SHA-256: b524f25179397b246aeb512f092872acf0d25140448a0ee37866f7f557cbd656
+Generated BEFORE replacement by ArchiveLegacyCharacterizationTest.saveActualLegacyCache
+calling the actual protected AbstractSwordInstaller.unpack via HttpSwordInstaller subclass,
+with jsword production at cba5125baa4d7541d717570b585bbbafd153779b.
+428 DEFLATED entries written by commons-compress 1.12, committed at c8902cda.
+Immutable compatibility fixture: tests must not regenerate/overwrite it after porting.
+
+Download safety and unavailable alternatives
+The originally prescribed www.crosswire.org URLs returned HTTP 403.
+The alternate crosswire.org host succeeded. WEB.zip returned HTTP 404.
+KJV.zip was downloaded and inspected but NOT included (GPL declaration, not assumed public domain).
+Each archive was downloaded into its own new empty directory outside test resources.
+Python inspection used -I from the repository cwd; no downloaded content was executed.
+All tar/zip names were inspected before copying; no absolute, dotdot or backslash-traversal names.
+No extracted archive was used as a script directory or working directory.

@@ -27,8 +27,7 @@ class ArchiveLegacyCharacterizationTest {
         try {
             val input = File("jsword/src/jvmTest/resources/k4-archives/mods.d.tar.gz")
                 .let { if (it.exists()) it else File("src/jvmTest/resources/k4-archives/mods.d.tar.gz") }
-            Installer().expand(root, input)
-            val cache = File(root, "mods.d.zip")
+            val cache = File(input.parentFile, "legacy-mods.d.zip")
             ZipFile(cache).use { zip ->
                 val entries = zip.entries.toList()
                 assertEquals(428, entries.size)
@@ -88,7 +87,7 @@ class ArchiveLegacyCharacterizationTest {
             val zip = File(root, "input.zip")
             zip(zip, listOf("../escaped"))
             val dest = File(root, "dest").apply { mkdirs() }
-            IOUtil.unpackZip(zip, dest)
+            LegacyArchiveReference.unpackZip(zip, dest)
             assertTrue(File(root, "escaped").exists())
         } finally { root.deleteRecursively() }
     }
@@ -98,7 +97,7 @@ class ArchiveLegacyCharacterizationTest {
             val output = ByteArrayOutputStream()
             TarArchiveOutputStream(GZIPOutputStream(output)).use { tar ->
                 entries.forEach { (name, bytes) ->
-                    tar.putArchiveEntry(TarArchiveEntry(name).apply { size = bytes.size.toLong() })
+                    tar.putArchiveEntry(TarArchiveEntry(name, true).apply { size = bytes.size.toLong() })
                     tar.write(bytes)
                     tar.closeArchiveEntry()
                 }

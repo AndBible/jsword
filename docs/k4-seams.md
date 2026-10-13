@@ -512,6 +512,52 @@ this with normalized Path I/O. Tasks 16-17 move JobCancellerTest and portable
 listener tests to commonTest; real Thread, reflection/ObjectStreamClass, and
 blocked-read JVM characterization remain jvmTest.
 
+## Task 13 archive handoff
+
+`TarReader` and `StoredZipWriter` live in commonMain now. `SwordArchive` is path 83
+in the move list, common-ready in jvmMain until Task 16. TarReader's internal
+`consumeLegacyBlockPadding()` consumes up to the next 10240-byte tar block boundary
+like commons-compress 1.12 (short EOF accepted), not the rest of the gzip member.
+A 24-case frozen legacy differential covers termination before/at/after that
+boundary, extra tar-tail bytes, truncated gzip trailers and corrupt CRCs.
+
+`ArchivePlatform.jvm.kt` supplies plain internal helpers; Task 16 adds matching
+common expects and JVM actual modifiers, and supported Native actuals:
+
+- `archiveRead(String): ByteArray`, `archiveSink(String): BufferedSink` preserve
+  lexical File spelling, owned output close and filesystem errors.
+- `archiveGzipSource(String): BufferedSource` owns File input plus the original
+  first-member-only commons gzip wrapper. Native must support gzip (not throw
+  unsupported), trailing/concatenated-member acceptance, incremental validation
+  and read-consumption/error timing. Do not drain past legacy tar block padding.
+- `archiveLowercase(String): String` uses JVM Locale.getDefault(), NOT JSword
+  locale. Filter strings/output names remain unchanged; the Boolean is include.
+- `archiveZipName(ByteArray, Boolean): String` retains commons' default UTF-8
+  decoding (including unflagged UTF-8 names), not CP437 by assumption.
+- `archiveInflate(ByteArray, Int): ByteArray` is an intermediate unused bounded
+  raw inflater helper; remove it once the streaming decoder is finalized.
+- `archiveInflateSource(ByteArray): Source` uses InflaterInputStream with raw
+  Inflater(true), preserving ZipException and successful chunks before late failure.
+  Native uses negative-windowBits zlib with equivalent streaming/error behavior.
+- `archiveExtract(String, String, Boolean, () -> Source): Unit` performs lexical File
+  child joins, canonical containment check against existing symlinks, legacy
+  parent mkdir/error text, output case preservation and owned output close.
+  Native must preserve literal filename spelling and enforce equivalent containment.
+
+Task 13 is an INCOMPLETE checkpoint: controller continuation must implement
+readConfZip sequential local-header behavior distinct from unpackZip central-index
+behavior, and remove unapproved strict metadata checks where legacy accepts.
+The current reader iterates central-directory records, retaining duplicate names and
+nonalphabetical order. It supports single-disk STORED/DEFLATED, descriptors and
+bounded ZIP64 metadata; payloads must fit Int/ByteArray. Encrypted/unsupported
+methods, malformed headers/lengths/CRC and multidisk archives fail explicitly.
+Traversal/drive/UNC/dotdot names are rejected (tar/conf cache skipped, module ZIP
+throws); existing symlink destination escapes are rejected. These are deliberate
+security fixes over the frozen legacy extractor, which permitted contained zip-slip.
+ZIP symlink entries remain ordinary files as in the old extractor. No global
+Path-to-File map or IOUtil-wide split is introduced. File-facing callers pass
+literal spelling directly to internal adapter entry points; Path APIs are projections.
+
 ## Task 11 HTTP transport handoff
 
 `HttpTransport` is common now; WebResource/install exceptions remain JVM until Task 16.
