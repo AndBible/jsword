@@ -245,7 +245,7 @@ open class TreeKeyIndex
             throw BookException(JSOtherMsg.lookupText("Missing data files for old and new testaments in {0}."))
         }
 
-        return storageAbsolute(StorageLocation(loc.getPath()))
+        return storageAbsolute(StorageLocation(loc.getPath()!!))
     }
 
     private companion object {

@@ -5,8 +5,8 @@ import java.util.Calendar
 import java.util.GregorianCalendar
 
 /** K4 date seam; becomes expect/actual in Task 16, retaining JVM locale and current year. */
-object DevotionDateFormat {
-    fun format(month: Int, day: Int): String {
+actual object DevotionDateFormat {
+    actual fun format(month: Int, day: Int): String {
         val greg = GregorianCalendar()
         val nameDF = DateFormatter.getDateInstance()
         greg.set(Calendar.MONTH, month - 1)
@@ -14,7 +14,7 @@ object DevotionDateFormat {
         return nameDF.format(greg.time)!!
     }
 
-    fun parseMonthDay(text: String): Pair<Int, Int>? {
+    actual fun parseMonthDay(text: String): Pair<Int, Int>? {
         val greg = GregorianCalendar()
         val nameDF = DateFormatter.getDateInstance()
         nameDF.setLenient(true)

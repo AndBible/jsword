@@ -3,10 +3,9 @@ package org.crosswire.common.util
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-fun interface Cancellable { fun cancel() }
 
 /** One daemon thread per schedule, fixed delay, first run immediately. */
-fun scheduleRepeating(periodMs: Long, task: () -> Unit): Cancellable {
+actual fun scheduleRepeating(periodMs: Long, task: () -> Unit): Cancellable {
     val executor = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable).apply { isDaemon = true }
     }

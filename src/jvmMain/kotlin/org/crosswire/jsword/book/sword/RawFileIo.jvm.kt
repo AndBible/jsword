@@ -3,11 +3,11 @@ package org.crosswire.jsword.book.sword
 import java.io.*
 import org.crosswire.common.util.Logger
 
-internal fun rawFileCreate(location: StorageLocation): Boolean = File(location.spelling).createNewFile()
-internal fun rawFileNumber(value: Long, newline: Boolean): String = String.format(if (newline) "%07d\r\n" else "%07d", value)
-internal fun rawFileDecodeName(data: ByteArray): String = String(data, 0, 7, java.nio.charset.Charset.defaultCharset())
+internal actual fun rawFileCreate(location: StorageLocation): Boolean = File(location.spelling).createNewFile()
+internal actual fun rawFileNumber(value: Long, newline: Boolean): String = String.format(if (newline) "%07d\r\n" else "%07d", value)
+internal actual fun rawFileDecodeName(data: ByteArray): String = String(data, 0, 7, java.nio.charset.Charset.defaultCharset())
 
-internal fun rawFileAppend(location: StorageLocation, ordinal: Long, charset: String?) {
+internal actual fun rawFileAppend(location: StorageLocation, ordinal: Long, charset: String?) {
     var stream: BufferedOutputStream? = null
     try {
         stream = BufferedOutputStream(FileOutputStream(File(location.spelling), true))
@@ -15,7 +15,7 @@ internal fun rawFileAppend(location: StorageLocation, ordinal: Long, charset: St
     } finally { stream?.close() }
 }
 
-internal fun rawFileWrite(location: StorageLocation, data: ByteArray) {
+internal actual fun rawFileWrite(location: StorageLocation, data: ByteArray) {
     var stream: BufferedOutputStream? = null
     try {
         stream = BufferedOutputStream(FileOutputStream(File(location.spelling), false))
@@ -23,7 +23,7 @@ internal fun rawFileWrite(location: StorageLocation, data: ByteArray) {
     } finally { stream?.close() }
 }
 
-internal fun rawFileRead(location: StorageLocation, log: Logger): ByteArray {
+internal actual fun rawFileRead(location: StorageLocation, log: Logger): ByteArray {
     val file = File(location.spelling)
     var stream: BufferedInputStream? = null
     try {
@@ -41,7 +41,7 @@ internal fun rawFileRead(location: StorageLocation, log: Logger): ByteArray {
     } finally { stream?.close() }
 }
 
-internal fun rawFileWriteInc(location: StorageLocation?, data: ByteArray, log: Logger) {
+internal actual fun rawFileWriteInc(location: StorageLocation?, data: ByteArray, log: Logger) {
     var stream: FileOutputStream? = null
     try {
         stream = FileOutputStream(location?.let { File(it.spelling) }, false)
@@ -51,7 +51,7 @@ internal fun rawFileWriteInc(location: StorageLocation?, data: ByteArray, log: L
     } finally { stream?.close() }
 }
 
-internal fun rawFilePopulate(location: StorageLocation, count: Int) {
+internal actual fun rawFilePopulate(location: StorageLocation, count: Int) {
     val stream = BufferedOutputStream(FileOutputStream(File(location.spelling), false))
     try { for (i in 0 until count) stream.write(ByteArray(6)) }
     finally { stream.close() }

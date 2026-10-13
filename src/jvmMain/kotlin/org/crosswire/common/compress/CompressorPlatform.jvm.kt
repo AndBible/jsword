@@ -13,7 +13,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.utils.IOUtils
 
 /** Plain JVM helpers until Task 16 supplies expect/actual declarations. */
-internal fun platformCompress(type: CompressorType, input: ByteArray): ByteArray {
+internal actual fun platformCompress(type: CompressorType, input: ByteArray): ByteArray {
     val bin = BufferedInputStream(ByteArrayInputStream(input))
     val bos = ByteArrayOutputStream()
     val out: CompressorOutputStream = when (type) {
@@ -28,7 +28,7 @@ internal fun platformCompress(type: CompressorType, input: ByteArray): ByteArray
     return bos.toByteArray()
 }
 
-internal fun platformUncompress(type: CompressorType, input: ByteArray, expectedLength: Int): ByteArray {
+internal actual fun platformUncompress(type: CompressorType, input: ByteArray, expectedLength: Int): ByteArray {
     val out = ByteArrayOutputStream(expectedLength)
     val cin: CompressorInputStream = when (type) {
         CompressorType.BZIP2 -> BZip2CompressorInputStream(ByteArrayInputStream(input))
@@ -43,7 +43,7 @@ internal fun platformUncompress(type: CompressorType, input: ByteArray, expected
 }
 
 /** Retains first-member-only gzip, trailing-byte acceptance and legacy IOException classes. */
-internal fun platformGzipUncompress(input: ByteArray, expectedLength: Int): ByteArray {
+internal actual fun platformGzipUncompress(input: ByteArray, expectedLength: Int): ByteArray {
     val out = ByteArrayOutputStream(expectedLength)
     val cin: CompressorInputStream = GzipCompressorInputStream(ByteArrayInputStream(input))
     IOUtils.copy(cin, out)

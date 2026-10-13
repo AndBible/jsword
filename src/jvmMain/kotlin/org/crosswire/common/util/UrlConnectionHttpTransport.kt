@@ -37,3 +37,5 @@ class UrlConnectionHttpTransport : HttpTransport {
         throw TransportCancelledException(error)
     }
 }
+
+actual fun defaultHttpTransport(): HttpTransport? = UrlConnectionHttpTransport()

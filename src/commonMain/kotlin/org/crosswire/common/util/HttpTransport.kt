@@ -28,3 +28,5 @@ interface HttpBody : okio.Closeable {
 
 /** A read interrupted or timed out (JVM InterruptedIOException, including SocketTimeoutException). */
 class TransportCancelledException(cause: Throwable? = null) : okio.IOException(null, cause)
+
+expect fun defaultHttpTransport(): HttpTransport?

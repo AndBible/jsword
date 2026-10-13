@@ -12,7 +12,7 @@ import org.jdom2.Element
 import java.util.Arrays
 
 /** K4 facade boundaries, JVM-only until their parameter types move in Task 16. */
-internal fun swordMetaDataToOsis(md: SwordBookMetaData): Document {
+internal actual fun swordMetaDataToOsis(md: SwordBookMetaData): Document {
     val knownKeys: MutableList<String> = ArrayList(md.osisConfig.keys)
     val factory = OSISUtil.factory()
     val table = factory.createTable()
@@ -41,9 +41,9 @@ internal fun swordMetaDataToOsis(md: SwordBookMetaData): Document {
     return Document(table)
 }
 
-internal fun sourceFilterFor(sourceType: String?): SourceFilter = SourceFilterFactory.getFilter(sourceType)
+internal actual fun sourceFilterFor(sourceType: String?): SourceFilter = SourceFilterFactory.getFilter(sourceType)
 
-internal fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book =
+internal actual fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book =
     when (type.toString()) {
         "RawLD", "RawLD4", "zLD" -> if (sbmd.bookCategory == BookCategory.DAILY_DEVOTIONS) {
             SwordDailyDevotion(sbmd, backend)
@@ -55,7 +55,7 @@ internal fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: B
         else -> throw UnsupportedOperationException("Unknown book type: $type")
     }
 
-internal fun registerSwordDriver() = Books.installed().registerDriver(SwordBookDriver.instance())
+internal actual fun registerSwordDriver() = Books.installed().registerDriver(SwordBookDriver.instance())
 
 private fun toRow(factory: OSISUtil.OSISFactory, key: String, value: String): Element {
     val nameEle = toKeyCell(factory, key)

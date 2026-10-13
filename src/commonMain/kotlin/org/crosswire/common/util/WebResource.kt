@@ -133,7 +133,7 @@ open class WebResource {
     open val size: Int
         get() {
             try {
-                val response = transport.head(uri!!, timeout)
+                val response = requireTransport().head(uri!!, timeout)
                 if (response.status == 200) {
                     return response.contentLength
                 }
@@ -158,7 +158,7 @@ open class WebResource {
     open val lastModified: Long
         get() {
             try {
-                val response = transport.head(uri!!, timeout)
+                val response = requireTransport().head(uri!!, timeout)
                 if (response.status == 200) {
                     return response.lastModified
                 }
@@ -188,7 +188,7 @@ open class WebResource {
         var statusCode = 0
 
         try {
-            `in` = transport.get(uri!!, timeout)
+            `in` = requireTransport().get(uri!!, timeout)
             // Initialize the meter, if present
             if (meter != null) {
                 // Find out how big it is
@@ -247,7 +247,10 @@ open class WebResource {
 
     companion object {
         @JvmStatic
-        var transport: HttpTransport = UrlConnectionHttpTransport()
+        var transport: HttpTransport? = defaultHttpTransport()
+
+        private fun requireTransport(): HttpTransport =
+            transport ?: throw IllegalStateException("No HttpTransport set")
 
         @JvmStatic
         fun setHostnameWhitelist(hostnameWhitelist: List<String>?) {

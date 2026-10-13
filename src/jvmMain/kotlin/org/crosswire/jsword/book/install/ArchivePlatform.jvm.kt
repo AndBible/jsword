@@ -14,14 +14,14 @@ import java.util.Locale
 import java.util.zip.Inflater
 
 // Lexical File spelling must never round-trip through okio.Path on Unix.
-internal fun archiveRead(path: String): ByteArray = File(path).readBytes()
-internal fun archiveSink(path: String): BufferedSink = File(path).outputStream().sink().buffer()
-internal fun archiveGzipSource(path: String): okio.Source = GzipCompressorInputStream(File(path).inputStream()).source()
-internal fun archiveLowercase(name: String): String = name.lowercase(Locale.getDefault())
-internal fun archiveZipName(bytes: ByteArray, utf8: Boolean): String = String(bytes, Charsets.UTF_8).replace('\\', '/')
+internal actual fun archiveRead(path: String): ByteArray = File(path).readBytes()
+internal actual fun archiveSink(path: String): BufferedSink = File(path).outputStream().sink().buffer()
+internal actual fun archiveGzipSource(path: String): okio.Source = GzipCompressorInputStream(File(path).inputStream()).source()
+internal actual fun archiveLowercase(name: String): String = name.lowercase(Locale.getDefault())
+internal actual fun archiveZipName(bytes: ByteArray, utf8: Boolean): String = String(bytes, Charsets.UTF_8).replace('\\', '/')
 
 /** Raw-DEFLATE EOF reports consumed input without copying or decoding a selected body twice. */
-internal fun archiveDescriptorSource(bytes: ByteArray, offset: Int, consumed: (Int) -> Unit): okio.Source {
+internal actual fun archiveDescriptorSource(bytes: ByteArray, offset: Int, consumed: (Int) -> Unit): okio.Source {
     val input = java.io.ByteArrayInputStream(bytes, offset, bytes.size - offset)
     val inflater = Inflater(true)
     return object : java.util.zip.InflaterInputStream(input, inflater) {
@@ -35,7 +35,7 @@ internal fun archiveDescriptorSource(bytes: ByteArray, offset: Int, consumed: (I
 }
 
 /** Error-only reopen retains the actual central entry attached to the legacy exception. */
-internal fun archiveUnsupportedZipFeature(archiveSpelling: String, centralIndex: Int): Nothing {
+internal actual fun archiveUnsupportedZipFeature(archiveSpelling: String, centralIndex: Int): Nothing {
     org.apache.commons.compress.archivers.zip.ZipFile(File(archiveSpelling)).use { zip ->
         val entries = zip.entries
         repeat(centralIndex) { entries.nextElement() }
@@ -46,7 +46,7 @@ internal fun archiveUnsupportedZipFeature(archiveSpelling: String, centralIndex:
 }
 
 /** Sequential inflater fills may read beyond the body; only that case drains on advance. */
-internal fun archiveCacheSource(bytes: ByteArray, offset: Int, compressedSize: Int): Pair<okio.Source, () -> Unit> {
+internal actual fun archiveCacheSource(bytes: ByteArray, offset: Int, compressedSize: Int): Pair<okio.Source, () -> Unit> {
     val inflater = Inflater(true)
     var fed = 0
     val source = object : okio.Source {
@@ -77,9 +77,9 @@ internal fun archiveCacheSource(bytes: ByteArray, offset: Int, compressedSize: I
     }
 }
 
-internal fun archiveInflateSource(bytes: ByteArray): okio.Source = java.util.zip.InflaterInputStream(bytes.inputStream(), Inflater(true)).source()
+internal actual fun archiveInflateSource(bytes: ByteArray): okio.Source = java.util.zip.InflaterInputStream(bytes.inputStream(), Inflater(true)).source()
 
-internal fun archiveExtract(dest: String, name: String, directory: Boolean, source: () -> okio.Source) {
+internal actual fun archiveExtract(dest: String, name: String, directory: Boolean, source: () -> okio.Source) {
     val root = File(dest)
     val target = File(root, name)
     val canonicalRoot = root.canonicalFile.toPath()

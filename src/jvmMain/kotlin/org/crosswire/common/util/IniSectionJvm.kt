@@ -35,7 +35,7 @@ object IniSectionJvm {
 
 // PrintWriter uses the cached platform separator, not a subsequently changed property.
 internal var iniLineSeparator: String = System.lineSeparator()
-internal fun platformIniLineSeparator(): String = iniLineSeparator
+internal actual fun platformIniLineSeparator(): String = iniLineSeparator
 
-internal fun unmodifiableIniKeys(keys: Set<String>): Collection<String> = java.util.Collections.unmodifiableSet(keys)
-internal fun unmodifiableIniValues(values: Collection<String>): Collection<String> = java.util.Collections.unmodifiableCollection(values)
+internal actual fun unmodifiableIniKeys(keys: Set<String>): Collection<String> = java.util.Collections.unmodifiableSet(keys)
+internal actual fun unmodifiableIniValues(values: Collection<String>): Collection<String> = java.util.Collections.unmodifiableCollection(values)

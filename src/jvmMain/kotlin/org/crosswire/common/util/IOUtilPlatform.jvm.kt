@@ -2,7 +2,7 @@ package org.crosswire.common.util
 
 import org.apache.commons.compress.archivers.zip.ZipFile
 
-internal fun ioZipEntry(entrySpec: String): ByteArray {
+internal actual fun ioZipEntry(entrySpec: String): ByteArray {
             // Get the buffer
             var buffer = ByteArray(0)
             val parts = StringUtil.split(entrySpec, '!')

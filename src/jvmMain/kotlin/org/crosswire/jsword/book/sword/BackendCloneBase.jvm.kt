@@ -1,9 +1,9 @@
 package org.crosswire.jsword.book.sword
 
 /** JVM object cloning preserves fields introduced by unknown host subclasses. */
-abstract class BackendCloneBase : Cloneable {
-    protected fun shallowBackendClone(): Any = super.clone()
+actual abstract class BackendCloneBase actual constructor() : Cloneable {
+    protected actual fun shallowBackendClone(): Any = super.clone()
 
-    protected open fun portableBackendClone(): Any =
+    protected actual open fun portableBackendClone(): Any =
         throw UnsupportedOperationException("Host subclass must provide a portable clone")
 }

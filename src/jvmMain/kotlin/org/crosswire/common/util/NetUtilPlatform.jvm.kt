@@ -6,14 +6,14 @@ import java.io.OutputStream
 import java.net.JarURLConnection
 import java.net.URISyntaxException
 
-internal typealias NetMalformedURLException = java.net.MalformedURLException
-internal fun netUriSyntaxFailure(error: Throwable): Boolean = error is URISyntaxException
-internal fun netCanRead(uri: KUri): Boolean = File(uri.path).canRead()
-internal fun netCanWrite(uri: KUri): Boolean = File(uri.path).canWrite()
-internal fun netCheckResource(uri: KUri) { uri.toURL().openStream().close() }
-internal fun netUrlSize(uri: KUri): Int = uri.toURL().openConnection().contentLength
+internal actual typealias NetMalformedURLException = java.net.MalformedURLException
+internal actual fun netUriSyntaxFailure(error: Throwable): Boolean = error is URISyntaxException
+internal actual fun netCanRead(uri: KUri): Boolean = File(uri.path).canRead()
+internal actual fun netCanWrite(uri: KUri): Boolean = File(uri.path).canWrite()
+internal actual fun netCheckResource(uri: KUri) { uri.toURL().openStream().close() }
+internal actual fun netUrlSize(uri: KUri): Int = uri.toURL().openConnection().contentLength
 private const val TEMP_SUFFIX = "tmp"
-internal fun netLoadProperties(uri: KUri): PropertyMap {
+internal actual fun netLoadProperties(uri: KUri): PropertyMap {
     var ins: InputStream? = null
     try {
         ins = NetUtilJvm.getInputStream(uri)
@@ -26,7 +26,7 @@ internal fun netLoadProperties(uri: KUri): PropertyMap {
     }
 }
 
-internal fun netStoreProperties(properties: PropertyMap?, uri: KUri, title: String?) {
+internal actual fun netStoreProperties(properties: PropertyMap?, uri: KUri, title: String?) {
     var out: OutputStream? = null
 
     try {
@@ -39,12 +39,12 @@ internal fun netStoreProperties(properties: PropertyMap?, uri: KUri, title: Stri
     }
 }
 
-internal fun netTemporaryUri(prefix: String, suffix: String?): KUri {
+internal actual fun netTemporaryUri(prefix: String, suffix: String?): KUri {
     val tempFile = File.createTempFile(prefix, suffix)
     return NetUtilJvm.getURI(tempFile)
 }
 
-internal fun netListByIndexFile(index: KUri, filter: URIFilter?): Array<String> {
+internal actual fun netListByIndexFile(index: KUri, filter: URIFilter?): Array<String> {
     var `in`: InputStream? = null
     try {
         `in` = NetUtilJvm.getInputStream(index)
@@ -55,7 +55,7 @@ internal fun netListByIndexFile(index: KUri, filter: URIFilter?): Array<String> 
     }
 }
 
-internal fun netUrlLastModified(uri: KUri): Long {
+internal actual fun netUrlLastModified(uri: KUri): Long {
         val urlConnection = uri.toURL().openConnection()
         var time = urlConnection.lastModified
 

@@ -1,6 +1,8 @@
 package org.crosswire.jsword.book
 
-actual interface Book : Comparable<Book>
+import org.crosswire.common.activate.Activatable
+
+actual interface Book : Activatable, Comparable<Book>
 
 actual interface BookDriver {
     actual fun getDriverName(): String

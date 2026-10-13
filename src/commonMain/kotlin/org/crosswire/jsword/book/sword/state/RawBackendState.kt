@@ -73,11 +73,11 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
         val path = SwordUtil.getExpandedDataPath(bookMetaData)
 
         val otPath = NetUtil.lengthenURI(path, storageSeparator() + SwordConstants.FILE_OT)!!
-        otTextFile = StorageLocation(otPath.getPath())
+        otTextFile = StorageLocation(otPath.getPath()!!)
         otIdxFile = StorageLocation(otPath.getPath() + SwordConstants.EXTENSION_VSS)
 
         val ntPath = NetUtil.lengthenURI(path, storageSeparator() + SwordConstants.FILE_NT)!!
-        ntTextFile = StorageLocation(ntPath.getPath())
+        ntTextFile = StorageLocation(ntPath.getPath()!!)
         ntIdxFile = StorageLocation(ntPath.getPath() + SwordConstants.EXTENSION_VSS)
 
         // It is an error to be neither OT nor NT

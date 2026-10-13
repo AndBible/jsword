@@ -70,7 +70,7 @@ object SwordArchive {
                 val scratch = Buffer()
                 var offset = 0
                 while (offset < size) {
-                    if (offset < 0) throw org.crosswire.common.util.ArrayIndexOutOfBoundsException()
+                    if (offset < 0) throw org.crosswire.common.util.ArrayIndexOutOfBoundsException(null)
                     val count = it.read(scratch,(size-offset).toLong())
                     if (count == -1L) offset--
                     else offset += scratch.read(body,offset,count.toInt())
