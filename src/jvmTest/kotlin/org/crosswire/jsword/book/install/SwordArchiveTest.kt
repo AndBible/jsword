@@ -179,6 +179,60 @@ class SwordArchiveTest {
         assertEquals(expected,installer.snapshot())
     }
 
+    @Test fun actualVisitorClosesOwnedSourceOnEveryExitWithoutAdvancingCallbackFailure() = temp { root ->
+        val callbackError = IllegalStateException("callback")
+        val closeError = IOException("close")
+        for (mode in listOf("success","callback","read","advance")) for (failClose in listOf(false,true)) {
+            val body = "prefix".toByteArray(); val size = body.size
+            val payload = byteArrayOf(0,(size+200).toByte(),0,(size+200).inv().toByte(),0xff.toByte()) + body + ByteArray(200) { 32 } + byteArrayOf(7)
+            val buffer = okio.Buffer()
+            org.crosswire.common.util.StoredZipWriter.write(buffer,listOf("a.conf" to if (mode == "success") body else payload))
+            val bytes = buffer.readByteArray()
+            if (mode != "success") {
+                bytes[8]=8
+                repeat(4) { bytes[22+it] = (size ushr (8*it)).toByte() }
+                if (mode == "read") bytes[30+"a.conf".length]=7
+            }
+            val file = File(root,"input.zip").apply { writeBytes(bytes) }
+            var closed = 0; var visited = false
+            val result = runCatching { SwordArchive.visitConfZipSpelling(file.path, { source ->
+                object : okio.ForwardingSource(source) {
+                    override fun close() { closed++; super.close(); if (failClose) throw closeError }
+                }
+            }) { _,_ -> visited = true; if (mode == "callback") throw callbackError } }
+            assertEquals(1,closed,"mode=$mode/failClose=$failClose")
+            if (mode == "callback") assertEquals(callbackError,result.exceptionOrNull())
+            if (mode in listOf("read","advance")) assertTrue(result.exceptionOrNull() is java.util.zip.ZipException)
+            if (mode == "success") assertEquals(if (failClose) closeError else null,result.exceptionOrNull())
+            assertEquals(mode != "read",visited)
+            if (failClose && mode != "success") assertTrue(result.exceptionOrNull()!!.suppressed.contains(closeError))
+        }
+    }
+
+    @Test fun installerGnuAndPaxExtensionsFollowRawReadBoundaries() = temp { root ->
+        for (pax in listOf(false,true)) {
+            val name = "mods.d/"+"a".repeat(140)+".conf"
+            val record = "path=$name\n"
+            var length = record.length+3
+            while ("$length $record".length != length) length = "$length $record".length
+            val extension = if (pax) org.crosswire.common.util.TarReaderTest.tarRecord("pax","$length $record".toByteArray(),'x')
+                else org.crosswire.common.util.TarReaderTest.tarRecord("././@LongLink",(name+'\u0000').toByteArray(),'L')
+            val tar = extension + org.crosswire.common.util.TarReaderTest.tarRecord("short.conf",byteArrayOf(1)) +
+                org.crosswire.common.util.TarReaderTest.tarRecord("ignored.txt",byteArrayOf(2)) +
+                org.crosswire.common.util.TarReaderTest.tarRecord("last.conf",byteArrayOf(3)) + ByteArray(1024)
+            val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(tar) } }.toByteArray()
+            val input = File(root,"input.gz").apply { writeBytes(gzip) }
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            assertTrue(reference.isSuccess)
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"pax=$pax")
+            val expected = confs(File(old,"mods.d.zip"))
+            assertEquals(listOf(name,"last.conf"),expected.map { it.first })
+            assertEquals(expected,confs(File(new,"mods.d.zip")),"pax=$pax")
+        }
+    }
+
     @Test fun unsupportedDuplicateEntryRetainsActualCentralMetadata() = temp { root ->
         val file = File(root,"input.zip")
         org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(file).use { zip ->

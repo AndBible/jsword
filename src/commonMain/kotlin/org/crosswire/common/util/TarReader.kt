@@ -89,9 +89,19 @@ class TarReader private constructor(private val source: BufferedSource, private 
             padding = (512 - size % 512) % 512
             val type = header[156].toInt().toChar()
             if (type == 'L' || type == 'x') {
-                val body = readEntry()
-                source.skip(padding)
-                consumed += padding
+                val body = if (installer) readInstallerEntry() else readEntry()
+                if (installer) {
+                    val scratch = okio.Buffer()
+                    var left = padding
+                    while (left > 0) {
+                        val count = readInstaller(scratch,left)
+                        if (count == -1L) break
+                        scratch.clear(); consumed += count; left -= count
+                    }
+                } else {
+                    source.skip(padding)
+                    consumed += padding
+                }
                 padding = 0
                 if (type == 'L') longName = body.decodeToString().trimEnd('\u0000', '\n')
                 else paxPath = paxPath(body) ?: paxPath

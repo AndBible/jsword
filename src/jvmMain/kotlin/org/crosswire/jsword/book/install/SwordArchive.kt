@@ -2,6 +2,7 @@ package org.crosswire.jsword.book.install
 
 import okio.Buffer
 import okio.buffer
+import okio.use
 import okio.Path
 import org.crosswire.common.util.LoggerFactory
 import org.crosswire.common.util.StoredZipWriter
@@ -49,7 +50,10 @@ object SwordArchive {
     }.toList()
 
     /** The installer consumes each declared-size body before advancing to the next entry. */
-    internal fun visitConfZipSpelling(zip: String, visit: (String,ByteArray) -> Unit) {
+    internal fun visitConfZipSpelling(zip: String, visit: (String,ByteArray) -> Unit) =
+        visitConfZipSpelling(zip, { it }, visit)
+
+    internal fun visitConfZipSpelling(zip: String, decorate: (okio.Source) -> okio.Source, visit: (String,ByteArray) -> Unit) {
         for (entry in readLocalZip(archiveRead(zip))) {
             if (entry.directory) continue
             if (!safeName(entry.name)) { log.error("Unsafe archive entry: {}",entry.name); continue }
@@ -57,18 +61,23 @@ object SwordArchive {
             val size = entry.declaredSize.toInt()
             if (size == 0) { log.error("Empty entry: {}",entry.name); continue }
             val body = ByteArray(size)
-            val input = entry.source()
-            val scratch = Buffer()
-            var offset = 0
-            while (offset < size) {
-                if (offset < 0) throw org.crosswire.common.util.ArrayIndexOutOfBoundsException()
-                val count = input.read(scratch,(size-offset).toLong())
-                if (count == -1L) offset--
-                else offset += scratch.read(body,offset,count.toInt())
+            val raw = entry.source()
+            val input = try { decorate(raw) } catch (error: Throwable) {
+                try { raw.close() } catch (closeError: Throwable) { error.addSuppressed(closeError) }
+                throw error
             }
-            visit(entry.name,body)
-            entry.advance()
-            input.close()
+            input.use {
+                val scratch = Buffer()
+                var offset = 0
+                while (offset < size) {
+                    if (offset < 0) throw org.crosswire.common.util.ArrayIndexOutOfBoundsException()
+                    val count = it.read(scratch,(size-offset).toLong())
+                    if (count == -1L) offset--
+                    else offset += scratch.read(body,offset,count.toInt())
+                }
+                visit(entry.name,body)
+                entry.advance()
+            }
         }
     }
 

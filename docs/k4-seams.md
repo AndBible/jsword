@@ -526,7 +526,10 @@ Public `readEntry()` and `next()` remain strict EOFException/two-zero terminator
 Installer `nextInstaller()` independently permits absent/short next records and optional,
 nonvalidating second EOF records and short padding after a completed body, retaining
 actual consumed counts and 10240-byte consumption. Internal Source constructor leaves
-public BufferedSource constructor/strict policy unchanged. Partial-cache differential pins
+public BufferedSource constructor/strict policy unchanged. GNU L/PAX x extension
+bodies and padding use that same raw installer policy, never the public buffered
+reader (actual old installer long-name/path plus subsequent/filtered entries covered).
+Partial-cache differential pins
 first entry plus 4300 bytes of a truncated later entry and finalized directory.
 
 `ArchivePlatform.jvm.kt` supplies plain internal helpers; Task 16 adds matching
@@ -586,6 +589,12 @@ prefix; seekable unread compressed suffixes skip or drain according to the origi
 512-byte input-fed closeEntry condition. Both 200-byte (drain/error) and 5000-byte
 (skip/success) malformed suffix cases retain the first book. A throwing callback
 occurs before any suffix advance.
+The internal ownership-test overload adds `(Source) -> Source` decorator before
+that visitor; production delegates with identity. Tests wrap the actual source to
+observe exactly-one close and suppressed close errors, not a synthetic reader or
+inflater-GC counter. Raw source closes if decoration throws; owned use closes on
+read/callback/advance failure. Close releases inflater without advancing; advancement
+remains only after successful callback.
 Public readConfZip List remains the generic
 body API, not the installer oracle. Logger category uses the exact FQN string with
 no dependency on the JVM-only installer class.
