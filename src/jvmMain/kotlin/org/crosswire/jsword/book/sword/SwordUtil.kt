@@ -27,7 +27,8 @@ import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
 import java.io.RandomAccessFile
-import java.io.UnsupportedEncodingException
+import org.crosswire.common.util.KCharset
+import org.crosswire.common.util.UnsupportedCharsetException
 import java.net.URI
 
 /**
@@ -374,13 +375,12 @@ class SwordUtil private constructor() {
             var txt = ""
             try {
                 if (offset + length <= data.size) {
-                    // java.lang.String on purpose: the charset NAME constructor throws UnsupportedEncodingException (and NPE for null) as the Java code did
-                    txt = java.lang.String(data, offset, length, charset) as String
+                    txt = KCharset.decode(data, offset, length, charset)
                 }
-            } catch (ex: UnsupportedEncodingException) {
-                // It is impossible! In case, use system default...
+            } catch (ex: UnsupportedCharsetException) {
+                // The Android platform default used by the legacy fallback is UTF-8.
                 log.error("{}: Encoding {} not supported.", key, charset, ex)
-                txt = java.lang.String(data, offset, length) as String
+                txt = KCharset.decode(data, offset, length, "UTF-8")
             }
 
             return txt
