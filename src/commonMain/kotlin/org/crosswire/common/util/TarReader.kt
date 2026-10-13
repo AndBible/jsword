@@ -68,6 +68,28 @@ class TarReader(private val source: BufferedSource) : Closeable {
         }
     }
 
+    /** Installer's legacy single body read permits a short body before next-entry truncation. */
+    internal fun readInstallerEntry(): ByteArray {
+        if (remaining > Int.MAX_VALUE) throw IOException("Tar entry too large")
+        val buffer = okio.Buffer()
+        while (remaining > 0) {
+            val count = source.read(buffer, remaining)
+            if (count == -1L) break
+            consumed += count
+            remaining -= count
+        }
+        return buffer.readByteArray()
+    }
+
+    internal fun nextInstaller(): Entry? {
+        val incomplete = remaining > 0
+        try { return next() }
+        catch (error: okio.EOFException) {
+            if (incomplete) throw IOException("Truncated TAR archive", error)
+            throw error
+        }
+    }
+
     /** Consumes only the unread current body, leaving block padding for next(). */
     fun readEntry(): ByteArray {
         if (remaining > Int.MAX_VALUE) throw IOException("Tar entry too large")

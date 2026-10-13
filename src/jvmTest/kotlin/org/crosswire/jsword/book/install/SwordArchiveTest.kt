@@ -152,6 +152,26 @@ class SwordArchiveTest {
         assertEquals(mapOf("first.conf" to listOf<Byte>(1)),tree(filtered))
     }
 
+    @Test fun corruptTarOutputAndPartialCacheMatchFrozenLegacy() = temp { root ->
+        val complete = org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/first.conf",byteArrayOf(1))
+        val later = org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/later.conf",ByteArray(5000) { 65 })
+        val truncated = complete + later.copyOf(512+4300)
+        val partial = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(truncated) } }.toByteArray()
+        for ((name,bytes) in listOf("bad" to byteArrayOf(1,2,3), "partial" to partial)) {
+            val input = File(root,"$name.gz").apply { writeBytes(bytes) }
+            val old = File(root,"old-$name").apply { mkdirs() }; val new = File(root,"new-$name").apply { mkdirs() }
+            File(old,"mods.d.zip").writeText("previous cache"); File(new,"mods.d.zip").writeText("previous cache")
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,name)
+            val oldContents = runCatching { confs(File(old,"mods.d.zip")) }
+            val newContents = runCatching { confs(File(new,"mods.d.zip")) }
+            println("PARTIAL TAR $name old=${oldContents.getOrNull()?.map { it.first to it.second.size }} new=${newContents.getOrNull()?.map { it.first to it.second.size }}")
+            assertEquals(oldContents.exceptionOrNull()?.javaClass,newContents.exceptionOrNull()?.javaClass,name)
+            if (oldContents.isSuccess) assertEquals(oldContents.getOrThrow(),newContents.getOrThrow(),name)
+        }
+    }
+
     @Test fun corruptTarTruncatesExistingCacheBeforeReadingInput() = temp { root ->
         val input=File(root,"bad.gz").apply { writeBytes(byteArrayOf(1,2,3)) }
         val output=File(root,"mods.d.zip").apply { writeText("previous cache") }

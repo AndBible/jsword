@@ -520,6 +520,10 @@ in the move list, common-ready in jvmMain until Task 16. TarReader's internal
 like commons-compress 1.12 (short EOF accepted), not the rest of the gzip member.
 A 24-case frozen legacy differential covers termination before/at/after that
 boundary, extra tar-tail bytes, truncated gzip trailers and corrupt CRCs.
+Internal `readInstallerEntry(): ByteArray` permits the original short body write;
+`nextInstaller(): Entry?` preserves the later IOException for an incomplete body.
+Public `readEntry()` remains strict EOFException. Partial-cache differential pins
+first entry plus 4300 bytes of a truncated later entry and finalized directory.
 
 `ArchivePlatform.jvm.kt` supplies plain internal helpers; Task 16 adds matching
 common expects and JVM actual modifiers, and supported Native actuals:

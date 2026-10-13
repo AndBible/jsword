@@ -19,12 +19,14 @@ object SwordArchive {
         try {
         TarReader(archiveGzipSource(tarGz)).use { reader ->
             while (true) {
-                val entry = reader.next() ?: break
+                val entry = reader.nextInstaller() ?: break
                 if (entry.isDirectory) continue
                 if (!safeName(entry.name)) { log.error("Unsafe archive entry: {}", entry.name); continue }
                 if (!entry.name.endsWith(".conf")) { log.error("Not a SWORD config file: {}", entry.name); continue }
                 if (entry.size == 0L) { log.error("Empty entry: {}", entry.name); continue }
-                writer.entry(entry.name, reader.readEntry())
+                val body = reader.readInstallerEntry()
+                if (body.size.toLong() != entry.size) log.error("Error: Could not read {} bytes for {} from {}", entry.size.toString(), entry.name, tarGz)
+                writer.entry(entry.name, body)
             }
             reader.consumeLegacyBlockPadding()
         }
