@@ -1,4 +1,5 @@
 # KSword API allowlist (K1 spec §4.1). One entry per line:
+org.crosswire.common.util.NetUtil + M public static toPath(java.net.URI): okio.Path throws [] # K4 seam
 #   <class FQN> <+|-> <canonical ApiShape line> # <reason>
 # "+" approves an addition, "-" approves a removed/changed line (exceptional; reviewer must agree).
 org.crosswire.common.activate.Lock + K public () throws [] # Java ctor was package-private; Kotlin has no package visibility, internal compiles to public. Lock is only a token type.

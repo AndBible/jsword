@@ -94,6 +94,10 @@ private constructor() {
     }
 
     companion object {
+        /** Validated File URI projection; authoritative lexical IO must not use this Path. */
+        @JvmStatic
+        fun toPath(uri: KUri): okio.Path = validatedFileUriPath(uri)
+
         /**
          * Constant for the file: protocol or scheme
          */
