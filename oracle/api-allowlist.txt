@@ -381,8 +381,8 @@ org.crosswire.jsword.book.sword.SwordUtil + M public static writeNextRAF(org.cro
 org.crosswire.jsword.book.sword.SwordUtil + M public static writeRAF(org.crosswire.common.util.RandomAccessSource,long,byte[]): void throws [java.io.IOException] # K4 stream
 org.crosswire.jsword.book.sword.ZVerseBackend - M public dumpCompRaf(java.io.RandomAccessFile): void throws [] # K4 stream
 org.crosswire.jsword.book.sword.ZVerseBackend - M public dumpIdxRaf(org.crosswire.jsword.versification.Versification,int,java.io.RandomAccessFile): void throws [] # K4 stream
-org.crosswire.jsword.book.sword.ZVerseBackend + M public dumpCompRaf(org.crosswire.common.util.RandomAccessSource): void throws [] # K4 stream
-org.crosswire.jsword.book.sword.ZVerseBackend + M public dumpIdxRaf(org.crosswire.jsword.versification.Versification,int,org.crosswire.common.util.RandomAccessSource): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZVerseBackend + M public dumpCompRaf(org.crosswire.common.util.RandomAccessSource,java.lang.Appendable): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZVerseBackend + M public dumpIdxRaf(org.crosswire.jsword.versification.Versification,int,org.crosswire.common.util.RandomAccessSource,java.lang.Appendable): void throws [] # K4 stream
 org.crosswire.jsword.book.sword.state.GenBookBackendState - M public getBdtRaf(): java.io.RandomAccessFile throws [] # K4 stream
 org.crosswire.jsword.book.sword.state.GenBookBackendState + M public getBdtRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
 org.crosswire.jsword.book.sword.state.RawBackendState - F protected ntIdxFile: java.io.File # K4 split
@@ -440,3 +440,4 @@ org.crosswire.jsword.book.sword.RawLDBackend + M protected portableBackendClone(
 org.crosswire.jsword.book.sword.ZLDBackend + K protected (org.crosswire.jsword.book.sword.ZLDBackend) throws [] # K4 seam
 org.crosswire.jsword.book.sword.ZLDBackend + M protected portableBackendClone(): java.lang.Object throws [] # K4 seam
 org.crosswire.jsword.book.sword.AbstractKeyBackend - F private-or-package static final serialVersionUID: long = -2782112117361556089 # K3 D1
+org.crosswire.jsword.book.sword.RawFileBackend - M protected updateDataFile(long,java.io.File): void throws [java.io.IOException] # K4 split

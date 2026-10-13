@@ -78,5 +78,23 @@ if [ "$status" -ne 1 ] || ! grep -q '^p/Unreadable\.kt: grep failed' <<< "$outpu
   echo "$output"
   fail=1
 fi
+tree='org/crosswire/jsword/book/sword/TreeNode.kt'
+mkdir -p "$tmp/root/$(dirname "$tree")"
+printf 'package p\nprivate const val serialVersionUID = -2472601787934480762L\n' > "$tmp/root/$tree"
+printf '%s #done\n' "$tree" > "$tmp/list"
+"$guard" --list "$tmp/list" --root "$tmp/root" >/dev/null || { echo 'FAIL: exact TreeNode UID rejected'; fail=1; }
+for sample in 'private const val serialVersionUID = 1L' 'private const val serialVersionUIDOther = -2472601787934480762L' 'private const val serialVersionUID = -2472601787934480762L; val x = java.lang.System.out'; do
+  printf 'package p\n%s\n' "$sample" > "$tmp/root/$tree"
+  output=$("$guard" --list "$tmp/list" --root "$tmp/root" 2>&1); status=$?
+  if [ "$status" -ne 1 ] || ! grep -q "^$tree:2:" <<< "$output"; then
+    echo "FAIL: TreeNode UID exception masked $sample"; fail=1
+  fi
+done
+printf 'package p\nprivate const val serialVersionUID = -2472601787934480762L\n' > "$tmp/root/p/Wrong.kt"
+echo 'p/Wrong.kt #done' > "$tmp/list"
+output=$("$guard" --list "$tmp/list" --root "$tmp/root" 2>&1); status=$?
+if [ "$status" -ne 1 ] || ! grep -q '^p/Wrong.kt:2:' <<< "$output"; then
+  echo 'FAIL: TreeNode UID exception accepted wrong path'; fail=1
+fi
 [ $fail = 0 ] && echo "k4-common-ready self-test: OK"
 exit $fail

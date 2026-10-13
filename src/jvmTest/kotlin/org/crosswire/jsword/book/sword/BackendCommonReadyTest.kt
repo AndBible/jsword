@@ -185,6 +185,7 @@ class BackendCommonReadyTest {
             backend.setIgnoreReadErrors(false)
             val method = backend.javaClass.getDeclaredMethod("portableBackendClone").apply { isAccessible = true }
             val copy = method.invoke(backend) as AbstractKeyBackend<*>
+            assertNotSame(backend, copy)
             assertEquals(backend.javaClass, copy.javaClass)
             assertSame(backend.bookMetaData, copy.bookMetaData)
             for (name in listOf("datasize", "entrysize")) {
@@ -193,6 +194,8 @@ class BackendCommonReadyTest {
             }
             val ignore = AbstractBackend::class.java.getDeclaredField("ignoreReadErrors").apply { isAccessible = true }
             assertEquals(false, ignore.get(copy))
+            copy.setIgnoreReadErrors(true)
+            assertEquals(false, ignore.get(backend))
         }
     }
 

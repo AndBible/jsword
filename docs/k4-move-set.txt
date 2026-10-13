@@ -58,7 +58,7 @@ org/crosswire/jsword/book/sword/DataIndex.kt #done
 org/crosswire/jsword/book/sword/GenBookBackend.kt #done
 org/crosswire/jsword/book/sword/NullBackend.kt #done
 org/crosswire/jsword/book/sword/RawBackend.kt #done
-org/crosswire/jsword/book/sword/RawFileBackend.kt
+org/crosswire/jsword/book/sword/RawFileBackend.kt #done
 org/crosswire/jsword/book/sword/RawLDBackend.kt #done
 org/crosswire/jsword/book/sword/StatefulFileBackedBackend.kt #done
 org/crosswire/jsword/book/sword/SwordBookMetaData.kt #done
@@ -68,7 +68,7 @@ org/crosswire/jsword/book/sword/SwordUtil.kt #done
 org/crosswire/jsword/book/sword/TreeKeyIndex.kt #done
 org/crosswire/jsword/book/sword/TreeNode.kt #done
 org/crosswire/jsword/book/sword/ZLDBackend.kt #done
-org/crosswire/jsword/book/sword/ZVerseBackend.kt
+org/crosswire/jsword/book/sword/ZVerseBackend.kt #done
 org/crosswire/jsword/book/sword/processing/NoOpRawTextProcessor.kt #done
 org/crosswire/jsword/book/sword/processing/RawTextToXmlProcessor.kt #done
 org/crosswire/jsword/book/sword/state/AbstractOpenFileState.kt #done

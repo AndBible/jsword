@@ -7,18 +7,26 @@ import org.junit.Test
 class TreeNodePreservationTest {
     @Test fun clonePreservesBackingArrayIdentityAndSerializationFields() {
         val node = TreeNode(12).apply { name = "root"; parent = 3; firstChild = 4; nextSibling = 5; setUserData(byteArrayOf(6, 7)) }
+        val input = byteArrayOf(6, 7)
+        node.setUserData(input); input[0] = 99
+        assertArrayEquals(byteArrayOf(6, 7), node.getUserData())
         val clone = node.clone()
+        assertNotSame(node, clone)
         val field = TreeNode::class.java.getDeclaredField("userData").apply { isAccessible = true }
         assertSame(field.get(node), field.get(clone))
         val portable = TreeNode::class.java.getDeclaredMethod("portableTreeClone").apply { isAccessible = true }
             .invoke(node) as TreeNode
+        assertNotSame(node, portable)
         assertSame(field.get(node), field.get(portable))
         assertEquals(node.offset, portable.offset); assertEquals(node.name, portable.name)
         assertEquals(node.parent, portable.parent); assertEquals(node.firstChild, portable.firstChild)
         assertEquals(node.nextSibling, portable.nextSibling)
+        portable.offset = 99
+        assertEquals(12, node.offset)
         val extra = mutableListOf("extra")
         val unknown = object : TreeNode(9) { val reference = extra }
         val unknownClone = unknown.clone()
+        assertNotSame(unknown, unknownClone)
         assertEquals(unknown.javaClass, unknownClone.javaClass)
         assertSame(extra, unknown.javaClass.getDeclaredField("reference").apply { isAccessible = true }.get(unknownClone))
         val view = node.getUserData(); view[0] = 99

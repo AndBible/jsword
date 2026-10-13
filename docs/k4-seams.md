@@ -356,6 +356,38 @@ public no-arg constructor, is not Serializable, and introduces no serialized
 superclass descriptor. Frozen oracle cross-loader old-to-new/new-to-old test also
 compares serialized bytes byte-exactly (six fields, same userData name/type and
 serialVersionUID); same-version roundtrip and backing identity tests complement it.
+Guard permits only this exact TreeNode.kt private const UID declaration and value;
+changed value/name/path and adjacent Java tokens remain rejected by planted tests.
+The constant is portable Kotlin; Task 16 compiler and serialization gates still
+verify the actual marker/base obligation, not this heuristic exemption.
 Task 16 supplies Native actuals and runs portable-copy tests; no Native runtime
 claim is made here. TreeKeyIndex uses existing storageCanRead/storageAbsolute and
 storageOpenRandomAccess hooks on lexical StorageLocation, never Path normalization.
+
+`RawFileIo.jvm.kt` contains bounded lexical stream hooks: rawFileCreate(Location):
+Boolean = File.createNewFile; rawFileNumber(Long, Boolean): String = default FORMAT
+String.format(%07d with optional CRLF); rawFileDecodeName(ByteArray): String =
+JDK default-charset seven bytes; rawFileAppend(Location, Long, String?): Unit opens
+append BufferedOutputStream BEFORE named charset encoding (including legacy
+UnsupportedEncodingException/file creation); rawFileWrite(Location, ByteArray):
+Unit truncates buffered output; rawFileRead(Location, Logger): ByteArray uses File
+length.toInt and ONE BufferedInputStream read, preserving short-read diagnostic,
+empty input and FileNotFoundException logging; rawFileWriteInc(Location?, ByteArray,
+Logger): Unit uses truncating FileOutputStream and catches FileNotFoundException;
+rawFilePopulate(Location, Int): Unit truncates and writes count six-byte zero records.
+Task 16 introduces matching common expects and JVM actuals in RawFileIo.kt/jvm.kt
+and RawFileIo.ios.kt implementing the same lexical/permission/open-before-encoding,
+close, locale, one-read and diagnostic semantics. Do NOT substitute storageRead's
+read-all semantics or normalize paths. These hooks are internal, not protected APIs.
+Legacy protected updateDataFile(Long, File) is split to public static
+RawFileBackendJvm.updateDataFile(RawFileBackend, Long, File), with the one exact K4
+split removal allowance. No jsword or app subclass caller exists; portable backend
+calls internal rawFileAppend on state's lexical text location. Existing overloaded
+setRawText/setAliasKey signatures and protected updateIndexFile are unchanged.
+
+ZVerse debug methods consume Appendable; exact existing Task 8 stream allowances
+are adjusted only for that extra argument. No app debug caller exists. Existing
+backendDebugFailure handles caught source IOException; Appendable exceptions
+propagate (these old methods did not catch output writes). Arraycopy becomes
+copyInto on identical byte ranges. Compressor uncompress(...).toByteArray remains
+unchanged for Task 10.

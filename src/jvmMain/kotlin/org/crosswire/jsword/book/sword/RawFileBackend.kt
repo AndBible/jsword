@@ -24,22 +24,15 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.jsword.book.sword.state.RawBackendState
 import org.crosswire.jsword.book.sword.state.RawFileBackendState
-import org.crosswire.jsword.book.sword.state.RawBackendStateJvm
-import org.crosswire.jsword.book.sword.state.RawFileBackendStateJvm
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.versification.Testament
 import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
 import org.crosswire.common.util.RandomAccessSource
+import org.crosswire.common.util.KCharset
+import okio.IOException
 
 /**
  * A Raw File format that allows for each verse to have it's own storage. The
@@ -119,20 +112,20 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
 
         val idxRaf = state.getIdxRaf(testament)
         val txtRaf = state.getTextRaf(testament)
-        val txtFile = RawBackendStateJvm.getTextFile(state, testament)
+        val txtFile = state.getTextLocation(testament)
 
         val dataIndex = getIndex(idxRaf, index.toLong())
-        val dataFile: File
+        val dataFile: StorageLocation
         if (dataIndex.getSize() == 0) {
             dataFile = createDataTextFile(state.getIncfileValue())
             updateIndexFile(idxRaf, index.toLong(), txtRaf!!.size())
-            updateDataFile(state.getIncfileValue().toLong(), txtFile)
+            rawFileAppend(txtFile, state.getIncfileValue().toLong(), bookMetaData.bookCharset)
             checkAndIncrementIncfile(state, state.getIncfileValue())
         } else {
             dataFile = getDataTextFile(txtRaf, dataIndex)
         }
 
-        val textData = text!!.toByteArray(Charsets.UTF_8)
+        val textData = KCharset.encode(text!!, "UTF-8")
         encipher(textData)
         writeTextDataFile(dataFile, textData)
     }
@@ -159,11 +152,11 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
     }
 
     @Throws(BookException::class, IOException::class)
-    private fun createDataTextFile(index: Int): File {
-        var dataPath = SwordUtil.getExpandedDataPath(bookMetaData).path
-        dataPath += File.separator + String.format("%07d", index)
-        val dataFile = File(dataPath)
-        if (!dataFile.exists() && !dataFile.createNewFile()) {
+    private fun createDataTextFile(index: Int): StorageLocation {
+        var dataPath = SwordUtil.getExpandedDataPath(bookMetaData).getPath()
+        dataPath += storageSeparator() + rawFileNumber(index.toLong(), false)
+        val dataFile = StorageLocation(dataPath)
+        if (!storageExists(dataFile) && !rawFileCreate(dataFile)) {
             throw IOException("Could not create data file.")
         }
         return dataFile
@@ -188,7 +181,7 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
         decipher(data)
         if (data.size == 7) {
             // default charset on purpose: Java used new String(byte[], int, int)
-            return java.lang.String(data, 0, 7) as String
+            return rawFileDecodeName(data)
         }
         log.error("Read data is not of appropriate size of 9 bytes!")
         throw IOException("Datalength is not 9 bytes!")
@@ -207,10 +200,10 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
      * @throws BookException
      */
     @Throws(IOException::class, BookException::class)
-    private fun getDataTextFile(txtRaf: RandomAccessSource?, dataIndex: DataIndex): File {
+    private fun getDataTextFile(txtRaf: RandomAccessSource?, dataIndex: DataIndex): StorageLocation {
         val dataFilename = getTextFilename(txtRaf, dataIndex)
-        val dataPath = SwordUtil.getExpandedDataPath(bookMetaData).path + File.separator + dataFilename
-        return File(dataPath)
+        val dataPath = SwordUtil.getExpandedDataPath(bookMetaData).getPath() + storageSeparator() + dataFilename
+        return StorageLocation(dataPath)
     }
 
     @Throws(IOException::class)
@@ -229,21 +222,6 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
         indexFileWriteData[5] = lengthValueData[1]
 
         SwordUtil.writeRAF(idxRaf, indexFileWriteOffset, indexFileWriteData)
-    }
-
-    @Throws(IOException::class)
-    protected open fun updateDataFile(ordinal: Long, txtFile: File) {
-        val fileName = String.format("%07d\r\n", ordinal)
-        var bos: BufferedOutputStream? = null
-        try {
-            bos = BufferedOutputStream(FileOutputStream(txtFile, true))
-            // charset NAME on purpose (UnsupportedEncodingException, as in Java)
-            bos.write((fileName as java.lang.String).getBytes(bookMetaData.bookCharset))
-        } finally {
-            if (bos != null) {
-                bos.close()
-            }
-        }
     }
 
     @Throws(IOException::class)
@@ -291,29 +269,29 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
 
     @Throws(IOException::class, BookException::class)
     private fun createDataFiles() {
-        val path = SwordUtil.getExpandedDataPath(bookMetaData).path
+        val path = SwordUtil.getExpandedDataPath(bookMetaData).getPath()
 
-        val otTextFile = File(path + File.separator + SwordConstants.FILE_OT)
-        if (!otTextFile.exists() && !otTextFile.createNewFile()) {
+        val otTextFile = StorageLocation(path + storageSeparator() + SwordConstants.FILE_OT)
+        if (!storageExists(otTextFile) && !rawFileCreate(otTextFile)) {
             throw IOException("Could not create ot text file.")
         }
 
-        val ntTextFile = File(path + File.separator + SwordConstants.FILE_NT)
-        if (!ntTextFile.exists() && !ntTextFile.createNewFile()) {
+        val ntTextFile = StorageLocation(path + storageSeparator() + SwordConstants.FILE_NT)
+        if (!storageExists(ntTextFile) && !rawFileCreate(ntTextFile)) {
             throw IOException("Could not create nt text file.")
         }
     }
 
     @Throws(IOException::class, BookException::class)
     private fun createIndexFiles() {
-        val path = SwordUtil.getExpandedDataPath(bookMetaData).path
-        val otIndexFile = File(path + File.separator + SwordConstants.FILE_OT + SwordConstants.EXTENSION_VSS)
-        if (!otIndexFile.exists() && !otIndexFile.createNewFile()) {
+        val path = SwordUtil.getExpandedDataPath(bookMetaData).getPath()
+        val otIndexFile = StorageLocation(path + storageSeparator() + SwordConstants.FILE_OT + SwordConstants.EXTENSION_VSS)
+        if (!storageExists(otIndexFile) && !rawFileCreate(otIndexFile)) {
             throw IOException("Could not create ot index file.")
         }
 
-        val ntIndexFile = File(path + File.separator + SwordConstants.FILE_NT + SwordConstants.EXTENSION_VSS)
-        if (!ntIndexFile.exists() && !ntIndexFile.createNewFile()) {
+        val ntIndexFile = StorageLocation(path + storageSeparator() + SwordConstants.FILE_NT + SwordConstants.EXTENSION_VSS)
+        if (!storageExists(ntIndexFile) && !rawFileCreate(ntIndexFile)) {
             throw IOException("Could not create nt index file.")
         }
     }
@@ -325,32 +303,17 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
         val v11n = Versifications.instance().getVersification(v11nName)!!
         val otCount = v11n.getCount(Testament.OLD)
         val ntCount = v11n.getCount(Testament.NEW) + 1
-        val otIdxBos = BufferedOutputStream(FileOutputStream(RawBackendStateJvm.getIdxFile(state, Testament.OLD), false))
-        try {
-            for (i in 0 until otCount) {
-                writeInitialIndex(otIdxBos)
-            }
-        } finally {
-            otIdxBos.close()
-        }
-
-        val ntIdxBos = BufferedOutputStream(FileOutputStream(RawBackendStateJvm.getIdxFile(state, Testament.NEW), false))
-        try {
-            for (i in 0 until ntCount) {
-                writeInitialIndex(ntIdxBos)
-            }
-        } finally {
-            ntIdxBos.close()
-        }
+        rawFilePopulate(state.getIdxLocation(Testament.OLD), otCount)
+        rawFilePopulate(state.getIdxLocation(Testament.NEW), ntCount)
     }
 
     @Throws(IOException::class, BookException::class)
     private fun createIncfile(state: RawFileBackendState) {
-        val tempIncfile = File(SwordUtil.getExpandedDataPath(bookMetaData).path + File.separator + RawFileBackendState.INCFILE)
-        if (!tempIncfile.exists() && !tempIncfile.createNewFile()) {
+        val tempIncfile = StorageLocation(SwordUtil.getExpandedDataPath(bookMetaData).getPath() + storageSeparator() + RawFileBackendState.INCFILE)
+        if (!storageExists(tempIncfile) && !rawFileCreate(tempIncfile)) {
             throw IOException("Could not create incfile file.")
         }
-        RawFileBackendStateJvm.setIncfile(state, tempIncfile)
+        state.setIncLocation(tempIncfile)
     }
 
     @Throws(IOException::class)
@@ -360,59 +323,14 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
 
     @Throws(IOException::class)
     private fun writeIncfile(state: RawFileBackendState, value: Int) {
-        var fos: FileOutputStream? = null
-        try {
-            fos = FileOutputStream(RawFileBackendStateJvm.getIncfile(state), false)
-            fos.write(littleEndian32BitByteArrayFromInt(value))
-        } catch (e: FileNotFoundException) {
-            log.error("Error on writing to incfile, file should exist already!", e)
-        } finally {
-            if (fos != null) {
-                fos.close()
-            }
-        }
+        rawFileWriteInc(state.getIncLocation(), littleEndian32BitByteArrayFromInt(value), log)
     }
 
     @Throws(IOException::class)
-    private fun writeInitialIndex(outStream: BufferedOutputStream) {
-        outStream.write(littleEndian32BitByteArrayFromInt(0)) // offset
-        outStream.write(littleEndian16BitByteArrayFromShort(0.toShort())) // length
-    }
+    private fun readTextDataFile(dataFile: StorageLocation): ByteArray = rawFileRead(dataFile, log)
 
     @Throws(IOException::class)
-    private fun readTextDataFile(dataFile: File): ByteArray {
-        var inStream: BufferedInputStream? = null
-        try {
-            val len = dataFile.length().toInt()
-            val textData = ByteArray(len)
-            inStream = BufferedInputStream(FileInputStream(dataFile))
-            if (inStream.read(textData) != len) {
-                log.error("Read data is not of appropriate size of {} bytes!", len.toString())
-                throw IOException("data is not $len bytes long")
-            }
-            return textData
-        } catch (ex: FileNotFoundException) {
-            log.error("Could not read text data file, file not found: {}", dataFile.name, ex)
-            throw ex
-        } finally {
-            if (inStream != null) {
-                inStream.close()
-            }
-        }
-    }
-
-    @Throws(IOException::class)
-    private fun writeTextDataFile(dataFile: File, textData: ByteArray) {
-        var bos: BufferedOutputStream? = null
-        try {
-            bos = BufferedOutputStream(FileOutputStream(dataFile, false))
-            bos.write(textData)
-        } finally {
-            if (bos != null) {
-                bos.close()
-            }
-        }
-    }
+    private fun writeTextDataFile(dataFile: StorageLocation, textData: ByteArray) = rawFileWrite(dataFile, textData)
 
     private fun littleEndian32BitByteArrayFromInt(`val`: Int): ByteArray {
         val buffer = ByteArray(4)

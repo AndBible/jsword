@@ -35,7 +35,7 @@ import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
+import okio.IOException
 import org.crosswire.common.util.RandomAccessSource
 
 /**
@@ -389,7 +389,7 @@ open class ZVerseBackend
 
         // and cut out the required section.
         val chopped = ByteArray(verseSize)
-        System.arraycopy(uncompressed, verseStart, chopped, 0, verseSize)
+        uncompressed!!.copyInto(chopped, 0, verseStart, verseStart + verseSize)
 
         return SwordUtil.decode(key!!.getName(), chopped, charset)
 
@@ -418,18 +418,18 @@ open class ZVerseBackend
      * @param ordinalStart
      * @param raf
      */
-    open fun dumpIdxRaf(v11n: Versification, ordinalStart: Int, raf: RandomAccessSource) {
+    open fun dumpIdxRaf(v11n: Versification, ordinalStart: Int, raf: RandomAccessSource, output: Appendable) {
         var end: Long = -1
         try {
             end = raf.size()
         } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         }
 
         var i = ordinalStart
         val buf = StringBuilder()
-        System.out.println("osisID\tblock\tstart\tsize")
+        output.append("osisID\tblock\tstart\tsize\n")
         var offset: Long = 0
         while (offset < end) {
             // entrysize because the index is entrysize bytes long for each verse
@@ -437,7 +437,7 @@ open class ZVerseBackend
             try {
                 temp = SwordUtil.readRAF(raf, offset, entrysize)
             } catch (e: IOException) {
-                e.printStackTrace()
+                backendDebugFailure(e)
             }
 
             // If the Bible does not contain the desired verse, return nothing.
@@ -464,7 +464,7 @@ open class ZVerseBackend
             buf.append(verseStart)
             buf.append('\t')
             buf.append(verseSize)
-            System.out.println(buf.toString())
+            output.append(buf.toString()).append('\n')
             offset += entrysize
         }
     }
@@ -474,18 +474,18 @@ open class ZVerseBackend
      * 
      * @param raf
      */
-    open fun dumpCompRaf(raf: RandomAccessSource) {
+    open fun dumpCompRaf(raf: RandomAccessSource, output: Appendable) {
         var end: Long = -1
         try {
             end = raf.size()
         } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         }
 
         val blockNum = 0
         val buf = StringBuilder()
-        System.out.println("block\tstart\tsize\tuncompressed")
+        output.append("block\tstart\tsize\tuncompressed\n")
         var offset: Long = 0
         while (offset < end) {
             // 12 because the index is 12 bytes long for each verse
@@ -493,7 +493,7 @@ open class ZVerseBackend
             try {
                 temp = SwordUtil.readRAF(raf, offset, COMP_ENTRY_SIZE)
             } catch (e: IOException) {
-                e.printStackTrace()
+                backendDebugFailure(e)
             }
 
             // If the Bible does not contain the desired verse, return nothing.
@@ -516,7 +516,7 @@ open class ZVerseBackend
             buf.append(blockSize)
             buf.append('\t')
             buf.append(uncompressedSize)
-            System.out.println(buf.toString())
+            output.append(buf.toString()).append('\n')
             offset += COMP_ENTRY_SIZE
         }
     }
