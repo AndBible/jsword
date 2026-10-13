@@ -220,6 +220,65 @@ class SwordArchiveTest {
         assertEquals(expected, SwordArchive.readConfZip(file.path.toPath()).map { it.first to it.second.toList() })
     }
 
+    @Test fun emptyCacheAndStoredLocalMetadataMatchLegacy() = temp { root ->
+        val buffer = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(buffer, emptyList())
+        val file = File(root,"input.zip").apply { writeBytes(buffer.readByteArray()) }
+        assertEquals(confs(file),SwordArchive.readConfZip(file.path.toPath()).map { it.first to it.second.toList() })
+        val stored = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(stored,listOf("a.conf" to "payload".toByteArray()))
+        val good = stored.readByteArray()
+        for (offset in listOf(6,8,14,18,22,30)) {
+            file.writeBytes(good.copyOf().apply { this[offset] = (this[offset].toInt() xor 1).toByte() })
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpackZip(file,old) }
+            val actual = runCatching { SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true) }
+            assertTrue(reference.isSuccess,"legacy offset=$offset ${reference.exceptionOrNull()}")
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"offset=$offset")
+            assertEquals(tree(old),tree(new),"offset=$offset")
+        }
+    }
+
+    @Test fun extractionIgnoresLegacyAcceptedLocalAndDescriptorMetadata() = temp { root ->
+        val output = java.io.ByteArrayOutputStream()
+        org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(output).use { zip ->
+            zip.putArchiveEntry(org.apache.commons.compress.archivers.zip.ZipArchiveEntry("a.conf"))
+            zip.write("payload".toByteArray()); zip.closeArchiveEntry()
+        }
+        val good = output.toByteArray()
+        fun signature(value: Int) = (0..good.size-4).first { offset -> (0..3).all { good[offset+it] == (value ushr (8*it)).toByte() } }
+        val central = signature(0x02014b50); val descriptor = signature(0x08074b50)
+        for (offset in listOf(14, 30, descriptor+4, descriptor+8, descriptor+12, central+16, central+24)) {
+            val bytes = good.copyOf().apply { this[offset] = (this[offset].toInt() xor 1).toByte() }
+            val file = File(root,"input.zip").apply { writeBytes(bytes) }
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }
+            val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpackZip(file,old) }
+            val actual = runCatching { SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true) }
+            assertTrue(reference.isSuccess,"legacy offset=$offset: ${reference.exceptionOrNull()}")
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"offset=$offset")
+            assertEquals(tree(old),tree(new),"offset=$offset")
+        }
+    }
+
+    @Test fun cacheUsesLocalOrderWhileExtractionUsesCentralOrder() = temp { root ->
+        val buffer = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(buffer, listOf("z.conf" to byteArrayOf(1), "a.conf" to byteArrayOf(2)))
+        val bytes = buffer.readByteArray()
+        val central = (0..bytes.size-4).first { bytes[it] == 80.toByte() && bytes[it+1] == 75.toByte() && bytes[it+2] == 1.toByte() && bytes[it+3] == 2.toByte() }
+        val length = 46 + "z.conf".length
+        val first = bytes.copyOfRange(central, central+length)
+        bytes.copyInto(bytes, central, central+length, central+2*length)
+        first.copyInto(bytes, central+length)
+        val file = File(root,"reordered.zip").apply { writeBytes(bytes) }
+        assertEquals(listOf("z.conf", "a.conf"), confs(file).map { it.first })
+        assertEquals(confs(file), SwordArchive.readConfZip(file.path.toPath()).map { it.first to it.second.toList() })
+        val old = File(root,"old").apply { mkdirs() }; val new = File(root,"new").apply { mkdirs() }
+        LegacyArchiveReference.unpackZip(file,old)
+        SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true)
+        assertEquals(tree(old),tree(new))
+    }
+
     @Test fun malformedZipCrcSizesDescriptorAndTruncationFail() = temp { root ->
         val output = java.io.ByteArrayOutputStream()
         org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(output).use { zip ->
@@ -241,8 +300,8 @@ class SwordArchiveTest {
             val legacy=runCatching { confs(file) }
             val actual=runCatching { SwordArchive.readConfZip(file.path.toPath()) }
             println("MALFORMED META old=${legacy.exceptionOrNull()?.javaClass?.name} new=${actual.exceptionOrNull()?.javaClass?.name}")
-            // Diagnostic only until controller rules on stream/central metadata conflict.
-            if (legacy.isFailure) assertTrue(actual.isFailure)
+            assertEquals(legacy.exceptionOrNull()?.javaClass, actual.exceptionOrNull()?.javaClass)
+            if (legacy.isSuccess) assertEquals(legacy.getOrThrow(), actual.getOrThrow().map { it.first to it.second.toList() })
         }
     }
 

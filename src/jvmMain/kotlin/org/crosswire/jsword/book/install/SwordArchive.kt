@@ -34,7 +34,7 @@ object SwordArchive {
     }
 
     fun readConfZip(zip: Path): List<Pair<String, ByteArray>> = readConfZipSpelling(zip.toString())
-    internal fun readConfZipSpelling(zip: String): List<Pair<String, ByteArray>> = readZip(archiveRead(zip)).mapNotNull { entry ->
+    internal fun readConfZipSpelling(zip: String): List<Pair<String, ByteArray>> = readLocalZip(archiveRead(zip)).mapNotNull { entry ->
         when {
             entry.directory -> null
             !safeName(entry.name) -> { log.error("Unsafe archive entry: {}", entry.name); null }
@@ -44,7 +44,7 @@ object SwordArchive {
                 else entry.name to body
             }
         }
-    }
+    }.toList()
 
     /** Boolean is legacy INCLUDE/EXCLUDE polarity, not output lowercasing. */
     fun unpackZip(zip: Path, dest: Path, include: Boolean, vararg dirs: String) =
@@ -67,6 +67,64 @@ object SwordArchive {
 
     private class ZipEntry(val name: String, val directory: Boolean, val source: () -> okio.Source) {
         val bytes: ByteArray get() = source().buffer().use { it.readByteArray() }
+    }
+
+    /** Cache streams follow local headers, independently of central metadata and ordering. */
+    private fun readLocalZip(bytes: ByteArray): Sequence<ZipEntry> = sequence {
+        fun need(offset: Int, count: Int) {
+            if (offset < 0 || count < 0 || offset > bytes.size - count) throw okio.EOFException("Truncated ZIP")
+        }
+        fun u16(offset: Int): Int { need(offset,2); return (bytes[offset].toInt() and 255) or ((bytes[offset+1].toInt() and 255) shl 8) }
+        fun u32(offset: Int): Long { need(offset,4); return (0..3).fold(0L) { value,i -> value or ((bytes[offset+i].toLong() and 255) shl (8*i)) } }
+        fun bounded(value: Long): Int { if (value < 0 || value > Int.MAX_VALUE) throw IOException("Large ZIP unsupported"); return value.toInt() }
+        fun u64(offset: Int): Int { if (u32(offset+4) != 0L) throw IOException("Large ZIP unsupported"); return bounded(u32(offset)) }
+        var cursor = 0
+        while (cursor < bytes.size) {
+            need(cursor,4)
+            if (u32(cursor) != 0x04034b50L) {
+                // The original stream scans through the central directory to the EOCD comment.
+                var end = cursor
+                while (end <= bytes.size-4 && u32(end) != 0x06054b50L) end++
+                need(end,22)
+                need(end+22,u16(end+20))
+                break
+            }
+            val flags = u16(cursor+6); val method = u16(cursor+8)
+            if (flags and 1 != 0 || method !in listOf(0,8)) throw IOException("Encrypted/unsupported ZIP")
+            val nameSize = u16(cursor+26); val extraSize = u16(cursor+28)
+            need(cursor+30,nameSize+extraSize)
+            val name = archiveZipName(bytes.copyOfRange(cursor+30,cursor+30+nameSize), flags and 0x800 != 0)
+            var compressed = u32(cursor+18)
+            var extra = cursor+30+nameSize
+            val extraEnd = extra+extraSize
+            while (extra < extraEnd) {
+                need(extra,4); val length = u16(extra+2)
+                if (length > extraEnd-extra-4) throw IOException("Invalid ZIP extra field")
+                if (u16(extra) == 1 && compressed == 0xffffffffL) {
+                    if (length < 16) throw okio.EOFException("Truncated ZIP64 field")
+                    compressed = u64(extra+12).toLong()
+                }
+                extra += 4+length
+            }
+            val data = cursor+30+nameSize+extraSize
+            val descriptor = flags and 8 != 0
+            val length = if (descriptor && method == 8) archiveDeflateLength(bytes,data) else bounded(compressed)
+            need(data,length)
+            yield(ZipEntry(name,name.endsWith('/')) {
+                val payload = bytes.copyOfRange(data,data+length)
+                if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
+            })
+            cursor = data+length
+            if (descriptor) {
+                if (u32(cursor) == 0x08074b50L) cursor += 4
+                need(cursor,12)
+                // Commons detects descriptor width from the following local/central signature.
+                val next = u32(cursor+12)
+                val width = if (next == 0x04034b50L || next == 0x02014b50L) 12 else 20
+                need(cursor,width)
+                cursor += width
+            }
+        }
     }
 
     /** Central directory drives iteration, not pathname lookup (which loses duplicate names). */
@@ -98,8 +156,7 @@ object SwordArchive {
                 if (u32(cursor) != 0x02014b50L) throw IOException("Invalid ZIP central header")
                 val flags = u16(cursor+8); val method = u16(cursor+10)
                 if (flags and 1 != 0 || method !in listOf(0, 8)) throw IOException("Encrypted/unsupported ZIP")
-                val crc = u32(cursor+16); var compressedValue = u32(cursor+20); var sizeValue = u32(cursor+24)
-                val zip64Sizes = compressedValue == 0xffffffffL || sizeValue == 0xffffffffL
+                var compressedValue = u32(cursor+20); var sizeValue = u32(cursor+24)
                 val nameSize = u16(cursor+28); val extraSize = u16(cursor+30); val commentSize = u16(cursor+32)
                 if (u16(cursor+34) != 0) throw IOException("Multi-disk ZIP unsupported")
                 need(cursor+46, nameSize+extraSize+commentSize)
@@ -122,24 +179,13 @@ object SwordArchive {
                 }
                 val compressed = bounded(compressedValue); val size = bounded(sizeValue)
                 val local = bounded(localValue); need(local,30)
-                if (u32(local) != 0x04034b50L || u16(local+6) != flags || u16(local+8) != method) throw IOException("ZIP local/central mismatch")
+                if (u32(local) != 0x04034b50L) throw IOException("Invalid ZIP local header")
                 val localName = u16(local+26); val localExtra = u16(local+28)
                 need(local+30, localName+localExtra)
-                if (!bytes.copyOfRange(local+30,local+30+localName).contentEquals(nameBytes)) throw IOException("ZIP name mismatch")
-                if (flags and 8 == 0 && (u32(local+14) != crc || (u32(local+18) != 0xffffffffL && u32(local+18) != compressed.toLong()) || (u32(local+22) != 0xffffffffL && u32(local+22) != size.toLong()))) throw IOException("ZIP size mismatch")
+                // ZipFile uses central metadata; local names, sizes and CRC are not consistency checks.
                 val data = local+30+localName+localExtra; need(data, compressed)
                 if (data.toLong()+compressed > start) throw IOException("ZIP body overlaps central directory")
-                if (flags and 8 != 0) {
-                    var descriptor = data + compressed
-                    if (u32(descriptor) == 0x08074b50L) descriptor += 4
-                    val descriptorSize = if (zip64Sizes) 20 else 12
-                    val descriptorCompressed = if (zip64Sizes) u64(descriptor+4) else u32(descriptor+4)
-                    val descriptorUncompressed = if (zip64Sizes) u64(descriptor+12) else u32(descriptor+8)
-                    if (descriptor.toLong() + descriptorSize > start || u32(descriptor) != crc ||
-                        descriptorCompressed != compressed.toLong() || descriptorUncompressed != size.toLong()) {
-                        throw IOException("ZIP data descriptor mismatch")
-                    }
-                }
+                // Data descriptors belong to the sequential reader, not ZipFile extraction.
                 add(ZipEntry(name, name.endsWith('/')) {
                     val payload = bytes.copyOfRange(data,data+compressed)
                     if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
@@ -150,12 +196,4 @@ object SwordArchive {
         }
     }
 
-    private fun crc32(bytes: ByteArray): Long {
-        var crc = -1
-        for (byte in bytes) {
-            crc = crc xor (byte.toInt() and 255)
-            repeat(8) { crc = (crc ushr 1) xor if (crc and 1 != 0) 0xedb88320.toInt() else 0 }
-        }
-        return crc.inv().toLong() and 0xffffffffL
-    }
 }

@@ -534,8 +534,10 @@ common expects and JVM actual modifiers, and supported Native actuals:
   locale. Filter strings/output names remain unchanged; the Boolean is include.
 - `archiveZipName(ByteArray, Boolean): String` retains commons' default UTF-8
   decoding (including unflagged UTF-8 names), not CP437 by assumption.
-- `archiveInflate(ByteArray, Int): ByteArray` is an intermediate unused bounded
-  raw inflater helper; remove it once the streaming decoder is finalized.
+- `archiveDeflateLength(ByteArray, Int): Int` locates raw-DEFLATE EOF for sequential
+  local entries with descriptors using a 4096-byte discard buffer, not a decoded-body
+  cache. Native requires raw zlib consumed-input accounting and matching EOF/ZipException
+  errors. The unused bounded `archiveInflate` helper is removed.
 - `archiveInflateSource(ByteArray): Source` uses InflaterInputStream with raw
   Inflater(true), preserving ZipException and successful chunks before late failure.
   Native uses negative-windowBits zlib with equivalent streaming/error behavior.
@@ -544,13 +546,14 @@ common expects and JVM actual modifiers, and supported Native actuals:
   parent mkdir/error text, output case preservation and owned output close.
   Native must preserve literal filename spelling and enforce equivalent containment.
 
-Task 13 is an INCOMPLETE checkpoint: controller continuation must implement
-readConfZip sequential local-header behavior distinct from unpackZip central-index
-behavior, and remove unapproved strict metadata checks where legacy accepts.
-The current reader iterates central-directory records, retaining duplicate names and
-nonalphabetical order. It supports single-disk STORED/DEFLATED, descriptors and
-bounded ZIP64 metadata; payloads must fit Int/ByteArray. Encrypted/unsupported
-methods, malformed headers/lengths/CRC and multidisk archives fail explicitly.
+Task 13 continuation separates readConfZip sequential local-header order from
+unpackZip central-directory order, retaining duplicates and nonalphabetical order.
+Cache streams ignore central CRC/sizes; extraction ignores local names/flags/method/
+CRC/sizes and descriptor consistency as independently characterized against old
+commons readers. CRC correctness remains a writer obligation, not new reader strictness.
+Single-disk STORED/DEFLATED and small ZIP64 metadata/descriptors are covered;
+compressed payloads must fit Int/ByteArray. Encrypted/unsupported methods and
+multidisk archives remain limitations. Malformed length safety checks are retained.
 Traversal/drive/UNC/dotdot names are rejected (tar/conf cache skipped, module ZIP
 throws); existing symlink destination escapes are rejected. These are deliberate
 security fixes over the frozen legacy extractor, which permitted contained zip-slip.

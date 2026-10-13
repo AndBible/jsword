@@ -21,21 +21,18 @@ internal fun archiveGzipSource(path: String): BufferedSource = GzipCompressorInp
 internal fun archiveLowercase(name: String): String = name.lowercase(Locale.getDefault())
 internal fun archiveZipName(bytes: ByteArray, utf8: Boolean): String = String(bytes, Charsets.UTF_8).replace('\\', '/')
 
-internal fun archiveInflate(bytes: ByteArray, expectedSize: Int): ByteArray {
+/** Descriptor entries have no local compressed size; raw inflater EOF locates their descriptor. */
+internal fun archiveDeflateLength(bytes: ByteArray, offset: Int): Int {
     val inflater = Inflater(true)
     try {
-        inflater.setInput(bytes)
-        val output = java.io.ByteArrayOutputStream(minOf(expectedSize, 65536))
+        inflater.setInput(bytes, offset, bytes.size - offset)
         val buffer = ByteArray(4096)
         while (!inflater.finished()) {
             val count = inflater.inflate(buffer)
-            if (count == 0 && !inflater.finished()) throw IOException("Truncated/invalid ZIP deflate")
-            if (output.size().toLong() + count > expectedSize) throw IOException("ZIP inflated size exceeds declared size")
-            output.write(buffer, 0, count)
+            if (count == 0 && !inflater.finished()) throw java.io.EOFException("Truncated ZIP deflate")
         }
-        if (inflater.remaining != 0) throw IOException("ZIP deflate trailing bytes")
-        return output.toByteArray()
-    } catch (error: DataFormatException) { throw IOException("Invalid ZIP deflate", error) }
+        return bytes.size - offset - inflater.remaining
+    } catch (error: DataFormatException) { throw java.util.zip.ZipException(error.message) }
     finally { inflater.end() }
 }
 
