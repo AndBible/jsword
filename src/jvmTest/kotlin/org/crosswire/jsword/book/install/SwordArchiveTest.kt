@@ -153,6 +153,22 @@ class SwordArchiveTest {
         assertEquals(mapOf("first.conf" to listOf<Byte>(1)),tree(filtered))
     }
 
+    @Test fun cacheOutputOpensBeforeMissingInputAndFinalizesOnError() = temp { root ->
+        val input = File(root,"missing.gz")
+        for (blocked in listOf(false,true)) {
+            val old = File(root,"old-$blocked").apply { mkdirs() }; val new = File(root,"new-$blocked").apply { mkdirs() }
+            if (blocked) { File(old,"mods.d.zip").mkdir(); File(new,"mods.d.zip").mkdir() }
+            else { File(old,"mods.d.zip").writeText("old cache"); File(new,"mods.d.zip").writeText("old cache") }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
+            assertTrue(reference.exceptionOrNull() is java.io.FileNotFoundException)
+            if (blocked) {
+                assertTrue(actual.exceptionOrNull()!!.message!!.contains("mods.d.zip"))
+            } else assertEquals(confs(File(old,"mods.d.zip")),confs(File(new,"mods.d.zip")))
+        }
+    }
+
     @Test fun corruptTarOutputAndPartialCacheMatchFrozenLegacy() = temp { root ->
         val complete = org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/first.conf",byteArrayOf(1))
         val later = org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/later.conf",ByteArray(5000) { 65 })
