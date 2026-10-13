@@ -111,11 +111,18 @@ class BackendDebugPreservationTest {
             java.io.File("$path.idx").writeBytes(byteArrayOf())
             java.io.File("$path.dat").writeBytes(data.toByteArray())
             val md = metadata(path)
-            val state = ZLDBackendState(md)
+            var releases = 0
+            var failRead = false
+            val state = object : ZLDBackendState(md) {
+                override fun setLastAccess(lastAccess: Long) { releases++; super.setLastAccess(lastAccess) }
+            }
             val backend = object : ZLDBackend(md) {
                 override fun initState() = state
                 override fun getCardinality() = indexes.size
-                override fun getIndex(state: RawLDBackendState, entry: Long) = indexes[entry.toInt()]
+                override fun getIndex(state: RawLDBackendState, entry: Long): DataIndex {
+                    if (failRead) throw java.io.IOException("zld-read-probe")
+                    return indexes[entry.toInt()]
+                }
                 override fun getEntry(fileState: RawLDBackendState?, entry: DataEntry): DataEntry =
                     object : DataEntry(entry.getName(), byteArrayOf(), "UTF-8") {
                         override fun getRawText(cipherKey: ByteArray?) = raws[entry.getBlockIndex().getOffset() - 10]
@@ -142,6 +149,17 @@ class BackendDebugPreservationTest {
             val output = StringBuilder(); backend.dumpIdxRaf(output)
             assertEquals(reference, output.toString())
             assertTrue(output.contains("short\nline"))
+            assertEquals(1, releases)
+            failRead = true
+            val oldErr = System.err; val err = ByteArrayOutputStream()
+            val failedOutput = StringBuilder()
+            try {
+                System.setErr(PrintStream(err, true, "UTF-8"))
+                backend.dumpIdxRaf(failedOutput)
+            } finally { System.setErr(oldErr) }
+            assertEquals("index\toffset\tsize\tkey\tvalue\n", failedOutput.toString())
+            assertTrue(err.toString("UTF-8").contains("java.io.IOException: zld-read-probe"))
+            assertEquals(2, releases)
             state.releaseResources()
         } finally { dir.deleteRecursively() }
     }

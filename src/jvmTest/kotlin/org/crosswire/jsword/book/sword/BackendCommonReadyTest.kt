@@ -101,11 +101,28 @@ class BackendCommonReadyTest {
     }
 
     @Test fun devotionInternalPatternRetainsFullMatchAndOutOfRangeAcceptance() {
-        val field = RawLDBackend::class.java.getDeclaredField("DEVOTION_PATTERN").apply { isAccessible = true }
-        val current = field.get(null) as Regex
+        val backend = Probe(metadata("Category=Daily Devotional\n"))
+        assertEquals(org.crosswire.jsword.book.BookCategory.DAILY_DEVOTIONS, backend.bookMetaData.bookCategory)
         val frozen = java.util.regex.Pattern.compile("^\\d\\d\\.\\d\\d$")
         for (key in listOf("01.01", "99.99", "00.00", "1.01", "01.01\n", "x01.01", "٠١.٠١")) {
-            assertEquals(key, frozen.matcher(key).matches(), current.matches(key))
+            if (frozen.matcher(key).matches()) {
+                assertEquals(key, external(backend, key, ""))
+            } else {
+                // Execute the old date-parser branch independently, including its error.
+                val reference = runCatching {
+                    val calendar = java.util.GregorianCalendar()
+                    val formatter = org.crosswire.common.icu.DateFormatter.getDateInstance()
+                    formatter.setLenient(true)
+                    calendar.time = formatter.parse(key)
+                    org.crosswire.common.util.MessageFormatLite.format("{0,number,00}.{1,number,00}",
+                        org.crosswire.common.util.KswordLocale.default(), arrayOf<Any>(
+                            1 + calendar.get(java.util.Calendar.MONTH), calendar.get(java.util.Calendar.DATE)))
+                }
+                val actual = runCatching { external(backend, key, "") }
+                if (reference.isSuccess) assertEquals(key, reference.getOrThrow(), actual.getOrThrow())
+                else assertEquals(key, reference.exceptionOrNull()!!::class,
+                    (actual.exceptionOrNull() as java.lang.reflect.InvocationTargetException).targetException::class)
+            }
         }
     }
 
