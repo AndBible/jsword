@@ -18,6 +18,8 @@ class StorageLexicalContractTest {
         assertEquals("/parent/absolute", storageChild(StorageLocation("/parent"), "/absolute").spelling)
         assertEquals("/absolute", storageChild(StorageLocation(""), "/absolute").spelling)
         assertEquals("/child", storageChild(StorageLocation(""), "child").spelling)
+        assertEquals("/", storageChild(StorageLocation(""), "").spelling)
+        assertEquals("", storageChild(null, "").spelling)
         assertEquals("child", storageChild(null, "child").spelling)
         assertEquals("parent", storageChild(StorageLocation("parent"), "").spelling)
         assertFailsWith<NullPointerException> { storageChild(null, null) }

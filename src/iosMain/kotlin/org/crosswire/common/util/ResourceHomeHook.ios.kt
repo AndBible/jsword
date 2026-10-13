@@ -35,7 +35,7 @@ internal actual fun validatedFileUriPath(uri: KUri): Path = nativeFileUriSpellin
 
 /** Validate before projecting to Path: registry authorities need not have a host. */
 internal fun nativeFileUriSpelling(uri: KUri): String {
-    require(uri.isAbsolute() && uri.getScheme() == "file") { "URI is not an absolute file URI" }
+    require(uri.isAbsolute() && uri.getScheme().equals("file", ignoreCase = true)) { "URI is not an absolute file URI" }
     require(uri.getRawPath() != null && uri.getPath()!!.startsWith('/')) { "URI is not hierarchical" }
     require(uri.rawAuthority().isNullOrEmpty()) { "URI has an authority" }
     require(uri.getQuery() == null && uri.getFragment() == null) { "URI has a query or fragment" }

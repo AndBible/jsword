@@ -30,7 +30,7 @@ internal object NativeLexicalFiles {
     fun child(parent: String?, child: String): String {
         val part = spelling(child)
         if (parent == null) return part
-        if (part.isEmpty()) return parent
+        if (part.isEmpty()) return if (parent.isEmpty()) "/" else parent
         return spelling(parent + (if (part.startsWith('/')) "" else "/") + part)
     }
 
@@ -49,8 +49,38 @@ internal object NativeLexicalFiles {
     fun mkdirs(path: String): Boolean {
         if (exists(path) || !valid(path)) return false
         if (mkdir(path, 511.convert()) == 0) return true
-        val up = parent(absolute(path)) ?: return false
-        return (mkdirs(up) || directory(up)) && mkdir(path, 511.convert()) == 0
+        val canonical = try { canonicalFallback(path) } catch (_: IOException) { return false }
+        val up = parent(canonical) ?: return false
+        return (mkdirs(up) || exists(up)) && mkdir(canonical, 511.convert()) == 0
+    }
+
+    /** File.mkdirs canonicalizes only after its direct mkdir fails, including nonexistent tails. */
+    private fun canonicalFallback(path: String): String {
+        var prefix = absolute(path)
+        val tail = ArrayDeque<String>()
+        var resolved: String
+        while (true) {
+            val real = realpath(prefix, null)
+            if (real != null) {
+                resolved = try { real.toKString() } finally { free(real) }
+                break
+            }
+            if (errno != ENOENT && errno != ENOTDIR) throw failure("canonicalize $path")
+            val up = parent(prefix) ?: throw failure("canonicalize $path")
+            tail.addFirst(name(prefix))
+            prefix = up
+        }
+        for (part in tail) {
+            resolved = when (part) {
+                "", "." -> resolved
+                ".." -> parent(resolved) ?: "/"
+                else -> if (resolved == "/") "/$part" else "$resolved/$part"
+            }
+            // A reduced '..' may expose another existing symlink prefix.
+            val real = realpath(resolved, null)
+            if (real != null) resolved = try { real.toKString() } finally { free(real) }
+        }
+        return resolved
     }
     fun list(path: String): List<String>? {
         if (!valid(path)) return null
@@ -78,34 +108,56 @@ internal object NativeLexicalFiles {
     }
 
     fun handle(path: String, writable: Boolean): FileHandle = Descriptor(openFile(path, if (writable) O_RDWR or O_CREAT else O_RDONLY), writable)
-    fun source(path: String): Source = handle(path, false).let { handle ->
-        // A FileHandle source retains its descriptor after the owner's close until the source closes.
-        val source = handle.source()
-        handle.close()
-        source
+    fun source(path: String): Source {
+        val fd = openFile(path, O_RDONLY)
+        val streamLock = SynchronizedObject()
+        var closed = false
+        return object : Source {
+            override fun read(sink: Buffer, byteCount: Long): Long = synchronized(streamLock) {
+                check(!closed) { "closed" }
+                require(byteCount >= 0)
+                if (byteCount == 0L) return@synchronized 0L
+                val bytes = ByteArray(minOf(byteCount, 8192L).toInt())
+                val count = bytes.usePinned { platform.posix.read(fd, it.addressOf(0), bytes.size.toULong()) }
+                if (count < 0) throw failure("read")
+                if (count == 0L) -1L else {
+                    sink.write(bytes, 0, count.toInt())
+                    count
+                }
+            }
+            override fun timeout(): Timeout = Timeout.NONE
+            override fun close() = synchronized(streamLock) {
+                if (!closed) { closed = true; closeChecked(fd) }
+            }
+        }
     }
     fun sink(path: String, append: Boolean = false): Sink {
-        val descriptor = Descriptor(openFile(path, O_WRONLY or O_CREAT or (if (append) O_APPEND else O_TRUNC)), true)
-        // O_APPEND is kernel-owned; this offset is only meaningful for non-append output.
+        val fd = openFile(path, O_WRONLY or O_CREAT or (if (append) O_APPEND else O_TRUNC))
+        val streamLock = SynchronizedObject()
         return object : Sink {
-            private var position = 0L
             private var closed = false
-            override fun write(source: Buffer, byteCount: Long) {
+            override fun write(source: Buffer, byteCount: Long) = synchronized(streamLock) {
                 check(!closed) { "closed" }
                 require(byteCount >= 0 && byteCount <= source.size)
                 var remaining = byteCount
                 while (remaining > 0) {
                     val bytes = source.readByteArray(minOf(remaining, 8192L))
-                    descriptor.write(position, bytes, 0, bytes.size)
-                    position += bytes.size
+                    var done = 0
+                    bytes.usePinned { pin ->
+                        while (done < bytes.size) {
+                            val count = platform.posix.write(fd, pin.addressOf(done), (bytes.size - done).toULong())
+                            if (count <= 0) throw failure("write")
+                            done += count.toInt()
+                        }
+                    }
                     remaining -= bytes.size
                 }
             }
             // FileOutputStream.flush is a no-op; only random-access handle flush calls fsync.
             override fun flush() = Unit
             override fun timeout(): Timeout = Timeout.NONE
-            override fun close() {
-                if (!closed) { closed = true; descriptor.close() }
+            override fun close() = synchronized(streamLock) {
+                if (!closed) { closed = true; closeChecked(fd) }
             }
         }
     }

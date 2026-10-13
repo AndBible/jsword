@@ -50,7 +50,7 @@ class NativeStorageIoTest {
         }
         val closed = storageOpenRandomAccess(file, false)
         closed.close(); closed.close()
-        assertFailsWith<IOException> { closed.size() }
+        assertFailsWith<IllegalStateException> { closed.size() }
         val moved = storageChild(root, "moved\\file")
         assertTrue(storageMove(file, moved)); assertFalse(storageExists(file))
         assertContentEquals(byteArrayOf(1, 2, 3, 0, 0, 7), storageRead(moved))
@@ -87,10 +87,58 @@ class NativeStorageIoTest {
         assertEquals("caféxx", rawFileDecodeName("caféxxxrest".encodeToByteArray()))
     }
 
+    @Test fun mkdirsCanonicalFallbackDoesNotCreateDiscardedSegments() = temporary { root ->
+        val target = storageChild(root, "missing/../target")
+        assertTrue(storageMkdirs(target))
+        assertTrue(storageDirectory(storageChild(root, "target")))
+        assertFalse(storageExists(storageChild(root, "missing")))
+        assertFalse(storageMkdirs(storageChild(root, "other/../target")))
+        assertFalse(storageExists(storageChild(root, "other")))
+        assertTrue(storageMkdirs(storageChild(root, "dot/./child")))
+        assertTrue(storageDirectory(storageChild(root, "dot/child")))
+        val link = storageChild(root, "link")
+        assertEquals(0, symlink(storageChild(root, "dot").spelling, link.spelling))
+        assertTrue(storageMkdirs(storageChild(root, "link/discarded/../../linked-target")))
+        assertFalse(storageExists(storageChild(root, "dot/discarded")))
+        assertTrue(storageDirectory(storageChild(root, "linked-target")))
+        unlink(link.spelling)
+    }
+
+    @Test fun fifoStreamsTransferWithoutRandomAccessSeek() = temporary { root ->
+        val fifo = storageChild(root, "pipe")
+        assertEquals(0, mkfifo(fifo.spelling, 384.convert()))
+        // A real nonblocking counterpart keeps opens deterministic without a worker thread.
+        val counterpart = open(fifo.spelling, O_RDWR or O_NONBLOCK)
+        assertTrue(counterpart >= 0)
+        // Bound any accidental blocking regression: SIGALRM fails the test process, never an endless CI hang.
+        alarm(5u)
+        try {
+            val bytes = byteArrayOf(1, 2, 3)
+            bytes.usePinned { assertEquals(3L, write(counterpart, it.addressOf(0), 3uL)) }
+            NativeLexicalFiles.source(fifo.spelling).use { source ->
+                val buffer = Buffer()
+                assertEquals(3L, source.read(buffer, 3))
+                assertContentEquals(bytes, buffer.readByteArray())
+            }
+            NativeLexicalFiles.sink(fifo.spelling, append = true).use { sink ->
+                sink.write(Buffer().write(bytes), 3)
+                sink.flush()
+            }
+            val received = ByteArray(3)
+            received.usePinned { assertEquals(3L, read(counterpart, it.addressOf(0), 3uL)) }
+            assertContentEquals(bytes, received)
+        } finally { alarm(0u); close(counterpart) }
+    }
+
     @Test fun fileUrisRejectRegistryAuthoritiesAndKeepLiteralPaths() = temporary { root ->
         val file = storageChild(root, "uri\\file")
         val uri = KUri("file", null, file.spelling, null)
         assertEquals(file, storageUriLocation(uri))
+        for (scheme in listOf("FILE", "FiLe")) {
+            val mixedCase = KUri(scheme, null, file.spelling, null)
+            assertEquals(file, storageUriLocation(mixedCase))
+            assertEquals(file.path, validatedFileUriPath(mixedCase))
+        }
         webResourceOutputSink(uri).buffer().use { it.writeUtf8("literal") }
         assertEquals("literal", storageRead(file).decodeToString())
         webResourceOutputSink(KUri("file://registry:bad${file.spelling.replace("\\", "%5C")}?ignored#ignored")).buffer().use { it.writeUtf8("decoded path") }
