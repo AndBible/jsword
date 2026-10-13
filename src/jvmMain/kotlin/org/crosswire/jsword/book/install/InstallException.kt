@@ -47,9 +47,6 @@ open class InstallException : LucidException {
     constructor(msg: String?, ex: Throwable?) : super(msg, ex)
 
     private companion object {
-        /**
-         * Serialization ID
-         */
         private const val serialVersionUID = 3258132440416335669L
     }
 }

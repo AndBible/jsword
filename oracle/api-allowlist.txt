@@ -493,3 +493,7 @@ org.crosswire.common.compress.Zip + K public (byte[]) throws [] # K4 stream
 org.crosswire.common.compress.Zip + M public compress(): byte[] throws [java.io.IOException] # K4 stream
 org.crosswire.common.compress.Zip + M public uncompress(): byte[] throws [java.io.IOException] # K4 stream
 org.crosswire.common.compress.Zip + M public uncompress(int): byte[] throws [java.io.IOException] # K4 stream
+
+# K4 T11 HTTP injection and common-ready install exception.
+org.crosswire.common.util.WebResource + M public static getTransport(): org.crosswire.common.util.HttpTransport throws [] # K4 seam: host-owned HttpTransport injection
+org.crosswire.common.util.WebResource + M public static setTransport(org.crosswire.common.util.HttpTransport): void throws [] # K4 seam: host-owned HttpTransport injection

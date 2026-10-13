@@ -63,6 +63,11 @@ while IFS= read -r line; do
              [[ "$m" =~ ^[0-9]+:[[:space:]]*private[[:space:]]const[[:space:]]val[[:space:]]serialVersionUID[[:space:]]=[[:space:]]-2472601787934480762L$ ]]; then
             continue
           fi
+          # Kotlin Exception is Serializable on JVM; preserve the frozen install exception UID.
+          if [ "$p" = 'serialVersionUID' ] && [ "$f" = 'org/crosswire/jsword/book/install/InstallException.kt' ] &&
+             [[ "$m" =~ ^[0-9]+:[[:space:]]*private[[:space:]]const[[:space:]]val[[:space:]]serialVersionUID[[:space:]]=[[:space:]]3258132440416335669L$ ]]; then
+            continue
+          fi
           echo "$f:$m   [$p]"; hits=1
         done <<< "$out"
       else

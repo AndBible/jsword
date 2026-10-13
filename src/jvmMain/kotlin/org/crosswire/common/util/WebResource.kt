@@ -23,13 +23,9 @@ import org.crosswire.common.progress.Progress
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.install.DownloadCancelledException
 import org.crosswire.jsword.book.install.DownloadException
-import java.io.IOException
-import java.io.InputStream
-import java.io.InterruptedIOException
-import java.io.OutputStream
-import java.net.URI
-import java.util.Date
-import javax.net.ssl.HttpsURLConnection
+import okio.IOException
+import okio.BufferedSink
+import okio.buffer
 
 /**
  * A WebResource is backed by an URL and potentially the proxy through which it
@@ -50,7 +46,7 @@ open class WebResource {
      * @param theURI
      *            the Resource to get via HTTP
      */
-    constructor(theURI: URI?) : this(theURI, null, null, timeout.toLong())
+    constructor(theURI: KUri?) : this(theURI, null, null, timeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, while timing out if too much
@@ -62,7 +58,7 @@ open class WebResource {
      *            the length of time in milliseconds to allow a connection to
      *            respond before timing out
      */
-    constructor(theURI: URI?, theTimeout: Int) : this(theURI, null, null, theTimeout.toLong())
+    constructor(theURI: KUri?, theTimeout: Int) : this(theURI, null, null, theTimeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
@@ -73,7 +69,7 @@ open class WebResource {
      * @param theProxyHost
      *            the proxy host or null
      */
-    constructor(theURI: URI?, theProxyHost: String?) : this(theURI, theProxyHost, null, timeout.toLong())
+    constructor(theURI: KUri?, theProxyHost: String?) : this(theURI, theProxyHost, null, timeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
@@ -87,7 +83,7 @@ open class WebResource {
      *            the length of time in milliseconds to allow a connection to
      *            respond before timing out
      */
-    constructor(theURI: URI?, theProxyHost: String?, theTimeout: Int) : this(theURI, theProxyHost, null, theTimeout.toLong())
+    constructor(theURI: KUri?, theProxyHost: String?, theTimeout: Int) : this(theURI, theProxyHost, null, theTimeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
@@ -100,7 +96,7 @@ open class WebResource {
      * @param theProxyPort
      *            the proxy port or null, where null means use the standard port
      */
-    constructor(theURI: URI?, theProxyHost: String?, theProxyPort: Int?) : this(theURI, theProxyHost, theProxyPort, timeout.toLong())
+    constructor(theURI: KUri?, theProxyHost: String?, theProxyPort: Int?) : this(theURI, theProxyHost, theProxyPort, timeout.toLong())
 
     /**
      * Construct a WebResource for the given URL, going through the optional
@@ -116,7 +112,7 @@ open class WebResource {
      *            the length of time in milliseconds to allow a connection to
      *            respond before timing out
      */
-    constructor(theURI: URI?, theProxyHost: String?, theProxyPort: Int?, theTimeout: Long) {
+    constructor(theURI: KUri?, theProxyHost: String?, theProxyPort: Int?, theTimeout: Long) {
         uri = theURI
     }
 
@@ -137,19 +133,14 @@ open class WebResource {
     open val size: Int
         get() {
             try {
-                // Execute the method.
-                val httpsURLConnection = uri!!.toURL().openConnection() as HttpsURLConnection
-                httpsURLConnection.requestMethod = "HEAD"
-                httpsURLConnection.connectTimeout = timeout
-                httpsURLConnection.readTimeout = timeout
-
-                if (httpsURLConnection.responseCode == 200) {
-                    return httpsURLConnection.contentLength
+                val response = transport.head(uri!!, timeout)
+                if (response.status == 200) {
+                    return response.contentLength
                 }
-                val reason = httpsURLConnection.responseMessage
+                val reason = response.reason
                 // TRANSLATOR: Common error condition: {0} is a placeholder for the
                 // URL of what could not be found.
-                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.path))
+                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.getPath()))
             } catch (e: IOException) {
                 return 0
             }
@@ -167,22 +158,18 @@ open class WebResource {
     open val lastModified: Long
         get() {
             try {
-                // Execute the method.
-                val httpsURLConnection = uri!!.toURL().openConnection() as HttpsURLConnection
-                httpsURLConnection.requestMethod = "HEAD"
-                httpsURLConnection.connectTimeout = timeout
-                httpsURLConnection.readTimeout = timeout
-                if (httpsURLConnection.responseCode == 200) {
-                    return httpsURLConnection.lastModified
+                val response = transport.head(uri!!, timeout)
+                if (response.status == 200) {
+                    return response.lastModified
                 }
-                val reason = httpsURLConnection.responseMessage
+                val reason = response.reason
                 // TRANSLATOR: Common error condition: {0} is a placeholder for the
                 // URL of what could not be found.
-                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.path))
+                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.getPath()))
             } catch (e: IOException) {
-                return Date().time
+                return currentTimeMillis()
             }
-            return Date().time
+            return currentTimeMillis()
         }
 
     /**
@@ -195,31 +182,28 @@ open class WebResource {
      * @throws LucidException when an error is encountered
      */
     @Throws(LucidException::class)
-    open fun copy(dest: URI?, meter: Progress?) {
-        var `in`: InputStream? = null
-        var out: OutputStream? = null
+    open fun copy(dest: KUri?, meter: Progress?) {
+        var `in`: HttpBody? = null
+        var out: BufferedSink? = null
         var statusCode = 0
 
         try {
-            // Execute the method.
-            val httpsURLConnection = uri!!.toURL().openConnection() as HttpsURLConnection
-            httpsURLConnection.connectTimeout = timeout
-            httpsURLConnection.readTimeout = timeout
+            `in` = transport.get(uri!!, timeout)
             // Initialize the meter, if present
             if (meter != null) {
                 // Find out how big it is
-                var size = httpsURLConnection.contentLength
+                var size = `in`.contentLength
                 // Sometimes the Content-Length is not given and we have to grab it via HEAD method
                 if (size == 0) {
                     size = this.size
                 }
                 meter.totalWork = size
             }
-            statusCode = httpsURLConnection.responseCode
-            `in` = httpsURLConnection.inputStream
+            statusCode = `in`.status
+            `in`.prepareRead()
 
             // Download the index file
-            out = NetUtil.getOutputStream(dest!!)
+            out = webResourceOutputSink(dest!!).buffer()
 
             val buf = ByteArray(4096)
             var count = `in`.read(buf)
@@ -228,9 +212,10 @@ open class WebResource {
                     meter.incrementWorkDone(count)
                 }
                 out.write(buf, 0, count)
+                out.emit()
                 count = `in`.read(buf)
             }
-        } catch (e: InterruptedIOException) {
+        } catch (e: TransportCancelledException) {
             throw DownloadCancelledException(uri)
         } catch (e: IOException) {
             // TRANSLATOR: Common error condition: {0} is a placeholder for the
@@ -253,14 +238,17 @@ open class WebResource {
      * @throws LucidException when an error is encountered
      */
     @Throws(LucidException::class)
-    open fun copy(dest: URI?) {
+    open fun copy(dest: KUri?) {
         copy(dest, null)
     }
 
-    private var uri: URI?
+    private var uri: KUri?
     //private CloseableHttpClient client;
 
     companion object {
+        @JvmStatic
+        var transport: HttpTransport = UrlConnectionHttpTransport()
+
         @JvmStatic
         fun setHostnameWhitelist(hostnameWhitelist: List<String>?) {
             WebResource.hostnameWhitelist = hostnameWhitelist

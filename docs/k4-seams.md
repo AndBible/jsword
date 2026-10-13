@@ -446,3 +446,35 @@ empty ZIP is tested via no-arg decode plus exact-length-zero failure rather than
 changing the legacy inflater to satisfy the plan's guessed roundtrip example.
 LZSS preserves constants/tree/ring behavior with indexed unsigned byte reads and
 Buffer output, including truncated token acceptance and negative-capacity error.
+
+## Task 11 HTTP transport handoff
+
+`HttpTransport` is common now; WebResource/install exceptions remain JVM until Task 16.
+Controller corrected the eager GET promise after real local HTTPS characterization:
+`get(uri: KUri, timeoutMs: Int): HttpBody` returns a lazy request. Access
+`contentLength` only when a meter exists (HEAD fallback only for zero, not -1),
+then `status`, then `prepareRead(): Unit` before destination open. A dropped
+connection's contentLength suppresses IOException and yields -1; meter is updated
+before status throws, mapping to LucidException with status still zero.
+`prepareRead` establishes inputStream and preserves 404-before-output behavior.
+Read/metadata/open InterruptedIOException maps to TransportCancelledException.
+Input closes before output, with IOException suppressed/logged as before; no new
+explicit disconnect of the URLConnection is introduced.
+
+Plain JVM `internal fun webResourceOutputSink(uri: KUri): okio.Sink` in
+WebResourceIo.jvm.kt reuses NetUtil.getOutputStream's lexical FileOutputStream
+boundary (including non-file URL behavior). NetUtil.toPath is only a projection:
+a legal Unix backslash filename changes into a separator there. The sink adapter
+also deliberately avoids okio OutputStream.sink's interrupt check: that adapter
+lost the partial file on cancellation in a real blocked-read test. WebResource
+emits each write immediately, retaining legacy output-error timing. Task 16 adds
+an internal common expect in WebResourceIo.kt and a Native actual using exact
+lexical filesystem spelling; no Path/File identity registry.
+
+Task 16 adds `expect fun defaultHttpTransport(): HttpTransport?` (JVM
+UrlConnectionHttpTransport, iOS null), nullable transport holder with
+IllegalStateException("No HttpTransport set") when unset, and moves fake tests
+from jvmTest to commonTest. Native host HTTP implementation remains track I.
+Existing currentTimeMillis JVM helper is reused; Task 16 adds its expect/actual.
+JVM constructor timeout/proxy arguments remain ignored; companion timeout and
+platform default ProxySelector retain authority. Production TLS is unchanged.

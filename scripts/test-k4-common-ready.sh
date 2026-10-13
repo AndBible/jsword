@@ -96,5 +96,23 @@ output=$("$guard" --list "$tmp/list" --root "$tmp/root" 2>&1); status=$?
 if [ "$status" -ne 1 ] || ! grep -q '^p/Wrong.kt:2:' <<< "$output"; then
   echo 'FAIL: TreeNode UID exception accepted wrong path'; fail=1
 fi
+install='org/crosswire/jsword/book/install/InstallException.kt'
+mkdir -p "$tmp/root/$(dirname "$install")"
+printf 'package p\nprivate const val serialVersionUID = 3258132440416335669L\n' > "$tmp/root/$install"
+printf '%s #done\n' "$install" > "$tmp/list"
+"$guard" --list "$tmp/list" --root "$tmp/root" >/dev/null || { echo 'FAIL: exact InstallException UID rejected'; fail=1; }
+for sample in 'private const val serialVersionUID = 1L' 'private const val serialVersionUIDOther = 3258132440416335669L' 'private const val serialVersionUID = 3258132440416335669L; val x = java.lang.System.out'; do
+  printf 'package p\n%s\n' "$sample" > "$tmp/root/$install"
+  output=$("$guard" --list "$tmp/list" --root "$tmp/root" 2>&1); status=$?
+  if [ "$status" -ne 1 ] || ! grep -q "^$install:2:" <<< "$output"; then
+    echo "FAIL: InstallException UID exception masked $sample"; fail=1
+  fi
+done
+printf 'package p\nprivate const val serialVersionUID = 3258132440416335669L\n' > "$tmp/root/p/Wrong.kt"
+echo 'p/Wrong.kt #done' > "$tmp/list"
+output=$("$guard" --list "$tmp/list" --root "$tmp/root" 2>&1); status=$?
+if [ "$status" -ne 1 ] || ! grep -q '^p/Wrong\.kt:2:' <<< "$output"; then
+  echo 'FAIL: InstallException UID exception accepted wrong path'; fail=1
+fi
 [ $fail = 0 ] && echo "k4-common-ready self-test: OK"
 exit $fail

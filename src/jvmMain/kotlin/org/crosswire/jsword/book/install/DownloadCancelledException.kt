@@ -1,5 +1,5 @@
 package org.crosswire.jsword.book.install
 
-import java.net.URI
+import org.crosswire.common.util.KUri
 
-open class DownloadCancelledException(uri: URI?) : InstallException("Downloading $uri was cancelled")
+open class DownloadCancelledException(uri: KUri?) : InstallException("Downloading $uri was cancelled")
