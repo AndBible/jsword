@@ -1,6 +1,8 @@
 package org.crosswire.common.util
 
 /** URI syntax and quoting shared by the native seam and its JVM differential tests. */
+internal class KUriSyntaxException(message: String) : IllegalArgumentException(message)
+
 internal object KUriParts {
     data class Parts(val scheme: String?, val rawSsp: String, val rawAuthority: String?, val rawUserInfo: String?, val host: String?, val port: Int, val rawPath: String?, val rawQuery: String?, val rawFragment: String?)
 
@@ -183,10 +185,10 @@ internal class KUriModel private constructor(private val text: String, private v
     override fun hashCode(): Int = identity().hashCode()
 
     companion object {
-        fun parse(s: String): KUriModel = KUriModel(s, KUriParts.parse(s) ?: throw IllegalArgumentException("Illegal character in URI: $s"))
+        fun parse(s: String): KUriModel = KUriModel(s, KUriParts.parse(s) ?: throw KUriSyntaxException("Illegal character in URI: $s"))
         fun build(scheme: String?, host: String?, path: String?, fragment: String?): KUriModel = build(scheme, null, host, -1, path, null, fragment)
         fun build(scheme: String?, userInfo: String?, host: String?, port: Int, path: String?, query: String?, fragment: String?): KUriModel {
-            require(scheme == null || path.isNullOrEmpty() || path.startsWith('/')) { "Relative path in absolute URI" }
+            if (scheme != null && !path.isNullOrEmpty() && !path.startsWith('/')) throw KUriSyntaxException("Relative path in absolute URI")
             val text = buildString {
                 if (scheme != null) { append(scheme); append(':') }
                 if (host != null) {
@@ -200,7 +202,7 @@ internal class KUriModel private constructor(private val text: String, private v
                 if (fragment != null) { append('#'); append(KUriParts.quote(fragment, ":@/?[]")) }
             }
             val result = parse(text)
-            require(result.parts.rawAuthority == null || result.parts.host != null) { "Invalid server authority: ${result.parts.rawAuthority}" }
+            if (result.parts.rawAuthority != null && result.parts.host == null) throw KUriSyntaxException("Invalid server authority: ${result.parts.rawAuthority}")
             return result
         }
     }
