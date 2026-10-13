@@ -529,6 +529,13 @@ actual consumed counts and 10240-byte consumption. Internal Source constructor l
 public BufferedSource constructor/strict policy unchanged. GNU L/PAX x extension
 bodies and padding use that same raw installer policy, never the public buffered
 reader (actual old installer long-name/path plus subsequent/filtered entries covered).
+Unlike ordinary selected bodies, incomplete declared GNU/PAX extension bodies fail
+with IOException before padding/parsing or same-call next-header EOF; frozen old
+installer differentials cover empty/partial extension bodies with/without an earlier
+cache entry. Fully consumed GNU bodies still permit short padding (0/1/100 bytes).
+A terminal fully consumed PAX header with no following entry remains a known
+compatibility gap: old commons throws NullPointerException (path or comment record),
+while this reader ends successfully. This is distinct from incomplete-body handling.
 Partial-cache differential pins
 first entry plus 4300 bytes of a truncated later entry and finalized directory.
 

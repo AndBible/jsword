@@ -233,6 +233,55 @@ class SwordArchiveTest {
         }
     }
 
+    @Test fun installerIncompleteGnuBodyFailsLikeFrozenLegacy() = incompleteInstallerExtension('L')
+
+    @Test fun installerIncompletePaxBodyFailsLikeFrozenLegacy() = incompleteInstallerExtension('x')
+
+    private fun incompleteInstallerExtension(type: Char) = temp { root ->
+        val completeBody = if (type == 'L') "mods.d/long.conf\u0000".toByteArray() else "25 path=mods.d/long.conf\n".toByteArray()
+        val mismatches = mutableListOf<String>()
+        for (earlier in listOf(false,true)) for (partial in listOf(false,true)) {
+            val body = if (partial) completeBody else byteArrayOf()
+            // The checksum and declared size remain valid; only the extension body is short.
+            val extension = org.crosswire.common.util.TarReaderTest.tarRecord("extension",body+byteArrayOf(0),type).copyOf(512+body.size)
+            val prefix = if (earlier) org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/first.conf",byteArrayOf(1)) else byteArrayOf()
+            val tar = prefix+extension
+            val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(tar) } }.toByteArray()
+            val input = File(root,"input.gz").apply { writeBytes(gzip) }
+            assertEquals(tar.toList(),GZIPInputStream(input.inputStream()).use { it.readBytes().toList() })
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            val context = "type=$type/earlier=$earlier/partial=$partial"
+            println("INCOMPLETE EXTENSION $context old=${reference.exceptionOrNull()} new=${actual.exceptionOrNull()}")
+            val expected = if (earlier) listOf("mods.d/first.conf" to listOf<Byte>(1)) else emptyList()
+            assertEquals(expected,confs(File(old,"mods.d.zip")),context)
+            assertEquals(expected,confs(File(new,"mods.d.zip")),context)
+            assertTrue(reference.exceptionOrNull()?.javaClass == IOException::class.java,context)
+            if (reference.exceptionOrNull()?.javaClass != actual.exceptionOrNull()?.javaClass) mismatches.add(context)
+        }
+        assertTrue(mismatches.isEmpty(),"Legacy IOException was not preserved: $mismatches")
+    }
+
+    @Test fun installerCompleteGnuExtensionShortPaddingStillMatchesFrozenLegacy() = temp { root ->
+        for (padding in listOf(0,1,100)) {
+            val body = "mods.d/long.conf\u0000".toByteArray()
+            val extension = org.crosswire.common.util.TarReaderTest.tarRecord("extension",body,'L').copyOf(512+body.size+padding)
+            val tar = org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/first.conf",byteArrayOf(1))+extension
+            val gzip = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(tar) } }.toByteArray()
+            val input = File(root,"input.gz").apply { writeBytes(gzip) }
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            val context = "GNU/padding=$padding"
+            println("COMPLETE EXTENSION $context old=${reference.exceptionOrNull()} new=${actual.exceptionOrNull()}")
+            assertTrue(reference.isSuccess,context)
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,context)
+            assertEquals(listOf("mods.d/first.conf" to listOf<Byte>(1)),confs(File(old,"mods.d.zip")),context)
+            assertEquals(confs(File(old,"mods.d.zip")),confs(File(new,"mods.d.zip")),context)
+        }
+    }
+
     @Test fun unsupportedDuplicateEntryRetainsActualCentralMetadata() = temp { root ->
         val file = File(root,"input.zip")
         org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(file).use { zip ->

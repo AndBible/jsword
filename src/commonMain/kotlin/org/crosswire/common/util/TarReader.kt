@@ -91,6 +91,8 @@ class TarReader private constructor(private val source: BufferedSource, private 
             if (type == 'L' || type == 'x') {
                 val body = if (installer) readInstallerEntry() else readEntry()
                 if (installer) {
+                    // Extension bodies must be complete before the same-call next-header EOF.
+                    if (remaining > 0) throw IOException("Truncated TAR archive")
                     val scratch = okio.Buffer()
                     var left = padding
                     while (left > 0) {
