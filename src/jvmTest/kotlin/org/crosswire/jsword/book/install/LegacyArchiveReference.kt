@@ -20,6 +20,26 @@ import java.net.URI
 
 internal object LegacyArchiveReference {
     private val log = LoggerFactory.getLogger(LegacyArchiveReference::class)
+    /** Actual cba5125 loadCachedIndex selected-entry read loop, not generic readBytes. */
+    fun loadConfZip(file: File, visit: (String, ByteArray) -> Unit) {
+        val fin = file.inputStream()
+        val zin = ZipArchiveInputStream(fin)
+        try {
+            while (true) {
+                val entry = zin.nextZipEntry ?: break
+                if (entry.isDirectory) continue
+                val path = entry.name
+                if (!path.endsWith(SwordConstants.EXTENSION_CONF)) { log.error("Not a SWORD config file: {}",path); continue }
+                val size = entry.size.toInt()
+                if (size == 0) { log.error("Empty entry: {}",path); continue }
+                val buffer = ByteArray(size)
+                var offset = 0
+                while (offset < size) offset += zin.read(buffer,offset,size-offset)
+                visit(path,buffer)
+            }
+        } finally { IOUtil.close(fin); IOUtil.close(zin) }
+    }
+
     fun unpack(cacheDir: URI?, cache: URI?) {
         var fin: InputStream? = null
         var gin: GzipCompressorInputStream? = null

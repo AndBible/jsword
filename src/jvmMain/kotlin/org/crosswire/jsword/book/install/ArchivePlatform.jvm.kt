@@ -34,6 +34,20 @@ internal fun archiveDescriptorSource(bytes: ByteArray, offset: Int, consumed: (I
     }.source()
 }
 
+internal fun archiveUnsupportedZipFeature(name: String, method: Int, encrypted: Boolean): Nothing {
+    val entry = org.apache.commons.compress.archivers.zip.ZipArchiveEntry(name)
+    entry.method = method
+    val flags = org.apache.commons.compress.archivers.zip.GeneralPurposeBit()
+    flags.useEncryption(encrypted)
+    entry.generalPurposeBit = flags
+    if (encrypted) throw org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException(
+        org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException.Feature.ENCRYPTION,entry)
+    val known = org.apache.commons.compress.archivers.zip.ZipMethod.getMethodByCode(method)
+    if (known != null) throw org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException(known,entry)
+    throw org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException(
+        org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException.Feature.METHOD,entry)
+}
+
 internal fun archiveInflateSource(bytes: ByteArray): okio.Source = java.util.zip.InflaterInputStream(bytes.inputStream(), Inflater(true)).source()
 
 internal fun archiveExtract(dest: String, name: String, directory: Boolean, source: () -> okio.Source) {

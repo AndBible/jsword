@@ -398,14 +398,14 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             unpack(cacheDir, cache)
         }
 
-        for ((path, buffer) in org.crosswire.jsword.book.install.SwordArchive.readConfZipSpelling(NetUtil.getAsFile(confDir).path)) {
+        org.crosswire.jsword.book.install.SwordArchive.visitConfZipSpelling(NetUtil.getAsFile(confDir).path) { path, buffer ->
                 // Set the path to something that gives the path to the zip and the entry in the zip
                 val sbmd = SwordBookMetaData(buffer, confDir.path + '!' + path)
                 sbmd.setDriver(fake)
 
                 // skip any book that is not supported.
                 if (!sbmd.isSupported) {
-                    continue
+                    return@visitConfZipSpelling
                 }
 
                 val book: Book = SwordBook(sbmd, nullBackend)

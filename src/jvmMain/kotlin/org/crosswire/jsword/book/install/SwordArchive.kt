@@ -48,6 +48,26 @@ object SwordArchive {
         }
     }.toList()
 
+    /** The installer consumes each declared-size body before advancing to the next entry. */
+    internal fun visitConfZipSpelling(zip: String, visit: (String,ByteArray) -> Unit) {
+        for (entry in readLocalZip(archiveRead(zip))) {
+            if (entry.directory) continue
+            if (!safeName(entry.name)) { log.error("Unsafe archive entry: {}",entry.name); continue }
+            if (!entry.name.endsWith(".conf")) { log.error("Not a SWORD config file: {}",entry.name); continue }
+            val size = entry.declaredSize.toInt()
+            if (size == 0) { log.error("Empty entry: {}",entry.name); continue }
+            val body = ByteArray(size)
+            entry.source().buffer().use { input ->
+                var offset = 0
+                while (offset < size) {
+                    val count = input.read(body,offset,size-offset)
+                    offset += count
+                }
+            }
+            visit(entry.name,body)
+        }
+    }
+
     /** Boolean is legacy INCLUDE/EXCLUDE polarity, not output lowercasing. */
     fun unpackZip(zip: Path, dest: Path, include: Boolean, vararg dirs: String) =
         unpackZipSpelling(zip.toString(), dest.toString(), include, *dirs)
@@ -67,7 +87,7 @@ object SwordArchive {
         !name.startsWith('\\') && !(name.length > 1 && name[1] == ':') &&
         name.replace('\\', '/').split('/').none { it == ".." } && '\u0000' !in name
 
-    private class ZipEntry(val name: String, val directory: Boolean, val source: () -> okio.Source) {
+    private class ZipEntry(val name: String, val directory: Boolean, val declaredSize: Long = -1, val source: () -> okio.Source) {
         val bytes: ByteArray get() = source().buffer().use { it.readByteArray() }
     }
 
@@ -97,6 +117,7 @@ object SwordArchive {
             need(cursor+30,nameSize+extraSize)
             val name = archiveZipName(bytes.copyOfRange(cursor+30,cursor+30+nameSize), flags and 0x800 != 0)
             var compressed = u32(cursor+18)
+            var declaredSize = u32(cursor+22)
             var extra = cursor+30+nameSize
             val extraEnd = extra+extraSize
             while (extra < extraEnd) {
@@ -104,6 +125,7 @@ object SwordArchive {
                 if (length > extraEnd-extra-4) throw IOException("Invalid ZIP extra field")
                 if (u16(extra) == 1 && compressed == 0xffffffffL) {
                     if (length < 16) throw okio.EOFException("Truncated ZIP64 field")
+                    declaredSize = u64(extra+4).toLong()
                     compressed = u64(extra+12).toLong()
                 }
                 extra += 4+length
@@ -113,7 +135,7 @@ object SwordArchive {
             var length = if (descriptor && method == 8) -1 else bounded(compressed)
             var stream: okio.BufferedSource? = null
             if (length >= 0) need(data,length)
-            val entry = ZipEntry(name,name.endsWith('/')) {
+            val entry = ZipEntry(name,name.endsWith('/'),if (descriptor) -1 else declaredSize) {
                 if (descriptor && method == 8) {
                     stream ?: archiveDescriptorSource(bytes,data) { length = it }.buffer().also { stream = it }
                 } else {
@@ -199,7 +221,7 @@ object SwordArchive {
                 if (data.toLong()+compressed > start) throw IOException("ZIP body overlaps central directory")
                 // Data descriptors belong to the sequential reader, not ZipFile extraction.
                 add(ZipEntry(name, name.endsWith('/')) {
-                    if (flags and 1 != 0 || method !in listOf(0,8)) throw IOException("Encrypted/unsupported ZIP")
+                    if (flags and 1 != 0 || method !in listOf(0,8)) archiveUnsupportedZipFeature(name,method,flags and 1 != 0)
                     val payload = bytes.copyOfRange(data,data+compressed)
                     if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
                 })

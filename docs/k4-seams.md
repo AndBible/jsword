@@ -522,7 +522,9 @@ A 24-case frozen legacy differential covers termination before/at/after that
 boundary, extra tar-tail bytes, truncated gzip trailers and corrupt CRCs.
 Internal `readInstallerEntry(): ByteArray` permits the original short body write;
 `nextInstaller(): Entry?` preserves the later IOException for an incomplete body.
-Public `readEntry()` remains strict EOFException. Partial-cache differential pins
+Public `readEntry()` and `next()` remain strict EOFException/two-zero terminator.
+Installer `nextInstaller()` independently permits absent/short next records and optional,
+nonvalidating second EOF records, retaining 10240-byte consumption. Partial-cache differential pins
 first entry plus 4300 bytes of a truncated later entry and finalized directory.
 
 `ArchivePlatform.jvm.kt` supplies plain internal helpers; Task 16 adds matching
@@ -548,6 +550,11 @@ common expects and JVM actual modifiers, and supported Native actuals:
 - `archiveInflateSource(ByteArray): Source` uses InflaterInputStream with raw
   Inflater(true), preserving ZipException and successful chunks before late failure.
   Native uses negative-windowBits zlib with equivalent streaming/error behavior.
+- `archiveUnsupportedZipFeature(String, Int, Boolean): Nothing` raises the original
+  commons UnsupportedZipFeatureException at selected-source opening, retaining entry
+  name/method/encryption, feature and known-method message. Native needs a typed
+  IOException-facing unsupported-feature outcome with equivalent metadata/timing,
+  not a commons dependency. Skipped central entries/directories do not validate features.
 - `archiveExtract(String, String, Boolean, () -> Source): Unit` performs lexical File
   child joins, canonical containment check against existing symlinks, legacy
   parent mkdir/error text, output case preservation and owned output close.
@@ -555,6 +562,12 @@ common expects and JVM actual modifiers, and supported Native actuals:
 
 Task 13 continuation separates readConfZip sequential local-header order from
 unpackZip central-directory order, retaining duplicates and nonalphabetical order.
+Internal `visitConfZipSpelling(String, (String, ByteArray) -> Unit)` preserves the
+actual installer declared-size loop (zero skip, undersized prefix, oversized read
+failure, descriptor -1 NegativeArraySizeException), metadata processing and earlier
+registrations before later failures. Public readConfZip List remains the generic
+body API, not the installer oracle. Logger category uses the exact FQN string with
+no dependency on the JVM-only installer class.
 Cache streams ignore central CRC/sizes; extraction ignores local names/flags/method/
 CRC/sizes and descriptor consistency as independently characterized against old
 commons readers. CRC correctness remains a writer obligation, not new reader strictness.

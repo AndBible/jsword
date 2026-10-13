@@ -153,6 +153,82 @@ class SwordArchiveTest {
         assertEquals(mapOf("first.conf" to listOf<Byte>(1)),tree(filtered))
     }
 
+    private class CacheInstaller(private val root: File) : org.crosswire.jsword.book.install.sword.HttpSwordInstaller() {
+        override fun getCachedIndexDir() = root.toURI()
+        override fun getCachedIndexFile() = File(root,"mods.d.tar.gz").toURI()
+        fun load() = loadCachedIndex()
+        fun snapshot() = entries.values.map { it.initials }.sorted()
+    }
+
+    @Test fun actualInstallerRetainsEarlierBooksOnLaterTailFailure() = temp { root ->
+        val body = "[First]\nDescription=First book\nModDrv=RawText\nDataPath=./modules/texts/rawtext/first/\nLang=en\n".toByteArray()
+        val buffer = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(buffer,listOf("first.conf" to body))
+        val file = File(root,"mods.d.zip").apply { writeBytes(buffer.readByteArray().let { it.copyOf(it.size-1) }) }
+        File(root,"mods.d.tar.gz").writeBytes(byteArrayOf(1))
+        val expected = mutableListOf<String>()
+        val reference = runCatching { LegacyArchiveReference.loadConfZip(file) { name,bytes ->
+            val metadata = org.crosswire.jsword.book.sword.SwordBookMetaData(bytes,file.path+'!'+name)
+            metadata.setDriver(org.crosswire.jsword.book.sword.SwordBookDriver.instance())
+            if (metadata.isSupported) expected.add(metadata.initials)
+        } }
+        val installer = CacheInstaller(root)
+        val actual = runCatching { installer.load() }
+        assertEquals(listOf("First"),expected)
+        assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
+        assertEquals(expected,installer.snapshot())
+    }
+
+    @Test fun actualInstallerLateBodyAndEarlierMetadataErrorOrder() = temp { root ->
+        val valid = "[First]\nDescription=First book\nModDrv=RawText\nDataPath=./modules/texts/rawtext/first/\nLang=en\n".toByteArray()
+        for (badFirst in listOf(false,true)) {
+            val dir = File(root,"case-$badFirst").apply { mkdirs() }
+            val file = File(dir,"mods.d.zip")
+            org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(file).use { zip ->
+                zip.putArchiveEntry(org.apache.commons.compress.archivers.zip.ZipArchiveEntry("first.conf")); zip.write(if (badFirst) byteArrayOf(0) else valid); zip.closeArchiveEntry()
+                zip.putArchiveEntry(org.apache.commons.compress.archivers.zip.ZipArchiveEntry("later.conf")); zip.write(ByteArray(100) { 65 }); zip.closeArchiveEntry()
+            }
+            val bytes = file.readBytes()
+            val local = (0..bytes.size-4).filter { bytes[it] == 80.toByte() && bytes[it+1] == 75.toByte() && bytes[it+2] == 3.toByte() && bytes[it+3] == 4.toByte() }.last()
+            val name = (bytes[local+26].toInt() and 255) or ((bytes[local+27].toInt() and 255) shl 8)
+            val extra = (bytes[local+28].toInt() and 255) or ((bytes[local+29].toInt() and 255) shl 8)
+            bytes[local+30+name+extra] = 7; file.writeBytes(bytes)
+            File(dir,"mods.d.tar.gz").writeBytes(byteArrayOf(1))
+            val expected = mutableListOf<String>()
+            val reference = runCatching { LegacyArchiveReference.loadConfZip(file) { path,body ->
+                val metadata = org.crosswire.jsword.book.sword.SwordBookMetaData(body,file.path+'!'+path)
+                metadata.setDriver(org.crosswire.jsword.book.sword.SwordBookDriver.instance())
+                if (metadata.isSupported) expected.add(metadata.initials)
+            } }
+            val installer = CacheInstaller(dir); val actual = runCatching { installer.load() }
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"badFirst=$badFirst")
+            assertEquals(expected,installer.snapshot(),"badFirst=$badFirst")
+            if (!badFirst) assertEquals(listOf("First"),expected)
+            println("CALLER ORDER badFirst=$badFirst exception=${reference.exceptionOrNull()} retained=$expected")
+        }
+    }
+
+    @Test fun actualCacheCallerDeclaredSizeAndDescriptorsMatch() = temp { root ->
+        for (declared in listOf(0,3,20)) {
+            val file = File(root,"input.zip")
+            org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(file).use { zip ->
+                zip.putArchiveEntry(org.apache.commons.compress.archivers.zip.ZipArchiveEntry("a.conf")); zip.write("payload".toByteArray()); zip.closeArchiveEntry()
+            }
+            val bytes = file.readBytes(); repeat(4) { bytes[22+it] = (declared ushr (8*it)).toByte() }; file.writeBytes(bytes)
+            val expected = mutableListOf<Pair<String,List<Byte>>>()
+            val reference = runCatching { LegacyArchiveReference.loadConfZip(file) { name,body -> expected.add(name to body.toList()) } }
+            val actual = runCatching { buildList { SwordArchive.visitConfZipSpelling(file.path) { name,body -> add(name to body.toList()) } } }
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"declared=$declared")
+            if (reference.isSuccess) assertEquals(expected,actual.getOrThrow(),"declared=$declared")
+        }
+        val out = java.io.ByteArrayOutputStream()
+        org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(out).use { zip -> zip.putArchiveEntry(org.apache.commons.compress.archivers.zip.ZipArchiveEntry("a.conf")); zip.write(byteArrayOf(1)); zip.closeArchiveEntry() }
+        val file = File(root,"descriptor.zip").apply { writeBytes(out.toByteArray()) }
+        val reference = runCatching { LegacyArchiveReference.loadConfZip(file) { _,_ -> } }
+        val actual = runCatching { SwordArchive.visitConfZipSpelling(file.path) { _,_ -> } }
+        assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
+    }
+
     @Test fun extractionSkippedFeaturesMatchActualOld() = temp { root ->
         val buffer = okio.Buffer()
         org.crosswire.common.util.StoredZipWriter.write(buffer,listOf("first.conf" to byteArrayOf(1),"excluded.bin" to byteArrayOf(2)))
@@ -165,6 +241,17 @@ class SwordArchiveTest {
             val actual = runCatching { SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true,"first") }
             assertTrue(reference.isSuccess)
             assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
+            assertEquals(tree(old),tree(new))
+            val selectedOld = runCatching { LegacyArchiveReference.unpackZip(file,old) }
+            val selectedNew = runCatching { SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true) }
+            assertEquals(selectedOld.exceptionOrNull()?.javaClass,selectedNew.exceptionOrNull()?.javaClass)
+            val oldError = selectedOld.exceptionOrNull() as org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException
+            val newError = selectedNew.exceptionOrNull() as org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException
+            assertEquals(oldError.message,newError.message)
+            assertEquals(oldError.feature,newError.feature)
+            assertEquals(oldError.entry.name,newError.entry.name)
+            assertEquals(oldError.entry.method,newError.entry.method)
+            assertEquals(oldError.entry.generalPurposeBit.usesEncryption(),newError.entry.generalPurposeBit.usesEncryption())
             assertEquals(tree(old),tree(new))
         }
     }
