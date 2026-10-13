@@ -32,7 +32,7 @@ open class PropertyMap(
      * Default values for any keys not found in this property map.
      */
     private var defaults: PropertyMap?
-) : LinkedHashMap<String, String>() {
+) : PropertyMapSuperclass<String, String>() {
     /**
      * Creates an empty property list with no default values.
      */
