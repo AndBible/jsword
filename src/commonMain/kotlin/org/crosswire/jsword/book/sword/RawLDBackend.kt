@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.book.sword
 
+import org.crosswire.common.util.ArrayIndexOutOfBoundsException
 import org.crosswire.common.util.KCharset
 import org.crosswire.common.util.UnsupportedCharsetException
 import org.crosswire.common.util.StringUtil
