@@ -324,3 +324,19 @@ Throwable.printStackTrace() to stderr. Task 16 introduces the common expect in
 BackendDebug.kt, JVM actual modifier, and BackendDebug.ios.kt emitting the failure
 and available stack trace to stderr. RawLD and ZLD debug methods catch IO and
 BookException as before; Appendable failures enter that same diagnostic path.
+
+`BackendCloneBase.jvm.kt` is a permanent platform clone base, not a temporary
+inherited JVM masking workaround. Task 16 declares common expect abstract
+BackendCloneBase with protected shallowBackendClone(): Any and protected open
+portableBackendClone(): Any. JVM shallowBackendClone is final and directly
+invokes Object.clone (javap confirms invokespecial, no virtual recursion), retaining
+unknown subclasses, all extra fields, metadata identity and shallow references.
+The iOS actual shallowBackendClone delegates to portableBackendClone. AbstractKeyBackend
+calls that bridge; unknown host subclasses must override portableBackendClone or
+get an explicit UnsupportedOperationException on Native only. Known RawLD and ZLD
+copies are already supplied and tested on JVM by invoking the portable hook: base
+bmd reference and ignoreReadErrors value, RawLD datasize and derived entrysize;
+ZLD adds no instance fields. Task 16 runs those tests on Native after moving them
+out of JDK reflection. JVM clone retains Cloneable transitively. The exact
+AbstractBackend superclass/copy helper and protected copy constructors/overrides
+are K4 seam API allowances. No Unsafe, reflection or module-open dependency.

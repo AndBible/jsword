@@ -63,6 +63,17 @@ open class RawLDBackend<T : RawLDBackendState>
      */
     private val entrysize: Int = OFFSETSIZE + datasize
 
+    protected constructor(source: RawLDBackend<*>) : this(null, source.datasize) {
+        source.copyBackendFieldsTo(this)
+    }
+
+    protected override fun portableBackendClone(): Any {
+        if (this::class != RawLDBackend::class) {
+            throw UnsupportedOperationException("Host subclass must provide a portable clone")
+        }
+        return RawLDBackend<RawLDBackendState>(this)
+    }
+
     @Throws(IOException::class)
     override fun readRawContent(state: RawLDBackendState, key: Key?): String {
         return doReadRawContent(state, key!!.getName())

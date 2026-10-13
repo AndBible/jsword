@@ -40,7 +40,7 @@ abstract class AbstractKeyBackend<T : OpenFileState>
  * @param sbmd
  * the book's metadata
  */
-(sbmd: SwordBookMetaData?) : AbstractBackend<T>(sbmd), Key, Cloneable {
+(sbmd: SwordBookMetaData?) : AbstractBackend<T>(sbmd), Key {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#canHaveChildren()
@@ -145,16 +145,8 @@ abstract class AbstractKeyBackend<T : OpenFileState>
         return null
     }
 
-    override fun clone(): AbstractKeyBackend<T> {
-        var clone: AbstractKeyBackend<T>? = null
-        try {
-            @Suppress("UNCHECKED_CAST")
-            clone = super<Cloneable>.clone() as AbstractKeyBackend<T>
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    @Suppress("UNCHECKED_CAST")
+    override fun clone(): AbstractKeyBackend<T> = shallowBackendClone() as AbstractKeyBackend<T>
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.passage.Key#getName()

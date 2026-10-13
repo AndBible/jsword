@@ -42,6 +42,17 @@ open class ZLDBackend
  */
 (sbmd: SwordBookMetaData?) : RawLDBackend<ZLDBackendState>(sbmd, 4) {
 
+    protected constructor(source: ZLDBackend) : this(null) {
+        source.copyBackendFieldsTo(this)
+    }
+
+    protected override fun portableBackendClone(): Any {
+        if (this::class != ZLDBackend::class) {
+            throw UnsupportedOperationException("Host subclass must provide a portable clone")
+        }
+        return ZLDBackend(this)
+    }
+
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.sword.RawLDBackend#initState()
      */

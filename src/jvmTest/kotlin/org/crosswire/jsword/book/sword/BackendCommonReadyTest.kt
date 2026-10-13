@@ -151,6 +151,22 @@ class BackendCommonReadyTest {
         assertTrue(clone is java.lang.Cloneable)
     }
 
+    @Test fun knownPortableBackendCopiesPreserveBaseAndSizingFields() {
+        for (backend in listOf(RawLDBackend<RawLDBackendState>(metadata(), 2), ZLDBackend(metadata()))) {
+            backend.setIgnoreReadErrors(false)
+            val method = backend.javaClass.getDeclaredMethod("portableBackendClone").apply { isAccessible = true }
+            val copy = method.invoke(backend) as AbstractKeyBackend<*>
+            assertEquals(backend.javaClass, copy.javaClass)
+            assertSame(backend.bookMetaData, copy.bookMetaData)
+            for (name in listOf("datasize", "entrysize")) {
+                val field = RawLDBackend::class.java.getDeclaredField(name).apply { isAccessible = true }
+                assertEquals(field.get(backend), field.get(copy))
+            }
+            val ignore = AbstractBackend::class.java.getDeclaredField("ignoreReadErrors").apply { isAccessible = true }
+            assertEquals(false, ignore.get(copy))
+        }
+    }
+
     @Test fun searchUppercaseIgnoresTurkishDefaultLocale() {
         val original = Locale.getDefault()
         try {

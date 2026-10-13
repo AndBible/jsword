@@ -46,7 +46,7 @@ org/crosswire/jsword/book/install/DownloadCancelledException.kt
 org/crosswire/jsword/book/install/DownloadException.kt
 org/crosswire/jsword/book/install/InstallException.kt
 org/crosswire/jsword/book/sword/AbstractBackend.kt #done
-org/crosswire/jsword/book/sword/AbstractKeyBackend.kt
+org/crosswire/jsword/book/sword/AbstractKeyBackend.kt #done
 org/crosswire/jsword/book/sword/Backend.kt #done
 org/crosswire/jsword/book/sword/BlockType.kt #done
 org/crosswire/jsword/book/sword/BookType.kt #done

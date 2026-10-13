@@ -65,9 +65,6 @@ org.crosswire.jsword.book.readings.ReadingsKey - F private-or-package date: java
 org.crosswire.jsword.book.readings.ReadingsKey - F private-or-package static final serialVersionUID: long = -5500401548068844993 # K3 D1
 org.crosswire.jsword.book.readings.ReadingsKey - K protected (java.lang.String,java.lang.String,org.crosswire.jsword.passage.Key) throws [] # Java ctor was protected, which in Java includes package access used by ReadingsBook in the same package; a Kotlin protected constructor is invisible to a package neighbour, so it is internal, which compiles to public.
 org.crosswire.jsword.book.readings.ReadingsKey - K protected (java.util.Date) throws [] # Java ctor was protected, which in Java includes package access used by ReadingsBook in the same package; a Kotlin protected constructor is invisible to a package neighbour, so it is internal, which compiles to public.
-org.crosswire.jsword.book.sword.AbstractKeyBackend + C class public abstract extends org.crosswire.jsword.book.sword.AbstractBackend implements [java.lang.Cloneable,org.crosswire.jsword.passage.Key] # Kotlin cannot call Object.clone() through `super` once Key redeclares clone() abstractly; `super<Cloneable>.clone()` needs Cloneable as a direct supertype. Key already extends Cloneable, so the extra interface is redundant.
-org.crosswire.jsword.book.sword.AbstractKeyBackend - C class public abstract extends org.crosswire.jsword.book.sword.AbstractBackend implements [org.crosswire.jsword.passage.Key] # Kotlin cannot call Object.clone() through `super` once Key redeclares clone() abstractly; `super<Cloneable>.clone()` needs Cloneable as a direct supertype. Key already extends Cloneable, so the extra interface is redundant.
-org.crosswire.jsword.book.sword.AbstractKeyBackend - F private-or-package static final serialVersionUID: long = -2782112117361556089 # K3 D1
 org.crosswire.jsword.book.sword.RawLDBackend - F private-or-package final datasize: int # K3 D1
 org.crosswire.jsword.book.sword.RawLDBackend - F private-or-package final entrysize: int # K3 D1
 org.crosswire.jsword.book.sword.RawLDBackend - F private-or-package static final serialVersionUID: long = 818089833394450383 # K3 D1
@@ -435,3 +432,11 @@ org.crosswire.jsword.book.sword.RawLDBackend + M public dumpIdxRaf(java.lang.App
 org.crosswire.jsword.book.sword.RawLDBackend + M public toIMP(java.lang.Appendable): void throws [] # K4 stream
 org.crosswire.jsword.book.sword.ZLDBackend - M public dumpIdxRaf(): void throws [] # K4 stream
 org.crosswire.jsword.book.sword.ZLDBackend + M public dumpIdxRaf(java.lang.Appendable): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.AbstractBackend - C class public abstract extends java.lang.Object implements [org.crosswire.jsword.book.sword.Backend,org.crosswire.jsword.book.sword.StatefulFileBackedBackend] # K4 seam
+org.crosswire.jsword.book.sword.AbstractBackend + C class public abstract extends org.crosswire.jsword.book.sword.BackendCloneBase implements [org.crosswire.jsword.book.sword.Backend,org.crosswire.jsword.book.sword.StatefulFileBackedBackend] # K4 seam
+org.crosswire.jsword.book.sword.AbstractBackend + M protected final copyBackendFieldsTo(org.crosswire.jsword.book.sword.AbstractBackend): void throws [] # K4 seam
+org.crosswire.jsword.book.sword.RawLDBackend + K protected (org.crosswire.jsword.book.sword.RawLDBackend) throws [] # K4 seam
+org.crosswire.jsword.book.sword.RawLDBackend + M protected portableBackendClone(): java.lang.Object throws [] # K4 seam
+org.crosswire.jsword.book.sword.ZLDBackend + K protected (org.crosswire.jsword.book.sword.ZLDBackend) throws [] # K4 seam
+org.crosswire.jsword.book.sword.ZLDBackend + M protected portableBackendClone(): java.lang.Object throws [] # K4 seam
+org.crosswire.jsword.book.sword.AbstractKeyBackend - F private-or-package static final serialVersionUID: long = -2782112117361556089 # K3 D1

@@ -46,20 +46,26 @@ import org.crosswire.common.util.KCharset
  * @author DM Smith
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-abstract class AbstractBackend<T : OpenFileState> : StatefulFileBackedBackend<T>, Backend<T> {
+abstract class AbstractBackend<T : OpenFileState> : BackendCloneBase, StatefulFileBackedBackend<T>, Backend<T> {
     /**
      * Default constructor for the sake of serialization.
      */
     /* protected */
-    constructor()
+    constructor() : super()
 
     /**
      * Construct a minimal backend
      *
      * @param sbmd
      */
-    constructor(sbmd: SwordBookMetaData?) {
+    constructor(sbmd: SwordBookMetaData?) : super() {
         bmd = sbmd
+    }
+
+    /** Copies the exact base fields for known Native backend copies. */
+    protected fun copyBackendFieldsTo(copy: AbstractBackend<*>) {
+        copy.bmd = bmd
+        copy.ignoreReadErrors = ignoreReadErrors
     }
 
     /* (non-Javadoc)
