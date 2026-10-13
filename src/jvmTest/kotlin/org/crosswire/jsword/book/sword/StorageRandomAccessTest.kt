@@ -7,6 +7,32 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class StorageRandomAccessTest {
+    @Test fun emptyAndNullWritesRetainLegacyNoopAndSeekOrdering() {
+        val file = File.createTempFile("empty-write", ".bin")
+        try {
+            val raf = java.io.RandomAccessFile(file, "r")
+            val src = storageOpenRandomAccess(StorageLocation(file.path), false)
+            try {
+                for (data in listOf(byteArrayOf(), null)) {
+                    SwordUtil.writeNextRAF(raf, data)
+                    src.writeNext(data)
+                    SwordUtil.writeRAF(raf, 7, data)
+                    src.writeAtCursor(7, data)
+                    assertEquals(raf.filePointer, src.position())
+                    assertThrows(IOException::class.java) { SwordUtil.writeRAF(raf, -1, data) }
+                    assertThrows(IOException::class.java) { src.writeAtCursor(-1, data) }
+                }
+                raf.close(); src.close()
+                for (data in listOf(byteArrayOf(), null)) {
+                    SwordUtil.writeNextRAF(raf, data)
+                    src.writeNext(data)
+                    assertThrows(IOException::class.java) { SwordUtil.writeRAF(raf, 7, data) }
+                    assertThrows(IOException::class.java) { src.writeAtCursor(7, data) }
+                }
+            } finally { raf.close(); src.close() }
+        } finally { file.delete() }
+    }
+
     @Test fun lexicalOpenAndCursorMatchLegacyFile() {
         val root = Files.createTempDirectory("lexical-raf").toFile()
         try {

@@ -63,7 +63,9 @@ class RandomAccessSource(private val handle: FileHandle) : Closeable {
     }
 
     internal fun writeNext(data: ByteArray?) {
-        if (data == null) return
+        // RAF direct writes of null/empty data are no-ops even on closed/read-only files.
+        // writeAtCursor still seeks first, so its closed/negative seek errors are retained.
+        if (data == null || data.isEmpty()) return
         checkOpen()
         if (!handle.readWrite) throw okio.IOException("Bad file descriptor")
         handle.write(cursor, data, 0, data.size)
