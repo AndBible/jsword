@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import org.crosswire.common.util.KCharset
+import org.crosswire.common.util.UnsupportedCharsetException
 import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg
@@ -29,14 +31,9 @@ import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.jsword.book.sword.state.RawLDBackendState
 import org.crosswire.jsword.passage.DefaultLeafKeyList
 import org.crosswire.jsword.passage.Key
-import java.io.IOException
-import java.io.UnsupportedEncodingException
-import java.nio.charset.Charset
-import java.text.DecimalFormat
+import okio.IOException
 import org.crosswire.common.util.KswordLocale
 import org.crosswire.common.util.MessageFormatLite
-import java.util.Locale
-import java.util.regex.Pattern
 
 /**
  * An implementation AbstractKeyBackend to read RAW format files.
@@ -102,10 +99,10 @@ open class RawLDBackend<T : RawLDBackendState>
         var cipherKeyBytes: ByteArray? = null
         if (cipherKeyString != null) {
             try {
-                // charset NAME on purpose (UnsupportedEncodingException, as in Java)
-                cipherKeyBytes = (cipherKeyString as java.lang.String).getBytes(bookMetaData.bookCharset)
-            } catch (e: UnsupportedEncodingException) {
-                cipherKeyBytes = cipherKeyString.toByteArray(Charset.defaultCharset())
+                // Unknown names retain the legacy UTF-8 fallback.
+                cipherKeyBytes = KCharset.encode(cipherKeyString, bookMetaData.bookCharset!!)
+            } catch (e: UnsupportedCharsetException) {
+                cipherKeyBytes = KCharset.encode(cipherKeyString, "UTF-8")
             }
         }
         return entry.getRawText(cipherKeyBytes)
@@ -356,19 +353,19 @@ open class RawLDBackend<T : RawLDBackendState>
         var keytitle = externalKey
         if (BookCategory.DAILY_DEVOTIONS == bmd.bookCategory) {
             // Is it already in internal format? If so, just return it.
-            val m = DEVOTION_PATTERN.matcher(keytitle)
-            if (m.matches()) {
+            val m = DEVOTION_PATTERN.matchEntire(keytitle)
+            if (m != null) {
                 return keytitle
             }
             val (month, day) = DevotionDateFormat.parseMonthDay(keytitle)!!
-            val objs = arrayOf<Any>(Integer.valueOf(month), Integer.valueOf(day))
+            val objs = arrayOf<Any>(month, day)
             return MessageFormatLite.format(DATE_KEY_FORMAT, KswordLocale.default(), objs)
         }
 
         if (bmd.hasFeature(FeatureType.GREEK_DEFINITIONS) || bmd.hasFeature(FeatureType.HEBREW_DEFINITIONS)) {
             // Is the string valid?
-            var m = STRONGS_PATTERN.matcher(keytitle)
-            if (!m.matches()) {
+            var m = STRONGS_PATTERN.matchEntire(keytitle)
+            if (m == null) {
                 return keytitle
             }
             if ("true".equals(bmd.getProperty(SwordBookMetaData.KEY_STRONGS_PADDING), ignoreCase = true)) {
@@ -376,7 +373,7 @@ open class RawLDBackend<T : RawLDBackendState>
                 // NASB has trailing letters!
                 var pos = keytitle.length - 1
                 val lastLetter = keytitle[pos]
-                val hasTrailingLetter = Character.isLetter(lastLetter)
+                val hasTrailingLetter = lastLetter.isLetter()
                 if (hasTrailingLetter) {
                     keytitle = keytitle.substring(0, pos)
                     // And it might be preceded by a !
@@ -390,14 +387,14 @@ open class RawLDBackend<T : RawLDBackendState>
                 val type = keytitle[0]
 
                 // Get the number after the G or H
-                val strongsNumber = Integer.parseInt(keytitle.substring(1))
+                val strongsNumber = keytitle.substring(1).toInt()
                 // If it has both Greek and Hebrew, then the G and H are needed.
                 val buf = StringBuilder()
                 if (bmd.hasFeature(FeatureType.GREEK_DEFINITIONS) && bmd.hasFeature(FeatureType.HEBREW_DEFINITIONS)) {
                     // The convention is that a Strong's dictionary with both Greek
                     // and Hebrew have G or H prefix
                     buf.append(type)
-                    buf.append(getZero4Pad().format(strongsNumber.toLong()))
+                    buf.append(strongsNumber.toString().padStart(4, '0'))
 
                     // The NAS lexicon has some entries that end in A-Z, but it is
                     // not preceded by a !
@@ -407,14 +404,14 @@ open class RawLDBackend<T : RawLDBackendState>
                     return buf.toString()
                 }
 
-                m = STRONGS_PATTERN.matcher(pattern)
-                if (m.matches()) {
+                m = STRONGS_PATTERN.matchEntire(pattern)
+                if (m != null) {
                     buf.append(type)
-                    val numLength = m.group(2).length
+                    val numLength = m.groupValues[2].length
                     if (numLength == 4) {
-                        buf.append(getZero4Pad().format(strongsNumber.toLong()))
+                        buf.append(strongsNumber.toString().padStart(4, '0'))
                     } else {
-                        buf.append(getZero5Pad().format(strongsNumber.toLong()))
+                        buf.append(strongsNumber.toString().padStart(5, '0'))
                     }
                     // The NAS lexicon has some entries that end in A-Z, but it is
                     // not preceded by a !
@@ -425,7 +422,7 @@ open class RawLDBackend<T : RawLDBackendState>
                 }
 
                 // It is just the number
-                return getZero5Pad().format(strongsNumber.toLong())
+                return strongsNumber.toString().padStart(5, '0')
             }
             // else unpad, E.g. G0001 to G1
             // This test is merely an optimization to prevent unnecessary work.
@@ -434,7 +431,7 @@ open class RawLDBackend<T : RawLDBackendState>
                 // NASB has trailing letters!
                 var pos = keytitle.length - 1
                 val lastLetter = keytitle[pos]
-                val hasTrailingLetter = Character.isLetter(lastLetter)
+                val hasTrailingLetter = lastLetter.isLetter()
                 if (hasTrailingLetter) {
                     keytitle = keytitle.substring(0, pos)
                     // And it might be preceded by a !
@@ -444,7 +441,7 @@ open class RawLDBackend<T : RawLDBackendState>
                     }
                 }
                 // Get the number after the G or H
-                val strongsNumber = Integer.parseInt(keytitle.substring(1))
+                val strongsNumber = keytitle.substring(1).toInt()
                 // The convention is that a Strong's dictionary with both Greek
                 // and Hebrew have G or H prefix
                 val buf = StringBuilder()
@@ -466,7 +463,7 @@ open class RawLDBackend<T : RawLDBackendState>
         var keytitle: String? = internalKey
         if (BookCategory.DAILY_DEVOTIONS == bmd.bookCategory && internalKey.length >= 3) {
             val spec = StringUtil.splitAll(internalKey, '.')
-            keytitle = DevotionDateFormat.format(Integer.parseInt(spec[0]), Integer.parseInt(spec[1]))
+            keytitle = DevotionDateFormat.format(spec[0].toInt(), spec[1].toInt())
         }
         return keytitle
     }
@@ -476,37 +473,23 @@ open class RawLDBackend<T : RawLDBackendState>
         val keytitle = internalKey
         val caseSensitive = bmd.getProperty(SwordBookMetaData.KEY_CASE_SENSITIVE_KEYS)
         if (!"true".equals(caseSensitive, ignoreCase = true) && BookCategory.DAILY_DEVOTIONS != bmd.bookCategory) {
-            return keytitle.uppercase(Locale.US)
+            return keytitle.uppercase()
         }
 
         return keytitle
     }
 
-    /**
-     * A means to normalize Strong's Numbers.
-     */
-    private fun getZero5Pad(): DecimalFormat {
-        return DecimalFormat("00000")
-    }
-
-    /**
-     * A means to normalize Strong's Numbers.
-     */
-    private fun getZero4Pad(): DecimalFormat {
-        return DecimalFormat("0000")
-    }
-
     /** 
      * Experimental code.
      */
-    open fun dumpIdxRaf() {
+    open fun dumpIdxRaf(output: Appendable) {
         var state: RawLDBackendState? = null
         var end: Long = -1
         try {
             state = initState()
             end = getCardinality().toLong()
             val buf = StringBuilder()
-            System.out.println("index\toffset\tsize\tkey\tvalue")
+            output.append("index\toffset\tsize\tkey\tvalue\n")
             var i: Long = 0
             while (i < end) {
                 val index = getIndex(state, i)
@@ -536,15 +519,15 @@ open class RawLDBackend<T : RawLDBackendState>
                 } else {
                     buf.append("\t\t")
                 }
-                System.out.println(buf.toString())
+                output.append(buf.toString()).append('\n')
                 ++i
             }
         } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         } catch (e: BookException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         } finally {
             OpenFileStateManager.instance().release(state)
         }
@@ -553,7 +536,7 @@ open class RawLDBackend<T : RawLDBackendState>
     /** 
      * Experimental code.
      */
-    open fun toIMP() {
+    open fun toIMP(output: Appendable) {
         var state: RawLDBackendState? = null
         var end: Long = -1
         try {
@@ -577,15 +560,15 @@ open class RawLDBackend<T : RawLDBackendState>
                     buf.append("\n")
                     buf.append(raw)
                 }
-                System.out.println(buf.toString())
+                output.append(buf.toString()).append('\n')
                 ++i
             }
         } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         } catch (e: BookException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         } finally {
             OpenFileStateManager.instance().release(state)
         }
@@ -602,12 +585,12 @@ open class RawLDBackend<T : RawLDBackendState>
          * followed by a number. It can be followed by a ! and a letter or just a
          * letter.
          */
-        private val STRONGS_PATTERN: Pattern = Pattern.compile("^([GH])(\\d+)((!)?([a-z])?)$")
+        private val STRONGS_PATTERN = Regex("^([GH])(\\d+)((!)?([a-z])?)$")
 
         /**
          * This is the pattern of a date for a DailyDevotion, DD.MM
          */
-        private val DEVOTION_PATTERN: Pattern = Pattern.compile("^\\d\\d\\.\\d\\d$")
+        private val DEVOTION_PATTERN = Regex("^\\d\\d\\.\\d\\d$")
 
         /**
          * How many bytes in the offset pointers in the index

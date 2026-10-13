@@ -75,14 +75,10 @@ class BackendCommonReadyTest {
             override fun initState() = RawLDBackendState(bookMetaData)
             override fun getCardinality() = 0
         }
-        val original = System.out
-        val bytes = java.io.ByteArrayOutputStream()
-        try {
-            System.setOut(java.io.PrintStream(bytes, true, "UTF-8"))
-            backend.dumpIdxRaf()
-            backend.toIMP()
-            assertEquals("index\toffset\tsize\tkey\tvalue\n", bytes.toString("UTF-8"))
-        } finally { System.setOut(original) }
+        val output = StringBuilder()
+        backend.dumpIdxRaf(output)
+        backend.toIMP(output)
+        assertEquals("index\toffset\tsize\tkey\tvalue\n", output.toString())
     }
 
     @Test fun searchUppercaseIgnoresTurkishDefaultLocale() {

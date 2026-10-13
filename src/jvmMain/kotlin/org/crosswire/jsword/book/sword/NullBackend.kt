@@ -23,9 +23,8 @@ import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor
 import org.crosswire.jsword.book.sword.state.OpenFileState
 import org.crosswire.jsword.passage.DefaultKeyList
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
-import java.io.IOException
-import java.util.ArrayList
+import org.crosswire.common.kdom.Content
+import okio.IOException
 
 /**
  * A NullBackend is not attached to resources.

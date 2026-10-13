@@ -24,8 +24,7 @@ import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.sword.state.OpenFileState
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.RestrictionType
-import java.io.IOException
-import java.util.NoSuchElementException
+import okio.IOException
 
 /**
  * A Backend that can be used as a global key list.
@@ -207,7 +206,7 @@ abstract class AbstractKeyBackend<T : OpenFileState>
 
         // Check that that is the same as this
         // Don't use instanceOf since that breaks inheritance
-        if (other.javaClass != this.javaClass) {
+        if (other::class != this::class) {
             return false
         }
 

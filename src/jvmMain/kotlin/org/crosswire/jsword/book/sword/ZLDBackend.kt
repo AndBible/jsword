@@ -26,7 +26,7 @@ import org.crosswire.jsword.book.sword.state.RawLDBackendState
 import org.crosswire.jsword.book.sword.state.ZLDBackendState
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
+import okio.IOException
 
 /**
  * An extension of RawLDBackend to read Z format files.
@@ -112,7 +112,7 @@ open class ZLDBackend
             entrySize -= 1
         }
         val entryBytes = ByteArray(entrySize)
-        System.arraycopy(uncompressed, entryStart, entryBytes, 0, entrySize)
+        uncompressed.copyInto(entryBytes, 0, entryStart, entryStart + entrySize)
         val finalEntry = DataEntry(entry.getName(), entryBytes, bookMetaData.bookCharset)
 
         return finalEntry
@@ -121,14 +121,14 @@ open class ZLDBackend
     /** 
      * Experimental code.
      */
-    override fun dumpIdxRaf() {
+    override fun dumpIdxRaf(output: Appendable) {
         var state: RawLDBackendState? = null
         var end: Long = -1
         try {
             state = initState()
             end = getCardinality().toLong()
             val buf = StringBuilder()
-            System.out.println("index\toffset\tsize\tkey\tvalue")
+            output.append("index\toffset\tsize\tkey\tvalue\n")
             var i: Long = 0
             while (i < end) {
                 val index = getIndex(state, i)
@@ -168,15 +168,15 @@ open class ZLDBackend
                         }
                     }
                 }
-                System.out.println(buf.toString())
+                output.append(buf.toString()).append('\n')
                 ++i
             }
         } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         } catch (e: BookException) {
             // TODO Auto-generated catch block
-            e.printStackTrace()
+            backendDebugFailure(e)
         } finally {
             OpenFileStateManager.instance().release(state)
         }

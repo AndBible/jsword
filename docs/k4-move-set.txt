@@ -45,32 +45,32 @@ org/crosswire/jsword/book/basic/AbstractBookMetaData.kt #done
 org/crosswire/jsword/book/install/DownloadCancelledException.kt
 org/crosswire/jsword/book/install/DownloadException.kt
 org/crosswire/jsword/book/install/InstallException.kt
-org/crosswire/jsword/book/sword/AbstractBackend.kt
+org/crosswire/jsword/book/sword/AbstractBackend.kt #done
 org/crosswire/jsword/book/sword/AbstractKeyBackend.kt
-org/crosswire/jsword/book/sword/Backend.kt
-org/crosswire/jsword/book/sword/BlockType.kt
+org/crosswire/jsword/book/sword/Backend.kt #done
+org/crosswire/jsword/book/sword/BlockType.kt #done
 org/crosswire/jsword/book/sword/BookType.kt #done
 org/crosswire/jsword/book/sword/ConfigEntryTable.kt #done
 org/crosswire/jsword/book/sword/ConfigEntryType.kt #done
 org/crosswire/jsword/book/sword/ConfigValueInterceptor.kt #done
 org/crosswire/jsword/book/sword/DataEntry.kt #done
 org/crosswire/jsword/book/sword/DataIndex.kt #done
-org/crosswire/jsword/book/sword/GenBookBackend.kt
-org/crosswire/jsword/book/sword/NullBackend.kt
-org/crosswire/jsword/book/sword/RawBackend.kt
+org/crosswire/jsword/book/sword/GenBookBackend.kt #done
+org/crosswire/jsword/book/sword/NullBackend.kt #done
+org/crosswire/jsword/book/sword/RawBackend.kt #done
 org/crosswire/jsword/book/sword/RawFileBackend.kt
-org/crosswire/jsword/book/sword/RawLDBackend.kt
-org/crosswire/jsword/book/sword/StatefulFileBackedBackend.kt
+org/crosswire/jsword/book/sword/RawLDBackend.kt #done
+org/crosswire/jsword/book/sword/StatefulFileBackedBackend.kt #done
 org/crosswire/jsword/book/sword/SwordBookMetaData.kt #done
 org/crosswire/jsword/book/sword/SwordBookPath.kt #done
 org/crosswire/jsword/book/sword/SwordConstants.kt #done
 org/crosswire/jsword/book/sword/SwordUtil.kt #done
 org/crosswire/jsword/book/sword/TreeKeyIndex.kt
 org/crosswire/jsword/book/sword/TreeNode.kt
-org/crosswire/jsword/book/sword/ZLDBackend.kt
+org/crosswire/jsword/book/sword/ZLDBackend.kt #done
 org/crosswire/jsword/book/sword/ZVerseBackend.kt
-org/crosswire/jsword/book/sword/processing/NoOpRawTextProcessor.kt
-org/crosswire/jsword/book/sword/processing/RawTextToXmlProcessor.kt
+org/crosswire/jsword/book/sword/processing/NoOpRawTextProcessor.kt #done
+org/crosswire/jsword/book/sword/processing/RawTextToXmlProcessor.kt #done
 org/crosswire/jsword/book/sword/state/AbstractOpenFileState.kt #done
 org/crosswire/jsword/book/sword/state/GenBookBackendState.kt #done
 org/crosswire/jsword/book/sword/state/OpenFileState.kt #done

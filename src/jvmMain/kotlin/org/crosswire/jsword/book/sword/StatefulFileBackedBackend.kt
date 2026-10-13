@@ -22,7 +22,7 @@ package org.crosswire.jsword.book.sword
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.sword.state.OpenFileState
 import org.crosswire.jsword.passage.Key
-import java.io.IOException
+import okio.IOException
 
 /**
  * Indicates that there is a stateful backend

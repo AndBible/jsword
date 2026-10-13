@@ -32,13 +32,11 @@ import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.passage.RestrictionType
 import org.crosswire.jsword.passage.Verse
-import org.jdom2.Content
+import org.crosswire.common.kdom.Content
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.IOException
-import java.nio.charset.Charset
-import java.util.ArrayList
+import okio.IOException
+import org.crosswire.common.util.KCharset
 
 /**
  * A generic way to read data from disk for later formatting.
@@ -77,8 +75,8 @@ abstract class AbstractBackend<T : OpenFileState> : StatefulFileBackedBackend<T>
     override fun decipher(data: ByteArray) {
         val cipherKeyString = bookMetaData.getProperty(SwordBookMetaData.KEY_CIPHER_KEY)
         if (cipherKeyString != null) {
-            // default charset on purpose: Java used String.getBytes()
-            val cipherEngine = Sapphire(cipherKeyString.toByteArray(Charset.defaultCharset()))
+            // Android cipher keys use UTF-8.
+            val cipherEngine = Sapphire(KCharset.encode(cipherKeyString, "UTF-8"))
             for (i in data.indices) {
                 data[i] = cipherEngine.cipher(data[i])
             }
@@ -301,8 +299,8 @@ abstract class AbstractBackend<T : OpenFileState> : StatefulFileBackedBackend<T>
      */
     @Throws(IOException::class, BookException::class)
     override fun create() {
-        val dataPath = File(SwordUtil.getExpandedDataPath(bookMetaData))
-        if (!dataPath.exists() && !dataPath.mkdirs()) {
+        val dataPath = storageUriLocation(SwordUtil.getExpandedDataPath(bookMetaData))
+        if (!storageExists(dataPath) && !storageMkdirs(dataPath)) {
             throw IOException("Unable to create module data path!")
         }
     }

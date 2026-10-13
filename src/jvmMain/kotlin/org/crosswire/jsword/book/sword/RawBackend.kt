@@ -33,7 +33,7 @@ import org.crosswire.jsword.versification.Testament
 import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
+import okio.IOException
 import org.crosswire.common.util.RandomAccessSource
 
 /**

@@ -28,8 +28,7 @@ import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.TreeKey
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
-import java.util.ArrayList
+import okio.IOException
 
 /**
  * Backend for General Books.

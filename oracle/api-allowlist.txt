@@ -427,3 +427,11 @@ org.crosswire.jsword.book.sword.state.ZVerseBackendState - M public getTextRaf(o
 org.crosswire.jsword.book.sword.state.ZVerseBackendState + M public getCompRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
 org.crosswire.jsword.book.sword.state.ZVerseBackendState + M public getIdxRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
 org.crosswire.jsword.book.sword.state.ZVerseBackendState + M public getTextRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+
+# K4 Task 9 explicit debug output destination
+org.crosswire.jsword.book.sword.RawLDBackend - M public dumpIdxRaf(): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.RawLDBackend - M public toIMP(): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.RawLDBackend + M public dumpIdxRaf(java.lang.Appendable): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.RawLDBackend + M public toIMP(java.lang.Appendable): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZLDBackend - M public dumpIdxRaf(): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZLDBackend + M public dumpIdxRaf(java.lang.Appendable): void throws [] # K4 stream
