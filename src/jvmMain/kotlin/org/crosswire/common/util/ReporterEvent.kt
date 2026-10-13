@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.util
 
-import java.util.EventObject
 
 import org.crosswire.common.icu.NumberShaper
 
@@ -29,7 +28,13 @@ import org.crosswire.common.icu.NumberShaper
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class ReporterEvent private constructor(source: Any?, private var ex: Throwable?, message: String?) : EventObject(source) {
+open class ReporterEvent private constructor(source: Any?, private var ex: Throwable?, message: String?) : ProgressEventSerializable {
+    private val eventSource: Any = requireNotNull(source) { "null source" }
+
+    open fun getSource(): Any = eventSource
+
+    override fun toString(): String = "${eventClassName(this)}[source=$eventSource]"
+
     /**
      * Constructs an CaptureEvent object.
      *
@@ -57,18 +62,7 @@ open class ReporterEvent private constructor(source: Any?, private var ex: Throw
      */
     open val sourceName: String
         get() {
-            val src = getSource()
-            val clazz: Class<*> = if (src is Class<*>) {
-                src
-            } else {
-                src.javaClass
-            }
-            val full = clazz.name
-            val lastDot = full.lastIndexOf('.')
-            if (lastDot == -1) {
-                return full
-            }
-            return full.substring(lastDot + 1)
+            return reporterSourceName(getSource())
         }
 
     /**

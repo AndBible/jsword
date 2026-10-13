@@ -22,9 +22,10 @@ package org.crosswire.common.progress
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
-import java.util.UUID
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CopyOnWriteArraySet
+import org.crosswire.common.util.randomJobId
+import org.crosswire.common.util.CopyOnWriteList
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /**
  * JobManager is responsible for creating jobs and informing listeners about the
@@ -79,7 +80,7 @@ private constructor() {
          */
         @JvmStatic
         fun createJob(jobName: String): Progress {
-            return createJob(UUID.randomUUID().toString(), jobName, null)
+            return createJob(randomJobId(), jobName, null)
         }
 
         /**
@@ -91,9 +92,9 @@ private constructor() {
          * @return the job
          */
         @JvmStatic
-        fun createJob(jobID: String, jobName: String, workerThread: Thread?): Progress {
-            val job: Progress = Job(jobID, jobName, workerThread)
-            jobs.add(job)
+        fun createJob(jobID: String, jobName: String, canceller: (() -> Unit)?): Progress {
+            val job: Progress = Job(jobID, jobName, canceller)
+            synchronized(lock) { jobs.add(job) }
 
             log.debug("job starting: {}", job.jobName)
 
@@ -102,7 +103,7 @@ private constructor() {
 
         @JvmStatic
         fun findJob(jobID: String): Progress? {
-            return jobs.stream().filter { progress -> progress.jobID == jobID }.findFirst().orElse(null)
+            return synchronized(lock) { jobs.firstOrNull { it.jobID == jobID } }
         }
 
         /**
@@ -132,7 +133,12 @@ private constructor() {
          */
         @JvmStatic
         fun iterator(): MutableIterator<Progress> {
-            return jobs.iterator()
+            val snapshot = synchronized(lock) { jobs.toList() }.iterator()
+            return object : MutableIterator<Progress> {
+                override fun hasNext() = snapshot.hasNext()
+                override fun next() = snapshot.next()
+                override fun remove(): Unit = throw UnsupportedOperationException()
+            }
         }
 
         /**
@@ -140,7 +146,7 @@ private constructor() {
          */
         @JvmStatic
         fun getJobCount(): Int {
-            return jobs.size
+            return synchronized(lock) { jobs.size }
         }
 
         /**
@@ -164,19 +170,20 @@ private constructor() {
             // that are no longer in our list of jobs. ho hum.
             if (job.isFinished) {
                 log.debug("job finished: {}", job.jobName)
-                jobs.remove(job)
+                synchronized(lock) { jobs.remove(job) }
             }
         }
 
         /**
          * List of listeners using thread safe list
          */
-        private val listeners: MutableList<WorkListener?> = CopyOnWriteArrayList()
+        private val listeners: MutableList<WorkListener?> = CopyOnWriteList()
 
         /**
          * List of current jobs
          */
-        private val jobs: MutableSet<Progress> = CopyOnWriteArraySet()
+        private val lock = SynchronizedObject()
+        private val jobs: MutableSet<Progress> = linkedSetOf()
 
         /**
          * The log stream

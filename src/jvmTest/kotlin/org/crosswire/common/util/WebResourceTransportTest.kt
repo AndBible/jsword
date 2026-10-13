@@ -41,6 +41,41 @@ class WebResourceTransportTest {
         }
     }
 
+    @Test fun jobCancellationUnblocksHostReadAndPropagatesDownloadCancellation() = fixture { directory, _, _ ->
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val cancelled = java.util.concurrent.CountDownLatch(1)
+        val failure = java.util.concurrent.atomic.AtomicReference<Throwable>()
+        var closed = false
+        WebResource.transport = object : HttpTransport {
+            override fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
+            override fun get(uri: KUri, timeoutMs: Int) = object : HttpBody {
+                override val contentLength = 4
+                override val status = 200
+                override fun prepareRead() = Unit
+                override fun read(buf: ByteArray): Int {
+                    entered.countDown()
+                    check(cancelled.await(2, java.util.concurrent.TimeUnit.SECONDS))
+                    throw TransportCancelledException()
+                }
+                override fun close() { closed = true }
+            }
+        }
+        val job = JobManager.createJob("blocked-host", "blocked-host") { cancelled.countDown() }
+        val worker = Thread {
+            try { WebResource(KUri("https://fake/body")).copy(directory.resolve("body").toURI(), job) }
+            catch (ex: Throwable) { failure.set(ex) }
+        }
+        try {
+            worker.start()
+            assertTrue(entered.await(2, java.util.concurrent.TimeUnit.SECONDS))
+            job.cancel()
+            worker.join(2000)
+            assertTrue(!worker.isAlive)
+            assertTrue(failure.get() is DownloadCancelledException)
+            assertTrue(closed)
+        } finally { cancelled.countDown(); worker.join(2000); job.done() }
+    }
+
     @Test fun injectedTransportUsesLegacyOrderAndHeadForZeroOnly() = fixture { directory, events, _ ->
         val job = JobManager.createJob("k4")
         try {

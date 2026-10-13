@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.util
 
-import java.util.EventListener
 
 /**
  * ReporterListener informs users of problems and messages.
@@ -27,7 +26,7 @@ import java.util.EventListener
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface ReporterListener : EventListener {
+interface ReporterListener {
     /**
      * Called whenever Reporter.informUser() is passed an Exception
      *

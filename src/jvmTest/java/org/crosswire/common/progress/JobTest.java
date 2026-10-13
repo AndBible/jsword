@@ -58,7 +58,7 @@ public class JobTest {
         Assert.assertEquals(100, job.getWork());
         Assert.assertFalse(job.isCancelable());
 
-        job = JobManager.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread());
+        job = org.crosswire.common.progress.JobManagerJvm.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread());
         job.beginJob(WIBBLE);
         Assert.assertEquals(WIBBLE, job.getJobName());
         Assert.assertFalse(job.isFinished());
@@ -83,7 +83,7 @@ public class JobTest {
         Assert.assertEquals(100, job.getWork());
         // Assert.assertFalse(job.isCancelable());
 
-        job = JobManager.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread());
+        job = org.crosswire.common.progress.JobManagerJvm.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread());
         job.beginJob(WIBBLE, uri);
         Assert.assertEquals(WIBBLE, job.getJobName());
         Assert.assertFalse(job.isFinished());

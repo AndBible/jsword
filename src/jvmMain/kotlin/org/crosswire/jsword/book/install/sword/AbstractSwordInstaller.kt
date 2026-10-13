@@ -231,7 +231,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         if (jobId == null) {
             jobId = String.format(Progress.INSTALL_BOOK, book.initials)
         }
-        val job = JobManager.createJob(jobId, jobName, Thread.currentThread())
+        val job = org.crosswire.common.progress.JobManagerJvm.createJob(jobId, jobName, Thread.currentThread())
 
         var temp: URI? = null
         var fileName: String? = null
@@ -298,7 +298,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     override fun reloadBookList() {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        val job = JobManager.createJob(Progress.RELOAD_BOOK_LIST, jobName, null)
+        val job = org.crosswire.common.progress.JobManagerJvm.createJob(Progress.RELOAD_BOOK_LIST, jobName, null)
 
         job.isNotifyUser = false
         job.beginJob(jobName)
@@ -355,7 +355,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     override fun downloadSearchIndex(book: Book, tempDest: URI) {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        val job = JobManager.createJob(String.format(Progress.DOWNLOAD_SEARCH_INDEX, book.initials), jobName, Thread.currentThread())
+        val job = org.crosswire.common.progress.JobManagerJvm.createJob(String.format(Progress.DOWNLOAD_SEARCH_INDEX, book.initials), jobName, Thread.currentThread())
         job.beginJob(jobName)
 
         try {

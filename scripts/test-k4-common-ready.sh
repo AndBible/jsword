@@ -114,5 +114,21 @@ output=$("$guard" --list "$tmp/list" --root "$tmp/root" 2>&1); status=$?
 if [ "$status" -ne 1 ] || ! grep -q '^p/Wrong\.kt:2:' <<< "$output"; then
   echo 'FAIL: InstallException UID exception accepted wrong path'; fail=1
 fi
+for pair in 'org/crosswire/common/progress/WorkEvent.kt 3976736990807011378' 'org/crosswire/common/util/ReporterEvent.kt 4121978048640988213'; do
+  read -r event uid <<< "$pair"
+  mkdir -p "$tmp/root/$(dirname "$event")"
+  printf 'package p\nprivate const val serialVersionUID = %sL\n' "$uid" > "$tmp/root/$event"
+  printf '%s #done\n' "$event" > "$tmp/list"
+  "$guard" --list "$tmp/list" --root "$tmp/root" >/dev/null || { echo "FAIL: exact event UID rejected"; fail=1; }
+  for sample in 'private const val serialVersionUID = 1L' "private const val serialVersionUIDOther = ${uid}L" "private const val serialVersionUID = ${uid}L; val x = java.lang.System.out"; do
+    printf 'package p\n%s\n' "$sample" > "$tmp/root/$event"
+    "$guard" --list "$tmp/list" --root "$tmp/root" >/dev/null 2>&1
+    [ $? -eq 1 ] || { echo "FAIL: event UID exception masked $sample"; fail=1; }
+  done
+  printf 'package p\nprivate const val serialVersionUID = %sL\n' "$uid" > "$tmp/root/p/Wrong.kt"
+  echo 'p/Wrong.kt #done' > "$tmp/list"
+  "$guard" --list "$tmp/list" --root "$tmp/root" >/dev/null 2>&1
+  [ $? -eq 1 ] || { echo 'FAIL: event UID accepted wrong path'; fail=1; }
+done
 [ $fail = 0 ] && echo "k4-common-ready self-test: OK"
 exit $fail

@@ -19,6 +19,9 @@
  */
 package org.crosswire.common.util
 
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+
 /**
  * A TimeGate when entered will cause the gate to be closed for a specified
  * period of time.
@@ -35,17 +38,17 @@ open class TimeGate
  *            the length of time to keep the gate shut after opening it.
  */
 (count: Int) {
+    private val lock = SynchronizedObject()
     /**
      * Determine whether entry through the gate is allowed. Opening the gate
      * will close it until the TimeGate's interval has passed.
      *
      * @return true if one may enter.
      */
-    @Synchronized
-    open fun open(): Boolean {
+    open fun open(): Boolean = synchronized(lock) {
         // check to see if the gate has been closed long enough.
         // If so, then open it and note the time that it was opened.
-        val now = System.currentTimeMillis()
+        val now = currentTimeMillis()
         if (now - then > closeTime) {
             then = now
             return true

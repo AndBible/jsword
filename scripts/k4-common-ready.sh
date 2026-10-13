@@ -68,6 +68,17 @@ while IFS= read -r line; do
              [[ "$m" =~ ^[0-9]+:[[:space:]]*private[[:space:]]const[[:space:]]val[[:space:]]serialVersionUID[[:space:]]=[[:space:]]3258132440416335669L$ ]]; then
             continue
           fi
+          # Portable constants retain event UIDs through the explicit JVM Serializable seam.
+          if [ "$p" = 'serialVersionUID' ]; then
+            case "$f:$m" in
+              org/crosswire/common/progress/WorkEvent.kt:*) uid=3976736990807011378 ;;
+              org/crosswire/common/util/ReporterEvent.kt:*) uid=4121978048640988213 ;;
+              *) uid='' ;;
+            esac
+            if [ -n "$uid" ] && [[ "$m" =~ ^[0-9]+:[[:space:]]*private[[:space:]]const[[:space:]]val[[:space:]]serialVersionUID[[:space:]]=[[:space:]]${uid}L$ ]]; then
+              continue
+            fi
+          fi
           echo "$f:$m   [$p]"; hits=1
         done <<< "$out"
       else

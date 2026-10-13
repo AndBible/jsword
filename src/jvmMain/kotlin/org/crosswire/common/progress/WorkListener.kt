@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.progress
 
-import java.util.EventListener
 
 /**
  * Implement WorkListener and call myClassObj.addProgressListener() to receive
@@ -28,7 +27,7 @@ import java.util.EventListener
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface WorkListener : EventListener {
+interface WorkListener {
     /**
      * This method is called to indicate that some progress has been made. The
      * amount of progress is indicated by ev.getPercent()

@@ -447,6 +447,53 @@ changing the legacy inflater to satisfy the plan's guessed roundtrip example.
 LZSS preserves constants/tree/ring behavior with indexed unsigned byte reads and
 Buffer output, including truncated token acceptance and negative-capacity error.
 
+## Task 12 progress inventory (Steps 3-5)
+
+`JobManager.createJob(String, String, (() -> Unit)?): Progress` replaces the
+Thread factory in the common-ready class. `JobManagerJvm.createJob(String,
+String, Thread?): Progress` retains the Thread-taking signature in the authorized
+JVM holder and wraps interrupt. All three-argument old callers (including app's
+two production null callers and its download-cache test) qualify that holder;
+there is no ambiguous nullable Thread/lambda overload. The Job constructor now
+takes the same nullable callback. The one-argument factory remains unchanged.
+Cancel still completes/notifies/removes before calling the host callback, ignores
+a false cancelable flag, and skips sequential repeats/finished jobs. A thrown
+completion listener leaves the finished job registered and skips cancellation,
+as the real old Thread characterization proves. No new idempotency is imposed
+on simultaneous cancellation. Manager delivery uses CopyOnWriteList snapshots;
+jobs use a narrow atomicfu lock, insertion ordering and a snapshot iterator whose
+remove always throws. Callbacks run outside the manager lock.
+
+`ProgressPlatform.jvm.kt` defines these plain JVM boundaries for Task 16:
+`internal fun randomJobId(): String` (UUID.randomUUID, not a weaker ID policy),
+`internal fun reporterSourceName(Any): String` (Class inputs and binary simple
+names preserved), `internal fun reporterLoggerType(Any?): KClass<*>`,
+`internal fun eventClassName(Any): String`, and
+`internal fun grabReporterAwtExceptions(Boolean): Unit`. Add common expects in
+ProgressPlatform.kt and JVM actual modifiers; native uses UUID, native class
+names/logger KClass, and no-op AWT registration. The nested public AWT handler
+and its original JVM binary name remain intact. Reuse currentTimeMillis and
+scheduleRepeating/Cancellable inventories above; no new clock or scheduler.
+
+`ProgressEventSerializable` is an internal JVM typealias to java.io.Serializable.
+Task 16 adds an expect marker and empty native actual. WorkEvent/ReporterEvent
+are plain open classes with explicit open getSource and EventObject-style
+source/toString behavior; null source still throws IllegalArgumentException.
+Frozen UIDs remain 3976736990807011378 and 4121978048640988213, verified through
+ObjectStreamClass. EventObject superclass descriptor is intentionally replaced,
+not byte-compatible serialization: exact K4 seam allowances identify this change.
+No serialized event stream compatibility or Native runtime claim is made.
+The guard accepts only the exact portable UID declarations at the exact paths.
+
+Job prediction I/O still calls NetUtil.loadProperties/storeProperties in legacy
+order through KUri (JVM URI alias); it does not change lexical URI/File spelling,
+property enumeration/escaping/timestamps, or broad NetUtil ownership. Task 14
+must provide these existing signatures as common-ready implementations with the
+inventoried property/lexical I/O helpers before Task 16 moves Job. Do not replace
+this with normalized Path I/O. Tasks 16-17 move JobCancellerTest and portable
+listener tests to commonTest; real Thread, reflection/ObjectStreamClass, and
+blocked-read JVM characterization remain jvmTest.
+
 ## Task 11 HTTP transport handoff
 
 `HttpTransport` is common now; WebResource/install exceptions remain JVM until Task 16.

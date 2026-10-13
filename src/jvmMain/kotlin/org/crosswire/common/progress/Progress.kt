@@ -19,7 +19,7 @@
  */
 package org.crosswire.common.progress
 
-import java.net.URI
+import org.crosswire.common.util.KUri
 
 /**
  * A Generic way of keeping track of Threads and monitoring their progress.
@@ -57,7 +57,7 @@ interface Progress {
      *            the URI of a properties file from which past behavior is read
      *            and the results of the current run are stored.
      */
-    fun beginJob(sectionName: String?, predictURI: URI?)
+    fun beginJob(sectionName: String?, predictURI: KUri?)
 
     /**
      * @return the job name

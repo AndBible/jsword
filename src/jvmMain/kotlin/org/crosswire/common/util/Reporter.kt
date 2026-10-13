@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.util
 
-import java.util.concurrent.CopyOnWriteArrayList
 
 import org.crosswire.jsword.JSMsg
 
@@ -72,8 +71,7 @@ private constructor() {
          */
         @JvmStatic
         fun informUser(source: Any?, prob: Throwable) {
-            val cat: Class<*> = if (source != null) source.javaClass else Reporter::class.java
-            val templog = LoggerFactory.getLogger(cat.kotlin)
+            val templog = LoggerFactory.getLogger(reporterLoggerType(source))
 
             templog.warn(prob.message, prob)
 
@@ -93,8 +91,7 @@ private constructor() {
          */
         @JvmStatic
         fun informUser(source: Any?, prob: LucidException) {
-            val cat: Class<*> = if (source != null) source.javaClass else Reporter::class.java
-            val templog = LoggerFactory.getLogger(cat.kotlin)
+            val templog = LoggerFactory.getLogger(reporterLoggerType(source))
 
             templog.warn(prob.message, prob)
 
@@ -114,8 +111,7 @@ private constructor() {
          */
         @JvmStatic
         fun informUser(source: Any?, prob: LucidRuntimeException) {
-            val cat: Class<*> = if (source != null) source.javaClass else Reporter::class.java
-            val templog = LoggerFactory.getLogger(cat.kotlin)
+            val templog = LoggerFactory.getLogger(reporterLoggerType(source))
 
             templog.warn(prob.message, prob)
 
@@ -186,33 +182,13 @@ private constructor() {
          */
         @JvmStatic
         fun grabAWTExecptions(grab: Boolean) {
-            if (grab) {
-                // register ourselves
-                System.setProperty(AWT_HANDLER_PROPERTY, OUR_NAME)
-            } else {
-                // unregister ourselves
-                val current = System.getProperty(AWT_HANDLER_PROPERTY)
-                if (current != null && current == OUR_NAME) {
-                    val prop = System.getProperties()
-                    prop.remove(AWT_HANDLER_PROPERTY)
-                }
-            }
+            grabReporterAwtExceptions(grab)
         }
-
-        /**
-         * The system property name for registering AWT exceptions
-         */
-        private const val AWT_HANDLER_PROPERTY = "sun.awt.exception.handler"
-
-        /**
-         * The name of the class to register for AWT exceptions
-         */
-        private val OUR_NAME: String = CustomAWTExceptionHandler::class.java.name
 
         /**
          * The list of listeners
          */
-        private val LISTENERS: MutableList<ReporterListener> = CopyOnWriteArrayList()
+        private val LISTENERS: MutableList<ReporterListener> = CopyOnWriteList()
 
         /**
          * The log stream

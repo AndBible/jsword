@@ -27,12 +27,13 @@ import org.crosswire.common.util.PropertyMap
 import org.crosswire.jsword.JSMsg
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
-import java.net.URI
-import java.util.ArrayList
-import java.util.HashMap
-import java.util.Timer
-import java.util.TimerTask
+import okio.IOException
+import org.crosswire.common.util.KUri
+import org.crosswire.common.util.Cancellable
+import org.crosswire.common.util.scheduleRepeating
+import org.crosswire.common.util.currentTimeMillis
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /**
  * A Generic method of keeping track of Threads and monitoring their progress.
@@ -66,12 +67,12 @@ internal constructor(
     /**
      * Optional thread to monitor progress
      */
-    private val workerThread: Thread?
+    private val canceller: (() -> Unit)?
 ) : Progress {
+    private val lock = SynchronizedObject()
     /**
      * A short descriptive phrase
      */
-    @get:Synchronized
     override val jobName: String = jobName
 
     /**
@@ -82,7 +83,7 @@ internal constructor(
     /**
      * Does this job allow interruptions?
      */
-    private var cancelable: Boolean = workerThread != null
+    private var cancelable: Boolean = canceller != null
 
     /**
      * The type of job being performed. This is used to simplify code.
@@ -119,7 +120,7 @@ internal constructor(
     /**
      * The URI to which we load and save timings
      */
-    private var predictionMapURI: URI? = null
+    private var predictionMapURI: KUri? = null
 
     /**
      * The timings loaded from where they were saved after the last run
@@ -139,7 +140,7 @@ internal constructor(
     /**
      * The timer that lets us post fake progress events.
      */
-    private var fakingTimer: Timer? = null
+    private var fakingTimer: Cancellable? = null
 
     /* (non-Javadoc)
      * @see org.crosswire.common.progress.Progress#beginJob(java.lang.String)
@@ -156,7 +157,7 @@ internal constructor(
             return
         }
 
-        synchronized(this) {
+        synchronized(lock) {
             finished = false
             currentSectionName = sectionName
             totalUnits = totalWork
@@ -170,19 +171,18 @@ internal constructor(
     /* (non-Javadoc)
      * @see org.crosswire.common.progress.Progress#beginJob(java.lang.String, java.net.URI)
      */
-    override fun beginJob(sectionName: String?, predictURI: URI?) {
+    override fun beginJob(sectionName: String?, predictURI: KUri?) {
         if (finished) {
             return
         }
 
-        synchronized(this) {
+        synchronized(lock) {
             currentSectionName = sectionName
             predictionMapURI = predictURI
             jobMode = ProgressMode.PREDICTIVE
-            startTime = System.currentTimeMillis()
+            startTime = currentTimeMillis()
 
-            fakingTimer = Timer()
-            fakingTimer!!.schedule(PredictTask(), 0L, REPORTING_INTERVAL.toLong())
+            fakingTimer = scheduleRepeating(REPORTING_INTERVAL.toLong()) { predictTick(currentTimeMillis()) }
 
             // Load currentPredictionMap. It's not a disaster if it doesn't load
             totalUnits = loadPredictions()
@@ -213,7 +213,7 @@ internal constructor(
      * @see org.crosswire.common.progress.Progress#setTotalWork(int)
      */
     override var totalWork: Int
-        @Synchronized get() = totalUnits
+        get() = synchronized(lock) { totalUnits }
         set(totalWork) {
             this.totalUnits = totalWork
         }
@@ -239,7 +239,7 @@ internal constructor(
                 return
             }
 
-            synchronized(this) {
+            synchronized(lock) {
                 if (workUnits == work) {
                     return
                 }
@@ -264,7 +264,7 @@ internal constructor(
             return
         }
 
-        synchronized(this) {
+        synchronized(lock) {
             workUnits += step
 
             val oldPercent = percent
@@ -293,10 +293,10 @@ internal constructor(
             }
 
             var doUpdate = false
-            synchronized(this) {
+            synchronized(lock) {
                 // If we are in some kind of predictive mode, then measure progress toward the expected end.
                 if (jobMode == ProgressMode.PREDICTIVE || jobMode == ProgressMode.UNKNOWN) {
-                    doUpdate = updateProgress(System.currentTimeMillis())
+                    doUpdate = updateProgress(currentTimeMillis())
 
                     // We are done with the current section and are starting another
                     // So record the length of the last section
@@ -322,7 +322,7 @@ internal constructor(
         // TRANSLATOR: This shows up in a progress bar when progress is finished.
         val sectionName = JSMsg.gettext("Done")
 
-        synchronized(this) {
+        synchronized(lock) {
             finished = true
 
             currentSectionName = sectionName
@@ -337,14 +337,14 @@ internal constructor(
             percent = 100
 
             if (nextPredictionMap != null) {
-                nextPredictionMap!![currentSectionName] = (System.currentTimeMillis() - startTime).toInt()
+                nextPredictionMap!![currentSectionName] = (currentTimeMillis() - startTime).toInt()
             }
         }
 
         // Report that the job is done.
         if (isNotifyUser) JobManager.fireWorkProgressed(this)
 
-        synchronized(this) {
+        synchronized(lock) {
             if (predictionMapURI != null) {
                 savePredictions()
             }
@@ -358,8 +358,8 @@ internal constructor(
         if (!finished) {
             ignoreTimings()
             done()
-            if (workerThread != null) {
-                workerThread.interrupt()
+            if (canceller != null) {
+                canceller.invoke()
             }
         }
     }
@@ -377,7 +377,7 @@ internal constructor(
     override var isCancelable: Boolean
         get() = cancelable
         set(newInterruptable) {
-            if (workerThread == null || finished) {
+            if (canceller == null || finished) {
                 return
             }
             cancelable = newInterruptable
@@ -389,8 +389,7 @@ internal constructor(
      * 
      * @param li the interested listener
      */
-    @Synchronized
-    fun addWorkListener(li: WorkListener?) {
+    fun addWorkListener(li: WorkListener?) = synchronized(lock) {
         val temp: MutableList<WorkListener?> = ArrayList()
         temp.addAll(listeners)
 
@@ -405,8 +404,7 @@ internal constructor(
      * 
      * @param li the disinterested listener
      */
-    @Synchronized
-    fun removeWorkListener(li: WorkListener?) {
+    fun removeWorkListener(li: WorkListener?) = synchronized(lock) {
         if (listeners.contains(li)) {
             val temp: MutableList<WorkListener?> = ArrayList()
             temp.addAll(listeners)
@@ -425,7 +423,7 @@ internal constructor(
         // certainly keep the event dispatch clear of the synchronized block or
         // there will be a deadlock
         val temp: MutableList<WorkListener?> = ArrayList()
-        synchronized(this) {
+        synchronized(lock) {
             temp.addAll(listeners)
         }
 
@@ -443,8 +441,7 @@ internal constructor(
      * @param now the current point in progress
      * @return true if there is an update to progress.
      */
-    @Synchronized
-    protected fun updateProgress(now: Long): Boolean {
+    protected fun updateProgress(now: Long): Boolean = synchronized(lock) {
         if (finished) {
             return false
         }
@@ -479,7 +476,7 @@ internal constructor(
                 val timestr = temp[title]
 
                 try {
-                    val time = Integer.valueOf(timestr)
+                    val time = timestr!!.toInt()
                     currentPredictionMap!![title] = time
 
                     // if this time is later than the latest
@@ -522,8 +519,7 @@ internal constructor(
      * Typically called from in a catch block, this ensures that we don't save
      * the timing file because we have a messed up run.
      */
-    @Synchronized
-    private fun ignoreTimings() {
+    private fun ignoreTimings() = synchronized(lock) {
         predictionMapURI = null
     }
 
@@ -531,18 +527,6 @@ internal constructor(
     internal fun predictTick(now: Long) {
         if (updateProgress(now)) {
             JobManager.fireWorkProgressed(this)
-        }
-    }
-
-    /**
-     * So we can fake progress for Jobs that don't tell us how they are doing
-     */
-    internal inner class PredictTask : TimerTask() {
-        /* (non-Javadoc)
-         * @see java.util.TimerTask#run()
-         */
-        override fun run() {
-            predictTick(System.currentTimeMillis())
         }
     }
 
