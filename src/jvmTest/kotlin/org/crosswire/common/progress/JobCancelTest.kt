@@ -7,7 +7,7 @@ import kotlin.test.*
 
 /** Legacy Thread characterization; stays JVM through Tasks 16-17. */
 class JobCancelTest {
-    @Test fun cancellationFinishesAndNotifiesBeforeInterruptEvenWhenDisabled() {
+    private class CancellationFixture {
         val waiting = CountDownLatch(1)
         val stopped = CountDownLatch(1)
         val release = CountDownLatch(1)
@@ -19,13 +19,36 @@ class JobCancelTest {
             }
             override fun interrupt() { interrupts++; super.interrupt() }
         }
-        var createdJob: Progress? = null
-        var addedListener: WorkListener? = null
-        try {
-            worker.start()
-            assertTrue(waiting.await(2, TimeUnit.SECONDS))
-            val job = JobManagerJvm.createJob("cancel-test", "cancel-test", worker)
-            createdJob = job
+        var job: Progress? = null
+        var listener: WorkListener? = null
+
+        fun run(readiness: () -> Unit = { assertTrue(waiting.await(2, TimeUnit.SECONDS)) }, scenario: (Progress) -> Unit) {
+            try {
+                worker.start()
+                readiness()
+                val created = JobManagerJvm.createJob("cancel-test", "cancel-test", worker)
+                job = created
+                scenario(created)
+            } finally { cleanup() }
+        }
+
+        fun listen(value: WorkListener) {
+            listener = value
+            JobManager.addWorkListener(value)
+        }
+
+        fun cleanup() {
+            listener?.let { JobManager.removeWorkListener(it) }
+            release.countDown()
+            worker.interrupt()
+            worker.join(2000)
+            job?.done()
+        }
+    }
+
+    @Test fun cancellationFinishesAndNotifiesBeforeInterruptEvenWhenDisabled() {
+        val fixture = CancellationFixture()
+        fixture.run { job ->
             val events = mutableListOf<String>()
             val listener = object : WorkListener {
                 override fun workStateChanged(ev: WorkEvent) { events.add("state") }
@@ -33,7 +56,7 @@ class JobCancelTest {
                     if (ev.job === job) {
                         assertTrue(job.isFinished)
                         assertEquals(100, job.work)
-                        assertEquals(0, interrupts)
+                        assertEquals(0, fixture.interrupts)
                         assertSame(job, JobManager.findJob(job.jobID))
                         events.add("done")
                     }
@@ -41,39 +64,61 @@ class JobCancelTest {
             }
             assertTrue(job.isCancelable)
             job.isCancelable = false
-            addedListener = listener
-            JobManager.addWorkListener(listener)
+            fixture.listen(listener)
             job.cancel()
-            assertTrue(stopped.await(2, TimeUnit.SECONDS))
+            assertTrue(fixture.stopped.await(2, TimeUnit.SECONDS))
             job.cancel()
             job.isCancelable = true
             assertFalse(job.isCancelable)
-            assertEquals(1, interrupts)
+            assertEquals(1, fixture.interrupts)
             assertEquals(listOf("done"), events)
             assertNull(JobManager.findJob(job.jobID))
-        } finally {
-            addedListener?.let { JobManager.removeWorkListener(it) }
-            release.countDown()
-            worker.interrupt(); worker.join(2000)
-            createdJob?.done()
         }
     }
 
     @Test fun readinessFailureStillReleasesAndJoinsWorker() {
-        val release = CountDownLatch(1)
-        val worker = Thread { try { release.await() } catch (_: InterruptedException) { } }
+        val fixture = CancellationFixture()
         val error = IllegalStateException("readiness")
-        assertSame(error, assertFailsWith<IllegalStateException> {
-            try {
-                worker.start()
-                throw error
-            } finally {
-                release.countDown()
-                worker.interrupt()
-                worker.join(2000)
-            }
-        })
-        assertFalse(worker.isAlive)
+        try {
+            assertSame(error, assertFailsWith<IllegalStateException> {
+                fixture.run(readiness = {
+                    assertTrue(fixture.waiting.await(2, TimeUnit.SECONDS))
+                    throw error
+                }) { fail("scenario must not run after readiness failure") }
+            })
+            assertFalse(fixture.worker.isDaemon)
+            assertFalse(fixture.worker.isAlive, "shared fixture must clean readiness failure")
+            assertNull(fixture.job)
+            assertNull(fixture.listener)
+        } finally {
+            // Independent test rescue runs only AFTER observing a leak in the mutated subject.
+            fixture.cleanup()
+        }
+    }
+
+    @Test fun partialSetupFailureRemovesCreatedJobAndListener() {
+        val fixture = CancellationFixture()
+        val error = IllegalStateException("partial setup")
+        var callbacks = 0
+        try {
+            assertSame(error, assertFailsWith<IllegalStateException> {
+                fixture.run { _ ->
+                    fixture.listen(object : WorkListener {
+                        override fun workStateChanged(ev: WorkEvent) = Unit
+                        override fun workProgressed(ev: WorkEvent) { callbacks++ }
+                    })
+                    throw error
+                }
+            })
+            assertFalse(fixture.worker.isAlive)
+            val job = fixture.job!!
+            assertTrue(job.isFinished)
+            assertNull(JobManager.findJob(job.jobID))
+            assertEquals(0, callbacks, "listener must be removed before cleanup completion event")
+            val probe = JobManager.createJob("cleanup-listener-probe")
+            try { probe.done(); assertEquals(0, callbacks, "removed listener must not receive later events") }
+            finally { probe.done() }
+        } finally { fixture.cleanup() }
     }
 
     @Test fun listenerFailureLeavesFinishedJobRegisteredAndPreventsInterrupt() {
