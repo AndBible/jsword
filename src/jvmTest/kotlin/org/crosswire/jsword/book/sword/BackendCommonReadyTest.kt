@@ -68,6 +68,38 @@ class BackendCommonReadyTest {
         assertEquals("00025", external(backend, "G25", "25"))
     }
 
+    @Test fun paddingPreservesJdkDefaultLocaleDigitsAndGreedyPattern() {
+        val original = Locale.getDefault()
+        try {
+            for (locale in listOf("en-US", "ar", "fa", "bn", "th-TH-u-nu-thai")) {
+                Locale.setDefault(Locale.forLanguageTag(locale))
+                val backend = Probe(metadata("Feature=GreekDef\nStrongsPadding=true\n"))
+                for (number in listOf(0, 1, 25, 8674, Int.MAX_VALUE)) {
+                    val key = "G$number"
+                    val matcher = java.util.regex.Pattern.compile("^([GH])(\\d+)((!)?([a-z])?)$").matcher("G00001")
+                    assertTrue(matcher.matches())
+                    val reference = java.text.DecimalFormat(if (matcher.group(2).length == 4) "0000" else "00000")
+                        .format(number.toLong())
+                    assertEquals(locale, "G$reference", external(backend, key, "G00001"))
+                    assertEquals(locale, java.text.DecimalFormat("00000").format(number.toLong()),
+                        external(backend, key, "25"))
+                }
+                // The frozen regex captures all four digits and selects four-place padding.
+                assertEquals("H" + java.text.DecimalFormat("0000").format(8674L),
+                    external(backend, "H8674", "H0001"))
+                for (key in listOf("G-1", "G25\n", "G25A", "G٢٥")) {
+                    assertEquals(key, external(backend, key, "G00001"))
+                }
+                try {
+                    external(backend, "G2147483648", "G00001")
+                    fail("overflow must retain NumberFormatException")
+                } catch (e: java.lang.reflect.InvocationTargetException) {
+                    assertTrue(e.cause is NumberFormatException)
+                }
+            }
+        } finally { Locale.setDefault(original) }
+    }
+
     @Test fun debugOutputPreservesHeaderAndEmptyImp() {
         val backend = object : Probe(metadata("DataPath=./missing\n").apply {
             library = java.io.File(System.getProperty("java.io.tmpdir")).toURI()

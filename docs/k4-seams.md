@@ -308,3 +308,19 @@ still does not mutate cursor. Internal readStream(ByteArray): Int is one direct
 FileHandle read with no Sword record EOF logging, used only by incfile to retain
 FileInputStream's single-read byte count and old diagnostic events. Both are
 portable Kotlin/okio and introduce no Native platform hook.
+
+### Task 9 backend preservation hooks (Task 16 obligations)
+
+`BackendNumberFormat.jvm.kt` defines internal `backendZeroPad(Int, Int): String`
+using a fresh JDK DecimalFormat of the requested zero width and the default FORMAT
+locale. Task 16 introduces the common expect in BackendNumberFormat.kt and actual
+modifiers here, plus BackendNumberFormat.ios.kt. Native must preserve localized
+zero digits, minimum integer width, no grouping and locale minus sign; it must not
+silently use ASCII padStart. JVM reference coverage includes Arabic, Persian,
+Bengali, Thai numbering extension, zero, max Int and regex rejection/overflow.
+
+`BackendDebug.jvm.kt` defines internal `backendDebugFailure(Throwable): Unit` using
+Throwable.printStackTrace() to stderr. Task 16 introduces the common expect in
+BackendDebug.kt, JVM actual modifier, and BackendDebug.ios.kt emitting the failure
+and available stack trace to stderr. RawLD and ZLD debug methods catch IO and
+BookException as before; Appendable failures enter that same diagnostic path.

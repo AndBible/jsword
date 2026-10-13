@@ -394,7 +394,7 @@ open class RawLDBackend<T : RawLDBackendState>
                     // The convention is that a Strong's dictionary with both Greek
                     // and Hebrew have G or H prefix
                     buf.append(type)
-                    buf.append(strongsNumber.toString().padStart(4, '0'))
+                    buf.append(backendZeroPad(strongsNumber, 4))
 
                     // The NAS lexicon has some entries that end in A-Z, but it is
                     // not preceded by a !
@@ -409,9 +409,9 @@ open class RawLDBackend<T : RawLDBackendState>
                     buf.append(type)
                     val numLength = m.groupValues[2].length
                     if (numLength == 4) {
-                        buf.append(strongsNumber.toString().padStart(4, '0'))
+                        buf.append(backendZeroPad(strongsNumber, 4))
                     } else {
-                        buf.append(strongsNumber.toString().padStart(5, '0'))
+                        buf.append(backendZeroPad(strongsNumber, 5))
                     }
                     // The NAS lexicon has some entries that end in A-Z, but it is
                     // not preceded by a !
@@ -422,7 +422,7 @@ open class RawLDBackend<T : RawLDBackendState>
                 }
 
                 // It is just the number
-                return strongsNumber.toString().padStart(5, '0')
+                return backendZeroPad(strongsNumber, 5)
             }
             // else unpad, E.g. G0001 to G1
             // This test is merely an optimization to prevent unnecessary work.
