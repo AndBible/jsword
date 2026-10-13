@@ -98,10 +98,23 @@ class NativeStorageIoTest {
         assertTrue(storageDirectory(storageChild(root, "dot/child")))
         val link = storageChild(root, "link")
         assertEquals(0, symlink(storageChild(root, "dot").spelling, link.spelling))
-        assertTrue(storageMkdirs(storageChild(root, "link/discarded/../../linked-target")))
-        assertFalse(storageExists(storageChild(root, "dot/discarded")))
-        assertTrue(storageDirectory(storageChild(root, "linked-target")))
-        unlink(link.spelling)
+        try {
+            assertTrue(storageMkdirs(storageChild(root, "link/discarded/../../linked-target")))
+            assertFalse(storageExists(storageChild(root, "dot/discarded")))
+            assertTrue(storageDirectory(storageChild(root, "linked-target")))
+        } finally { unlink(link.spelling) }
+    }
+
+    @Test fun mkdirsDoesNotResolveSymlinkExposedByMissingTailCollapse() = temporary { root ->
+        assertTrue(storageMkdirs(storageChild(root, "actual/deep")))
+        val link = storageChild(root, "link")
+        assertEquals(0, symlink(storageChild(root, "actual/deep").spelling, link.spelling))
+        try {
+            assertTrue(storageMkdirs(storageChild(root, "missing/../link/../target")))
+            assertTrue(storageDirectory(storageChild(root, "target")))
+            assertFalse(storageExists(storageChild(root, "actual/target")))
+            assertFalse(storageExists(storageChild(root, "missing")))
+        } finally { unlink(link.spelling) }
     }
 
     @Test fun fifoStreamsTransferWithoutRandomAccessSeek() = temporary { root ->

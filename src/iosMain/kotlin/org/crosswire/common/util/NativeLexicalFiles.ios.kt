@@ -76,9 +76,7 @@ internal object NativeLexicalFiles {
                 ".." -> parent(resolved) ?: "/"
                 else -> if (resolved == "/") "/$part" else "$resolved/$part"
             }
-            // A reduced '..' may expose another existing symlink prefix.
-            val real = realpath(resolved, null)
-            if (real != null) resolved = try { real.toKString() } finally { free(real) }
+            // JDK canonicalization collapses the unresolved suffix lexically, without resolving newly exposed links.
         }
         return resolved
     }
