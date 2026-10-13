@@ -12,7 +12,6 @@ import java.io.IOException
 import java.net.MalformedURLException
 import java.util.Locale
 import java.util.zip.Inflater
-import java.util.zip.DataFormatException
 
 // Lexical File spelling must never round-trip through okio.Path on Unix.
 internal fun archiveRead(path: String): ByteArray = File(path).readBytes()
@@ -21,19 +20,18 @@ internal fun archiveGzipSource(path: String): BufferedSource = GzipCompressorInp
 internal fun archiveLowercase(name: String): String = name.lowercase(Locale.getDefault())
 internal fun archiveZipName(bytes: ByteArray, utf8: Boolean): String = String(bytes, Charsets.UTF_8).replace('\\', '/')
 
-/** Descriptor entries have no local compressed size; raw inflater EOF locates their descriptor. */
-internal fun archiveDeflateLength(bytes: ByteArray, offset: Int): Int {
+/** Raw-DEFLATE EOF reports consumed input without copying or decoding a selected body twice. */
+internal fun archiveDescriptorSource(bytes: ByteArray, offset: Int, consumed: (Int) -> Unit): okio.Source {
+    val input = java.io.ByteArrayInputStream(bytes, offset, bytes.size - offset)
     val inflater = Inflater(true)
-    try {
-        inflater.setInput(bytes, offset, bytes.size - offset)
-        val buffer = ByteArray(4096)
-        while (!inflater.finished()) {
-            val count = inflater.inflate(buffer)
-            if (count == 0 && !inflater.finished()) throw java.io.EOFException("Truncated ZIP deflate")
+    return object : java.util.zip.InflaterInputStream(input, inflater) {
+        override fun read(buffer: ByteArray, off: Int, len: Int): Int {
+            val count = super.read(buffer, off, len)
+            if (count == -1) consumed(bytes.size - offset - input.available() - inflater.remaining)
+            return count
         }
-        return bytes.size - offset - inflater.remaining
-    } catch (error: DataFormatException) { throw java.util.zip.ZipException(error.message) }
-    finally { inflater.end() }
+        override fun close() { try { super.close() } finally { inflater.end() } }
+    }.source()
 }
 
 internal fun archiveInflateSource(bytes: ByteArray): okio.Source = java.util.zip.InflaterInputStream(bytes.inputStream(), Inflater(true)).source()

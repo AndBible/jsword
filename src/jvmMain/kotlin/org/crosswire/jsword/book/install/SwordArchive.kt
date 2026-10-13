@@ -110,12 +110,23 @@ object SwordArchive {
             }
             val data = cursor+30+nameSize+extraSize
             val descriptor = flags and 8 != 0
-            val length = if (descriptor && method == 8) archiveDeflateLength(bytes,data) else bounded(compressed)
-            need(data,length)
-            yield(ZipEntry(name,name.endsWith('/')) {
-                val payload = bytes.copyOfRange(data,data+length)
-                if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
-            })
+            var length = if (descriptor && method == 8) -1 else bounded(compressed)
+            var stream: okio.BufferedSource? = null
+            if (length >= 0) need(data,length)
+            val entry = ZipEntry(name,name.endsWith('/')) {
+                if (descriptor && method == 8) {
+                    stream ?: archiveDescriptorSource(bytes,data) { length = it }.buffer().also { stream = it }
+                } else {
+                    val payload = bytes.copyOfRange(data,data+length)
+                    if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
+                }
+            }
+            yield(entry)
+            if (descriptor && method == 8 && length < 0) {
+                // nextZipEntry drains skipped descriptor bodies to locate the next local header.
+                val input = stream ?: entry.source().buffer()
+                input.use { val scratch = Buffer(); while (it.read(scratch,4096) != -1L) scratch.clear() }
+            }
             cursor = data+length
             if (descriptor) {
                 if (u32(cursor) == 0x08074b50L) cursor += 4

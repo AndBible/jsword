@@ -74,6 +74,7 @@ class SwordArchiveTest {
 
     @Test fun maliciousTarNamesAndEmptyEntriesAreSkipped() = temp { root ->
         val input = File(root, "in.gz").apply { writeBytes(ArchiveLegacyCharacterizationTest.tarGzip(listOf("../evil.conf" to byteArrayOf(1), "/abs.conf" to byteArrayOf(2), "mods.d/empty.conf" to byteArrayOf(), "mods.d/good.conf" to byteArrayOf(3)))) }
+        assertEquals(listOf("../evil.conf", "/abs.conf", "mods.d/empty.conf", "mods.d/good.conf"), TarArchiveInputStream(GZIPInputStream(input.inputStream())).use { tar -> buildList { while (true) { val entry = tar.nextTarEntry ?: break; add(entry.name) } } })
         val output = File(root, "out.zip")
         SwordArchive.tarGzConfsToZip(input.path.toPath(), output.path.toPath())
         assertEquals(listOf("mods.d/good.conf"), SwordArchive.readConfZip(output.path.toPath()).map { it.first })
@@ -240,6 +241,29 @@ class SwordArchiveTest {
         assertEquals(expected, SwordArchive.readConfZip(file.path.toPath()).map { it.first to it.second.toList() })
     }
 
+    @Test fun malformedIgnoredCacheBodyMatchesSequentialLegacy() = temp { root ->
+        for (descriptor in listOf(false,true)) {
+            val file = File(root,"input.zip")
+            fun write(zip: org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream) {
+                zip.putArchiveEntry(org.apache.commons.compress.archivers.zip.ZipArchiveEntry("ignored.txt"))
+                zip.write(ByteArray(5000) { 65 }); zip.closeArchiveEntry(); zip.close()
+            }
+            if (descriptor) {
+                val out = java.io.ByteArrayOutputStream(); write(org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(out)); file.writeBytes(out.toByteArray())
+            } else write(org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream(file))
+            val bytes = file.readBytes()
+            val nameLength = (bytes[26].toInt() and 255) or ((bytes[27].toInt() and 255) shl 8)
+            val extraLength = (bytes[28].toInt() and 255) or ((bytes[29].toInt() and 255) shl 8)
+            bytes[30+nameLength+extraLength] = 7
+            file.writeBytes(bytes)
+            val reference = runCatching { confs(file) }
+            val actual = runCatching { SwordArchive.readConfZip(file.path.toPath()) }
+            println("IGNORED CACHE descriptor=$descriptor old=${reference.exceptionOrNull()} new=${actual.exceptionOrNull()}")
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,"descriptor=$descriptor")
+            if (reference.isSuccess) assertEquals(emptyList(),actual.getOrThrow())
+        }
+    }
+
     @Test fun emptyCacheAndStoredLocalMetadataMatchLegacy() = temp { root ->
         val buffer = okio.Buffer()
         org.crosswire.common.util.StoredZipWriter.write(buffer, emptyList())
@@ -291,6 +315,7 @@ class SwordArchiveTest {
         bytes.copyInto(bytes, central, central+length, central+2*length)
         first.copyInto(bytes, central+length)
         val file = File(root,"reordered.zip").apply { writeBytes(bytes) }
+        assertEquals(listOf("a.conf", "z.conf"), org.apache.commons.compress.archivers.zip.ZipFile(file).use { zip -> java.util.Collections.list(zip.entries).map { it.name } })
         assertEquals(listOf("z.conf", "a.conf"), confs(file).map { it.first })
         assertEquals(confs(file), SwordArchive.readConfZip(file.path.toPath()).map { it.first to it.second.toList() })
         val old = File(root,"old").apply { mkdirs() }; val new = File(root,"new").apply { mkdirs() }

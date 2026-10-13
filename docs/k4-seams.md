@@ -538,10 +538,13 @@ common expects and JVM actual modifiers, and supported Native actuals:
   locale. Filter strings/output names remain unchanged; the Boolean is include.
 - `archiveZipName(ByteArray, Boolean): String` retains commons' default UTF-8
   decoding (including unflagged UTF-8 names), not CP437 by assumption.
-- `archiveDeflateLength(ByteArray, Int): Int` locates raw-DEFLATE EOF for sequential
-  local entries with descriptors using a 4096-byte discard buffer, not a decoded-body
-  cache. Native requires raw zlib consumed-input accounting and matching EOF/ZipException
-  errors. The unused bounded `archiveInflate` helper is removed.
+- `archiveDescriptorSource(ByteArray, Int, (Int) -> Unit): Source` streams raw
+  DEFLATE from an offset without a suffix copy; at EOF its callback reports compressed
+  bytes consumed. Selected cache bodies decode once; skipped descriptor entries drain
+  through a 4096-byte discard buffer as the original sequential reader does (malformed
+  skipped seekable entries are ignored, malformed skipped descriptors throw ZipException).
+  Native requires negative-windowBits zlib, consumed-input accounting and matching
+  streaming EOF/errors. Unused bounded `archiveInflate` and intermediate scan helper removed.
 - `archiveInflateSource(ByteArray): Source` uses InflaterInputStream with raw
   Inflater(true), preserving ZipException and successful chunks before late failure.
   Native uses negative-windowBits zlib with equivalent streaming/error behavior.
