@@ -5,6 +5,7 @@ import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import okio.buffer
 import okio.openZip
+import okio.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

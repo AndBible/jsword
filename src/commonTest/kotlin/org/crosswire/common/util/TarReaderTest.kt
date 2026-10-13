@@ -2,6 +2,7 @@ package org.crosswire.common.util
 
 import okio.Buffer
 import okio.EOFException
+import okio.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
