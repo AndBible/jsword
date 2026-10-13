@@ -58,6 +58,9 @@ class BackendCommonReadyTest {
     }
 
     @Test fun strongsPaddingAndRegexPreserveExistingBranches() {
+        val original = Locale.getDefault(Locale.Category.FORMAT)
+        try {
+        Locale.setDefault(Locale.Category.FORMAT, Locale.US)
         val backend = Probe(metadata("Feature=GreekDef\nStrongsPadding=true\n"))
         assertEquals("G00025", external(backend, "G25", "G00001"))
         assertEquals("H08674", external(backend, "H8674", "H00001"))
@@ -66,6 +69,7 @@ class BackendCommonReadyTest {
             assertEquals(key, external(backend, key, "G00001"))
         }
         assertEquals("00025", external(backend, "G25", "25"))
+        } finally { Locale.setDefault(Locale.Category.FORMAT, original) }
     }
 
     @Test fun paddingPreservesJdkDefaultLocaleDigitsAndGreedyPattern() {
@@ -124,6 +128,31 @@ class BackendCommonReadyTest {
                     (actual.exceptionOrNull() as java.lang.reflect.InvocationTargetException).targetException::class)
             }
         }
+    }
+
+    @Test fun bothFeaturesNaslexSuffixAndDisabledPaddingRetainOldBranches() {
+        val original = Locale.getDefault(Locale.Category.FORMAT)
+        try {
+            Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("ar"))
+            val both = Probe(metadata("Feature=GreekDef\nFeature=HebrewDef\nStrongsPadding=true\n"))
+            assertEquals("G" + java.text.DecimalFormat("0000").format(25L), external(both, "G25!a", "G00001"))
+            val nasMd = SwordBookMetaData("[naslex]\nModDrv=RawLD\nFeature=GreekDef\nStrongsPadding=true\n".toByteArray(), "nas.conf")
+            val nas = object : Probe(nasMd) {
+                override val bookMetaData: org.crosswire.jsword.book.BookMetaData =
+                    object : org.crosswire.jsword.book.BookMetaData by nasMd {
+                        override val initials = "naslex"
+                    }
+            }
+            assertEquals("G" + java.text.DecimalFormat("00000").format(25L) + "a", external(nas, "G25!a", "G00001"))
+            val unpadded = Probe(metadata("Feature=GreekDef\n").apply {
+                setProperty(SwordBookMetaData.KEY_STRONGS_PADDING, "false")
+            })
+            // The frozen implementation returns the suffix-stripped key, not its unpadded buffer.
+            for (key in listOf("G00025", "G00025a", "G00025!a", "H00001")) {
+                val reference = key.removeSuffix("a").removeSuffix("!")
+                assertEquals(reference, external(unpadded, key, "G00001"))
+            }
+        } finally { Locale.setDefault(Locale.Category.FORMAT, original) }
     }
 
     @Test fun debugOutputPreservesHeaderAndEmptyImp() {
