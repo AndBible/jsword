@@ -24,7 +24,9 @@ class TarReader(private val source: BufferedSource) : Closeable {
         }
     }
 
-    fun next(): Entry? {
+    fun next(): Entry? = next(false)
+
+    private fun next(installer: Boolean): Entry? {
         if (ended) return null
         source.skip(remaining + padding)
         consumed += remaining + padding
@@ -33,12 +35,20 @@ class TarReader(private val source: BufferedSource) : Closeable {
         var longName: String? = null
         var paxPath: String? = null
         while (true) {
-            val header = source.readByteArray(512)
-            consumed += 512
+            fun record(): ByteArray? {
+                if (!installer) return source.readByteArray(512).also { consumed += 512 }
+                val buffer = okio.Buffer()
+                while (buffer.size < 512) {
+                    val count = source.read(buffer,512-buffer.size)
+                    if (count == -1L) return null
+                    consumed += count
+                }
+                return buffer.readByteArray()
+            }
+            val header = record() ?: run { ended = true; return null }
             if (header.all { it == 0.toByte() }) {
-                val second = source.readByteArray(512)
-                consumed += 512
-                if (second.any { it != 0.toByte() }) throw IOException("Invalid tar terminator")
+                val second = record()
+                if (!installer && second!!.any { it != 0.toByte() }) throw IOException("Invalid tar terminator")
                 ended = true
                 return null
             }
@@ -83,7 +93,7 @@ class TarReader(private val source: BufferedSource) : Closeable {
 
     internal fun nextInstaller(): Entry? {
         val incomplete = remaining > 0
-        try { return next() }
+        try { return next(true) }
         catch (error: okio.EOFException) {
             if (incomplete) throw IOException("Truncated TAR archive", error)
             throw error

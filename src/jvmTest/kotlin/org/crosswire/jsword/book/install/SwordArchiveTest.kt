@@ -153,6 +153,36 @@ class SwordArchiveTest {
         assertEquals(mapOf("first.conf" to listOf<Byte>(1)),tree(filtered))
     }
 
+    @Test fun extractionSkippedFeaturesMatchActualOld() = temp { root ->
+        val buffer = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(buffer,listOf("first.conf" to byteArrayOf(1),"excluded.bin" to byteArrayOf(2)))
+        val good = buffer.readByteArray()
+        val central = (0..good.size-4).filter { good[it] == 80.toByte() && good[it+1] == 75.toByte() && good[it+2] == 1.toByte() && good[it+3] == 2.toByte() }.last()
+        for ((offset,value) in listOf(central+8 to 1,central+10 to 99)) {
+            val file = File(root,"input.zip").apply { writeBytes(good.copyOf().apply { this[offset] = value.toByte() }) }
+            val old = File(root,"old").apply { deleteRecursively(); mkdirs() }; val new = File(root,"new").apply { deleteRecursively(); mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpackZip(file,old,true,"first") }
+            val actual = runCatching { SwordArchive.unpackZip(file.path.toPath(),new.path.toPath(),true,"first") }
+            assertTrue(reference.isSuccess)
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass)
+            assertEquals(tree(old),tree(new))
+        }
+    }
+
+    @Test fun installerTarPermissiveHeaderEofMatchesActualOld() = temp { root ->
+        val entry = org.crosswire.common.util.TarReaderTest.tarRecord("mods.d/a.conf",byteArrayOf(1))
+        for ((name,tail) in listOf("none" to byteArrayOf(),"short" to ByteArray(20),"one" to ByteArray(512),"short-second" to ByteArray(532),"nonzero-second" to (ByteArray(512)+ByteArray(512) { 42 }))) {
+            val bytes = java.io.ByteArrayOutputStream().also { out -> java.util.zip.GZIPOutputStream(out).use { it.write(entry+tail) } }.toByteArray()
+            val input = File(root,"input.gz").apply { writeBytes(bytes) }
+            val old = File(root,"old-$name").apply { mkdirs() }; val new = File(root,"new-$name").apply { mkdirs() }
+            val reference = runCatching { LegacyArchiveReference.unpack(old.toURI(),input.toURI()) }
+            val actual = runCatching { SwordArchive.tarGzConfsToZip(input.path.toPath(),File(new,"mods.d.zip").path.toPath()) }
+            assertTrue(reference.isSuccess,name)
+            assertEquals(reference.exceptionOrNull()?.javaClass,actual.exceptionOrNull()?.javaClass,name)
+            assertEquals(confs(File(old,"mods.d.zip")),confs(File(new,"mods.d.zip")),name)
+        }
+    }
+
     @Test fun cacheOutputOpensBeforeMissingInputAndFinalizesOnError() = temp { root ->
         val input = File(root,"missing.gz")
         for (blocked in listOf(false,true)) {

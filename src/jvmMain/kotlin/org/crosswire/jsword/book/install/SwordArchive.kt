@@ -10,7 +10,7 @@ import okio.IOException
 
 /** Archive operations shared by the installer and its JVM File adapters. */
 object SwordArchive {
-    private val log = LoggerFactory.getLogger(org.crosswire.jsword.book.install.sword.AbstractSwordInstaller::class)
+    private val log = LoggerFactory.getLogger("org.crosswire.jsword.book.install.sword.AbstractSwordInstaller")
 
     fun tarGzConfsToZip(tarGz: Path, zip: Path) = tarGzConfsToZipSpelling(tarGz.toString(), zip.toString())
     internal fun tarGzConfsToZipSpelling(tarGz: String, zip: String) {
@@ -168,7 +168,6 @@ object SwordArchive {
                 need(cursor, 46)
                 if (u32(cursor) != 0x02014b50L) throw IOException("Invalid ZIP central header")
                 val flags = u16(cursor+8); val method = u16(cursor+10)
-                if (flags and 1 != 0 || method !in listOf(0, 8)) throw IOException("Encrypted/unsupported ZIP")
                 var compressedValue = u32(cursor+20); var sizeValue = u32(cursor+24)
                 val nameSize = u16(cursor+28); val extraSize = u16(cursor+30); val commentSize = u16(cursor+32)
                 if (u16(cursor+34) != 0) throw IOException("Multi-disk ZIP unsupported")
@@ -200,6 +199,7 @@ object SwordArchive {
                 if (data.toLong()+compressed > start) throw IOException("ZIP body overlaps central directory")
                 // Data descriptors belong to the sequential reader, not ZipFile extraction.
                 add(ZipEntry(name, name.endsWith('/')) {
+                    if (flags and 1 != 0 || method !in listOf(0,8)) throw IOException("Encrypted/unsupported ZIP")
                     val payload = bytes.copyOfRange(data,data+compressed)
                     if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
                 })
