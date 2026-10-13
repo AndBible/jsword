@@ -552,6 +552,13 @@ common expects and JVM actual modifiers, and supported Native actuals:
   skipped seekable entries are ignored, malformed skipped descriptors throw ZipException).
   Native requires negative-windowBits zlib, consumed-input accounting and matching
   streaming EOF/errors. Unused bounded `archiveInflate` and intermediate scan helper removed.
+- `archiveCacheSource(ByteArray, Int, Int): Pair<Source, () -> Unit>` takes whole
+  archive bytes, local body offset and compressed size. Sequential raw inflater fills
+  512 compressed bytes (may include following headers); bounded caller reads expose
+  short output before suffix failure. Advance callback drains only when fed compressed
+  bytes exceed declared compressed size, otherwise skips without inflation, matching
+  commons closeEntry. Invoke only after successful visitor callback, never in finally.
+  Native requires equivalent raw zlib input-fed accounting/conditional advance/errors.
 - `archiveInflateSource(ByteArray): Source` uses InflaterInputStream with raw
   Inflater(true), preserving ZipException and successful chunks before late failure.
   Native uses negative-windowBits zlib with equivalent streaming/error behavior.
@@ -575,8 +582,10 @@ Internal `visitConfZipSpelling(String, (String, ByteArray) -> Unit)` preserves t
 actual installer declared-size loop (zero skip, undersized prefix, oversized read
 failure, descriptor -1 NegativeArraySizeException), metadata processing and earlier
 registrations before later failures. Raw Source reads request only the remaining
-prefix; seekable unread compressed suffixes are skipped without inflation exactly as
-old closeEntry does. A throwing callback occurs before any suffix advance.
+prefix; seekable unread compressed suffixes skip or drain according to the original
+512-byte input-fed closeEntry condition. Both 200-byte (drain/error) and 5000-byte
+(skip/success) malformed suffix cases retain the first book. A throwing callback
+occurs before any suffix advance.
 Public readConfZip List remains the generic
 body API, not the installer oracle. Logger category uses the exact FQN string with
 no dependency on the JVM-only installer class.

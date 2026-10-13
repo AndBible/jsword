@@ -223,8 +223,9 @@ class SwordArchiveTest {
     @Test fun actualCallerBoundedPrefixBeforeMalformedSuffixAndThrowingCallback() = temp { root ->
         val body = "[First]\nDescription=First book\nModDrv=RawText\nDataPath=./modules/texts/rawtext/first/\nLang=en\n".toByteArray()
         val length = body.size
-        val blockSize = length+5000
-        val payload = byteArrayOf(0,blockSize.toByte(),(blockSize ushr 8).toByte(),blockSize.inv().toByte(),(blockSize.inv() ushr 8).toByte()) + body + ByteArray(5000) { 32 } + byteArrayOf(7)
+        for (suffixSize in listOf(200,5000)) {
+        val blockSize = length+suffixSize
+        val payload = byteArrayOf(0,blockSize.toByte(),(blockSize ushr 8).toByte(),blockSize.inv().toByte(),(blockSize.inv() ushr 8).toByte()) + body + ByteArray(suffixSize) { 32 } + byteArrayOf(7)
         val buffer = okio.Buffer()
         org.crosswire.common.util.StoredZipWriter.write(buffer,listOf("first.conf" to payload))
         val bytes = buffer.readByteArray()
@@ -248,6 +249,7 @@ class SwordArchiveTest {
         val newThrow = runCatching { SwordArchive.visitConfZipSpelling(file.path) { _,_ -> throw callbackError } }
         assertEquals(callbackError,oldThrow.exceptionOrNull())
         assertEquals(callbackError,newThrow.exceptionOrNull())
+        }
     }
 
     @Test fun actualInstallerLateBodyAndEarlierMetadataErrorOrder() = temp { root ->

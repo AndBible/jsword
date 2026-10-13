@@ -67,7 +67,7 @@ object SwordArchive {
                 else offset += scratch.read(body,offset,count.toInt())
             }
             visit(entry.name,body)
-            // Seekable local entries skip the remaining compressed bytes without inflation.
+            entry.advance()
             input.close()
         }
     }
@@ -91,7 +91,7 @@ object SwordArchive {
         !name.startsWith('\\') && !(name.length > 1 && name[1] == ':') &&
         name.replace('\\', '/').split('/').none { it == ".." } && '\u0000' !in name
 
-    private class ZipEntry(val name: String, val directory: Boolean, val declaredSize: Long = -1, val source: () -> okio.Source) {
+    private class ZipEntry(val name: String, val directory: Boolean, val declaredSize: Long = -1, val advance: () -> Unit = {}, val source: () -> okio.Source) {
         val bytes: ByteArray get() = source().buffer().use { it.readByteArray() }
     }
 
@@ -139,12 +139,14 @@ object SwordArchive {
             var length = if (descriptor && method == 8) -1 else bounded(compressed)
             var stream: okio.BufferedSource? = null
             if (length >= 0) need(data,length)
-            val entry = ZipEntry(name,name.endsWith('/'),if (descriptor) -1 else declaredSize) {
+            var cacheSource: Pair<okio.Source, () -> Unit>? = null
+            val entry = ZipEntry(name,name.endsWith('/'),if (descriptor) -1 else declaredSize, { cacheSource?.second?.invoke() }) {
                 if (descriptor && method == 8) {
                     stream ?: archiveDescriptorSource(bytes,data) { length = it }.buffer().also { stream = it }
                 } else {
                     val payload = bytes.copyOfRange(data,data+length)
-                    if (method == 0) Buffer().write(payload) else archiveInflateSource(payload)
+                    if (method == 0) Buffer().write(payload)
+                    else archiveCacheSource(bytes,data,length).also { cacheSource = it }.first
                 }
             }
             yield(entry)

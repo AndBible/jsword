@@ -45,6 +45,38 @@ internal fun archiveUnsupportedZipFeature(archiveSpelling: String, centralIndex:
     }
 }
 
+/** Sequential inflater fills may read beyond the body; only that case drains on advance. */
+internal fun archiveCacheSource(bytes: ByteArray, offset: Int, compressedSize: Int): Pair<okio.Source, () -> Unit> {
+    val inflater = Inflater(true)
+    var fed = 0
+    val source = object : okio.Source {
+        override fun timeout() = okio.Timeout.NONE
+        override fun close() = inflater.end()
+        override fun read(sink: okio.Buffer, byteCount: Long): Long {
+            if (byteCount == 0L) return 0
+            val output = ByteArray(minOf(byteCount,4096).toInt())
+            while (true) {
+                if (inflater.needsInput()) {
+                    val count = minOf(512,bytes.size-offset-fed)
+                    if (count == 0) throw IOException("Truncated ZIP file")
+                    inflater.setInput(bytes,offset+fed,count); fed += count
+                }
+                val count = try { inflater.inflate(output) }
+                catch (error: java.util.zip.DataFormatException) { throw java.util.zip.ZipException(error.message).apply { initCause(error) } }
+                if (count > 0) { sink.write(output,0,count); return count.toLong() }
+                if (inflater.finished()) return -1
+                if (!inflater.needsInput()) throw java.util.zip.ZipException("Invalid ZIP deflate")
+            }
+        }
+    }
+    return source to {
+        if (fed > compressedSize) {
+            val scratch = okio.Buffer()
+            while (source.read(scratch,4096) != -1L) scratch.clear()
+        }
+    }
+}
+
 internal fun archiveInflateSource(bytes: ByteArray): okio.Source = java.util.zip.InflaterInputStream(bytes.inputStream(), Inflater(true)).source()
 
 internal fun archiveExtract(dest: String, name: String, directory: Boolean, source: () -> okio.Source) {
