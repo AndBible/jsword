@@ -63,15 +63,23 @@ class CorpusParityTest {
 
     @Test
     fun everyKeyOfEveryModule() {
-        for (m in Oracle.call("corpus.modules").lines().filter { it.isNotBlank() }) {
-            assertSameLines("keys $m", both("corpus.keys", m, keyStride.toString())) { line ->
+        val modules = Oracle.call("corpus.modules").lines().filter { it.isNotBlank() }
+        var totalKeys = 0
+        for (m in modules) {
+            val keys = both("corpus.keys", m, keyStride.toString())
+            assertSameLines("keys $m", keys) { line ->
                 val index = line.substringBefore('\t')
                 if (index.toIntOrNull() == null) "" else
                     "    oracle full : ${Oracle.call("corpus.keyAt", m, index).take(2000)}\n" +
                         "    current full: ${Current.call("corpus.keyAt", m, index).take(2000)}\n"
             }
+            val keyCount = keys.first.lineSequence().single { it.startsWith("count=") }
+                .substringAfter("count=").toInt()
+            totalKeys += keyCount
+            println("K4CORPUS module=$m keys=$keyCount stride=$keyStride")
             assertSameLines("chapters $m", both("corpus.chapters", m))
         }
+        println("K4CORPUS modules=${modules.size} keys=$totalKeys stride=$keyStride")
     }
 
     @Test
