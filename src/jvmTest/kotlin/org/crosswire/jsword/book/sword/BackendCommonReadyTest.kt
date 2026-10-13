@@ -81,6 +81,18 @@ class BackendCommonReadyTest {
         assertEquals("index\toffset\tsize\tkey\tvalue\n", output.toString())
     }
 
+    @Test fun clonePreservesUnknownRuntimeSubclassAndShallowFields() {
+        val reference = mutableListOf("shared")
+        val backend = object : Probe(metadata()) { val extra = reference }
+        val clone = backend.clone()
+        assertNotSame(backend, clone)
+        assertEquals(backend.javaClass, clone.javaClass)
+        assertSame(backend.bookMetaData, clone.bookMetaData)
+        val field = backend.javaClass.getDeclaredField("extra").apply { isAccessible = true }
+        assertSame(reference, field.get(clone))
+        assertTrue(clone is java.lang.Cloneable)
+    }
+
     @Test fun searchUppercaseIgnoresTurkishDefaultLocale() {
         val original = Locale.getDefault()
         try {
