@@ -30,7 +30,6 @@ import org.crosswire.common.util.LoggerFactory
 import okio.IOException
 import org.crosswire.common.util.KUri
 import org.crosswire.common.util.Cancellable
-import org.crosswire.common.util.scheduleRepeating
 import org.crosswire.common.util.currentTimeMillis
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
@@ -182,7 +181,7 @@ internal constructor(
             jobMode = ProgressMode.PREDICTIVE
             startTime = currentTimeMillis()
 
-            fakingTimer = scheduleRepeating(REPORTING_INTERVAL.toLong()) { predictTick(currentTimeMillis()) }
+            fakingTimer = scheduleJobTicker(REPORTING_INTERVAL.toLong()) { predictTick(currentTimeMillis()) }
 
             // Load currentPredictionMap. It's not a disaster if it doesn't load
             totalUnits = loadPredictions()

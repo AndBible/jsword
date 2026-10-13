@@ -19,8 +19,7 @@
  */
 package org.crosswire.common.progress
 
-import org.crosswire.common.util.ProgressEventSerializable
-import org.crosswire.common.util.eventClassName
+import org.crosswire.common.util.ProgressEventBase
 
 /**
  * A WorkEvent happens whenever a task makes some progress in doing measurable
@@ -35,12 +34,7 @@ open class WorkEvent
  * 
  * @param source the job that has made progress
  */
-(source: Progress?) : ProgressEventSerializable {
-    private val eventSource: Any = requireNotNull(source) { "null source" }
-
-    open fun getSource(): Any = eventSource
-
-    override fun toString(): String = "${eventClassName(this)}[source=$eventSource]"
+(source: Progress?) : ProgressEventBase(source) {
     /**
      * Accessor for the Job
      * 

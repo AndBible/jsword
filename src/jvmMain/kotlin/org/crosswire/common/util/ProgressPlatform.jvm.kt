@@ -2,15 +2,14 @@ package org.crosswire.common.util
 
 /** Task 16 supplies native UUID and source-class actuals, preserving JVM naming here. */
 internal fun randomJobId(): String = java.util.UUID.randomUUID().toString()
-internal fun eventClassName(event: Any): String = event.javaClass.name
 internal fun reporterSourceName(source: Any): String {
     val type = if (source is Class<*>) source else source.javaClass
     return type.name.substringAfterLast('.')
 }
 internal fun reporterLoggerType(source: Any?) = source?.javaClass?.kotlin ?: Reporter::class
 
-/** JVM Serializable marker retained for events; native actual is an empty interface. */
-internal typealias ProgressEventSerializable = java.io.Serializable
+/** Genuine JVM superclass retains transient source and the frozen serialized descriptor. */
+internal typealias ProgressEventBase = java.util.EventObject
 
 /** AWT registration remains host-only, including the original nested handler's binary name. */
 internal fun grabReporterAwtExceptions(grab: Boolean) {

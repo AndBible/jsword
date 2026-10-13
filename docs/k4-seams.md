@@ -8,7 +8,7 @@
 | facade hooks (`SwordFacadeHooks.kt`, package `org.crosswire.jsword.book.sword`) | `internal expect fun swordMetaDataToOsis(md: SwordBookMetaData): Document`, `internal expect fun sourceFilterFor(sourceType: String?): SourceFilter`, `internal expect fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book`, `internal expect fun registerSwordDriver()` | today's code | throw `UnsupportedOperationException("K5b: <what>")`; `registerSwordDriver` is a no-op | K5b |
 | `CWProject` class-loader hook (`ResourceHomeHook.kt`, package `org.crosswire.common.util`) | `internal expect fun setResourceHome(dirs: Array<KUri>)` | `CWClassLoader.setHome(dirs)` | no-op (resources are embedded, K2) | stays |
 | `DevotionDateFormat` (package `org.crosswire.jsword.book.sword`) | `expect object DevotionDateFormat { fun format(month: Int, day: Int): String; fun parseMonthDay(text: String): Pair<Int, Int>? }` | today's `DateFormatter.getDateInstance()` + `GregorianCalendar` code from `RawLDBackend` | `NSDateFormatter`, medium date style, lenient | stays |
-| `OpenFileStateManager` scheduler, `Job` ticker (`Scheduling.kt`, package `org.crosswire.common.util`) | `expect fun scheduleRepeating(periodMs: Long, task: () -> Unit): Cancellable` + `fun interface Cancellable { fun cancel() }` | daemon `ScheduledExecutorService` (one per call, as today) | `dispatch_source` timer on a global queue | stays |
+| `OpenFileStateManager` scheduler (`Scheduling.kt`, package `org.crosswire.common.util`; Job has separate Task 12 ticker below) | `expect fun scheduleRepeating(periodMs: Long, task: () -> Unit): Cancellable` + `fun interface Cancellable { fun cancel() }` | daemon `ScheduledExecutorService` (one per call, as today) | `dispatch_source` timer on a global queue | stays |
 | BZIP2/XZ (`CompressorPlatform.kt`, package `org.crosswire.common.compress`) | `internal expect fun platformUncompress(type: CompressorType, input: ByteArray, expectedLength: Int): ByteArray`, `internal expect fun platformCompress(type: CompressorType, input: ByteArray): ByteArray` | commons-compress (today's `BZip2`/`XZ` bodies) | throw `BookException` "unsupported compression on this platform: <type>" | stays (D4) |
 | HTTP (`HttpTransport.kt`, package `org.crosswire.common.util`) | `interface HttpTransport`, `class HttpHead`, `interface HttpBody`, `class TransportCancelledException : okio.IOException` | `UrlConnectionHttpTransport` (today's `HttpsURLConnection` code) | none in K4 (track I); `WebResource.transport` must be set by the host | stays (D3) |
 
@@ -468,22 +468,40 @@ remove always throws. Callbacks run outside the manager lock.
 `internal fun randomJobId(): String` (UUID.randomUUID, not a weaker ID policy),
 `internal fun reporterSourceName(Any): String` (Class inputs and binary simple
 names preserved), `internal fun reporterLoggerType(Any?): KClass<*>`,
-`internal fun eventClassName(Any): String`, and
+and
 `internal fun grabReporterAwtExceptions(Boolean): Unit`. Add common expects in
 ProgressPlatform.kt and JVM actual modifiers; native uses UUID, native class
 names/logger KClass, and no-op AWT registration. The nested public AWT handler
 and its original JVM binary name remain intact. Reuse currentTimeMillis and
-scheduleRepeating/Cancellable inventories above; no new clock or scheduler.
+Cancellable/time inventories above; separate Job ticker is inventoried below.
 
-`ProgressEventSerializable` is an internal JVM typealias to java.io.Serializable.
-Task 16 adds an expect marker and empty native actual. WorkEvent/ReporterEvent
-are plain open classes with explicit open getSource and EventObject-style
-source/toString behavior; null source still throws IllegalArgumentException.
-Frozen UIDs remain 3976736990807011378 and 4121978048640988213, verified through
-ObjectStreamClass. EventObject superclass descriptor is intentionally replaced,
-not byte-compatible serialization: exact K4 seam allowances identify this change.
-No serialized event stream compatibility or Native runtime claim is made.
-The guard accepts only the exact portable UID declarations at the exact paths.
+Fix round 1 supersedes the original event/ticker waiver: events now extend
+`ProgressEventBase`, a genuine JVM typealias to java.util.EventObject, with NO
+duplicate stored source. Frozen WorkEvent/ReporterEvent descriptors, UIDs and
+byte-exact serialized streams match the isolated oracle in both loader directions,
+including real non-Serializable Job and Any sources; deserialized source remains
+null as before. No event superclass/getSource/toString/source-field allowance
+remains. Task 16 declares an internal expect open ProgressEventBase(source: Any?)
+with open getSource(): Any? and the inherited toString contract; JVM actual
+is EventObject, Native actual is a plain base rejecting null constructor source.
+ReporterEvent uses getSource()!! since construction guarantees a source, while
+JVM deserialization retains legacy null-source dereference failure. There is no
+Native Java-serialization contract. Frozen portable UID guard exceptions remain.
+
+Job uses separate plain JVM `internal fun scheduleJobTicker(periodMs: Long,
+task: () -> Unit): Cancellable` in progress/JobTicker.jvm.kt, with the original
+Timer()/TimerTask/Timer.schedule(0,period) body. Pool scheduleRepeating is UNCHANGED.
+Task 16 introduces JobTicker.kt expect and JVM actual plus Native actual retaining
+immediate first tick, epoch-wall-clock START-relative fixed delay (next start after
+max(period, callback duration)), no overlap, cancellation without interrupting an
+active callback, and uncaught failure termination/visible host error rather than
+suppression/leaked worker. JVM ticker is non-daemon as legacy Timer; Native host
+must explicitly implement equivalent lifetime/error policy, not assume a global
+queue fixed-delay executor matches it. Old Timer and actual Job failure tests
+verify non-daemon, uncaught handler identity and worker termination. Slow-callback
+tests use a 3-second period/3.5-second overrun and broad 1.5-second slack, rejecting
+the former completion-relative scheduler in a real RED run. No Native runtime
+claim; this policy remains a Task 16 obligation.
 
 Job prediction I/O still calls NetUtil.loadProperties/storeProperties in legacy
 order through KUri (JVM URI alias); it does not change lexical URI/File spelling,

@@ -10,33 +10,38 @@ class JobCancelTest {
     @Test fun cancellationFinishesAndNotifiesBeforeInterruptEvenWhenDisabled() {
         val waiting = CountDownLatch(1)
         val stopped = CountDownLatch(1)
+        val release = CountDownLatch(1)
         var interrupts = 0
         val worker = object : Thread() {
             override fun run() {
                 waiting.countDown()
-                try { CountDownLatch(1).await() } catch (_: InterruptedException) { stopped.countDown() }
+                try { release.await() } catch (_: InterruptedException) { stopped.countDown() }
             }
             override fun interrupt() { interrupts++; super.interrupt() }
         }
-        worker.start()
-        assertTrue(waiting.await(2, TimeUnit.SECONDS))
-        val job = org.crosswire.common.progress.JobManagerJvm.createJob("cancel-test", "cancel-test", worker)
-        val events = mutableListOf<String>()
-        val listener = object : WorkListener {
-            override fun workStateChanged(ev: WorkEvent) { events.add("state") }
-            override fun workProgressed(ev: WorkEvent) {
-                if (ev.job === job) {
-                    assertTrue(job.isFinished)
-                    assertEquals(100, job.work)
-                    assertEquals(0, interrupts)
-                    assertSame(job, JobManager.findJob(job.jobID))
-                    events.add("done")
+        var createdJob: Progress? = null
+        var addedListener: WorkListener? = null
+        try {
+            worker.start()
+            assertTrue(waiting.await(2, TimeUnit.SECONDS))
+            val job = JobManagerJvm.createJob("cancel-test", "cancel-test", worker)
+            createdJob = job
+            val events = mutableListOf<String>()
+            val listener = object : WorkListener {
+                override fun workStateChanged(ev: WorkEvent) { events.add("state") }
+                override fun workProgressed(ev: WorkEvent) {
+                    if (ev.job === job) {
+                        assertTrue(job.isFinished)
+                        assertEquals(100, job.work)
+                        assertEquals(0, interrupts)
+                        assertSame(job, JobManager.findJob(job.jobID))
+                        events.add("done")
+                    }
                 }
             }
-        }
-        try {
             assertTrue(job.isCancelable)
             job.isCancelable = false
+            addedListener = listener
             JobManager.addWorkListener(listener)
             job.cancel()
             assertTrue(stopped.await(2, TimeUnit.SECONDS))
@@ -47,10 +52,28 @@ class JobCancelTest {
             assertEquals(listOf("done"), events)
             assertNull(JobManager.findJob(job.jobID))
         } finally {
-            JobManager.removeWorkListener(listener)
+            addedListener?.let { JobManager.removeWorkListener(it) }
+            release.countDown()
             worker.interrupt(); worker.join(2000)
-            job.done()
+            createdJob?.done()
         }
+    }
+
+    @Test fun readinessFailureStillReleasesAndJoinsWorker() {
+        val release = CountDownLatch(1)
+        val worker = Thread { try { release.await() } catch (_: InterruptedException) { } }
+        val error = IllegalStateException("readiness")
+        assertSame(error, assertFailsWith<IllegalStateException> {
+            try {
+                worker.start()
+                throw error
+            } finally {
+                release.countDown()
+                worker.interrupt()
+                worker.join(2000)
+            }
+        })
+        assertFalse(worker.isAlive)
     }
 
     @Test fun listenerFailureLeavesFinishedJobRegisteredAndPreventsInterrupt() {
