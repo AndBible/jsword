@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword
 
-import org.crosswire.common.util.jswordAssert
-import java.io.Serializable
 
 /**
  * A node that knows where the data is in the real file and where it is in
@@ -37,7 +35,7 @@ open class TreeNode
  * @param theOffset
  */
 // was package-private
-internal constructor(theOffset: Int) : Cloneable, Serializable {
+internal constructor(theOffset: Int) : TreeNodeCloneBase(), TreeNodeSerializable {
     /**
      * TreeNode default ctor.
      */
@@ -80,11 +78,28 @@ internal constructor(theOffset: Int) : Cloneable, Serializable {
      * @param theUserData
      * the userData to set
      */
-    open var userData: ByteArray = ByteArray(0)
-        get() = field.clone()
-        set(value) {
-            field = value.clone()
+    private var userData: ByteArray = ByteArray(0)
+
+    open fun getUserData(): ByteArray = userData.copyOf()
+
+    open fun setUserData(value: ByteArray) {
+        userData = value.copyOf()
+    }
+
+    protected constructor(source: TreeNode) : this(source.offset) {
+        name = source.name
+        userData = source.userData
+        firstChild = source.firstChild
+        nextSibling = source.nextSibling
+        parent = source.parent
+    }
+
+    protected override fun portableTreeClone(): Any {
+        if (this::class != TreeNode::class) {
+            throw UnsupportedOperationException("Host subclass must provide a portable clone")
         }
+        return TreeNode(this)
+    }
 
     /**
      * The offset of the first child record in the offset. Leaf nodes are
@@ -141,15 +156,7 @@ internal constructor(theOffset: Int) : Cloneable, Serializable {
      */
     open var parent: Int = -1
 
-    public override fun clone(): TreeNode {
-        var clone: TreeNode? = null
-        try {
-            clone = super.clone() as TreeNode
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    public override fun clone(): TreeNode = shallowTreeClone() as TreeNode
 
     private companion object {
         /**

@@ -65,8 +65,8 @@ org/crosswire/jsword/book/sword/SwordBookMetaData.kt #done
 org/crosswire/jsword/book/sword/SwordBookPath.kt #done
 org/crosswire/jsword/book/sword/SwordConstants.kt #done
 org/crosswire/jsword/book/sword/SwordUtil.kt #done
-org/crosswire/jsword/book/sword/TreeKeyIndex.kt
-org/crosswire/jsword/book/sword/TreeNode.kt
+org/crosswire/jsword/book/sword/TreeKeyIndex.kt #done
+org/crosswire/jsword/book/sword/TreeNode.kt #done
 org/crosswire/jsword/book/sword/ZLDBackend.kt #done
 org/crosswire/jsword/book/sword/ZVerseBackend.kt
 org/crosswire/jsword/book/sword/processing/NoOpRawTextProcessor.kt #done

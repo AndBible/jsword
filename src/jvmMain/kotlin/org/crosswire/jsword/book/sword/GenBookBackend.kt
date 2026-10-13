@@ -71,7 +71,7 @@ open class GenBookBackend
                 return 0
             }
 
-            val userData = node.userData
+            val userData = node.getUserData()
 
             // Some entries may be empty.
             if (userData.size == 8) {
@@ -99,7 +99,7 @@ open class GenBookBackend
             throw BookException(JSMsg.gettext("No entry for '{0}' in {1}.", key!!.getName(), bookMetaData.initials))
         }
 
-        val userData = node.userData
+        val userData = node.getUserData()
 
         // Some entries may be empty.
         if (userData.size == 8) {

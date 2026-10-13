@@ -32,8 +32,7 @@ import org.crosswire.jsword.passage.DefaultKeyList
 import org.crosswire.jsword.passage.Key
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.IOException
+import okio.IOException
 import org.crosswire.common.util.RandomAccessSource
 
 /**
@@ -52,8 +51,8 @@ open class TreeKeyIndex
  */
 (sbmd: SwordBookMetaData?) : Activatable {
     private var bmd: SwordBookMetaData? = sbmd
-    private var idxFile: File? = null
-    private var datFile: File? = null
+    private var idxFile: StorageLocation? = null
+    private var datFile: StorageLocation? = null
     private var idxRaf: RandomAccessSource? = null
     private var datRaf: RandomAccessSource? = null
     private var active: Boolean = false
@@ -160,7 +159,7 @@ open class TreeKeyIndex
         buffer = SwordUtil.readNextRAF(datRaf, 2)
         val userDataSize = SwordUtil.decodeLittleEndian16(buffer, 0)
         if (userDataSize > 0) {
-            node.userData = SwordUtil.readNextRAF(datRaf, userDataSize)
+            node.setUserData(SwordUtil.readNextRAF(datRaf, userDataSize))
         }
 
         return node
@@ -178,28 +177,28 @@ open class TreeKeyIndex
             return
         }
 
-        val idx = File(path + EXTENSION_INDEX)
+        val idx = StorageLocation(path + EXTENSION_INDEX)
         idxFile = idx
-        val dat = File(path + EXTENSION_DATA)
+        val dat = StorageLocation(path + EXTENSION_DATA)
         datFile = dat
 
-        if (!idx.canRead()) {
+        if (!storageCanRead(idx)) {
             // TRANSLATOR: Common error condition: The file could not be read. There can be many reasons.
             // {0} is a placeholder for the file.
-            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", idx.absolutePath)))
+            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(idx))))
             return
         }
 
-        if (!dat.canRead()) {
+        if (!storageCanRead(dat)) {
             // TRANSLATOR: Common error condition: The file could not be read. There can be many reasons.
             // {0} is a placeholder for the file.
-            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", dat.absolutePath)))
+            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(dat))))
             return
         }
 
         try {
-            idxRaf = storageOpenRandomAccess(StorageLocation(idx.path), false)
-            datRaf = storageOpenRandomAccess(StorageLocation(dat.path), false)
+            idxRaf = storageOpenRandomAccess(idx, false)
+            datRaf = storageOpenRandomAccess(dat, false)
         } catch (ex: IOException) {
             log.error("failed to open files", ex)
             idxRaf = null
@@ -246,7 +245,7 @@ open class TreeKeyIndex
             throw BookException(JSOtherMsg.lookupText("Missing data files for old and new testaments in {0}."))
         }
 
-        return File(loc.path).absolutePath
+        return storageAbsolute(StorageLocation(loc.getPath()))
     }
 
     private companion object {

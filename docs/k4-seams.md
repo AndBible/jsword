@@ -340,3 +340,22 @@ ZLD adds no instance fields. Task 16 runs those tests on Native after moving the
 out of JDK reflection. JVM clone retains Cloneable transitively. The exact
 AbstractBackend superclass/copy helper and protected copy constructors/overrides
 are K4 seam API allowances. No Unsafe, reflection or module-open dependency.
+
+`TreeNodePlatform.jvm.kt` holds internal typealias TreeNodeSerializable =
+java.io.Serializable and a NON-Serializable abstract TreeNodeCloneBase : Cloneable.
+Task 16 introduces common expect marker interface TreeNodeSerializable, actual
+JVM typealias and empty iOS actual marker. Common expect TreeNodeCloneBase declares
+protected shallowTreeClone(): Any and protected open portableTreeClone(): Any;
+JVM final bridge calls Object.clone, iOS bridge delegates to portableTreeClone.
+TreeNode's explicit known copy aliases the PRIVATE userData array exactly as old
+shallow clone and copies offset/name/firstChild/nextSibling/parent. Its public open
+getUserData/setUserData retain defensive copying; three internal Kotlin callers
+use explicit methods. Unknown JVM subclass extra references remain shallow;
+unknown Native subclasses must supply a portable hook. The base has an effect-free
+public no-arg constructor, is not Serializable, and introduces no serialized
+superclass descriptor. Frozen oracle cross-loader old-to-new/new-to-old test also
+compares serialized bytes byte-exactly (six fields, same userData name/type and
+serialVersionUID); same-version roundtrip and backing identity tests complement it.
+Task 16 supplies Native actuals and runs portable-copy tests; no Native runtime
+claim is made here. TreeKeyIndex uses existing storageCanRead/storageAbsolute and
+storageOpenRandomAccess hooks on lexical StorageLocation, never Path normalization.
