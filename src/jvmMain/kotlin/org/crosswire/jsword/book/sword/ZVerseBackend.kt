@@ -36,6 +36,7 @@ import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import okio.IOException
+import org.crosswire.common.util.platformIniLineSeparator
 import org.crosswire.common.util.RandomAccessSource
 
 /**
@@ -429,7 +430,7 @@ open class ZVerseBackend
 
         var i = ordinalStart
         val buf = StringBuilder()
-        output.append("osisID\tblock\tstart\tsize\n")
+        output.append("osisID\tblock\tstart\tsize").append(platformIniLineSeparator())
         var offset: Long = 0
         while (offset < end) {
             // entrysize because the index is entrysize bytes long for each verse
@@ -464,7 +465,7 @@ open class ZVerseBackend
             buf.append(verseStart)
             buf.append('\t')
             buf.append(verseSize)
-            output.append(buf.toString()).append('\n')
+            output.append(buf.toString()).append(platformIniLineSeparator())
             offset += entrysize
         }
     }
@@ -485,7 +486,7 @@ open class ZVerseBackend
 
         val blockNum = 0
         val buf = StringBuilder()
-        output.append("block\tstart\tsize\tuncompressed\n")
+        output.append("block\tstart\tsize\tuncompressed").append(platformIniLineSeparator())
         var offset: Long = 0
         while (offset < end) {
             // 12 because the index is 12 bytes long for each verse
@@ -516,7 +517,7 @@ open class ZVerseBackend
             buf.append(blockSize)
             buf.append('\t')
             buf.append(uncompressedSize)
-            output.append(buf.toString()).append('\n')
+            output.append(buf.toString()).append(platformIniLineSeparator())
             offset += COMP_ENTRY_SIZE
         }
     }

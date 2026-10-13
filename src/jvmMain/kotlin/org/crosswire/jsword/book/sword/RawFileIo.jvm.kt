@@ -5,7 +5,7 @@ import org.crosswire.common.util.Logger
 
 internal fun rawFileCreate(location: StorageLocation): Boolean = File(location.spelling).createNewFile()
 internal fun rawFileNumber(value: Long, newline: Boolean): String = String.format(if (newline) "%07d\r\n" else "%07d", value)
-internal fun rawFileDecodeName(data: ByteArray): String = String(data, 0, 7)
+internal fun rawFileDecodeName(data: ByteArray): String = String(data, 0, 7, java.nio.charset.Charset.defaultCharset())
 
 internal fun rawFileAppend(location: StorageLocation, ordinal: Long, charset: String?) {
     var stream: BufferedOutputStream? = null

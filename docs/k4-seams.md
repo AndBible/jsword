@@ -367,7 +367,8 @@ storageOpenRandomAccess hooks on lexical StorageLocation, never Path normalizati
 `RawFileIo.jvm.kt` contains bounded lexical stream hooks: rawFileCreate(Location):
 Boolean = File.createNewFile; rawFileNumber(Long, Boolean): String = default FORMAT
 String.format(%07d with optional CRLF); rawFileDecodeName(ByteArray): String =
-JDK default-charset seven bytes; rawFileAppend(Location, Long, String?): Unit opens
+JDK Charset.defaultCharset() decoding of seven bytes, explicitly supplied to
+avoid Kotlin's UTF-8 constructor default; rawFileAppend(Location, Long, String?): Unit opens
 append BufferedOutputStream BEFORE named charset encoding (including legacy
 UnsupportedEncodingException/file creation); rawFileWrite(Location, ByteArray):
 Unit truncates buffered output; rawFileRead(Location, Logger): ByteArray uses File
@@ -385,6 +386,16 @@ split removal allowance. No jsword or app subclass caller exists; portable backe
 calls internal rawFileAppend on state's lexical text location. Existing overloaded
 setRawText/setAliasKey signatures and protected updateIndexFile are unchanged.
 
+RawFile default decoding is verified against the old Java constructor in a fresh
+JDK17 subprocess with ISO-8859-1 default charset, including an actual non-ASCII
+lexical filename read. Native must use the agreed platform-default charset policy
+when implementing rawFileDecodeName, not inherit a Kotlin UTF-8 convenience default.
+
+ZVerse debug methods retain host println separators through the existing
+platformIniLineSeparator() cached System.lineSeparator seam. Both populated dump
+methods match independent PrintStream output in a fresh CRLF-host JDK17 subprocess.
+Task 16 retains that shared separator expect/actual obligation; no new helper is
+introduced and no prior RawLD debug behavior is changed.
 ZVerse debug methods consume Appendable; exact existing Task 8 stream allowances
 are adjusted only for that extra argument. No app debug caller exists. Existing
 backendDebugFailure handles caught source IOException; Appendable exceptions
