@@ -25,9 +25,13 @@ object SwordArchive {
                 if (!safeName(entry.name)) { log.error("Unsafe archive entry: {}", entry.name); continue }
                 if (!entry.name.endsWith(".conf")) { log.error("Not a SWORD config file: {}", entry.name); continue }
                 if (entry.size == 0L) { log.error("Empty entry: {}", entry.name); continue }
-                val body = reader.readInstallerEntry()
+                writer.beginEntry(entry.name)
+                val body = try { reader.readInstallerEntry() } catch (error: Throwable) {
+                    try { writer.abortEntry() } catch (abort: Throwable) { error.addSuppressed(abort) }
+                    throw error
+                }
                 if (body.size.toLong() != entry.size) log.error("Error: Could not read {} bytes for {} from {}", entry.size.toString(), entry.name, tarGz)
-                writer.entry(entry.name, body)
+                writer.completeEntry(body)
             }
             reader.consumeLegacyBlockPadding()
         }

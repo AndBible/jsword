@@ -32,9 +32,29 @@ private fun localUrlPath(uri: KUri): String {
     return uri.getPath()!!
 }
 
+/** jar:file is a resource URL, not IOUtil's literal bang-split spelling. */
+private fun jar(uri: KUri): Pair<NativeZipArchive, String> {
+    val spec = uri.toString().substringAfter(':').substringBefore('#')
+    val split = spec.indexOf("!/")
+    if (split < 0) throw NetMalformedURLException("no !/ in spec")
+    val inner = try { KUri(spec.substring(0, split)) } catch (error: KUriSyntaxException) {
+        throw NetMalformedURLException(error.message)
+    }
+    if (urlScheme(inner) != "file") throw NetMalformedURLException("Native jar URL requires file: ${inner.getScheme()}")
+    return NativeZipArchive(localUrlPath(inner)) to KUriParts.decode(spec.substring(split + 2))
+}
+
+private fun jarEntry(zip: NativeZipArchive, name: String): CentralZipArchive.Entry =
+    zip.jarEntry(name) ?: throw FileNotFoundException("JAR entry $name not found")
+
 private fun input(uri: KUri, directFile: Boolean = false): Source {
     if (directFile && uri.getScheme() == "file") return NativeLexicalFiles.source(uri.getPath()!!)
     if (urlScheme(uri) == "file") return NativeLexicalFiles.source(localUrlPath(uri))
+    if (urlScheme(uri) == "jar") {
+        val (zip, name) = jar(uri)
+        if (name.isEmpty()) throw IOException("no entry name specified")
+        return zip.source(jarEntry(zip, name))
+    }
     val body = transport(uri).get(uri, WebResource.getTimeout())
     try {
         body.prepareRead()
@@ -64,6 +84,12 @@ internal actual fun netUrlSize(uri: KUri): Int =
         if (!NativeLexicalFiles.exists(path)) 0 else NativeLexicalFiles.length(path).let {
             if (it > Int.MAX_VALUE) -1 else it.toInt()
         }
+    } else if (urlScheme(uri) == "jar") {
+        try {
+            val (zip, name) = jar(uri)
+            zip.jarEntry(name)?.size?.let { if (it > Int.MAX_VALUE) -1 else it.toInt() } ?: -1
+        } catch (error: NetMalformedURLException) { throw error }
+        catch (_: IOException) { -1 }
     } else transport(uri).head(uri, WebResource.getTimeout()).contentLength
 
 internal actual fun netLoadProperties(uri: KUri): PropertyMap {
@@ -140,4 +166,7 @@ internal actual fun netUrlLastModified(uri: KUri): Long =
         val info = alloc<stat>()
         if ('\u0000' in path || stat(path, info.ptr) != 0) 0L
         else info.st_mtimespec.tv_sec * 1000L + info.st_mtimespec.tv_nsec / 1_000_000L
+    } else if (urlScheme(uri) == "jar") {
+        val (zip, name) = jar(uri)
+        jarEntry(zip, name).let { it.jarModifiedMillis ?: archiveEntryTime(it) }
     } else transport(uri).head(uri, WebResource.getTimeout()).lastModified

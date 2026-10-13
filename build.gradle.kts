@@ -30,6 +30,7 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation("org.apache.commons:commons-compress:1.12")
+            implementation("org.tukaani:xz:1.9")
             implementation("com.chenlb.mmseg4j:mmseg4j-analysis:1.8.6")
             implementation("com.chenlb.mmseg4j:mmseg4j-dic:1.8.6")
             implementation("org.jdom:jdom2:2.0.6.1")

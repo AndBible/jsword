@@ -16,6 +16,40 @@ object StoredZipWriter {
         private class Record(val name: ByteArray, val size: Int, val crc: Int, val flags: Int, val offset: Long)
         private val records = ArrayList<Record>()
         private var offset = 0L
+        private var pending: String? = null
+        private var aborted = false
+
+        internal fun beginEntry(name: String) {
+            check(pending == null && !aborted)
+            if (records.size == 65535) throw IOException("Too many ZIP entries")
+            if (name.encodeToByteArray().size > 65535) throw IOException("ZIP name too long")
+            pending = name
+        }
+
+        internal fun completeEntry(body: ByteArray) {
+            val name = checkNotNull(pending)
+            pending = null
+            // Stored, not the seekable writer's rewritten provisional header: that close keeps method 8
+            // and a ZIP64 extra while the body stays raw, which a sequential reader rejects as a stored block.
+            entry(name, body)
+        }
+
+        /** Publish the commons-compress 1.12 seekable File writer's orphan header only after a failed body read.
+         * Unknown size with Zip64Mode.AsNeeded writes version 45, method 8, flag 0x800 (UTF-8, no data-descriptor bit),
+         * CRC 0, both sizes 0xffffffff, and a 20-byte ZIP64 extra of two zero sizes. Only the DOS time is zero here.
+         * Normal output remains STORED; an aborted archive has no central directory or EOCD.
+         * Header visibility during an in-progress read is deliberately not emulated.
+         */
+        internal fun abortEntry() {
+            val name = checkNotNull(pending).encodeToByteArray()
+            pending = null
+            aborted = true
+            int(0x04034b50); short(45); short(0x800); short(8); short(0); short(0)
+            int(0); int(0xffffffffL); int(0xffffffffL); short(name.size); short(20)
+            sink.write(name)
+            short(1); short(16); sink.writeLongLe(0); sink.writeLongLe(0)
+            sink.flush()
+        }
         private fun short(value: Int) { sink.writeShortLe(value) }
         private fun int(value: Long) {
             if (value !in 0..0xffffffffL) throw IOException("ZIP64 required")
@@ -34,6 +68,8 @@ object StoredZipWriter {
             sink.flush()
         }
         fun finish() {
+            if (aborted) return
+            check(pending == null)
             val start = offset
             for (record in records) {
                 int(0x02014b50); short(20); short(20); short(record.flags); short(0); short(0); short(0)
