@@ -36,7 +36,7 @@ import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
-import java.io.RandomAccessFile
+import org.crosswire.common.util.RandomAccessSource
 
 /**
  * A backend to read compressed data verse based files. While the text file
@@ -322,9 +322,9 @@ open class ZVerseBackend
         var index = verse.ordinal
         val testament = v11n.getTestament(index)
         index = v11n.getTestamentOrdinal(index)
-        val idxRaf: RandomAccessFile?
-        val compRaf: RandomAccessFile?
-        val textRaf: RandomAccessFile?
+        val idxRaf: RandomAccessSource?
+        val compRaf: RandomAccessSource?
+        val textRaf: RandomAccessSource?
 
         idxRaf = rafBook.getIdxRaf(testament)
         compRaf = rafBook.getCompRaf(testament)
@@ -418,10 +418,10 @@ open class ZVerseBackend
      * @param ordinalStart
      * @param raf
      */
-    open fun dumpIdxRaf(v11n: Versification, ordinalStart: Int, raf: RandomAccessFile) {
+    open fun dumpIdxRaf(v11n: Versification, ordinalStart: Int, raf: RandomAccessSource) {
         var end: Long = -1
         try {
-            end = raf.length()
+            end = raf.size()
         } catch (e: IOException) {
             // TODO Auto-generated catch block
             e.printStackTrace()
@@ -474,10 +474,10 @@ open class ZVerseBackend
      * 
      * @param raf
      */
-    open fun dumpCompRaf(raf: RandomAccessFile) {
+    open fun dumpCompRaf(raf: RandomAccessSource) {
         var end: Long = -1
         try {
-            end = raf.length()
+            end = raf.size()
         } catch (e: IOException) {
             // TODO Auto-generated catch block
             e.printStackTrace()

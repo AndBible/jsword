@@ -25,11 +25,11 @@ import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.IOException
-import java.io.RandomAccessFile
+import okio.IOException
+import org.crosswire.common.util.RandomAccessSource
 import org.crosswire.common.util.KCharset
 import org.crosswire.common.util.UnsupportedCharsetException
-import java.net.URI
+import org.crosswire.common.util.KUri
 
 /**
  * Various utilities used by different Sword classes.
@@ -57,7 +57,7 @@ class SwordUtil private constructor() {
         // was protected static (package access for the other sword classes); public because Kotlin protected has no package access
         @JvmStatic
         @Throws(IOException::class)
-        fun readRAF(raf: RandomAccessFile?, offset: Long, theSize: Int): ByteArray {
+        fun readRAF(raf: RandomAccessSource?, offset: Long, theSize: Int): ByteArray {
             raf!!.seek(offset)
             return readNextRAF(raf, theSize)
         }
@@ -76,36 +76,8 @@ class SwordUtil private constructor() {
         // was protected static
         @JvmStatic
         @Throws(IOException::class)
-        fun readNextRAF(raf: RandomAccessFile?, theSize: Int): ByteArray {
-            val offset = raf!!.filePointer
-            var size = theSize
-            val rafSize = raf.length()
-
-            // It is common to have an entry that points to nothing.
-            // That is the equivalent of an empty string.
-            if (size == 0) {
-                return ByteArray(0)
-            }
-
-            if (size < 0) {
-                log.error("Nothing to read at offset = {} returning empty because negative size={}", offset.toString(), size.toString())
-                return ByteArray(0)
-            }
-
-            if (offset >= rafSize) {
-                log.error("Attempt to read beyond end. offset={} size={} but raf.length={}", offset.toString(), size.toString(), rafSize.toString())
-                return ByteArray(0)
-            }
-
-            if (offset + size > raf.length()) {
-                log.error("Need to reduce size to avoid EOFException. offset={} size={} but raf.length={}", offset.toString(), size.toString(), rafSize.toString())
-                size = (raf.length() - offset).toInt()
-            }
-
-            val read = ByteArray(size)
-            raf.readFully(read)
-
-            return read
+        fun readNextRAF(raf: RandomAccessSource?, theSize: Int): ByteArray {
+            return raf!!.readNext(theSize)
         }
 
         /**
@@ -123,7 +95,7 @@ class SwordUtil private constructor() {
         // was protected static
         @JvmStatic
         @Throws(IOException::class)
-        fun writeRAF(raf: RandomAccessFile?, offset: Long, data: ByteArray?) {
+        fun writeRAF(raf: RandomAccessSource?, offset: Long, data: ByteArray?) {
             raf!!.seek(offset)
             writeNextRAF(raf, data)
         }
@@ -131,11 +103,11 @@ class SwordUtil private constructor() {
         // was protected static
         @JvmStatic
         @Throws(IOException::class)
-        fun writeNextRAF(raf: RandomAccessFile?, data: ByteArray?) {
+        fun writeNextRAF(raf: RandomAccessSource?, data: ByteArray?) {
             if (data == null) {
                 return
             }
-            raf!!.write(data)
+            raf!!.writeNext(data)
         }
 
         /**
@@ -154,7 +126,7 @@ class SwordUtil private constructor() {
         // was protected static
         @JvmStatic
         @Throws(IOException::class)
-        fun readUntilRAF(raf: RandomAccessFile?, offset: Int, stopByte: Byte): ByteArray {
+        fun readUntilRAF(raf: RandomAccessSource?, offset: Int, stopByte: Byte): ByteArray {
             raf!!.seek(offset.toLong())
             return readUntilRAF(raf, stopByte)
         }
@@ -173,25 +145,8 @@ class SwordUtil private constructor() {
         // was protected static
         @JvmStatic
         @Throws(IOException::class)
-        fun readUntilRAF(raf: RandomAccessFile?, stopByte: Byte): ByteArray {
-            // The strategy used here is to read the file twice.
-            // Once to determine how much to read and then getting the actual data.
-            // It may be more efficient to incrementally build up a byte buffer.
-            // Note: that growing a static array by 1 byte at a time is O(n**2)
-            // This is negligible when the n is small, but prohibitive otherwise.
-            val offset = raf!!.filePointer
-            var size = 0
-
-            var nextByte: Int
-            do {
-                nextByte = raf.read()
-
-                size++
-            } while (nextByte != -1 && nextByte != stopByte.toInt())
-
-            // Note: we allow for nextByte == -1 to be included in size
-            // so that readRAF will report EOF errors
-            return readRAF(raf, offset, size)
+        fun readUntilRAF(raf: RandomAccessSource?, stopByte: Byte): ByteArray {
+            return raf!!.readUntil(stopByte)
         }
 
         /**
@@ -417,7 +372,7 @@ class SwordUtil private constructor() {
          */
         @JvmStatic
         @Throws(BookException::class)
-        fun getExpandedDataPath(bookMetaData: BookMetaData): URI {
+        fun getExpandedDataPath(bookMetaData: BookMetaData): KUri {
             val loc = NetUtil.lengthenURI(bookMetaData.library!!, bookMetaData.getProperty(SwordBookMetaData.KEY_DATA_PATH)!!)
 
             if (loc == null) {

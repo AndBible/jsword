@@ -24,6 +24,8 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.jsword.book.sword.state.RawBackendState
 import org.crosswire.jsword.book.sword.state.RawFileBackendState
+import org.crosswire.jsword.book.sword.state.RawBackendStateJvm
+import org.crosswire.jsword.book.sword.state.RawFileBackendStateJvm
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.versification.Testament
@@ -37,7 +39,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.RandomAccessFile
+import org.crosswire.common.util.RandomAccessSource
 
 /**
  * A Raw File format that allows for each verse to have it's own storage. The
@@ -74,8 +76,8 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
      */
     @Throws(IOException::class)
     override fun getEntry(state: RawBackendState, name: String?, testament: Testament?, index: Long): String {
-        val idxRaf: RandomAccessFile?
-        val txtRaf: RandomAccessFile?
+        val idxRaf: RandomAccessSource?
+        val txtRaf: RandomAccessSource?
         idxRaf = state.getIdxRaf(testament)
         txtRaf = state.getTextRaf(testament)
 
@@ -117,13 +119,13 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
 
         val idxRaf = state.getIdxRaf(testament)
         val txtRaf = state.getTextRaf(testament)
-        val txtFile = state.getTextFile(testament)
+        val txtFile = RawBackendStateJvm.getTextFile(state, testament)
 
         val dataIndex = getIndex(idxRaf, index.toLong())
         val dataFile: File
         if (dataIndex.getSize() == 0) {
             dataFile = createDataTextFile(state.getIncfileValue())
-            updateIndexFile(idxRaf, index.toLong(), txtRaf!!.length())
+            updateIndexFile(idxRaf, index.toLong(), txtRaf!!.size())
             updateDataFile(state.getIncfileValue().toLong(), txtFile)
             checkAndIncrementIncfile(state, state.getIncfileValue())
         } else {
@@ -179,7 +181,7 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
      * @throws IOException
      */
     @Throws(IOException::class)
-    private fun getTextFilename(txtRaf: RandomAccessFile?, dataIndex: DataIndex): String {
+    private fun getTextFilename(txtRaf: RandomAccessSource?, dataIndex: DataIndex): String {
         // data size to be read from the data file (ot or nt) should be 9 bytes
         // this will be the filename of the actual text file "\r\n"
         val data = SwordUtil.readRAF(txtRaf, dataIndex.getOffset().toLong(), dataIndex.getSize())
@@ -205,14 +207,14 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
      * @throws BookException
      */
     @Throws(IOException::class, BookException::class)
-    private fun getDataTextFile(txtRaf: RandomAccessFile?, dataIndex: DataIndex): File {
+    private fun getDataTextFile(txtRaf: RandomAccessSource?, dataIndex: DataIndex): File {
         val dataFilename = getTextFilename(txtRaf, dataIndex)
         val dataPath = SwordUtil.getExpandedDataPath(bookMetaData).path + File.separator + dataFilename
         return File(dataPath)
     }
 
     @Throws(IOException::class)
-    protected open fun updateIndexFile(idxRaf: RandomAccessFile?, index: Long, dataFileStartPosition: Long) {
+    protected open fun updateIndexFile(idxRaf: RandomAccessSource?, index: Long, dataFileStartPosition: Long) {
         val indexFileWriteOffset = index * entrysize
         val dataFileLengthValue = 7 // filename is 7 bytes + 2 bytes for "\r\n"
         val startPositionData = littleEndian32BitByteArrayFromInt(dataFileStartPosition.toInt())
@@ -323,7 +325,7 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
         val v11n = Versifications.instance().getVersification(v11nName)!!
         val otCount = v11n.getCount(Testament.OLD)
         val ntCount = v11n.getCount(Testament.NEW) + 1
-        val otIdxBos = BufferedOutputStream(FileOutputStream(state.getIdxFile(Testament.OLD), false))
+        val otIdxBos = BufferedOutputStream(FileOutputStream(RawBackendStateJvm.getIdxFile(state, Testament.OLD), false))
         try {
             for (i in 0 until otCount) {
                 writeInitialIndex(otIdxBos)
@@ -332,7 +334,7 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
             otIdxBos.close()
         }
 
-        val ntIdxBos = BufferedOutputStream(FileOutputStream(state.getIdxFile(Testament.NEW), false))
+        val ntIdxBos = BufferedOutputStream(FileOutputStream(RawBackendStateJvm.getIdxFile(state, Testament.NEW), false))
         try {
             for (i in 0 until ntCount) {
                 writeInitialIndex(ntIdxBos)
@@ -348,7 +350,7 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
         if (!tempIncfile.exists() && !tempIncfile.createNewFile()) {
             throw IOException("Could not create incfile file.")
         }
-        state.setIncfile(tempIncfile)
+        RawFileBackendStateJvm.setIncfile(state, tempIncfile)
     }
 
     @Throws(IOException::class)
@@ -360,7 +362,7 @@ open class RawFileBackend(sbmd: SwordBookMetaData?, datasize: Int) : RawBackend<
     private fun writeIncfile(state: RawFileBackendState, value: Int) {
         var fos: FileOutputStream? = null
         try {
-            fos = FileOutputStream(state.getIncfile(), false)
+            fos = FileOutputStream(RawFileBackendStateJvm.getIncfile(state), false)
             fos.write(littleEndian32BitByteArrayFromInt(value))
         } catch (e: FileNotFoundException) {
             log.error("Error on writing to incfile, file should exist already!", e)

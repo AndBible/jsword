@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.BookException
@@ -28,10 +26,10 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
-import java.net.URI
+import org.crosswire.jsword.book.sword.*
+import okio.IOException
+import org.crosswire.common.util.RandomAccessSource
+import org.crosswire.common.util.KUri
 
 /**
  * Stores the random access files required for processing the passage request
@@ -46,12 +44,12 @@ open class GenBookBackendState : AbstractOpenFileState {
     /**
      * The raw data file
      */
-    private var bdtFile: File? = null
+    private var bdtFile: StorageLocation? = null
 
     /**
      * The random access file for the raw data
      */
-    private var bdtRaf: RandomAccessFile? = null
+    private var bdtRaf: RandomAccessSource? = null
 
     /**
      * This is default package access for forcing the use of the
@@ -63,7 +61,7 @@ open class GenBookBackendState : AbstractOpenFileState {
      * @param bookMetaData the appropriate metadata for the book
      */
     internal constructor(bookMetaData: BookMetaData) : super(bookMetaData) {
-        val path: URI
+        val path: KUri
         try {
             path = SwordUtil.getExpandedDataPath(bookMetaData)
         } catch (e: BookException) {
@@ -71,22 +69,22 @@ open class GenBookBackendState : AbstractOpenFileState {
             return
         }
 
-        val bdt = File(path.path + EXTENSION_BDT)
+        val bdt = StorageLocation(path.getPath() + EXTENSION_BDT)
         bdtFile = bdt
 
-        if (!bdt.canRead()) {
+        if (!storageCanRead(bdt)) {
             // TRANSLATOR: Common error condition: The file could not be read.
             // There can be many reasons.
             // {0} is a placeholder for the file.
-            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", bdt.absolutePath)))
+            Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(bdt))))
             return
         }
 
         try {
-            bdtRaf = RandomAccessFile(bdt, FileUtil.MODE_READ)
+            bdtRaf = storageOpenRandomAccess(bdt, false)
         } catch (ex: IOException) {
             //failed to open the files, so close them now
-            IOUtil.close(bdtRaf)
+            closeStateSource(bdtRaf)
 
             LOGGER.error("failed to open files", ex)
             bdtRaf = null
@@ -94,14 +92,15 @@ open class GenBookBackendState : AbstractOpenFileState {
     }
 
     override fun releaseResources() {
-        IOUtil.close(bdtRaf)
+        markResourcesClosed()
+        closeStateSource(bdtRaf)
         bdtRaf = null
     }
 
     /**
      * @return the bdtRaf
      */
-    open fun getBdtRaf(): RandomAccessFile? {
+    open fun getBdtRaf(): RandomAccessSource? {
         return bdtRaf
     }
 

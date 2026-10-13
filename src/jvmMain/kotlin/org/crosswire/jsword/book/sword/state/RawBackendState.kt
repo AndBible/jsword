@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.common.util.jswordAssert
@@ -32,9 +30,9 @@ import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.jsword.versification.Testament
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.RandomAccessFile
+import org.crosswire.jsword.book.sword.*
+import okio.FileNotFoundException
+import org.crosswire.common.util.RandomAccessSource
 
 /**
  * Stores the random access files required for processing the passage request
@@ -59,52 +57,48 @@ open class RawBackendState
 @Throws(BookException::class)
 internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMetaData) {
     @JvmField
-    protected var otIdxRaf: RandomAccessFile? = null
+    protected var otIdxRaf: RandomAccessSource? = null
     @JvmField
-    protected var ntIdxRaf: RandomAccessFile? = null
+    protected var ntIdxRaf: RandomAccessSource? = null
     @JvmField
-    protected var otTextRaf: RandomAccessFile? = null
+    protected var otTextRaf: RandomAccessSource? = null
     @JvmField
-    protected var ntTextRaf: RandomAccessFile? = null
-    @JvmField
-    protected var ntIdxFile: File
-    @JvmField
-    protected var ntTextFile: File
-    @JvmField
-    protected var otIdxFile: File
-    @JvmField
-    protected var otTextFile: File
+    protected var ntTextRaf: RandomAccessSource? = null
+    internal var ntIdxFile: StorageLocation
+    internal var ntTextFile: StorageLocation
+    internal var otIdxFile: StorageLocation
+    internal var otTextFile: StorageLocation
 
     init {
         val path = SwordUtil.getExpandedDataPath(bookMetaData)
 
-        val otPath = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_OT)!!
-        otTextFile = File(otPath.path)
-        otIdxFile = File(otPath.path + SwordConstants.EXTENSION_VSS)
+        val otPath = NetUtil.lengthenURI(path, storageSeparator() + SwordConstants.FILE_OT)!!
+        otTextFile = StorageLocation(otPath.getPath())
+        otIdxFile = StorageLocation(otPath.getPath() + SwordConstants.EXTENSION_VSS)
 
-        val ntPath = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_NT)!!
-        ntTextFile = File(ntPath.path)
-        ntIdxFile = File(ntPath.path + SwordConstants.EXTENSION_VSS)
+        val ntPath = NetUtil.lengthenURI(path, storageSeparator() + SwordConstants.FILE_NT)!!
+        ntTextFile = StorageLocation(ntPath.getPath())
+        ntIdxFile = StorageLocation(ntPath.getPath() + SwordConstants.EXTENSION_VSS)
 
         // It is an error to be neither OT nor NT
         // Throwing exception, as if we can't read either the ot or nt file,
         // then we might as well give up
-        if (!otTextFile.canRead() && !ntTextFile.canRead()) {
+        if (!storageCanRead(otTextFile) && !storageCanRead(ntTextFile)) {
             val prob = BookException(JSOtherMsg.lookupText("Missing data files for old and new testaments in {0}.", path))
             Reporter.informUser(this, prob)
             throw prob
         }
 
-        val fileMode = if (isWritable()) FileUtil.MODE_WRITE else FileUtil.MODE_READ
+        val fileMode = isWritable()
 
-        if (otIdxFile.canRead()) {
+        if (storageCanRead(otIdxFile)) {
             try {
-                otIdxRaf = RandomAccessFile(otIdxFile, fileMode)
-                otTextRaf = RandomAccessFile(otTextFile, fileMode)
+                otIdxRaf = storageOpenRandomAccess(otIdxFile, fileMode)
+                otTextRaf = storageOpenRandomAccess(otTextFile, fileMode)
             } catch (ex: FileNotFoundException) {
                 //failed to open the files, so close them now
-                IOUtil.close(otIdxRaf)
-                IOUtil.close(otTextRaf)
+                closeStateSource(otIdxRaf)
+                closeStateSource(otTextRaf)
 
                 jswordAssert(false) { ex }
 
@@ -114,14 +108,14 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
             }
         }
 
-        if (ntIdxFile.canRead()) {
+        if (storageCanRead(ntIdxFile)) {
             try {
-                ntIdxRaf = RandomAccessFile(ntIdxFile, fileMode)
-                ntTextRaf = RandomAccessFile(ntTextFile, fileMode)
+                ntIdxRaf = storageOpenRandomAccess(ntIdxFile, fileMode)
+                ntTextRaf = storageOpenRandomAccess(ntTextFile, fileMode)
             } catch (ex: FileNotFoundException) {
                 //failed to open the files, so close them now
-                IOUtil.close(ntIdxRaf)
-                IOUtil.close(ntTextRaf)
+                closeStateSource(ntIdxRaf)
+                closeStateSource(ntTextRaf)
 
                 jswordAssert(false) { ex }
                 LOGGER.error("Could not open NT", ex)
@@ -139,21 +133,21 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
         // testament needs to be present
         // (i.e. readable) and both the index and the data files need to be
         // writable
-        if (otIdxFile.canRead() && (otIdxFile.canWrite() || !otTextFile.canWrite())) {
+        if (storageCanRead(otIdxFile) && (storageCanWrite(otIdxFile) || !storageCanWrite(otTextFile))) {
             return false
         }
-        if (ntIdxFile.canRead() && (ntIdxFile.canWrite() || !ntTextFile.canWrite())) {
+        if (storageCanRead(ntIdxFile) && (storageCanWrite(ntIdxFile) || !storageCanWrite(ntTextFile))) {
             return false
         }
-        return otIdxFile.canRead() || ntIdxFile.canRead()
+        return storageCanRead(otIdxFile) || storageCanRead(ntIdxFile)
     }
 
     override fun releaseResources() {
         markResourcesClosed()
-        IOUtil.close(ntIdxRaf)
-        IOUtil.close(ntTextRaf)
-        IOUtil.close(otIdxRaf)
-        IOUtil.close(otTextRaf)
+        closeStateSource(ntIdxRaf)
+        closeStateSource(ntTextRaf)
+        closeStateSource(otIdxRaf)
+        closeStateSource(otTextRaf)
         ntIdxRaf = null
         ntTextRaf = null
         otIdxRaf = null
@@ -166,7 +160,7 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    open fun getIdxRaf(testament: Testament?): RandomAccessFile? {
+    open fun getIdxRaf(testament: Testament?): RandomAccessSource? {
         return if (testament == Testament.NEW) ntIdxRaf else otIdxRaf
     }
 
@@ -176,21 +170,21 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    open fun getTextRaf(testament: Testament?): RandomAccessFile? {
+    open fun getTextRaf(testament: Testament?): RandomAccessSource? {
         return if (testament == Testament.NEW) ntTextRaf else otTextRaf
     }
 
     /**
      * @return the otTextRaf
      */
-    open fun getOtTextRaf(): RandomAccessFile? {
+    open fun getOtTextRaf(): RandomAccessSource? {
         return otTextRaf
     }
 
     /**
      * @return the ntTextRaf
      */
-    open fun getNtTextRaf(): RandomAccessFile? {
+    open fun getNtTextRaf(): RandomAccessSource? {
         return ntTextRaf
     }
 
@@ -200,7 +194,7 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    open fun getTextFile(testament: Testament?): File {
+    internal fun getTextLocation(testament: Testament?): StorageLocation {
         return if (testament == Testament.NEW) ntTextFile else otTextFile
     }
 
@@ -210,7 +204,7 @@ internal constructor(bookMetaData: BookMetaData) : AbstractOpenFileState(bookMet
      * @param testament the testament for the file
      * @return the requested file for the testament
      */
-    open fun getIdxFile(testament: Testament?): File {
+    internal fun getIdxLocation(testament: Testament?): StorageLocation {
         return if (testament == Testament.NEW) ntIdxFile else otIdxFile
     }
 

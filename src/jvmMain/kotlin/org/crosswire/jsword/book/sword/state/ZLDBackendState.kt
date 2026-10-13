@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.BookException
@@ -28,10 +26,10 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
-import java.net.URI
+import org.crosswire.jsword.book.sword.*
+import okio.IOException
+import org.crosswire.common.util.RandomAccessSource
+import org.crosswire.common.util.KUri
 
 /**
  * Stores the random access files required for processing the passage request.
@@ -46,22 +44,22 @@ open class ZLDBackendState : RawLDBackendState {
     /**
      * The compressed index.
      */
-    private var zdxFile: File? = null
+    private var zdxFile: StorageLocation? = null
 
     /**
      * The compressed index random access file.
      */
-    private var zdxRaf: RandomAccessFile? = null
+    private var zdxRaf: RandomAccessSource? = null
 
     /**
      * The compressed text.
      */
-    private var zdtFile: File? = null
+    private var zdtFile: StorageLocation? = null
 
     /**
      * The compressed text random access file.
      */
-    private var zdtRaf: RandomAccessFile? = null
+    private var zdtRaf: RandomAccessSource? = null
 
     /**
      * The index of the block that is cached.
@@ -91,7 +89,7 @@ open class ZLDBackendState : RawLDBackendState {
         lastBlockNum = -1
         lastUncompressed = EMPTY_BYTES
 
-        val path: URI
+        val path: KUri
         try {
             path = SwordUtil.getExpandedDataPath(bookMetaData)
         } catch (e: BookException) {
@@ -100,32 +98,32 @@ open class ZLDBackendState : RawLDBackendState {
         }
 
         try {
-            val zdx = File(path.path + EXTENSION_Z_INDEX)
+            val zdx = StorageLocation(path.getPath() + EXTENSION_Z_INDEX)
             zdxFile = zdx
-            val zdt = File(path.path + EXTENSION_Z_DATA)
+            val zdt = StorageLocation(path.getPath() + EXTENSION_Z_DATA)
             zdtFile = zdt
 
-            if (!zdx.canRead()) {
+            if (!storageCanRead(zdx)) {
                 // TRANSLATOR: Common error condition: The file could not be read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", zdt.absolutePath)))
+                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(zdt))))
                 return
             }
 
-            if (!zdt.canRead()) {
+            if (!storageCanRead(zdt)) {
                 // TRANSLATOR: Common error condition: The file could not be read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", zdt.absolutePath)))
+                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(zdt))))
                 return
             }
 
             // Open the files
-            zdxRaf = RandomAccessFile(zdx, FileUtil.MODE_READ)
-            zdtRaf = RandomAccessFile(zdt, FileUtil.MODE_READ)
+            zdxRaf = storageOpenRandomAccess(zdx, false)
+            zdtRaf = storageOpenRandomAccess(zdt, false)
         } catch (ex: IOException) {
             //failed to open the files, so close them now
-            IOUtil.close(zdxRaf)
-            IOUtil.close(zdtRaf)
+            closeStateSource(zdxRaf)
+            closeStateSource(zdtRaf)
 
             LOGGER.error("failed to open files", ex)
             zdxRaf = null
@@ -139,8 +137,8 @@ open class ZLDBackendState : RawLDBackendState {
         lastBlockNum = -1
         lastUncompressed = EMPTY_BYTES
 
-        IOUtil.close(zdxRaf)
-        IOUtil.close(zdtRaf)
+        closeStateSource(zdxRaf)
+        closeStateSource(zdtRaf)
         zdxRaf = null
         zdtRaf = null
     }
@@ -148,14 +146,14 @@ open class ZLDBackendState : RawLDBackendState {
     /**
      * @return the zdxRaf
      */
-    open fun getZdxRaf(): RandomAccessFile? {
+    open fun getZdxRaf(): RandomAccessSource? {
         return zdxRaf
     }
 
     /**
      * @return the zdtRaf
      */
-    open fun getZdtRaf(): RandomAccessFile? {
+    open fun getZdtRaf(): RandomAccessSource? {
         return zdtRaf
     }
 

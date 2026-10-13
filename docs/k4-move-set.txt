@@ -53,8 +53,8 @@ org/crosswire/jsword/book/sword/BookType.kt #done
 org/crosswire/jsword/book/sword/ConfigEntryTable.kt #done
 org/crosswire/jsword/book/sword/ConfigEntryType.kt #done
 org/crosswire/jsword/book/sword/ConfigValueInterceptor.kt #done
-org/crosswire/jsword/book/sword/DataEntry.kt
-org/crosswire/jsword/book/sword/DataIndex.kt
+org/crosswire/jsword/book/sword/DataEntry.kt #done
+org/crosswire/jsword/book/sword/DataIndex.kt #done
 org/crosswire/jsword/book/sword/GenBookBackend.kt
 org/crosswire/jsword/book/sword/NullBackend.kt
 org/crosswire/jsword/book/sword/RawBackend.kt
@@ -64,7 +64,7 @@ org/crosswire/jsword/book/sword/StatefulFileBackedBackend.kt
 org/crosswire/jsword/book/sword/SwordBookMetaData.kt #done
 org/crosswire/jsword/book/sword/SwordBookPath.kt #done
 org/crosswire/jsword/book/sword/SwordConstants.kt #done
-org/crosswire/jsword/book/sword/SwordUtil.kt
+org/crosswire/jsword/book/sword/SwordUtil.kt #done
 org/crosswire/jsword/book/sword/TreeKeyIndex.kt
 org/crosswire/jsword/book/sword/TreeNode.kt
 org/crosswire/jsword/book/sword/ZLDBackend.kt
@@ -72,12 +72,12 @@ org/crosswire/jsword/book/sword/ZVerseBackend.kt
 org/crosswire/jsword/book/sword/processing/NoOpRawTextProcessor.kt
 org/crosswire/jsword/book/sword/processing/RawTextToXmlProcessor.kt
 org/crosswire/jsword/book/sword/state/AbstractOpenFileState.kt
-org/crosswire/jsword/book/sword/state/GenBookBackendState.kt
+org/crosswire/jsword/book/sword/state/GenBookBackendState.kt #done
 org/crosswire/jsword/book/sword/state/OpenFileState.kt
 org/crosswire/jsword/book/sword/state/OpenFileStateManager.kt
-org/crosswire/jsword/book/sword/state/RawBackendState.kt
-org/crosswire/jsword/book/sword/state/RawFileBackendState.kt
-org/crosswire/jsword/book/sword/state/RawLDBackendState.kt
-org/crosswire/jsword/book/sword/state/ZLDBackendState.kt
-org/crosswire/jsword/book/sword/state/ZVerseBackendState.kt
+org/crosswire/jsword/book/sword/state/RawBackendState.kt #done
+org/crosswire/jsword/book/sword/state/RawFileBackendState.kt #done
+org/crosswire/jsword/book/sword/state/RawLDBackendState.kt #done
+org/crosswire/jsword/book/sword/state/ZLDBackendState.kt #done
+org/crosswire/jsword/book/sword/state/ZVerseBackendState.kt #done
 org/crosswire/jsword/index/IndexStatus.kt #done

@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.BookException
@@ -30,10 +28,10 @@ import org.crosswire.jsword.book.sword.SwordConstants
 import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
-import java.net.URI
+import org.crosswire.jsword.book.sword.*
+import okio.IOException
+import org.crosswire.common.util.RandomAccessSource
+import org.crosswire.common.util.KUri
 
 /**
  * State for [RawLDBackend]
@@ -51,22 +49,22 @@ open class RawLDBackendState : AbstractOpenFileState {
     /**
      * The index file
      */
-    private var idxFile: File? = null
+    internal var idxFile: StorageLocation? = null
 
     /**
      * The index random access file
      */
-    private var idxRaf: RandomAccessFile? = null
+    private var idxRaf: RandomAccessSource? = null
 
     /**
      * The data file
      */
-    private var datFile: File? = null
+    private var datFile: StorageLocation? = null
 
     /**
      * The data random access file
      */
-    private var datRaf: RandomAccessFile? = null
+    private var datRaf: RandomAccessSource? = null
 
     /**
      * This is default package access for forcing the use of the
@@ -79,7 +77,7 @@ open class RawLDBackendState : AbstractOpenFileState {
      */
     @Throws(BookException::class)
     internal constructor(bookMetaData: BookMetaData) : super(bookMetaData) {
-        val path: URI
+        val path: KUri
         try {
             path = SwordUtil.getExpandedDataPath(bookMetaData)
         } catch (e: BookException) {
@@ -88,39 +86,39 @@ open class RawLDBackendState : AbstractOpenFileState {
         }
 
         try {
-            val idx = File(path.path + SwordConstants.EXTENSION_INDEX)
+            val idx = StorageLocation(path.getPath() + SwordConstants.EXTENSION_INDEX)
             idxFile = idx
-            val dat = File(path.path + SwordConstants.EXTENSION_DATA)
+            val dat = StorageLocation(path.getPath() + SwordConstants.EXTENSION_DATA)
             datFile = dat
 
-            if (!idx.canRead()) {
+            if (!storageCanRead(idx)) {
                 // TRANSLATOR: Common error condition: The file could not be
                 // read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", idx.absolutePath)))
+                Reporter.informUser(this, BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(idx))))
 
                 // As per previous behaviour, we continue with state half made, having informed the user of the error
                 return
             }
 
-            if (!dat.canRead()) {
+            if (!storageCanRead(dat)) {
                 // Throwing exception, as if we can't read our data file, then we might as well give up
 
                 // TRANSLATOR: Common error condition: The file could not be
                 // read. There can be many reasons.
                 // {0} is a placeholder for the file.
-                val prob = BookException(JSMsg.gettext("Error reading {0}", dat.absolutePath))
+                val prob = BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(dat)))
                 Reporter.informUser(this, prob)
                 throw prob
             }
 
             // Open the files
-            idxRaf = RandomAccessFile(idx, FileUtil.MODE_READ)
-            datRaf = RandomAccessFile(dat, FileUtil.MODE_READ)
+            idxRaf = storageOpenRandomAccess(idx, false)
+            datRaf = storageOpenRandomAccess(dat, false)
         } catch (ex: IOException) {
             //failed to open the files, so close them now
-            IOUtil.close(idxRaf)
-            IOUtil.close(datRaf)
+            closeStateSource(idxRaf)
+            closeStateSource(datRaf)
 
             LOGGER.error("failed to open files", ex)
             idxRaf = null
@@ -128,14 +126,15 @@ open class RawLDBackendState : AbstractOpenFileState {
             // TRANSLATOR: Common error condition: The file could not be read.
             // There can be many reasons.
             // {0} is a placeholder for the file.
-            throw BookException(JSMsg.gettext("Error reading {0}", datFile!!.absolutePath), ex)
+            throw BookException(JSMsg.gettext("Error reading {0}", storageAbsolute(datFile!!)), ex)
         }
     }
 
     override fun releaseResources() {
+        markResourcesClosed()
         size = -1
-        IOUtil.close(idxRaf)
-        IOUtil.close(datRaf)
+        closeStateSource(idxRaf)
+        closeStateSource(datRaf)
         idxRaf = null
         datRaf = null
     }
@@ -143,21 +142,21 @@ open class RawLDBackendState : AbstractOpenFileState {
     /**
      * @return the idxFile
      */
-    open fun getIdxFile(): File? {
+    internal fun getIdxLocation(): StorageLocation? {
         return idxFile
     }
 
     /**
      * @return the idxRaf
      */
-    open fun getIdxRaf(): RandomAccessFile? {
+    open fun getIdxRaf(): RandomAccessSource? {
         return idxRaf
     }
 
     /**
      * @return the datRaf
      */
-    open fun getDatRaf(): RandomAccessFile? {
+    open fun getDatRaf(): RandomAccessSource? {
         return datRaf
     }
 

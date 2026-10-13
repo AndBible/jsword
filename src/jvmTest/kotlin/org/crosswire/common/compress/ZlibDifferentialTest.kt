@@ -1,6 +1,7 @@
 package org.crosswire.common.compress
 
 import org.crosswire.jsword.book.sword.SwordUtil
+import org.crosswire.jsword.book.sword.LegacySwordIo
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -118,12 +119,12 @@ class ZlibDifferentialTest {
                 RandomAccessFile(File(dir, "$testament.bzz"), "r").use { dat ->
                     // The compressed-block index: 12-byte entries of start, compressed size, uncompressed size.
                     for (i in 0 until 10) {
-                        val e = SwordUtil.readRAF(idx, 12L * i, 12)
+                        val e = LegacySwordIo.readRAF(idx, 12L * i, 12)
                         if (e.size < 12) break
                         val start = SwordUtil.decodeLittleEndian32(e, 0)
                         val csize = SwordUtil.decodeLittleEndian32(e, 4)
                         val usize = SwordUtil.decodeLittleEndian32(e, 8)
-                        val block = SwordUtil.readRAF(dat, start.toLong(), csize)
+                        val block = LegacySwordIo.readRAF(dat, start.toLong(), csize)
                         assertEquals(csize, block.size)
                         val expected = jdkInflate(block, usize)
                         assertEquals(usize, expected.size)

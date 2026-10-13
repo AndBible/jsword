@@ -34,7 +34,7 @@ import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.io.RandomAccessFile
+import org.crosswire.common.util.RandomAccessSource
 
 /**
  * TreeKeyIndex reads Sword index files that are path based. Paths are of the
@@ -54,8 +54,8 @@ open class TreeKeyIndex
     private var bmd: SwordBookMetaData? = sbmd
     private var idxFile: File? = null
     private var datFile: File? = null
-    private var idxRaf: RandomAccessFile? = null
-    private var datRaf: RandomAccessFile? = null
+    private var idxRaf: RandomAccessSource? = null
+    private var datRaf: RandomAccessSource? = null
     private var active: Boolean = false
 
     /**
@@ -198,8 +198,8 @@ open class TreeKeyIndex
         }
 
         try {
-            idxRaf = RandomAccessFile(idx, FileUtil.MODE_READ)
-            datRaf = RandomAccessFile(dat, FileUtil.MODE_READ)
+            idxRaf = storageOpenRandomAccess(StorageLocation(idx.path), false)
+            datRaf = storageOpenRandomAccess(StorageLocation(dat.path), false)
         } catch (ex: IOException) {
             log.error("failed to open files", ex)
             idxRaf = null

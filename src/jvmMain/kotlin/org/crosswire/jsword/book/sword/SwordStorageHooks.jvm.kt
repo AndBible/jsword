@@ -58,3 +58,5 @@ internal fun storageOpenRandomAccess(location: StorageLocation, writable: Boolea
         override fun protectedClose() = raf.close()
     })
 }
+
+internal fun storageAbsolute(location: StorageLocation): String = java.io.File(location.spelling).absolutePath

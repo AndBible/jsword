@@ -7,6 +7,15 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class StorageRandomAccessTest {
+    @Test fun nullReceiverOrderingMatchesLegacy() {
+        LegacySwordIo.writeNextRAF(null, null)
+        SwordUtil.writeNextRAF(null, null)
+        assertThrows(NullPointerException::class.java) { SwordUtil.writeNextRAF(null, byteArrayOf()) }
+        assertThrows(NullPointerException::class.java) { SwordUtil.writeRAF(null, 0, null) }
+        assertThrows(NullPointerException::class.java) { SwordUtil.readRAF(null, 0, 0) }
+        assertThrows(NullPointerException::class.java) { SwordUtil.readUntilRAF(null, 0) }
+    }
+
     @Test fun emptyAndNullWritesRetainLegacyNoopAndSeekOrdering() {
         val file = File.createTempFile("empty-write", ".bin")
         try {
@@ -14,20 +23,20 @@ class StorageRandomAccessTest {
             val src = storageOpenRandomAccess(StorageLocation(file.path), false)
             try {
                 for (data in listOf(byteArrayOf(), null)) {
-                    SwordUtil.writeNextRAF(raf, data)
-                    src.writeNext(data)
-                    SwordUtil.writeRAF(raf, 7, data)
-                    src.writeAtCursor(7, data)
+                    LegacySwordIo.writeNextRAF(raf, data)
+                    SwordUtil.writeNextRAF(src, data)
+                    LegacySwordIo.writeRAF(raf, 7, data)
+                    SwordUtil.writeRAF(src, 7, data)
                     assertEquals(raf.filePointer, src.position())
-                    assertThrows(IOException::class.java) { SwordUtil.writeRAF(raf, -1, data) }
-                    assertThrows(IOException::class.java) { src.writeAtCursor(-1, data) }
+                    assertThrows(IOException::class.java) { LegacySwordIo.writeRAF(raf, -1, data) }
+                    assertThrows(IOException::class.java) { SwordUtil.writeRAF(src, -1, data) }
                 }
                 raf.close(); src.close()
                 for (data in listOf(byteArrayOf(), null)) {
-                    SwordUtil.writeNextRAF(raf, data)
-                    src.writeNext(data)
-                    assertThrows(IOException::class.java) { SwordUtil.writeRAF(raf, 7, data) }
-                    assertThrows(IOException::class.java) { src.writeAtCursor(7, data) }
+                    LegacySwordIo.writeNextRAF(raf, data)
+                    SwordUtil.writeNextRAF(src, data)
+                    assertThrows(IOException::class.java) { LegacySwordIo.writeRAF(raf, 7, data) }
+                    assertThrows(IOException::class.java) { SwordUtil.writeRAF(src, 7, data) }
                 }
             } finally { raf.close(); src.close() }
         } finally { file.delete() }
@@ -40,19 +49,19 @@ class StorageRandomAccessTest {
             literal.writeBytes(byteArrayOf(1, 2, 0, 3, 4))
             val decoy = File(root, "literal/file").apply { parentFile.mkdirs(); writeBytes(byteArrayOf(9)) }
             storageOpenRandomAccess(StorageLocation(literal.path), false).use { src ->
-                assertArrayEquals(byteArrayOf(1), src.readAtCursor(0, 1))
+                assertArrayEquals(byteArrayOf(1), SwordUtil.readRAF(src, 0, 1))
                 assertEquals(1L, src.position())
-                assertArrayEquals(byteArrayOf(2, 0), src.readUntil(0))
+                assertArrayEquals(byteArrayOf(2, 0), SwordUtil.readUntilRAF(src, 0))
                 assertEquals(3L, src.position())
-                assertArrayEquals(byteArrayOf(3, 4), src.readNext(8))
+                assertArrayEquals(byteArrayOf(3, 4), SwordUtil.readNextRAF(src, 8))
                 assertEquals(5L, src.position())
-                assertArrayEquals(byteArrayOf(), src.readUntil(0))
-                assertArrayEquals(byteArrayOf(), src.readAtCursor(2, -1))
+                assertArrayEquals(byteArrayOf(), SwordUtil.readUntilRAF(src, 0))
+                assertArrayEquals(byteArrayOf(), SwordUtil.readRAF(src, 2, -1))
                 for (size in listOf(0, -1, 1)) {
-                    assertThrows(IOException::class.java) { src.readAtCursor(-1, size) }
+                    assertThrows(IOException::class.java) { SwordUtil.readRAF(src, -1, size) }
                     assertEquals(2L, src.position())
                 }
-                assertThrows(IOException::class.java) { src.writeAtCursor(0, byteArrayOf(9)) }
+                assertThrows(IOException::class.java) { SwordUtil.writeRAF(src, 0, byteArrayOf(9)) }
                 assertEquals(0L, src.position())
             }
             val closed = storageOpenRandomAccess(StorageLocation(literal.path), false)

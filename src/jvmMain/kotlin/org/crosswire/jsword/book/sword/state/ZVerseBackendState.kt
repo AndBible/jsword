@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.IOUtil
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.book.BookException
@@ -31,9 +29,9 @@ import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.jsword.versification.Testament
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.RandomAccessFile
+import org.crosswire.jsword.book.sword.*
+import okio.FileNotFoundException
+import org.crosswire.common.util.RandomAccessSource
 
 /**
  * Stores the random access files required for processing the passage request.
@@ -59,20 +57,20 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
     /**
      * The compressed random access files
      */
-    private var otCompRaf: RandomAccessFile? = null
-    private var ntCompRaf: RandomAccessFile? = null
+    private var otCompRaf: RandomAccessSource? = null
+    private var ntCompRaf: RandomAccessSource? = null
 
     /**
      * The data random access files
      */
-    private var otTextRaf: RandomAccessFile? = null
-    private var ntTextRaf: RandomAccessFile? = null
+    private var otTextRaf: RandomAccessSource? = null
+    private var ntTextRaf: RandomAccessSource? = null
 
     /**
      * The index random access files
      */
-    private var otIdxRaf: RandomAccessFile? = null
-    private var ntIdxRaf: RandomAccessFile? = null
+    private var otIdxRaf: RandomAccessSource? = null
+    private var ntIdxRaf: RandomAccessSource? = null
 
     /**
      * @return the lastTestament
@@ -91,27 +89,27 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
 
     init {
         val path = SwordUtil.getExpandedDataPath(bookMetaData)
-        val otAllButLast = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_OT + '.' + blockType.indicator + SUFFIX_PART1)!!.path
-        val otIdxFile = File(otAllButLast + SUFFIX_INDEX)
-        val otTextFile = File(otAllButLast + SUFFIX_TEXT)
-        val otCompFile = File(otAllButLast + SUFFIX_COMP)
+        val otAllButLast = NetUtil.lengthenURI(path, storageSeparator() + SwordConstants.FILE_OT + '.' + blockType.indicator + SUFFIX_PART1)!!.getPath()
+        val otIdxFile = StorageLocation(otAllButLast + SUFFIX_INDEX)
+        val otTextFile = StorageLocation(otAllButLast + SUFFIX_TEXT)
+        val otCompFile = StorageLocation(otAllButLast + SUFFIX_COMP)
 
-        val ntAllButLast = NetUtil.lengthenURI(path, File.separator + SwordConstants.FILE_NT + '.' + blockType.indicator + SUFFIX_PART1)!!.path
-        val ntIdxFile = File(ntAllButLast + SUFFIX_INDEX)
-        val ntTextFile = File(ntAllButLast + SUFFIX_TEXT)
-        val ntCompFile = File(ntAllButLast + SUFFIX_COMP)
+        val ntAllButLast = NetUtil.lengthenURI(path, storageSeparator() + SwordConstants.FILE_NT + '.' + blockType.indicator + SUFFIX_PART1)!!.getPath()
+        val ntIdxFile = StorageLocation(ntAllButLast + SUFFIX_INDEX)
+        val ntTextFile = StorageLocation(ntAllButLast + SUFFIX_TEXT)
+        val ntCompFile = StorageLocation(ntAllButLast + SUFFIX_COMP)
 
         // check whether exists to swallow any exception as before
-        if (otIdxFile.canRead()) {
+        if (storageCanRead(otIdxFile)) {
             try {
-                otCompRaf = RandomAccessFile(otIdxFile, FileUtil.MODE_READ)
-                otTextRaf = RandomAccessFile(otTextFile, FileUtil.MODE_READ)
-                otIdxRaf = RandomAccessFile(otCompFile, FileUtil.MODE_READ)
+                otCompRaf = storageOpenRandomAccess(otIdxFile, false)
+                otTextRaf = storageOpenRandomAccess(otTextFile, false)
+                otIdxRaf = storageOpenRandomAccess(otCompFile, false)
             } catch (ex: FileNotFoundException) {
                 //failed to open the files, so close them now
-                IOUtil.close(otCompRaf)
-                IOUtil.close(otTextRaf)
-                IOUtil.close(otIdxRaf)
+                closeStateSource(otCompRaf)
+                closeStateSource(otTextRaf)
+                closeStateSource(otIdxRaf)
 
                 jswordAssert(false) { ex }
                 LOGGER.error("Could not open OT", ex)
@@ -120,16 +118,16 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
 
         // why do swallow the exception and log. Can Books have one testament
         // without the other.
-        if (ntIdxFile.canRead()) {
+        if (storageCanRead(ntIdxFile)) {
             try {
-                ntCompRaf = RandomAccessFile(ntIdxFile, FileUtil.MODE_READ)
-                ntTextRaf = RandomAccessFile(ntTextFile, FileUtil.MODE_READ)
-                ntIdxRaf = RandomAccessFile(ntCompFile, FileUtil.MODE_READ)
+                ntCompRaf = storageOpenRandomAccess(ntIdxFile, false)
+                ntTextRaf = storageOpenRandomAccess(ntTextFile, false)
+                ntIdxRaf = storageOpenRandomAccess(ntCompFile, false)
             } catch (ex: FileNotFoundException) {
                 //failed to open the files, so close them now
-                IOUtil.close(ntCompRaf)
-                IOUtil.close(ntTextRaf)
-                IOUtil.close(ntIdxRaf)
+                closeStateSource(ntCompRaf)
+                closeStateSource(ntTextRaf)
+                closeStateSource(ntIdxRaf)
 
                 jswordAssert(false) { ex }
                 LOGGER.error("Could not open OT", ex)
@@ -138,12 +136,13 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
     }
 
     override fun releaseResources() {
-        IOUtil.close(ntCompRaf)
-        IOUtil.close(ntTextRaf)
-        IOUtil.close(ntIdxRaf)
-        IOUtil.close(otCompRaf)
-        IOUtil.close(otTextRaf)
-        IOUtil.close(otIdxRaf)
+        markResourcesClosed()
+        closeStateSource(ntCompRaf)
+        closeStateSource(ntTextRaf)
+        closeStateSource(ntIdxRaf)
+        closeStateSource(otCompRaf)
+        closeStateSource(otTextRaf)
+        closeStateSource(otIdxRaf)
         ntCompRaf = null
         ntTextRaf = null
         ntIdxRaf = null
@@ -158,7 +157,7 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
      * @param testament the testament for the index
      * @return the index for the testament
      */
-    open fun getCompRaf(testament: Testament?): RandomAccessFile? {
+    open fun getCompRaf(testament: Testament?): RandomAccessSource? {
         return if (testament == Testament.NEW) ntCompRaf else otCompRaf
     }
 
@@ -168,7 +167,7 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
      * @param testament the testament for the index
      * @return the index for the testament
      */
-    open fun getTextRaf(testament: Testament?): RandomAccessFile? {
+    open fun getTextRaf(testament: Testament?): RandomAccessSource? {
         return if (testament == Testament.NEW) ntTextRaf else otTextRaf
     }
 
@@ -178,7 +177,7 @@ internal constructor(bookMetaData: BookMetaData, blockType: BlockType) : Abstrac
      * @param testament the testament for the index
      * @return the index for the testament
      */
-    open fun getIdxRaf(testament: Testament?): RandomAccessFile? {
+    open fun getIdxRaf(testament: Testament?): RandomAccessSource? {
         return if (testament == Testament.NEW) ntIdxRaf else otIdxRaf
     }
 

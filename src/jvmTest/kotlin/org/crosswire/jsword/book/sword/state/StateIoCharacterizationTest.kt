@@ -2,7 +2,7 @@ package org.crosswire.jsword.book.sword.state
 
 import java.io.File
 import java.nio.file.Files
-import org.crosswire.jsword.book.sword.SwordBookMetaDataJvm
+import org.crosswire.jsword.book.sword.SwordBookMetaData
 import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.versification.Testament
@@ -10,10 +10,9 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class StateIoCharacterizationTest {
-    private fun metadata(root: File) = SwordBookMetaDataJvm.create(
-        File(System.getProperty("ksword.fixturesDir"), "space dir/ä/mods.d/K4RawText.conf"),
-        File(System.getProperty("ksword.fixturesDir"), "space dir/ä").toURI()
-    ).apply { library = root.toURI(); putProperty("DataPath", "./literal\\module") }
+    private fun metadata(root: File) = SwordBookMetaData(
+        "[Probe]\nDataPath=./literal\\module\nModDrv=RawText\nLang=en\n".toByteArray(), "probe.conf"
+    ).apply { library = root.toURI() }
 
     @Test fun rawStateUsesLiteralFilesAndOwnsHandles() {
         val root = Files.createTempDirectory("state-io").toFile()
@@ -23,9 +22,10 @@ class StateIoCharacterizationTest {
             File(data, "ot.vss").writeBytes(byteArrayOf(1))
             val state = RawBackendState(metadata(root))
             val src = state.getTextRaf(Testament.OLD)!!
-            assertArrayEquals(byteArrayOf(7, 8), SwordUtil.readRAF(src, 0, 4))
-            assertNull(state.getTextRaf(Testament.NEW))
-            state.releaseResources()
+            try {
+                assertArrayEquals(byteArrayOf(7, 8), SwordUtil.readRAF(src, 0, 4))
+                assertNull(state.getTextRaf(Testament.NEW))
+            } finally { state.releaseResources() }
             assertNull(state.getTextRaf(Testament.OLD))
             assertThrows(java.io.IOException::class.java) { SwordUtil.readRAF(src, 0, 0) }
             state.releaseResources()

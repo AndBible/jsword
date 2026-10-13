@@ -34,7 +34,7 @@ import org.crosswire.jsword.versification.system.Versifications
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import java.io.IOException
-import java.io.RandomAccessFile
+import org.crosswire.common.util.RandomAccessSource
 
 /**
  * Both Books and Commentaries seem to use the same format so this class
@@ -256,7 +256,7 @@ open class RawBackend<T : RawBackendState>
      * @throws IOException
      */
     @Throws(IOException::class)
-    protected open fun getIndex(raf: RandomAccessFile?, entry: Long): DataIndex {
+    protected open fun getIndex(raf: RandomAccessSource?, entry: Long): DataIndex {
         // Read the offset and size for this key from the index
         val buffer = SwordUtil.readRAF(raf, entry * entrysize, entrysize)
         if (buffer.size == 0) {
@@ -289,8 +289,8 @@ open class RawBackend<T : RawBackendState>
      */
     @Throws(IOException::class)
     protected open fun getEntry(state: RawBackendState, name: String?, testament: Testament?, index: Long): String {
-        val idxRaf: RandomAccessFile?
-        val txtRaf: RandomAccessFile?
+        val idxRaf: RandomAccessSource?
+        val txtRaf: RandomAccessSource?
         idxRaf = state.getIdxRaf(testament)
         txtRaf = state.getTextRaf(testament)
 

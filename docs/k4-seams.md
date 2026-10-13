@@ -265,3 +265,28 @@ occurs afterwards. JVM scheduleWithFixedDelay also suppresses future runs when
 the task throws; the Native actual must cancel rather than allow an exception to
 escape into the C callback. This snippet is handoff design, not Native runtime
 evidence.
+
+## Task 8 state port closure
+
+All six state implementations retain lexical `StorageLocation` values and own
+`RandomAccessSource` handles opened through `storageOpenRandomAccess`, not Path.
+SwordUtil's six public RAF overloads use internal cursor operations preserving
+seek-before-size, delimiter inclusion, EOF shortening, null/empty writes and close
+ownership. RawBackend, ZVerseBackend, RawFileBackend and TreeKeyIndex received
+handle substitutions only, not Task 9 algorithm replacements.
+
+New JVM hook `storageAbsolute(StorageLocation): String` delegates to
+`File(location.spelling).absolutePath`, used only for unchanged diagnostics.
+Task 16 must declare a common expect and supply Native absolute spelling against
+the platform working directory without canonicalizing dot segments or backslashes.
+Existing permission/existence/separator and lexical open hooks are reused.
+`closeStateSource` is portable Kotlin/okio, suppressing IOException under the legacy
+IOUtil logger; it needs no platform actual.
+
+File accessors moved to `RawBackendStateJvm`, `RawLDBackendStateJvm` and
+`RawFileBackendStateJvm` (StateFilesJvm.kt); the latter also adapts the incfile
+setter. Holders stay JVM-only, internal location accessors stay with state code.
+No app caller of these state File accessors or RAF helpers exists. RawFileBackend
+is the sole production File-accessor caller. Protected File fields were removed;
+source fields retain protected visibility. Exact API removals/replacements have
+K4 split/stream entries in api-allowlist.txt.

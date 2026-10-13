@@ -19,16 +19,15 @@
  */
 package org.crosswire.jsword.book.sword.state
 
-import org.crosswire.common.util.IOUtil
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordUtil
 import org.crosswire.common.util.Logger
+import org.crosswire.common.util.RandomAccessSource
 import org.crosswire.common.util.LoggerFactory
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.IOException
+import org.crosswire.jsword.book.sword.*
+import okio.FileNotFoundException
+import okio.IOException
 
 /**
  * Stores the random access files required for processing the passage request
@@ -52,7 +51,7 @@ open class RawFileBackendState
  */
 @Throws(BookException::class)
 internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData) {
-    private var incfile: File? = null
+    private var incfile: StorageLocation? = null
     private var incfileValue = 0
 
     init {
@@ -63,7 +62,7 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
      * @see org.crosswire.jsword.book.sword.AbstractBackend#isWritable()
      */
     override fun isWritable(): Boolean {
-        val incFile = getIncfile()
+        val incFile = getIncLocation()
 
         if (existsAndCanReadAndWrite(otTextFile)
             && existsAndCanReadAndWrite(ntTextFile)
@@ -82,8 +81,8 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
      * @param file the file
      * @return true, if successful
      */
-    private fun existsAndCanReadAndWrite(file: File): Boolean {
-        return file.exists() && file.canRead() && file.canWrite()
+    private fun existsAndCanReadAndWrite(file: StorageLocation): Boolean {
+        return storageExists(file) && storageCanRead(file) && storageCanWrite(file)
     }
 
     @Throws(IOException::class)
@@ -96,11 +95,11 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
         }
 
         if (this.incfile != null) {
-            var fis: FileInputStream? = null
+            var fis: RandomAccessSource? = null
             try {
-                fis = FileInputStream(this.incfile!!)
-                val buffer = ByteArray(4)
-                if (fis.read(buffer) != 4) {
+                fis = storageOpenRandomAccess(this.incfile!!, false)
+                val buffer = fis.readNext(4)
+                if (buffer.size != 4) {
                     LOGGER.error("Read data is not of appropriate size of 4 bytes!")
                     throw IOException("Incfile is not 4 bytes long")
                 }
@@ -111,7 +110,7 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
             } catch (e: FileNotFoundException) {
                 LOGGER.error("Error on writing to incfile, file should exist already!: {}", e.message, e)
             } finally {
-                IOUtil.close(fis)
+                closeStateSource(fis)
             }
         }
 
@@ -120,8 +119,8 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
 
     private fun initIncFile() {
         try {
-            val tempIncfile = File(SwordUtil.getExpandedDataPath(getBookMetaData()).path + File.separator + INCFILE)
-            if (tempIncfile.exists()) {
+            val tempIncfile = StorageLocation(SwordUtil.getExpandedDataPath(getBookMetaData()).getPath() + storageSeparator() + INCFILE)
+            if (storageExists(tempIncfile)) {
                 this.incfile = tempIncfile
             }
         } catch (e: BookException) {
@@ -152,7 +151,7 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
     /**
      * @return the incfile
      */
-    open fun getIncfile(): File? {
+    internal fun getIncLocation(): StorageLocation? {
         if (incfile == null) {
             initIncFile()
         }
@@ -163,7 +162,7 @@ internal constructor(bookMetaData: BookMetaData) : RawBackendState(bookMetaData)
      * @param incfile
      * the incfile to set
      */
-    open fun setIncfile(incfile: File?) {
+    internal fun setIncLocation(incfile: StorageLocation?) {
         this.incfile = incfile
     }
 

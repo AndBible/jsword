@@ -34,7 +34,7 @@ class FileStateIoCharacterizationTest {
         val state = RawBackendState(metadata(literal))
         try {
             assertArrayEquals(byteArrayOf(7, 8, 9), SwordUtil.readRAF(state.getTextRaf(Testament.OLD), 0, 3))
-            assertEquals(File(literal, "./modules/probe/ot"), state.getTextFile(Testament.OLD))
+            assertEquals(File(literal, "./modules/probe/ot"), RawBackendStateJvm.getTextFile(state, Testament.OLD))
         } finally { state.releaseResources() }
     }
 
@@ -70,8 +70,8 @@ class FileStateIoCharacterizationTest {
         File(directory, "probe.dat").writeBytes(byteArrayOf())
         val empty = RawLDBackendState(metadata(root, "RawLD"))
         try {
-            assertEquals(0, empty.getIdxRaf()!!.length())
-            assertEquals(0, empty.getDatRaf()!!.length())
+            assertEquals(0, empty.getIdxRaf()!!.size())
+            assertEquals(0, empty.getDatRaf()!!.size())
         } finally { empty.releaseResources() }
     }
 }

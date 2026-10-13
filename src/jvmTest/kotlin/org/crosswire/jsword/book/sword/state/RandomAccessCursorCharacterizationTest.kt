@@ -5,6 +5,7 @@ import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.file.Files
 import org.crosswire.jsword.book.sword.SwordUtil
+import org.crosswire.jsword.book.sword.LegacySwordIo
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -14,23 +15,23 @@ class RandomAccessCursorCharacterizationTest {
         try {
             file.writeBytes(byteArrayOf(1, 2, 0, 3, 4))
             RandomAccessFile(file, "r").use { raf ->
-                assertArrayEquals(byteArrayOf(1), SwordUtil.readRAF(raf, 0, 1))
+                assertArrayEquals(byteArrayOf(1), LegacySwordIo.readRAF(raf, 0, 1))
                 assertEquals(1L, raf.filePointer)
-                assertArrayEquals(byteArrayOf(2, 0), SwordUtil.readUntilRAF(raf, 0))
+                assertArrayEquals(byteArrayOf(2, 0), LegacySwordIo.readUntilRAF(raf, 0))
                 assertEquals(3L, raf.filePointer)
-                assertArrayEquals(byteArrayOf(3, 4), SwordUtil.readNextRAF(raf, 8))
+                assertArrayEquals(byteArrayOf(3, 4), LegacySwordIo.readNextRAF(raf, 8))
                 assertEquals(5L, raf.filePointer)
-                assertArrayEquals(byteArrayOf(), SwordUtil.readUntilRAF(raf, 0))
+                assertArrayEquals(byteArrayOf(), LegacySwordIo.readUntilRAF(raf, 0))
                 assertEquals(5L, raf.filePointer)
-                assertArrayEquals(byteArrayOf(3, 4), SwordUtil.readUntilRAF(raf, 3, 0))
+                assertArrayEquals(byteArrayOf(3, 4), LegacySwordIo.readUntilRAF(raf, 3, 0))
                 assertEquals(5L, raf.filePointer)
-                assertArrayEquals(byteArrayOf(), SwordUtil.readRAF(raf, 2, -1))
+                assertArrayEquals(byteArrayOf(), LegacySwordIo.readRAF(raf, 2, -1))
                 assertEquals(2L, raf.filePointer)
                 for (size in listOf(0, -1, 1)) {
-                    assertThrows(IOException::class.java) { SwordUtil.readRAF(raf, -1, size) }
+                    assertThrows(IOException::class.java) { LegacySwordIo.readRAF(raf, -1, size) }
                     assertEquals(2L, raf.filePointer)
                 }
-                assertThrows(IOException::class.java) { SwordUtil.writeRAF(raf, 0, byteArrayOf(9)) }
+                assertThrows(IOException::class.java) { LegacySwordIo.writeRAF(raf, 0, byteArrayOf(9)) }
                 assertEquals(0L, raf.filePointer)
             }
         } finally { file.delete() }
@@ -42,13 +43,13 @@ class RandomAccessCursorCharacterizationTest {
         try {
             RandomAccessFile(file, "rw").use { raf ->
                 assertTrue(file.exists())
-                SwordUtil.writeRAF(raf, 2, byteArrayOf(7, 8))
+                LegacySwordIo.writeRAF(raf, 2, byteArrayOf(7, 8))
                 assertEquals(4L, raf.filePointer)
                 assertArrayEquals(byteArrayOf(0, 0, 7, 8), file.readBytes())
-                SwordUtil.writeRAF(raf, 1, null)
+                LegacySwordIo.writeRAF(raf, 1, null)
                 assertEquals(1L, raf.filePointer)
-                SwordUtil.writeNextRAF(null, null)
-                assertThrows(IOException::class.java) { SwordUtil.writeRAF(raf, -1, null) }
+                LegacySwordIo.writeNextRAF(null, null)
+                assertThrows(IOException::class.java) { LegacySwordIo.writeRAF(raf, -1, null) }
             }
         } finally { root.deleteRecursively() }
     }

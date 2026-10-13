@@ -77,12 +77,6 @@ org.crosswire.jsword.book.sword.SwordUtil + M public static encodeLittleEndian16
 org.crosswire.jsword.book.sword.SwordUtil + M public static encodeLittleEndian32(int,byte[],int): void throws [] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
 org.crosswire.jsword.book.sword.SwordUtil + M public static findByte(byte[],byte): int throws [] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
 org.crosswire.jsword.book.sword.SwordUtil + M public static findByte(byte[],int,byte): int throws [] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
-org.crosswire.jsword.book.sword.SwordUtil + M public static readNextRAF(java.io.RandomAccessFile,int): byte[] throws [java.io.IOException] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
-org.crosswire.jsword.book.sword.SwordUtil + M public static readRAF(java.io.RandomAccessFile,long,int): byte[] throws [java.io.IOException] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
-org.crosswire.jsword.book.sword.SwordUtil + M public static readUntilRAF(java.io.RandomAccessFile,byte): byte[] throws [java.io.IOException] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
-org.crosswire.jsword.book.sword.SwordUtil + M public static readUntilRAF(java.io.RandomAccessFile,int,byte): byte[] throws [java.io.IOException] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
-org.crosswire.jsword.book.sword.SwordUtil + M public static writeNextRAF(java.io.RandomAccessFile,byte[]): void throws [java.io.IOException] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
-org.crosswire.jsword.book.sword.SwordUtil + M public static writeRAF(java.io.RandomAccessFile,long,byte[]): void throws [java.io.IOException] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
 org.crosswire.jsword.book.sword.SwordUtil - M protected static decodeLittleEndian16(byte[],int): int throws [] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
 org.crosswire.jsword.book.sword.SwordUtil - M protected static encodeLittleEndian16(int,byte[],int): void throws [] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
 org.crosswire.jsword.book.sword.SwordUtil - M protected static encodeLittleEndian32(int,byte[],int): void throws [] # Java protected static = package access for the other sword classes; a Kotlin companion member cannot be protected and the Kotlin sword classes (same package) could not call a protected one, so it is public.
@@ -378,3 +372,58 @@ org.crosswire.jsword.book.sword.SwordBookPath + M public static getSwordPath(): 
 org.crosswire.jsword.book.sword.SwordBookPath + M public static setAugmentPath(okio.Path[]): void throws [org.crosswire.jsword.book.BookException] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
 org.crosswire.jsword.book.sword.SwordBookPath + M public static setDownloadDir(okio.Path): void throws [] # K4 split: File/Writer boundary moved to JVM holder, Path core retained
 org.crosswire.jsword.book.sword.SwordBookMetaData + K public (org.crosswire.jsword.book.sword.StorageLocation,java.net.URI) throws [java.io.IOException,org.crosswire.jsword.book.BookException] # K4 seam: internal lexical File IO constructor preserves JVM spelling; Kotlin internal constructor is JVM public
+org.crosswire.jsword.book.sword.RawBackend - M protected getIndex(java.io.RandomAccessFile,long): org.crosswire.jsword.book.sword.DataIndex throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.RawBackend + M protected getIndex(org.crosswire.common.util.RandomAccessSource,long): org.crosswire.jsword.book.sword.DataIndex throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.RawFileBackend - M protected updateIndexFile(java.io.RandomAccessFile,long,long): void throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.RawFileBackend + M protected updateIndexFile(org.crosswire.common.util.RandomAccessSource,long,long): void throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.SwordUtil + M public static readNextRAF(org.crosswire.common.util.RandomAccessSource,int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.SwordUtil + M public static readRAF(org.crosswire.common.util.RandomAccessSource,long,int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.SwordUtil + M public static readUntilRAF(org.crosswire.common.util.RandomAccessSource,byte): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.SwordUtil + M public static readUntilRAF(org.crosswire.common.util.RandomAccessSource,int,byte): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.SwordUtil + M public static writeNextRAF(org.crosswire.common.util.RandomAccessSource,byte[]): void throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.SwordUtil + M public static writeRAF(org.crosswire.common.util.RandomAccessSource,long,byte[]): void throws [java.io.IOException] # K4 stream
+org.crosswire.jsword.book.sword.ZVerseBackend - M public dumpCompRaf(java.io.RandomAccessFile): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZVerseBackend - M public dumpIdxRaf(org.crosswire.jsword.versification.Versification,int,java.io.RandomAccessFile): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZVerseBackend + M public dumpCompRaf(org.crosswire.common.util.RandomAccessSource): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.ZVerseBackend + M public dumpIdxRaf(org.crosswire.jsword.versification.Versification,int,org.crosswire.common.util.RandomAccessSource): void throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.GenBookBackendState - M public getBdtRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.GenBookBackendState + M public getBdtRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected ntIdxFile: java.io.File # K4 split
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected ntIdxRaf: java.io.RandomAccessFile # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected ntTextFile: java.io.File # K4 split
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected ntTextRaf: java.io.RandomAccessFile # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected otIdxFile: java.io.File # K4 split
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected otIdxRaf: java.io.RandomAccessFile # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected otTextFile: java.io.File # K4 split
+org.crosswire.jsword.book.sword.state.RawBackendState - F protected otTextRaf: java.io.RandomAccessFile # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - M public getIdxFile(org.crosswire.jsword.versification.Testament): java.io.File throws [] # K4 split
+org.crosswire.jsword.book.sword.state.RawBackendState - M public getIdxRaf(org.crosswire.jsword.versification.Testament): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - M public getNtTextRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - M public getOtTextRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState - M public getTextFile(org.crosswire.jsword.versification.Testament): java.io.File throws [] # K4 split
+org.crosswire.jsword.book.sword.state.RawBackendState - M public getTextRaf(org.crosswire.jsword.versification.Testament): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + F protected ntIdxRaf: org.crosswire.common.util.RandomAccessSource # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + F protected ntTextRaf: org.crosswire.common.util.RandomAccessSource # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + F protected otIdxRaf: org.crosswire.common.util.RandomAccessSource # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + F protected otTextRaf: org.crosswire.common.util.RandomAccessSource # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + M public getIdxRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + M public getNtTextRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + M public getOtTextRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawBackendState + M public getTextRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawFileBackendState - M public getIncfile(): java.io.File throws [] # K4 split
+org.crosswire.jsword.book.sword.state.RawFileBackendState - M public setIncfile(java.io.File): void throws [] # K4 split
+org.crosswire.jsword.book.sword.state.RawLDBackendState - M public getDatRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawLDBackendState - M public getIdxFile(): java.io.File throws [] # K4 split
+org.crosswire.jsword.book.sword.state.RawLDBackendState - M public getIdxRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawLDBackendState + M public getDatRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.RawLDBackendState + M public getIdxRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZLDBackendState - M public getZdtRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZLDBackendState - M public getZdxRaf(): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZLDBackendState + M public getZdtRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZLDBackendState + M public getZdxRaf(): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZVerseBackendState - M public getCompRaf(org.crosswire.jsword.versification.Testament): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZVerseBackendState - M public getIdxRaf(org.crosswire.jsword.versification.Testament): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZVerseBackendState - M public getTextRaf(org.crosswire.jsword.versification.Testament): java.io.RandomAccessFile throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZVerseBackendState + M public getCompRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZVerseBackendState + M public getIdxRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream
+org.crosswire.jsword.book.sword.state.ZVerseBackendState + M public getTextRaf(org.crosswire.jsword.versification.Testament): org.crosswire.common.util.RandomAccessSource throws [] # K4 stream

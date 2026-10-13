@@ -120,7 +120,7 @@ open class RawLDBackend<T : RawLDBackendState>
             state = initState()
 
             if (state.size == -1) {
-                state.size = (state.getIdxRaf()!!.length() / entrysize).toInt()
+                state.size = (state.getIdxRaf()!!.size() / entrysize).toInt()
             }
             return state.size
         } catch (e: BookException) {

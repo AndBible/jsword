@@ -3,6 +3,7 @@ package org.crosswire.common.util
 import okio.Path.Companion.toOkioPath
 import okio.use
 import org.crosswire.jsword.book.sword.SwordUtil
+import org.crosswire.jsword.book.sword.LegacySwordIo
 import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 import java.io.File
@@ -23,7 +24,7 @@ class RandomAccessSourceParityTest {
             RandomAccessFile(f, "r").use { raf ->
                 RandomAccessSource.open(f.toOkioPath()).use { src ->
                     for ((off, size) in cases) {
-                        assertArrayEquals("off=$off size=$size", SwordUtil.readRAF(raf, off, size), src.read(off, size))
+                        assertArrayEquals("off=$off size=$size", LegacySwordIo.readRAF(raf, off, size), src.read(off, size))
                     }
                 }
             }
