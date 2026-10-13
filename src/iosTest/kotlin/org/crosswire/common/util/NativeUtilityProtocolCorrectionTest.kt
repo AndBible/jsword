@@ -5,6 +5,7 @@ package org.crosswire.common.util
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.test.*
+import okio.use
 import okio.IOException
 
 class NativeUtilityProtocolCorrectionTest {
@@ -28,6 +29,7 @@ class NativeUtilityProtocolCorrectionTest {
             assertFailsWith<IOException> { netCheckResource(remote) }
             assertFailsWith<IOException> { netLoadProperties(KUri("FILE://remote.invalid$path")) }
         } finally { unlink(path) }
+        Unit
     }
 
     @Test fun relativeUrisRetainArgumentFailureAndUppercaseHttpsUsesHost() {

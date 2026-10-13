@@ -1,9 +1,8 @@
 package org.crosswire.common.progress
 
-import org.junit.Test
 import kotlin.test.*
 
-/** Moves to commonTest with Job in Task 16. */
+/** Moved from jvmTest with Job; original assertions and call counts unchanged. */
 class JobCancellerTest {
     @Test fun hostCancellerRunsAfterCompletionAndOnlyOnceSequentially() {
         var calls = 0

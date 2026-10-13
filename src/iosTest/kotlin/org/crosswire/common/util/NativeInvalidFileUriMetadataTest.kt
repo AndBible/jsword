@@ -5,6 +5,7 @@ package org.crosswire.common.util
 import kotlinx.cinterop.*
 import platform.posix.*
 import kotlin.test.*
+import okio.use
 
 class NativeInvalidFileUriMetadataTest {
     @Test fun decodedNulCannotReadExistingPrefixMetadata() = memScoped {
