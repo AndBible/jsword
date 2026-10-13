@@ -380,7 +380,7 @@ open class ZVerseBackend
 
             decipher(data)
 
-            uncompressed = CompressorType.fromString(compressType)!!.getCompressor(data).uncompress(uncompressedSize).toByteArray()
+            uncompressed = CompressorType.fromString(compressType)!!.getCompressor(data).uncompress(uncompressedSize)
 
             // cache the uncompressed data for next time
             rafBook.lastBlockNum = blockNum

@@ -19,16 +19,8 @@
  */
 package org.crosswire.common.compress
 
-import java.io.BufferedInputStream
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
-
-import org.apache.commons.compress.compressors.CompressorInputStream
-import org.apache.commons.compress.compressors.CompressorOutputStream
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
-import org.apache.commons.compress.utils.IOUtils
+import okio.IOException
+import kotlin.jvm.Throws
 
 /**
  * BZip2 manages the compression and uncompression of BZip2 data.
@@ -39,41 +31,13 @@ import org.apache.commons.compress.utils.IOUtils
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-open class BZip2(input: InputStream) : AbstractCompressor(input) {
-    /* (non-Javadoc)
-     * @see org.crosswire.common.compress.Compressor#compress()
-     */
+open class BZip2(input: ByteArray) : AbstractCompressor(input) {
     @Throws(IOException::class)
-    override fun compress(): ByteArrayOutputStream {
-        val bin = BufferedInputStream(input)
-        val bos = ByteArrayOutputStream()
-        val out: CompressorOutputStream = BZip2CompressorOutputStream(bos)
-        IOUtils.copy(bin, out)
-        bin.close()
-        out.flush()
-        out.close()
-        return bos
-    }
+    override fun compress(): ByteArray = platformCompress(CompressorType.BZIP2, input)
 
-    /* (non-Javadoc)
-     * @see org.crosswire.common.compress.Compressor#uncompress()
-     */
     @Throws(IOException::class)
-    override fun uncompress(): ByteArrayOutputStream {
-        return uncompress(Compressor.BUF_SIZE)
-    }
+    override fun uncompress(): ByteArray = uncompress(Compressor.BUF_SIZE)
 
-    /* (non-Javadoc)
-     * @see org.crosswire.common.compress.Compressor#uncompress(int)
-     */
     @Throws(IOException::class)
-    override fun uncompress(expectedLength: Int): ByteArrayOutputStream {
-        val out = ByteArrayOutputStream(expectedLength)
-        val cin: CompressorInputStream = BZip2CompressorInputStream(input)
-        IOUtils.copy(cin, out)
-        cin.close()
-        out.flush()
-        out.close()
-        return out
-    }
+    override fun uncompress(expectedLength: Int): ByteArray = platformUncompress(CompressorType.BZIP2, input, expectedLength)
 }

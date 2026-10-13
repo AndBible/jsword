@@ -22,8 +22,8 @@
  */
 package org.crosswire.common.compress
 
-import java.io.ByteArrayOutputStream
-import java.io.IOException
+import okio.IOException
+import kotlin.jvm.Throws
 
 /**
  * A compressor provides the ability to compress and uncompress block text.
@@ -48,7 +48,7 @@ interface Compressor {
      * @throws IOException if an exception is encountered
      */
     @Throws(IOException::class)
-    fun compress(): ByteArrayOutputStream
+    fun compress(): ByteArray
 
     /**
      * Uncompresses the input and provides the result.
@@ -57,7 +57,7 @@ interface Compressor {
      * @throws IOException if an exception is encountered
      */
     @Throws(IOException::class)
-    fun uncompress(): ByteArrayOutputStream
+    fun uncompress(): ByteArray
 
     /**
      * Uncompresses the input and provides the result.
@@ -68,5 +68,5 @@ interface Compressor {
      * @throws IOException if an exception is encountered
      */
     @Throws(IOException::class)
-    fun uncompress(expectedLength: Int): ByteArrayOutputStream
+    fun uncompress(expectedLength: Int): ByteArray
 }

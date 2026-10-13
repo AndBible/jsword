@@ -98,7 +98,7 @@ open class ZLDBackend
                 decipher(temp)
 
                 val compressType = bookMetaData.getProperty(SwordBookMetaData.KEY_COMPRESS_TYPE)
-                uncompressed = CompressorType.fromString(compressType)!!.getCompressor(temp).uncompress().toByteArray()
+                uncompressed = CompressorType.fromString(compressType)!!.getCompressor(temp).uncompress()
 
                 // cache the uncompressed data for next time
                 state.lastBlockNum = blockNum

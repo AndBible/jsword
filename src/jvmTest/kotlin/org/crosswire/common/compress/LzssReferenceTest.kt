@@ -11,8 +11,8 @@ import org.crosswire.ksword.reference.LzssJavaStreams
 
 /** Independent frozen stream reference; remains JVM-only after Tasks 16-17. */
 class LzssReferenceTest {
-    private fun compressed(input: ByteArray) = LZSS(ByteArrayInputStream(input)).compress().toByteArray()
-    private fun expanded(input: ByteArray, length: Int) = LZSS(ByteArrayInputStream(input)).uncompress(length).toByteArray()
+    private fun compressed(input: ByteArray) = LZSS(input).compress()
+    private fun expanded(input: ByteArray, length: Int) = LZSS(input).uncompress(length)
 
     @Test fun corpusMatchesFrozenReference() {
         val random = Random(0x4c5a5353)

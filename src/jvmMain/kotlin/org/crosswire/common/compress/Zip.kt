@@ -19,9 +19,8 @@
  */
 package org.crosswire.common.compress
 
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
+import okio.IOException
+import kotlin.jvm.Throws
 
 /**
  * Zip manages the compression and uncompression of Zip files.
@@ -32,40 +31,13 @@ import java.io.InputStream
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-open class Zip(input: InputStream) : AbstractCompressor(input) {
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.crosswire.common.compress.Compressor#compress()
-     */
+open class Zip(input: ByteArray) : AbstractCompressor(input) {
     @Throws(IOException::class)
-    override fun compress(): ByteArrayOutputStream {
-        val bytes = input.use { it.readBytes() }
-        val bos = ByteArrayOutputStream()
-        bos.write(Zlib.deflate(bytes))
-        return bos
-    }
+    override fun compress(): ByteArray = Zlib.deflate(input)
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.crosswire.common.compress.Compressor#uncompress()
-     */
     @Throws(IOException::class)
-    override fun uncompress(): ByteArrayOutputStream {
-        return uncompress(Compressor.BUF_SIZE)
-    }
+    override fun uncompress(): ByteArray = uncompress(Compressor.BUF_SIZE)
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.crosswire.common.compress.Compressor#uncompress(int)
-     */
     @Throws(IOException::class)
-    override fun uncompress(expectedLength: Int): ByteArrayOutputStream {
-        val bytes = input.use { it.readBytes() }
-        val out = ByteArrayOutputStream(expectedLength)
-        out.write(Zlib.inflate(bytes, expectedLength))
-        return out
-    }
+    override fun uncompress(expectedLength: Int): ByteArray = Zlib.inflate(input, expectedLength)
 }

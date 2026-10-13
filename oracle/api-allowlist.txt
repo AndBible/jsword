@@ -441,3 +441,55 @@ org.crosswire.jsword.book.sword.ZLDBackend + K protected (org.crosswire.jsword.b
 org.crosswire.jsword.book.sword.ZLDBackend + M protected portableBackendClone(): java.lang.Object throws [] # K4 seam
 org.crosswire.jsword.book.sword.AbstractKeyBackend - F private-or-package static final serialVersionUID: long = -2782112117361556089 # K3 D1
 org.crosswire.jsword.book.sword.RawFileBackend - M protected updateDataFile(long,java.io.File): void throws [java.io.IOException] # K4 split
+
+# K4 T10 ByteArray compressor API.
+org.crosswire.common.compress.AbstractCompressor - F protected input: java.io.InputStream # K4 stream
+org.crosswire.common.compress.AbstractCompressor - K public (java.io.InputStream) throws [] # K4 stream
+org.crosswire.common.compress.AbstractCompressor + F protected final input: byte[] # K4 stream
+org.crosswire.common.compress.AbstractCompressor + K public (byte[]) throws [] # K4 stream
+org.crosswire.common.compress.BZip2 - K public (java.io.InputStream) throws [] # K4 stream
+org.crosswire.common.compress.BZip2 - M public compress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.BZip2 - M public uncompress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.BZip2 - M public uncompress(int): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.BZip2 + K public (byte[]) throws [] # K4 stream
+org.crosswire.common.compress.BZip2 + M public compress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.BZip2 + M public uncompress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.BZip2 + M public uncompress(int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Compressor - M public abstract compress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Compressor - M public abstract uncompress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Compressor - M public abstract uncompress(int): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Compressor + M public abstract compress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Compressor + M public abstract uncompress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Compressor + M public abstract uncompress(int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Gzip - K public (java.io.InputStream) throws [] # K4 stream
+org.crosswire.common.compress.Gzip - M public compress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Gzip - M public uncompress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Gzip - M public uncompress(int): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Gzip + K public (byte[]) throws [] # K4 stream
+org.crosswire.common.compress.Gzip + M public compress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Gzip + M public uncompress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Gzip + M public uncompress(int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.LZSS - K public (java.io.InputStream) throws [] # K4 stream
+org.crosswire.common.compress.LZSS - M public compress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.LZSS - M public uncompress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.LZSS - M public uncompress(int): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.LZSS + K public (byte[]) throws [] # K4 stream
+org.crosswire.common.compress.LZSS + M public compress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.LZSS + M public uncompress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.LZSS + M public uncompress(int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.XZ - K public (java.io.InputStream) throws [] # K4 stream
+org.crosswire.common.compress.XZ - M public compress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.XZ - M public uncompress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.XZ - M public uncompress(int): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.XZ + K public (byte[]) throws [] # K4 stream
+org.crosswire.common.compress.XZ + M public compress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.XZ + M public uncompress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.XZ + M public uncompress(int): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Zip - K public (java.io.InputStream) throws [] # K4 stream
+org.crosswire.common.compress.Zip - M public compress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Zip - M public uncompress(): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Zip - M public uncompress(int): java.io.ByteArrayOutputStream throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Zip + K public (byte[]) throws [] # K4 stream
+org.crosswire.common.compress.Zip + M public compress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Zip + M public uncompress(): byte[] throws [java.io.IOException] # K4 stream
+org.crosswire.common.compress.Zip + M public uncompress(int): byte[] throws [java.io.IOException] # K4 stream

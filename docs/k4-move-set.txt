@@ -3,14 +3,14 @@ org/crosswire/common/activate/Activatable.kt #done
 org/crosswire/common/activate/Activator.kt #done
 org/crosswire/common/activate/Kill.kt #done
 org/crosswire/common/activate/Lock.kt #done
-org/crosswire/common/compress/AbstractCompressor.kt
-org/crosswire/common/compress/BZip2.kt
-org/crosswire/common/compress/Compressor.kt
-org/crosswire/common/compress/CompressorType.kt
-org/crosswire/common/compress/Gzip.kt
-org/crosswire/common/compress/LZSS.kt
-org/crosswire/common/compress/XZ.kt
-org/crosswire/common/compress/Zip.kt
+org/crosswire/common/compress/AbstractCompressor.kt #done
+org/crosswire/common/compress/BZip2.kt #done
+org/crosswire/common/compress/Compressor.kt #done
+org/crosswire/common/compress/CompressorType.kt #done
+org/crosswire/common/compress/Gzip.kt #done
+org/crosswire/common/compress/LZSS.kt #done
+org/crosswire/common/compress/XZ.kt #done
+org/crosswire/common/compress/Zip.kt #done
 org/crosswire/common/progress/Job.kt
 org/crosswire/common/progress/JobManager.kt
 org/crosswire/common/progress/Progress.kt

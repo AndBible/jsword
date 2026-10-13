@@ -19,9 +19,9 @@
  */
 package org.crosswire.common.compress
 
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
+import okio.Buffer
+import okio.IOException
+import kotlin.jvm.Throws
 import org.crosswire.common.util.jswordAssert
 
 /**
@@ -126,7 +126,7 @@ import org.crosswire.common.util.jswordAssert
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-open class LZSS(input: InputStream) : AbstractCompressor(input) {
+open class LZSS(input: ByteArray) : AbstractCompressor(input) {
     /**
      * The ring buffer. It contains "nodes" of uncompressed text that can be
      * indexed by position. That is, a substring of the ring buffer can be
@@ -191,7 +191,18 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
     /**
      * The output stream containing the result.
      */
-    private lateinit var out: ByteArrayOutputStream
+    private lateinit var out: Buffer
+    private var inputPosition = 0
+
+    private fun readByte(): Int = if (inputPosition < input.size) input[inputPosition++].toInt() and 0xff else -1
+
+    private fun readBytes(target: ByteArray, offset: Int, length: Int): Int {
+        if (inputPosition == input.size) return -1
+        val count = minOf(length, input.size - inputPosition)
+        input.copyInto(target, offset, inputPosition, inputPosition + count)
+        inputPosition += count
+        return count
+    }
 
     /**
      * Compresses the input. Java `short` locals are kept as `Int` here; every
@@ -199,8 +210,8 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
      * array elements are narrowed explicitly.
      */
     @Throws(IOException::class)
-    override fun compress(): ByteArrayOutputStream {
-        out = ByteArrayOutputStream(Compressor.BUF_SIZE)
+    override fun compress(): ByteArray {
+        out = Buffer()
 
         var i = 0 // an iterator
         var r: Int // node number in the binary tree
@@ -255,11 +266,11 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
         // This function loads the buffer with up to MAX_STORE_LENGTH characters
         // and returns
         // the actual amount loaded.
-        var readResult = input.read(ringBuffer, r, MAX_STORE_LENGTH)
+        var readResult = readBytes(ringBuffer, r, MAX_STORE_LENGTH)
 
         // Make sure there is something to be compressed.
         if (readResult <= 0) {
-            return out
+            return out.readByteArray()
         }
 
         len = readResult
@@ -328,7 +339,7 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
             while (i < lastMatchLength) {
 
                 // Get next character...
-                readResult = input.read()
+                readResult = readByte()
                 if (readResult == -1) {
                     break
                 }
@@ -412,17 +423,18 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
             out.write(codeBuff, 0, codeBufPos)
         }
 
-        return out
+        return out.readByteArray()
     }
 
     @Throws(IOException::class)
-    override fun uncompress(): ByteArrayOutputStream {
+    override fun uncompress(): ByteArray {
         return uncompress(Compressor.BUF_SIZE)
     }
 
     @Throws(IOException::class)
-    override fun uncompress(expectedLength: Int): ByteArrayOutputStream {
-        out = ByteArrayOutputStream(expectedLength)
+    override fun uncompress(expectedLength: Int): ByteArray {
+        require(expectedLength >= 0) { "Negative initial size: $expectedLength" }
+        out = Buffer()
 
         val c = ByteArray(MAX_STORE_LENGTH) // an array of chars
         var flags: Byte // 8 bits of flags
@@ -448,7 +460,7 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
                 flagCount--
             } else {
                 // Next byte must be a flag.
-                val readResult = input.read()
+                val readResult = readByte()
                 if (readResult == -1) {
                     break
                 }
@@ -465,11 +477,11 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
             // If the low order bit of the flag is now set, then we know
             // that the next byte is a single, unencoded character.
             if ((flags.toInt() and 1) != 0) {
-                if (input.read(c, 0, 1) != 1) {
+                if (readBytes(c, 0, 1) != 1) {
                     break
                 }
 
-                out.write(c[0].toInt())
+                out.writeByte(c[0].toInt())
 
                 // Add to buffer, and increment to next spot. Wrap at end.
                 ringBuffer[r] = c[0]
@@ -478,7 +490,7 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
                 // Otherwise, we know that the next two bytes are a
                 // <position,length> pair. The position is in 12 bits and
                 // the length is in 4 bits.
-                if (input.read(c, 0, 2) != 2) {
+                if (readBytes(c, 0, 2) != 2) {
                     break
                 }
 
@@ -505,7 +517,7 @@ open class LZSS(input: InputStream) : AbstractCompressor(input) {
                 out.write(c, 0, len)
             }
         }
-        return out
+        return out.readByteArray()
     }
 
     /**

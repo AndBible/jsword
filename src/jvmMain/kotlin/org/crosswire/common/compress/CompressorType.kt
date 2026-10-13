@@ -19,7 +19,7 @@
  */
 package org.crosswire.common.compress
 
-import java.io.ByteArrayInputStream
+import kotlin.jvm.JvmStatic
 import org.crosswire.common.util.jswordAssert
 
 /**
@@ -31,31 +31,31 @@ import org.crosswire.common.util.jswordAssert
 enum class CompressorType {
     ZIP {
         override fun getCompressor(input: ByteArray): Compressor {
-            return Zip(ByteArrayInputStream(input))
+            return Zip(input)
         }
     },
 
     LZSS {
         override fun getCompressor(input: ByteArray): Compressor {
-            return org.crosswire.common.compress.LZSS(ByteArrayInputStream(input))
+            return org.crosswire.common.compress.LZSS(input)
         }
     },
 
     BZIP2 {
         override fun getCompressor(input: ByteArray): Compressor {
-            return BZip2(ByteArrayInputStream(input))
+            return BZip2(input)
         }
     },
 
     GZIP {
         override fun getCompressor(input: ByteArray): Compressor {
-            return Gzip(ByteArrayInputStream(input))
+            return Gzip(input)
         }
     },
 
     XZ {
         override fun getCompressor(input: ByteArray): Compressor {
-            return org.crosswire.common.compress.XZ(ByteArrayInputStream(input))
+            return org.crosswire.common.compress.XZ(input)
         }
     };
 

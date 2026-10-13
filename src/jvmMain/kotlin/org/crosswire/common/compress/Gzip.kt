@@ -19,61 +19,26 @@
  */
 package org.crosswire.common.compress
 
-import java.io.BufferedInputStream
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
+import okio.Buffer
+import okio.GzipSink
+import okio.IOException
+import kotlin.jvm.Throws
 
-import org.apache.commons.compress.compressors.CompressorInputStream
-import org.apache.commons.compress.compressors.CompressorOutputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
-import org.apache.commons.compress.utils.IOUtils
-
-/**
- * GZip manages the compression and uncompression of GZip data.
- *
- * Create a GZip that is capable of transforming the input.
- * @param input to compress or uncompress.
- *
- * @see gnu.lgpl.License The GNU Lesser General Public License for details.
- * @author DM Smith
- */
-open class Gzip(input: InputStream) : AbstractCompressor(input) {
-    /* (non-Javadoc)
-     * @see org.crosswire.common.compress.Compressor#compress()
-     */
+/** Gzip block compressor; JVM decoding retains the legacy first-member contract. */
+open class Gzip(input: ByteArray) : AbstractCompressor(input) {
     @Throws(IOException::class)
-    override fun compress(): ByteArrayOutputStream {
-        val bin = BufferedInputStream(input)
-        val bos = ByteArrayOutputStream()
-        val out: CompressorOutputStream = GzipCompressorOutputStream(bos)
-        IOUtils.copy(bin, out)
-        bin.close()
-        out.flush()
-        out.close()
-        return bos
+    override fun compress(): ByteArray {
+        val output = Buffer()
+        GzipSink(output).use { it.write(Buffer().write(input), input.size.toLong()) }
+        return output.readByteArray().also {
+            // Commons-compress's default OS is unknown, unlike Okio's FAT default.
+            it[9] = 0xff.toByte()
+        }
     }
 
-    /* (non-Javadoc)
-     * @see org.crosswire.common.compress.Compressor#uncompress()
-     */
     @Throws(IOException::class)
-    override fun uncompress(): ByteArrayOutputStream {
-        return uncompress(Compressor.BUF_SIZE)
-    }
+    override fun uncompress(): ByteArray = uncompress(Compressor.BUF_SIZE)
 
-    /* (non-Javadoc)
-     * @see org.crosswire.common.compress.Compressor#uncompress(int)
-     */
     @Throws(IOException::class)
-    override fun uncompress(expectedLength: Int): ByteArrayOutputStream {
-        val out = ByteArrayOutputStream(expectedLength)
-        val cin: CompressorInputStream = GzipCompressorInputStream(input)
-        IOUtils.copy(cin, out)
-        cin.close()
-        out.flush()
-        out.close()
-        return out
-    }
+    override fun uncompress(expectedLength: Int): ByteArray = platformGzipUncompress(input, expectedLength)
 }

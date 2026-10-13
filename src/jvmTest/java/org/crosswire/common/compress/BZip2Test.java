@@ -40,7 +40,7 @@ import org.junit.Test;
 public class BZip2Test {
 
     @Test
-    public void testCompression() {
+    public void testCompression() throws IOException {
         InputStream kjvGenesis = null;
         try {
             kjvGenesis = ResourceUtil.getResourceAsStream("kjv_genesis.txt");
@@ -50,16 +50,16 @@ public class BZip2Test {
             Assert.fail();
         }
         // new ByteArrayInputStream("ATATAAAFFFF".getBytes()));
-        Compressor compressor = new BZip2(kjvGenesis);
-        ByteArrayOutputStream bosCompressed = null;
+        Compressor compressor = new BZip2(org.apache.commons.compress.utils.IOUtils.toByteArray(kjvGenesis));
+        byte[] bosCompressed = null;
         try {
             bosCompressed = compressor.compress();
         } catch (IOException e) {
             Assert.fail();
             return;
         }
-        Compressor uncompressor = new BZip2(new ByteArrayInputStream(bosCompressed.toByteArray()));
-        ByteArrayOutputStream bosUncompressed = null;
+        Compressor uncompressor = new BZip2(bosCompressed);
+        byte[] bosUncompressed = null;
         try {
             bosUncompressed = uncompressor.uncompress();
         } catch (IOException e) {
@@ -68,7 +68,7 @@ public class BZip2Test {
         }
         String result;
         try {
-            byte[] back = bosUncompressed.toByteArray();
+            byte[] back = bosUncompressed;
             result = new String(back, "UTF-8");
             Assert.assertTrue("round trip ZIP uncompression", PlatformTestUtils.startsWith(result, "^          \r?\nThe First Book of Moses, called Genesis"));
         } catch (UnsupportedEncodingException e) {

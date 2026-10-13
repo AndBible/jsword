@@ -22,7 +22,7 @@ object FixtureModuleWriter {
     private fun bytes(module: FixtureModule, text: String) = text.toByteArray(Charset.forName(
         if ("Encoding=Latin-1" in module.extras) "windows-1252" else "UTF-8"))
     private fun compressed(module: FixtureModule, data: ByteArray) = CompressorType.fromString(
-        module.extras.first { it.startsWith("CompressType=") }.substringAfter('='))!!.getCompressor(data).compress().toByteArray()
+        module.extras.first { it.startsWith("CompressType=") }.substringAfter('='))!!.getCompressor(data).compress()
     private fun cipher(module: FixtureModule, data: ByteArray): ByteArray {
         val key = module.extras.firstOrNull { it.startsWith("CipherKey=") }?.substringAfter('=') ?: return data
         val engine = Sapphire(bytes(module, key))

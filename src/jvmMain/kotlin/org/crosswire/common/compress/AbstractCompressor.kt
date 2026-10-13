@@ -19,7 +19,7 @@
  */
 package org.crosswire.common.compress
 
-import java.io.InputStream
+import kotlin.jvm.JvmField
 
 /**
  * A compressor provides the ability to compress and uncompress text.
@@ -27,7 +27,7 @@ import java.io.InputStream
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-abstract class AbstractCompressor(input: InputStream) : Compressor {
+abstract class AbstractCompressor(input: ByteArray) : Compressor {
     @JvmField
-    protected var input: InputStream = input
+    protected val input: ByteArray = input
 }

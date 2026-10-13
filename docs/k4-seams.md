@@ -402,3 +402,47 @@ backendDebugFailure handles caught source IOException; Appendable exceptions
 propagate (these old methods did not catch output writes). Arraycopy becomes
 copyInto on identical byte ranges. Compressor uncompress(...).toByteArray remains
 unchanged for Task 10.
+
+## Task 10 compression inventory (2026-10-13)
+
+All eight compressor move-set files are common-ready in jvmMain; Task 16 moves
+production. `CompressorRoundTripTest` temporarily resides in jvmTest because its
+subjects are JVM-only. Move it to commonTest in Tasks 16-17. Differential tests
+and frozen Java-stream references remain JVM-only.
+
+`CompressorPlatform.jvm.kt` currently contains plain internal helpers. Task 16
+adds common `CompressorPlatform.kt` declarations and changes these to actual:
+
+```kotlin
+internal expect fun platformCompress(type: CompressorType, input: ByteArray): ByteArray
+internal expect fun platformUncompress(type: CompressorType, input: ByteArray, expectedLength: Int): ByteArray
+internal expect fun platformGzipUncompress(input: ByteArray, expectedLength: Int): ByteArray
+```
+
+BZIP2/XZ JVM bodies retain BufferedInputStream, ByteArrayOutputStream, the default
+commons-compress constructors, IOUtils.copy and original close/flush ordering.
+The iOS BZIP2/XZ actuals must both throw
+`BookException("unsupported compression on this platform: $type")`, including
+compression. Add typed-error coverage in iosTest/Tasks 16-17. XZ functional JVM
+verification remains a gap: commons-compress 1.12 has optional tukaani-xz, absent
+from this build runtime, so the baseline compression raises NoClassDefFoundError
+for org/tukaani/xz/FilterOptions. This port does not repair that dependency.
+
+GZIP is supported, not an unsupported Native codec. Independent characterization
+proved Okio GzipSource is not a compatible decoder: concatenated members and
+trailing bytes are rejected rather than returning the first member; malformed
+short headers throw EOFException rather than legacy IOException. Controller
+approved the minimal gzip decoding seam, keeping the original commons-compress
+JVM body. Native must implement first-member-only decode, acceptance of trailing
+bytes/extra members, length-as-capacity (zero accepted, negative rejected), CRC
+and truncated-input errors matching the frozen reference. If that parser needs
+larger work, surface it in Task 16; do not replace it with an unsupported error.
+
+GZIP compression uses Okio GzipSink over Buffer with OS header byte 9 patched to
+255 (commons default unknown OS instead of Okio FAT=0). Independent byte-exact
+corpus checks cover all remaining header/body/trailer bytes. ZIP uses the existing
+Zlib unchanged, including IllegalArgumentException on uncompress(0). Therefore
+empty ZIP is tested via no-arg decode plus exact-length-zero failure rather than
+changing the legacy inflater to satisfy the plan's guessed roundtrip example.
+LZSS preserves constants/tree/ring behavior with indexed unsigned byte reads and
+Buffer output, including truncated token acceptance and negative-capacity error.
