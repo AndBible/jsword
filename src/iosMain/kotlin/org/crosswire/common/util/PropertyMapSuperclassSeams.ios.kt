@@ -5,7 +5,7 @@ actual open class PropertyMapSuperclass<K, V> actual constructor() : MutableMap<
 
     actual override val size: Int get() = backing.size
     actual override val keys: MutableSet<K> get() = backing.keys
-    actual override val values: MutableCollection<V> get() = backing.values
+    actual override val values: MutableCollection<V> get() = Values()
     actual override val entries: MutableSet<MutableMap.MutableEntry<K, V>> get() = backing.entries
 
     actual override fun isEmpty(): Boolean = backing.isEmpty()
@@ -16,6 +16,20 @@ actual open class PropertyMapSuperclass<K, V> actual constructor() : MutableMap<
     actual override fun remove(key: K): V? = backing.remove(key)
     actual override fun putAll(from: Map<out K, V>) = backing.putAll(from)
     actual override fun clear() = backing.clear()
+
+    /**
+     * Live value view with JVM `remove` semantics. Kotlin/Native's `LinkedHashMap.values.remove`
+     * scans from the newest entry and removes the last duplicate; `java.util.HashMap` removes the
+     * first one in iteration order. The inherited [AbstractMutableCollection.remove] scans forward
+     * through [iterator], which removes from [backing].
+     */
+    private inner class Values : AbstractMutableCollection<V>() {
+        override val size: Int get() = backing.size
+        override fun iterator(): MutableIterator<V> = backing.values.iterator()
+        override fun contains(element: V): Boolean = backing.containsValue(element)
+        override fun add(element: V): Boolean = throw UnsupportedOperationException()
+        override fun clear() = backing.clear()
+    }
 
     override fun equals(other: Any?): Boolean = this === other || backing == other
     override fun hashCode(): Int = backing.hashCode()
