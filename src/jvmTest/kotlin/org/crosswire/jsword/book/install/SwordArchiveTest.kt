@@ -774,4 +774,14 @@ class SwordArchiveTest {
             else assertTrue(outcome.isSuccess, name)
         }
     }
+
+    @Test fun visitConfZipDrainsEntriesLargerThanOneOkioSegment() = temp { root ->
+        val body = ByteArray(20000) { (it % 251).toByte() }
+        val buffer = okio.Buffer()
+        org.crosswire.common.util.StoredZipWriter.write(buffer, listOf("big.conf" to body))
+        val file = File(root, "big.zip").apply { writeBytes(buffer.readByteArray()) }
+        val visited = mutableListOf<Pair<String, List<Byte>>>()
+        SwordArchive.visitConfZipSpelling(file.path) { name, data -> visited.add(name to data.toList()) }
+        assertEquals(listOf("big.conf" to body.toList()), visited)
+    }
 }
