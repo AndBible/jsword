@@ -1,10 +1,15 @@
 package org.crosswire.common.util
 
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.io.PrintWriter
+import java.io.Reader
 import java.io.Writer
-import okio.Path.Companion.toPath
 
 /** JVM-only stream and file entry points for the common-ready INI section. */
 object IniSectionJvm {
@@ -12,18 +17,44 @@ object IniSectionJvm {
     @JvmOverloads
     @Throws(java.io.IOException::class)
     fun load(section: IniSection, input: InputStream?, encoding: String?, filter: Filter<String>? = null) {
-        input!!.use { section.load(it.readBytes(), encoding, filter) }
+        var reader: Reader? = null
+        try {
+            reader = InputStreamReader(input, encoding)
+            val buffered = BufferedReader(reader, 2 * 1024)
+            section.loadLines({ buffered.readLine() }, { buffered.close() }, filter)
+        } finally {
+            // Legacy finally-close replaces a body failure; failed construction never owns input.
+            reader?.close()
+        }
     }
 
     @JvmStatic
     @JvmOverloads
     @Throws(java.io.IOException::class)
-    fun load(section: IniSection, file: File?, encoding: String?, filter: Filter<String>? = null) =
-        section.load(file!!.path.toPath(), encoding, filter)
+    fun load(section: IniSection, file: File?, encoding: String?, filter: Filter<String>? = null) {
+        section.rememberSave(encoding, if (file == null) null else { { save(section, file, encoding) } })
+        var input: InputStream? = null
+        try {
+            input = FileInputStream(file)
+            load(section, input, encoding, filter)
+        } finally {
+            input?.close()
+        }
+    }
 
     @JvmStatic
     @Throws(java.io.IOException::class)
-    fun save(section: IniSection, file: File?, encoding: String?) = section.save(file!!.path.toPath(), encoding)
+    fun save(section: IniSection, file: File?, encoding: String?) {
+        section.rememberSave(encoding, if (file == null) null else { { save(section, file, encoding) } })
+        var output: Writer? = null
+        try {
+            // Keep exact File identity and open/truncate before charset construction.
+            output = OutputStreamWriter(FileOutputStream(file), encoding)
+            save(section, output)
+        } finally {
+            output?.close()
+        }
+    }
 
     @JvmStatic
     fun save(section: IniSection, output: Writer?) {

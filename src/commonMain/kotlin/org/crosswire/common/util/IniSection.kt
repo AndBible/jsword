@@ -305,6 +305,7 @@ class IniSection : Iterable<Any?> {
     @Throws(IOException::class)
     fun load(path: Path, encoding: String?, filter: Filter<String>? = null) {
         configFile = path
+        retainedSave = null
         charset = encoding
         load(KFiles.readBytes(path), encoding, filter)
     }
@@ -343,8 +344,12 @@ class IniSection : Iterable<Any?> {
      */
     @Throws(IOException::class)
     fun save() {
-        jswordAssert(configFile != null) { "" }
+        jswordAssert(configFile != null || retainedSave != null) { "" }
         jswordAssert(charset != null) { "" }
+        retainedSave?.let {
+            if (charset != null) it()
+            return
+        }
         if (configFile != null && charset != null) {
             save(configFile!!, charset)
         }
@@ -354,6 +359,7 @@ class IniSection : Iterable<Any?> {
     @Throws(IOException::class)
     fun save(path: Path, encoding: String?) {
         configFile = path
+        retainedSave = null
         charset = encoding
         val output = StringBuilder()
         save(output)
@@ -415,11 +421,24 @@ class IniSection : Iterable<Any?> {
         return values
     }
 
+    /** Instance-owned save target for retained platform entry points; never projected through Path. */
+    internal fun rememberSave(encoding: String?, save: (() -> Unit)?) {
+        configFile = null
+        charset = encoding
+        retainedSave = save
+    }
+
     @Throws(IOException::class)
     private fun doLoad(bin: Buffer, filter: Filter<String>?) {
+        loadLines({ readLine(bin) }, { bin.close() }, filter)
+    }
+
+    /** Parses incrementally; the platform owns decoding and supplies legacy line/close behavior. */
+    @Throws(IOException::class)
+    internal fun loadLines(readLine: () -> String?, close: () -> Unit, filter: Filter<String>?) {
         try {
             while (true) {
-                val line = advance(bin) ?: break
+                val line = advance(readLine) ?: break
 
                 if (isSectionLine(line)) {
                     // The conf file contains a leading line of the form [KJV]
@@ -436,7 +455,7 @@ class IniSection : Iterable<Any?> {
                 }
 
                 val key = line.substring(0, splitPos).trim { it <= ' ' }
-                val value = more(bin, line.substring(splitPos + 1).trim { it <= ' ' })
+                val value = more(readLine, line.substring(splitPos + 1).trim { it <= ' ' })
                 if (filter == null || filter.test(key)) {
                     add(key, value)
                 }
@@ -445,7 +464,7 @@ class IniSection : Iterable<Any?> {
             warnings!!.setLength(0)
 
         } finally {
-            bin.close()
+            close()
         }
     }
 
@@ -457,10 +476,10 @@ class IniSection : Iterable<Any?> {
      * @throws IOException if encountered
      */
     @Throws(IOException::class)
-    private fun advance(bin: Buffer): String? {
+    private fun advance(readLine: () -> String?): String? {
         // Get the next non-blank, non-comment line
         var trimmed: String? = null
-        var line = readLine(bin)
+        var line = readLine()
         while (line != null) {
             // Remove leading and trailing whitespace
             trimmed = line.trim { it <= ' ' }
@@ -471,7 +490,7 @@ class IniSection : Iterable<Any?> {
             if (!isCommentLine(trimmed)) {
                 return trimmed
             }
-            line = readLine(bin)
+            line = readLine()
         }
         return null
     }
@@ -534,7 +553,7 @@ class IniSection : Iterable<Any?> {
      * Get continuation lines, if any.
      */
     @Throws(IOException::class)
-    private fun more(bin: Buffer, value: String): String {
+    private fun more(readLine: () -> String?, value: String): String {
         var moreCowBell = false
         var line: String? = value
         val buf = StringBuilder()
@@ -547,7 +566,7 @@ class IniSection : Iterable<Any?> {
             buf.append(line)
             if (moreCowBell) {
                 buf.append('\n')
-                line = advance(bin)
+                line = advance(readLine)
                 // Is this new line a potential key line?
                 // It cannot both continue the prior
                 // and also be a key line.
@@ -581,6 +600,8 @@ class IniSection : Iterable<Any?> {
     private var section: MutableMap<String, MutableList<String>>
 
     private var configFile: Path? = null
+
+    private var retainedSave: (() -> Unit)? = null
 
     private var charset: String? = null
 
