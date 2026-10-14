@@ -38,6 +38,49 @@ class JobTickerPolicyTest {
         assertEquals(listOf(1_000L, 1_100L), starts)
     }
 
+    @Test fun earlyOneShotAfterBackwardClockStepIsRearmed() {
+        val clock = Clock()
+        var calls = 0
+        val scheduler = scheduler(clock)
+        scheduler.start(immediate = false) { calls++ }
+        clock.now = 900L
+        assertEquals(100L, scheduler.onTimerEvent(), "a consumed early one-shot must be rearmed")
+        assertEquals(0, calls, "wall-clock due time must still be respected")
+        clock.now = 1_000L
+        assertEquals(100L, scheduler.onTimerEvent())
+        assertEquals(1, calls)
+    }
+
+    @Test fun timerEventReturnsDelayWithoutResamplingAfterCallbackReturn() {
+        var samples = 0
+        val scheduler = JobTickerScheduler(periodMs = 100L) {
+            when (++samples) {
+                1, 2 -> 1_000L // Deferred start and callback admission.
+                3 -> 1_040L // Callback return.
+                else -> 9_000L // Must not be sampled to translate due-at back to delay.
+            }
+        }
+        scheduler.start(immediate = false) { }
+        assertEquals(60L, scheduler.onTimerEvent())
+        assertEquals(1_100L, scheduler.nextDueAt())
+        assertEquals(3, samples)
+    }
+
+    @Test fun callbackReturnUsesOneClockSampleAcrossAClockStep() {
+        var samples = 0
+        val scheduler = JobTickerScheduler(periodMs = 100L) {
+            when (++samples) {
+                1 -> 1_000L // Callback start.
+                2 -> 1_040L // Callback return.
+                else -> 9_000L // A wall-clock step must not change the already computed gap.
+            }
+        }
+        scheduler.start { }
+        scheduler.onCallbackReturned()
+        assertEquals(1_100L, scheduler.nextDueAt())
+        assertEquals(2, samples, "callback return must use a single clock sample")
+    }
+
     @Test fun slowCallbackStartsNextTickAfterDurationNotAfterAnotherPeriod() {
         val clock = Clock()
         val starts = mutableListOf<Long>()
@@ -80,11 +123,12 @@ class JobTickerPolicyTest {
         var finished = false
         val scheduler = scheduler(clock)
         lateinit var ticker: org.crosswire.common.util.Cancellable
-        ticker = scheduler.start {
+        ticker = scheduler.start(immediate = false) {
             calls++
             ticker.cancel()
             finished = true
         }
+        scheduler.onDue()
         assertEquals(1, calls)
         assertTrue(finished, "cancellation must not interrupt the active callback")
         scheduler.onCallbackReturned()

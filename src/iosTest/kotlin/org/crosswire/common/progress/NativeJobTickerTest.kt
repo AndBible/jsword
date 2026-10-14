@@ -42,10 +42,8 @@ class NativeJobTickerTest {
         val entered = AtomicInt(0)
         val finished = AtomicInt(0)
         val release = AtomicInt(0)
-        val holder = arrayOfNulls<org.crosswire.common.util.Cancellable>(1)
-        holder[0] = scheduleJobTicker(50L) {
+        val ticker = scheduleJobTicker(50L) {
             if (entered.incrementAndFetch() == 1) {
-                holder[0]!!.cancel()
                 for (i in 0 until 300) {
                     if (release.load() == 1) break
                     usleep(10_000u)
@@ -53,14 +51,22 @@ class NativeJobTickerTest {
                 finished.incrementAndFetch()
             }
         }
-        assertTrue(waitFor(3_000) { entered.load() >= 1 })
-        usleep(200_000u)
-        assertEquals(0, finished.load(), "the active callback must still be running after cancel")
-        release.incrementAndFetch()
-        assertTrue(waitFor(3_000) { finished.load() == 1 }, "cancel must not interrupt the callback")
-        val seen = entered.load()
-        usleep(300_000u)
-        assertEquals(seen, entered.load(), "no tick may start after cancellation")
+        try {
+            assertTrue(waitFor(3_000) { entered.load() >= 1 })
+            // The callback may start before scheduleJobTicker returns. Cancel from the caller
+            // after obtaining the handle, while the callback is still waiting for release.
+            ticker.cancel()
+            usleep(200_000u)
+            assertEquals(0, finished.load(), "the active callback must still be running after cancel")
+            release.store(1)
+            assertTrue(waitFor(3_000) { finished.load() == 1 }, "cancel must not interrupt the callback")
+            val seen = entered.load()
+            usleep(300_000u)
+            assertEquals(seen, entered.load(), "no tick may start after cancellation")
+        } finally {
+            release.store(1)
+            ticker.cancel()
+        }
     }
 
     @Test fun slowCallbackDoesNotQueueAnOverlappingTick() {

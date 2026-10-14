@@ -1,86 +1,112 @@
 package org.crosswire.common.progress
 
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import org.crosswire.common.util.Cancellable
 import org.crosswire.common.util.currentTimeMillis
 
 /**
- * Epoch-wall-clock, start-relative ticker policy used by the Native Job ticker.
+ * Epoch-wall-clock, start-relative policy used by the Native Job ticker.
  *
- * The callback is bound once, in [start], and every later firing goes through [onDue] and
- * [onCallbackReturned] with no arguments: the Native handler and the policy tests call the same
- * functions. The next tick is due at `max(thisStart + period, callbackReturn)`, so a callback
- * that outruns the period starts its successor at the return instant rather than one more period
- * after completion. A tick never overlaps another. Cancellation never interrupts the active
- * callback; it only suppresses the successor. An uncaught callback failure stops the ticker and
- * propagates to the caller, which makes it visible to the host.
- *
- * [now] is injectable so the policy is testable without a timer. The Native actual passes
- * [currentTimeMillis].
+ * State transitions and tick admission are synchronized, but user callbacks run outside the lock:
+ * cancellation suppresses the successor without interrupting or waiting for the active callback.
+ * The next tick is due after max(period, callback duration) measured from callback start.
+ * Uncaught callback failures stop the ticker and propagate to the host-facing handler.
+ * [now] is injectable for deterministic policy tests; Native uses [currentTimeMillis].
  */
 internal class JobTickerScheduler(
     private val periodMs: Long,
     private val now: () -> Long = ::currentTimeMillis,
 ) {
+    private val lock = SynchronizedObject()
     private var stopped = false
     private var active = false
     private var startedAt = 0L
     private var dueAt: Long? = null
     private var task: (() -> Unit)? = null
 
-    /** When the next tick may start, or null while a callback is active or the ticker has stopped. */
-    fun nextDueAt(): Long? = if (stopped || active) null else dueAt
+    /** Next wall-clock due instant, or null while active or stopped. */
+    fun nextDueAt(): Long? = synchronized(lock) { if (stopped || active) null else dueAt }
 
-    fun isStopped(): Boolean = stopped
+    fun isStopped(): Boolean = synchronized(lock) { stopped }
 
-    /**
-     * Validates the period, binds [task], then starts. The first tick runs immediately unless
-     * [immediate] is false, in which case it is armed at [now] so a cancel-before-first boundary
-     * is observable. A non-positive period is rejected before any callback and before any arming.
-     */
+    /** Binds the callback, validating before execution; deferred start permits cancel-before-first. */
     fun start(immediate: Boolean = true, task: () -> Unit): Cancellable {
         require(periodMs > 0) { "Job ticker period must be positive, was $periodMs" }
-        check(this.task == null) { "ticker already started" }
-        this.task = task
-        val ticker = Cancellable { stopped = true }
-        if (immediate) fire() else dueAt = now()
+        val callback = synchronized(lock) {
+            check(this.task == null) { "ticker already started" }
+            this.task = task
+            val sampledNow = now()
+            dueAt = sampledNow
+            if (immediate) claim(sampledNow) else null
+        }
+        val ticker = Cancellable { synchronized(lock) { stopped = true; dueAt = null } }
+        callback?.let { invokeCallback(it) }
         return ticker
     }
 
-    /** Fires the bound callback if a tick is due. Does nothing while one is active, before the due instant, or after stop. */
-    fun onDue() {
-        if (stopped || active) return
-        val due = dueAt ?: return
-        if (now() < due) return
-        fire()
+    /**
+     * Handles a consumed one-shot event, returning its relative rearm delay or null after stop.
+     * A backwards wall-clock step can make the event early: rearm for the remaining wall-clock
+     * gap rather than abandon the consumed timer. Admission and each delay use one clock sample.
+     */
+    fun onTimerEvent(): Long? {
+        val callback = synchronized(lock) {
+            if (stopped || active) return null
+            val due = dueAt ?: return null
+            val sampledNow = now()
+            if (sampledNow < due) return due - sampledNow
+            claim(sampledNow)
+        }
+        invokeCallback(callback)
+        return onCallbackReturned()
     }
 
-    /**
-     * Records that the active callback returned normally. A cancellation or failure that landed
-     * during the callback wins: no successor is armed. Must not be called after a failure, which
-     * has already cleared the active callback.
-     */
-    fun onCallbackReturned() {
+    /** Atomically admits a due tick; concurrent or premature firings do not re-enter it. */
+    fun onDue() {
+        val callback = synchronized(lock) { claimDue() } ?: return
+        invokeCallback(callback)
+    }
+
+    /** Records normal return and yields the relative delay computed from one return sample. */
+    fun onCallbackReturned(): Long? = synchronized(lock) {
         check(active) { "no active callback" }
         active = false
         if (stopped) {
             dueAt = null
-            return
+            return null
         }
-        val elapsed = (now() - startedAt).coerceAtLeast(0L)
-        // Start-relative: a fast callback waits out the remainder of the period; a slow one is due now.
-        dueAt = now() + if (elapsed >= periodMs) 0L else periodMs - elapsed
+        val returnedAt = now()
+        val elapsed = (returnedAt - startedAt).coerceAtLeast(0L)
+        val delay = if (elapsed >= periodMs) 0L else periodMs - elapsed
+        dueAt = returnedAt + delay
+        delay
     }
 
-    private fun fire() {
+    // Both admission helpers are called only while holding lock.
+    private fun claimDue(): (() -> Unit)? {
+        if (stopped || active) return null
+        val due = dueAt ?: return null
+        val sampledNow = now()
+        return if (sampledNow < due) null else claim(sampledNow)
+    }
+
+    private fun claim(sampledNow: Long): () -> Unit {
         active = true
         dueAt = null
-        startedAt = now()
+        startedAt = sampledNow
+        return task!!
+    }
+
+    private fun invokeCallback(callback: () -> Unit) {
         try {
-            task!!.invoke()
+            callback()
         } catch (failure: Throwable) {
-            stopped = true
-            active = false
-            dueAt = null
+            synchronized(lock) {
+                stopped = true
+                active = false
+                dueAt = null
+            }
             throw failure
         }
     }

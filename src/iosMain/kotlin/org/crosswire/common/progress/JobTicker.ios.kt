@@ -41,6 +41,8 @@ import platform.darwin.dispatch_time
 internal actual fun scheduleJobTicker(periodMs: Long, task: () -> Unit): Cancellable {
     // Rejects a non-positive period before any source exists, matching JVM Timer's ordering.
     val scheduler = JobTickerScheduler(periodMs) { currentTimeMillis() }
+    // Deferred start validates and binds without invoking user code or acquiring a source.
+    val ticker = scheduler.start(immediate = false, task)
     val queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)
     val timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0u, 0u, queue)!!
 
@@ -57,8 +59,8 @@ internal actual fun scheduleJobTicker(periodMs: Long, task: () -> Unit): Cancell
             dispatch_source_cancel(timer)
             return@dispatch_source_set_event_handler
         }
-        try {
-            scheduler.onDue()
+        val delay = try {
+            scheduler.onTimerEvent()
         } catch (failure: Throwable) {
             // Report before releasing the source, and contain a hook that itself throws, so the
             // original callback failure is what the host sees rather than the hook's exception.
@@ -66,26 +68,14 @@ internal actual fun scheduleJobTicker(periodMs: Long, task: () -> Unit): Cancell
             dispatch_source_cancel(timer)
             return@dispatch_source_set_event_handler
         }
-        if (scheduler.nextDueAt() != null) {
-            // The tick was not due yet, or it was skipped because the ticker had already stopped.
-            return@dispatch_source_set_event_handler
-        }
-        if (scheduler.isStopped()) {
-            // Cancelled during the callback: it ran to completion, and no successor is armed.
+        if (delay != null) {
+            arm(delay)
+        } else if (scheduler.isStopped()) {
             dispatch_source_cancel(timer)
-            return@dispatch_source_set_event_handler
-        }
-        scheduler.onCallbackReturned()
-        val next = scheduler.nextDueAt()
-        if (next == null) {
-            dispatch_source_cancel(timer)
-        } else {
-            arm((next - currentTimeMillis()).coerceAtLeast(0L))
         }
     }
     // Arms the first tick at now without running it, so a cancel issued before the handler runs
     // wins and the callback never starts.
-    val ticker = scheduler.start(immediate = false, task)
     arm(0L)
     dispatch_resume(timer)
     return Cancellable {
