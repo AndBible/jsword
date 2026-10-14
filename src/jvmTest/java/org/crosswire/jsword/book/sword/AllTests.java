@@ -32,6 +32,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({
     BackendTest.class,
+    ConfigEntryTableJvmTest.class,
     ConfigEntryTableTest.class,
     RawFileBackendTest.class,
     SwordBookDriverTest.class,

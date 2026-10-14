@@ -91,6 +91,9 @@ abstract class BookType
     @Throws(BookException::class)
     protected abstract fun getBackend(sbmd: SwordBookMetaData): Backend<*>
 
+    /** Opens the real backend without the platform-specific Book facade in common tests. */
+    internal fun getBackendForTest(sbmd: SwordBookMetaData): Backend<*> = getBackend(sbmd)
+
     /* (non-Javadoc)
      * @see java.lang.Enum#toString()
      */

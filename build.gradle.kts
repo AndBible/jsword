@@ -139,6 +139,69 @@ tasks.named<Test>("jvmTest") {
     exclude("org/crosswire/ksword/parity/**")
 }
 
+// The Native CLI test runner has no NSBundle resources. Embed only the frozen synthetic
+// test corpus, then iosTest provisions it into real on-disk files before opening backends.
+val generatedFixtureResourcesDir = layout.buildDirectory.dir("generated/ksword/iosTest/kotlin")
+val generateK4FixtureResources by tasks.registering {
+    val root = layout.projectDirectory.dir("src/commonTest/resources/k4-modules")
+    inputs.files(fileTree(root)).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedFixtureResourcesDir)
+    doLast {
+        check(root.file("manifest.tsv").asFile.isFile) { "Frozen k4-modules manifest is required" }
+        val files = root.asFile.walkTopDown().filter { it.isFile }.sortedBy { it.relativeTo(root.asFile).invariantSeparatorsPath }.toList()
+        val out = generatedFixtureResourcesDir.get().file("org/crosswire/ksword/fixtures/K4FixtureResources.kt").asFile
+        out.parentFile.mkdirs()
+        out.bufferedWriter().use { w ->
+            w.appendLine("// GENERATED test-only fixture bytes. Do not edit.")
+            w.appendLine("package org.crosswire.ksword.fixtures")
+            w.appendLine("import kotlin.io.encoding.Base64")
+            w.appendLine("import kotlin.io.encoding.ExperimentalEncodingApi")
+            w.appendLine("@OptIn(ExperimentalEncodingApi::class)")
+            w.appendLine("internal object K4FixtureResources {")
+            w.appendLine("    fun files(): Sequence<Pair<String, ByteArray>> = sequence {")
+            for (f in files) {
+                val name = f.relativeTo(root.asFile).invariantSeparatorsPath
+                check(name.none { it == '$' || it == '\"' || it == '\\' }) { "Unsafe fixture path: $name" }
+                val chunks = JBase64.getEncoder().encodeToString(f.readBytes()).chunked(60_000)
+                w.appendLine("        yield(\"$name\" to Base64.decode(arrayOf<String>(")
+                chunks.forEach { w.appendLine("            \"$it\",") }
+                w.appendLine("        ).joinToString(\"\")))")
+            }
+            w.appendLine("    }")
+            w.appendLine("}")
+        }
+    }
+}
+// The default hierarchy creates iosTest after this script is evaluated.
+kotlin.sourceSets.configureEach {
+    if (name == "iosTest") kotlin.srcDir(generateK4FixtureResources)
+}
+
+// Preserve the original compression test's resource byte-for-byte on both platforms.
+val generatedCompressionTestDir = layout.buildDirectory.dir("generated/ksword/commonTest/kotlin")
+val generateCompressionTestResource by tasks.registering {
+    val input = layout.projectDirectory.file("src/jvmTest/resources/org/crosswire/common/compress/kjv_genesis.txt")
+    inputs.file(input)
+    outputs.dir(generatedCompressionTestDir)
+    doLast {
+        val out = generatedCompressionTestDir.get().file("org/crosswire/common/compress/CompressionTestResource.kt").asFile
+        out.parentFile.mkdirs()
+        out.bufferedWriter().use { w ->
+            w.appendLine("// GENERATED test-only resource. Do not edit.")
+            w.appendLine("package org.crosswire.common.compress")
+            w.appendLine("import kotlin.io.encoding.Base64")
+            w.appendLine("import kotlin.io.encoding.ExperimentalEncodingApi")
+            w.appendLine("@OptIn(ExperimentalEncodingApi::class)")
+            w.appendLine("internal fun compressionTestCorpus(): ByteArray = Base64.decode(arrayOf<String>(")
+            JBase64.getEncoder().encodeToString(input.asFile.readBytes()).chunked(60_000).forEach {
+                w.appendLine("    \"$it\",")
+            }
+            w.appendLine(").joinToString(\"\"))")
+        }
+    }
+}
+kotlin.sourceSets.named("commonTest") { kotlin.srcDir(generateCompressionTestResource) }
+
 // --- KSword parity oracle (K0 spec §6) ---------------------------------------------------------------
 // The baseline's own third-party libraries, pinned to the baseline versions; only the oracle loader sees them.
 val oracleThirdParty by configurations.creating {

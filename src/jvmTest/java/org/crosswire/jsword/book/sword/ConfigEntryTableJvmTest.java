@@ -43,13 +43,7 @@ import org.junit.Test;
  * @author mbergmann
  * @author DM Smith
  */
-public class ConfigEntryTableTest {
-
-    @Test
-    public void testCreateConfigEntryTableInstance() {
-        ConfigEntryTable table = new ConfigEntryTable("TestBook", true);
-        Assert.assertNotNull(table);
-    }
+public class ConfigEntryTableJvmTest {
 
     // TODO(DMS): make this test use mocks or setup its own environment
     @Test
@@ -95,24 +89,4 @@ public class ConfigEntryTableTest {
         }
     }
 
-    @Test
-    public void testSaveConfigEntryTable() {
-        String modName = "TestBook";
-        IniSection table = new IniSection(modName);
-        Assert.assertNotNull(table);
-
-        table.add(BookMetaData.KEY_LANG, "de");
-        String lang = table.get(BookMetaData.KEY_LANG);
-        Assert.assertNotNull(lang);
-        Assert.assertEquals("de", lang);
-
-        File configFile = new File("testconfig.conf");
-        try {
-            org.crosswire.common.util.IniSectionJvm.save(table, configFile, "UTF-8");
-        } catch (IOException e) {
-            Assert.assertTrue(false);
-        } finally {
-            configFile.delete();
-        }
-    }
 }

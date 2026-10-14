@@ -3,17 +3,18 @@ package org.crosswire.common.util
 import org.crosswire.common.progress.JobManager
 import org.crosswire.jsword.book.install.DownloadCancelledException
 import org.crosswire.jsword.book.install.DownloadException
-import org.junit.Test
-import java.nio.file.Files
+import kotlin.test.Test
+import okio.FileSystem
+import okio.Path
+import org.crosswire.ksword.fixtures.withTestDirectory
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/** JVM temporarily: WebResource stays JVM until Task 16. */
+/** Portable transport ordering; the original JVM thread-lifetime test stays on the JVM. */
 class WebResourceTransportTest {
-    private fun fixture(block: (java.io.File, MutableList<String>, HttpBody) -> Unit) {
+    private fun fixture(block: (Path, MutableList<String>, HttpBody) -> Unit) = withTestDirectory { directory ->
         val old = WebResource.transport
-        val directory = Files.createTempDirectory("k4-fake").toFile()
         val events = mutableListOf<String>()
         val body = object : HttpBody {
             override val contentLength: Int get() { events.add("length"); return 0 }
@@ -24,7 +25,7 @@ class WebResourceTransportTest {
                 events.add("read")
                 if (read) return -1
                 read = true
-                "body".toByteArray().copyInto(buf)
+                "body".encodeToByteArray().copyInto(buf)
                 return 4
             }
             override fun close() { events.add("close") }
@@ -37,50 +38,14 @@ class WebResourceTransportTest {
             block(directory, events, body)
         } finally {
             WebResource.transport = old
-            directory.deleteRecursively()
         }
-    }
-
-    @Test fun jobCancellationUnblocksHostReadAndPropagatesDownloadCancellation() = fixture { directory, _, _ ->
-        val entered = java.util.concurrent.CountDownLatch(1)
-        val cancelled = java.util.concurrent.CountDownLatch(1)
-        val failure = java.util.concurrent.atomic.AtomicReference<Throwable>()
-        var closed = false
-        WebResource.transport = object : HttpTransport {
-            override fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
-            override fun get(uri: KUri, timeoutMs: Int) = object : HttpBody {
-                override val contentLength = 4
-                override val status = 200
-                override fun prepareRead() = Unit
-                override fun read(buf: ByteArray): Int {
-                    entered.countDown()
-                    check(cancelled.await(2, java.util.concurrent.TimeUnit.SECONDS))
-                    throw TransportCancelledException()
-                }
-                override fun close() { closed = true }
-            }
-        }
-        val job = JobManager.createJob("blocked-host", "blocked-host") { cancelled.countDown() }
-        val worker = Thread {
-            try { WebResource(KUri("https://fake/body")).copy(directory.resolve("body").toURI(), job) }
-            catch (ex: Throwable) { failure.set(ex) }
-        }
-        try {
-            worker.start()
-            assertTrue(entered.await(2, java.util.concurrent.TimeUnit.SECONDS))
-            job.cancel()
-            worker.join(2000)
-            assertTrue(!worker.isAlive)
-            assertTrue(failure.get() is DownloadCancelledException)
-            assertTrue(closed)
-        } finally { cancelled.countDown(); worker.join(2000); job.done() }
     }
 
     @Test fun injectedTransportUsesLegacyOrderAndHeadForZeroOnly() = fixture { directory, events, _ ->
         val job = JobManager.createJob("k4")
         try {
-            WebResource(KUri("https://fake/body")).copy(directory.resolve("body").toURI(), job)
-            assertEquals("body", directory.resolve("body").readText())
+            WebResource(KUri("https://fake/body")).copy(pathUri(directory / "body"), job)
+            assertEquals("body", FileSystem.SYSTEM.read(directory / "body") { readUtf8() })
             assertEquals(4, job.totalWork)
             assertEquals(listOf("get", "length", "head", "status", "prepare", "read", "read", "close"), events)
         } finally { job.done() }
@@ -93,15 +58,16 @@ class WebResourceTransportTest {
                 override fun prepareRead() { events.add("prepare-failure"); throw okio.IOException("input") }
             }
         }
-        val dest = directory.resolve("body").apply { writeText("keep") }
-        val error = assertFailsWith<DownloadException> { WebResource(KUri("https://fake/body")).copy(dest.toURI()) }
+        val dest = directory / "body"
+        FileSystem.SYSTEM.write(dest) { writeUtf8("keep") }
+        val error = assertFailsWith<DownloadException> { WebResource(KUri("https://fake/body")).copy(pathUri(dest)) }
         assertEquals(200, error.statusCode)
-        assertEquals("keep", dest.readText())
+        assertEquals("keep", FileSystem.SYSTEM.read(dest) { readUtf8() })
         assertEquals(listOf("status", "prepare-failure", "close"), events)
     }
 
     @Test fun cancellationAfterPartialReadClosesInputBeforeOutputFlush() = fixture { directory, events, body ->
-        val dest = directory.resolve("body")
+        val dest = directory / "body"
         WebResource.transport = object : HttpTransport {
             override fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
             override fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody by body {
@@ -109,17 +75,17 @@ class WebResourceTransportTest {
                 override fun read(buf: ByteArray): Int {
                     if (read) throw TransportCancelledException()
                     read = true
-                    "body".toByteArray().copyInto(buf)
+                    "body".encodeToByteArray().copyInto(buf)
                     return 4
                 }
                 override fun close() {
-                    assertEquals(4, dest.length(), "legacy writes must reach output before the next read")
+                    assertEquals(4L, FileSystem.SYSTEM.metadata(dest).size, "legacy writes must reach output before the next read")
                     events.add("close")
                 }
             }
         }
-        assertFailsWith<DownloadCancelledException> { WebResource(KUri("https://fake/body")).copy(dest.toURI()) }
-        assertEquals("body", dest.readText())
+        assertFailsWith<DownloadCancelledException> { WebResource(KUri("https://fake/body")).copy(pathUri(dest)) }
+        assertEquals("body", FileSystem.SYSTEM.read(dest) { readUtf8() })
         assertTrue(events.contains("close"))
     }
 }
