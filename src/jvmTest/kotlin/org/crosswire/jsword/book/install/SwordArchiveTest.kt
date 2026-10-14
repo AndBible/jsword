@@ -10,68 +10,14 @@ import java.util.zip.GZIPInputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertContentEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import java.io.IOException
 
 class SwordArchiveTest {
-    /** The File writer stamps only the DOS time. Zeroing anything else would hide a drifted header. */
-    /** Compare a failed cache by its readable entries plus the failed entry's orphan header.
-     * The seekable writer rewrites a completed entry's provisional header in place and keeps a 20-byte
-     * ZIP64 extra while the body stays raw. A sequential writer cannot rewrite a flushed header, and
-     * emitting method 8 with a raw body is rejected as a stored block, so completed entries are STORED.
-     * That rewrite is the documented difference; the failed entry, which never got a body, is compared whole.
-     */
-    private fun assertFailedCache(frozen: File, actual: File, label: String) {
-        val frozenEntries = runCatching { cacheEntries(frozen) }
-        val actualEntries = runCatching { cacheEntries(actual) }
-        if (frozenEntries.isSuccess && actualEntries.isSuccess)
-            assertEquals(frozenEntries.getOrThrow(), actualEntries.getOrThrow(), "$label entries")
-        assertContentEquals(sharedHeader(orphanHeader(frozen.readBytes())), sharedHeader(orphanHeader(actual.readBytes())), "$label orphan header")
-    }
+    private fun assertFailedCache(frozen: File, actual: File, label: String) =
+        FailedCacheEvidence.assertMatches(frozen, actual, label)
 
-    private fun cacheEntries(file: File): List<Pair<String, List<Byte>>> = ZipArchiveInputStream(file.inputStream()).use { zip ->
-        buildList {
-            while (true) {
-                val entry = zip.nextZipEntry ?: break
-                val body = java.io.ByteArrayOutputStream()
-                val chunk = ByteArray(4096)
-                while (true) { val count = zip.read(chunk); if (count == -1) break; body.write(chunk, 0, count) }
-                add(entry.name to body.toByteArray().toList())
-            }
-        }
-    }
-
-    private fun orphanHeader(bytes: ByteArray): ByteArray {
-        var position = 0
-        var last = 0
-        while (position + 30 <= bytes.size && bytes[position] == 0x50.toByte() && bytes[position + 1] == 0x4b.toByte() && bytes[position + 2] == 3.toByte()) {
-            last = position
-            val name = u16(bytes, position + 26)
-            val extra = u16(bytes, position + 28)
-            val compressed = u16(bytes, position + 18)
-            val next = position + 30 + name + extra + compressed
-            if (next <= position || next > bytes.size) break
-            position = next
-        }
-        val end = (last + 30 + u16(bytes, last + 26) + u16(bytes, last + 28)).coerceAtMost(bytes.size)
-        val header = bytes.copyOfRange(last, end)
-        return header
-    }
-
-    /** Compare the failed entry's name only. The seekable writer leaves that entry as version 10,
-     * method 8, with a 20-byte ZIP64 extra; a sequential writer emits version 20, method 0, no extra,
-     * because it cannot rewrite a flushed header. Those header bytes are pinned separately by
-     * StoredZipFailureContractTest against the live File writer. */
-    private fun sharedHeader(header: ByteArray): ByteArray {
-        if (header.size < 30) return header
-        val name = u16(header, 26)
-        val end = minOf(30 + name, header.size)
-        return header.copyOfRange(30, end)
-    }
-
-    private fun u16(bytes: ByteArray, offset: Int) = bytes[offset].toInt() and 0xff or (bytes[offset + 1].toInt() and 0xff shl 8)
     private fun resource(name: String) = File(javaClass.getResource("/k4-archives/$name")!!.toURI())
     private fun confs(file: File): List<Pair<String, List<Byte>>> = ZipArchiveInputStream(file.inputStream()).use { zip ->
         buildList {

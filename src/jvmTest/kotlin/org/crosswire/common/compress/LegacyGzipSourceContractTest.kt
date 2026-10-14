@@ -113,30 +113,12 @@ class LegacyGzipSourceContractTest {
                 }
                 val portableBytes = output.readByteArray()
                 val current = java.io.File(root, "current.zip").apply { writeBytes(portableBytes) }
-                fun entries(file: java.io.File): Pair<List<Pair<String, List<Byte>>>, Throwable?> {
-                    val visible = mutableListOf<Pair<String, List<Byte>>>()
-                    val failure = runCatching { org.apache.commons.compress.archivers.zip.ZipArchiveInputStream(file.inputStream()).use { zip ->
-                        while (true) {
-                            val entry = zip.nextZipEntry ?: break
-                            val body = java.io.ByteArrayOutputStream()
-                            try {
-                                val chunk = ByteArray(4096)
-                                while (true) { val count = zip.read(chunk); if (count == -1) break; body.write(chunk, 0, count) }
-                            } finally { visible.add(entry.name to body.toByteArray().toList()) }
-                        }
-                    } }.exceptionOrNull()
-                    return visible to failure
-                }
                 assertEquals(expected.exceptionOrNull()?.javaClass, actual.exceptionOrNull()?.javaClass, "$name/$variant")
                 val frozenFile = java.io.File(old, "mods.d.zip")
-                val oldCache = entries(frozenFile); val newCache = entries(current)
-                println("CACHE DIAGNOSTIC $name/$variant frozen=${oldCache.first}/${oldCache.second} portable=${newCache.first}/${newCache.second}")
-                // The frozen File writer is the oracle. Comparing the portable writer with
-                // SwordArchive.tarGzConfsToZipSpelling compares the new abort path with itself.
+                // The oracle remains the independent seekable File writer, not the moved caller.
                 runCatching {
-                    assertEquals(oldCache.first, newCache.first, "$name/$variant cache bodies")
-                    assertEquals(oldCache.second?.javaClass, newCache.second?.javaClass, "$name/$variant cache read failure")
-                    if (actual.isFailure) assertContentEquals(sharedHeader(orphanHeader(frozenFile.readBytes())), sharedHeader(orphanHeader(portableBytes)), "$name/$variant orphan header")
+                    org.crosswire.jsword.book.install.FailedCacheEvidence.assertMatches(
+                        frozenFile, current, "$name/$variant")
                 }.exceptionOrNull()?.let { mismatches.add(it.message ?: "$name/$variant mismatch") }
             }
             assertTrue(mismatches.isEmpty(), mismatches.joinToString("\n"))
@@ -157,29 +139,4 @@ class LegacyGzipSourceContractTest {
         assertTrue(error.suppressed.contains(closeError))
     }
 
-    /** The File writer stamps only the DOS time. Every other byte is the orphan-header contract. */
-    /** The failed entry's name only. Its header bytes differ by design: the seekable close leaves
-     * version 10, method 8 and a ZIP64 extra, which a sequential writer cannot rewrite in place.
-     * StoredZipFailureContractTest pins those bytes against the live File writer. */
-    private fun orphanHeader(bytes: ByteArray): ByteArray {
-        var position = 0
-        var last = 0
-        while (position + 30 <= bytes.size && bytes[position] == 0x50.toByte() && bytes[position + 1] == 0x4b.toByte() && bytes[position + 2] == 3.toByte()) {
-            last = position
-            val next = position + 30 + u16(bytes, position + 26) + u16(bytes, position + 28) + u16(bytes, position + 18)
-            if (next <= position || next > bytes.size) break
-            position = next
-        }
-        val end = (last + 30 + u16(bytes, last + 26) + u16(bytes, last + 28)).coerceAtMost(bytes.size)
-        val header = bytes.copyOfRange(last, end)
-        return header
-    }
-
-    private fun sharedHeader(header: ByteArray): ByteArray {
-        if (header.size < 30) return header
-        val end = minOf(30 + u16(header, 26), header.size)
-        return header.copyOfRange(30, end)
-    }
-
-    private fun u16(bytes: ByteArray, offset: Int) = bytes[offset].toInt() and 0xff or (bytes[offset + 1].toInt() and 0xff shl 8)
 }
