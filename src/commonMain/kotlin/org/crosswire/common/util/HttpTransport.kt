@@ -19,6 +19,9 @@ interface HttpBody : okio.Closeable {
     val status: Int
     val contentLength: Int
 
+    /** Last-Modified in epoch millis; 0 when absent (URLConnection semantics). May establish the connection. */
+    val lastModified: Long get() = 0L
+
     /** Establish the input stream before opening the destination; may throw on HTTP errors. */
     fun prepareRead()
 
