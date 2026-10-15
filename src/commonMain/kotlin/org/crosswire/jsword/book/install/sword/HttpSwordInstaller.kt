@@ -49,11 +49,11 @@ open class HttpSwordInstaller : AbstractSwordInstaller() {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#getSize(org.crosswire.jsword.book.Book)
      */
-    override fun getSize(book: Book): Int {
+    override suspend fun getSize(book: Book): Int {
         return NetUtil.getSize(toRemoteURI(book)!!, proxyHost, proxyPort)
     }
 
-    override fun indexLastUpdated(): Long? {
+    override suspend fun indexLastUpdated(): Long? {
         return 0L
     }
 
@@ -72,8 +72,8 @@ open class HttpSwordInstaller : AbstractSwordInstaller() {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#download(org.crosswire.common.progress.Progress, java.lang.String, java.lang.String, KUri)
      */
-    @Throws(InstallException::class)
-    override fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    override suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
         val uri: KUri
         try {
             uri = KUri(NetUtil.PROTOCOL_HTTP, host, dir + '/' + file, null)
@@ -97,8 +97,8 @@ open class HttpSwordInstaller : AbstractSwordInstaller() {
      * @param dest
      * @throws LucidException
      */
-    @Throws(LucidException::class)
-    private fun copy(job: Progress?, uri: KUri, dest: KUri?) {
+    @Throws(LucidException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    private suspend fun copy(job: Progress?, uri: KUri, dest: KUri?) {
         if (job != null) {
             // TRANSLATOR: Progress label for downloading one or more files.
             job.sectionName = JSMsg.gettext("Downloading files")

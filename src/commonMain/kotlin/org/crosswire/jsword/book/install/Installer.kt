@@ -91,7 +91,7 @@ interface Installer : BookList {
      *            The book meta-data to check on.
      * @return whether there is a newer version to install
      */
-    fun getSize(book: Book): Int
+    suspend fun getSize(book: Book): Int
 
     /**
      * Return true if the book is not installed or there is a newer version to
@@ -101,7 +101,7 @@ interface Installer : BookList {
      *            The book meta-data to check on.
      * @return whether there is a newer version to install
      */
-    fun isNewer(book: Book): Boolean
+    suspend fun isNewer(book: Book): Boolean
 
     /**
      * Re-fetch a list of names from the remote source. <b>It would make sense
@@ -111,10 +111,10 @@ interface Installer : BookList {
      * 
      * @throws InstallException 
      */
-    @Throws(InstallException::class)
-    fun reloadBookList()
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    suspend fun reloadBookList()
 
-    fun indexLastUpdated(): Long?
+    suspend fun indexLastUpdated(): Long?
 
     /**
      * Download and install a book locally. The name should be one from an index
@@ -126,11 +126,11 @@ interface Installer : BookList {
      *            The book to install
      * @throws InstallException 
      */
-    @Throws(InstallException::class)
-    fun install(book: Book)
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    suspend fun install(book: Book)
 
-    @Throws(InstallException::class)
-    fun install(book: Book, jobId: String?)
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    suspend fun install(book: Book, jobId: String?)
 
     /**
      * Download a search index for the given Book. The installation of the
@@ -143,8 +143,8 @@ interface Installer : BookList {
      *            for installation.
      * @throws InstallException 
      */
-    @Throws(InstallException::class)
-    fun downloadSearchIndex(book: Book, tempDest: KUri)
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    suspend fun downloadSearchIndex(book: Book, tempDest: KUri)
 
     /** remove the cached book list to clear memory
      */

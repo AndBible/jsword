@@ -49,7 +49,7 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#getSize(org.crosswire.jsword.book.Book)
      */
-    override fun getSize(book: Book): Int {
+    override suspend fun getSize(book: Book): Int {
         return NetUtil.getSize(toRemoteURI(book)!!, proxyHost, proxyPort)
     }
 
@@ -68,8 +68,8 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#download(org.crosswire.common.progress.Progress, java.lang.String, java.lang.String, KUri)
      */
-    @Throws(InstallException::class)
-    override fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    override suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
         val uri: KUri
         try {
             uri = KUri(NetUtil.PROTOCOL_HTTPS, host, dir + '/' + file, null)
@@ -89,12 +89,14 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
         }
     }
 
-    override fun indexLastUpdated(): Long? {
+    override suspend fun indexLastUpdated(): Long? {
         try {
             val uri = KUri(NetUtil.PROTOCOL_HTTPS, host, catalogDirectory + "/" + FILE_LIST_GZ, null)
             val transport = WebResource.transport ?: return 0L
             val body = transport.get(uri, WebResource.getTimeout())
-            try { return body.lastModified } finally { body.close() }
+            try { return body.lastModified() } finally { body.close() }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             return 0L
         }
@@ -106,8 +108,8 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
      * @param dest
      * @throws LucidException
      */
-    @Throws(LucidException::class)
-    private fun copy(job: Progress?, uri: KUri, dest: KUri?) {
+    @Throws(LucidException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    private suspend fun copy(job: Progress?, uri: KUri, dest: KUri?) {
         if (job != null) {
             // TRANSLATOR: Progress label for downloading one or more files.
             job.sectionName = JSMsg.gettext("Downloading files")

@@ -23,13 +23,16 @@
 package org.crosswire.jsword.book.install.sword
 
 import kotlin.jvm.JvmField
+import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import okio.IOException
 
 import org.crosswire.common.progress.JobManager
 import org.crosswire.common.progress.Progress
-import org.crosswire.common.progress.currentThreadCanceller
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.KFiles
 import org.crosswire.common.util.KUri
@@ -81,8 +84,8 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      *            The file to download
      * @throws InstallException
      */
-    @Throws(InstallException::class)
-    protected abstract fun download(job: Progress?, dir: String?, file: String?, dest: KUri?)
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    protected abstract suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#getInstallerDefinition()
@@ -109,7 +112,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#isNewer(org.crosswire.jsword.book.Book)
      */
-    override fun isNewer(book: Book): Boolean {
+    override suspend fun isNewer(book: Book): Boolean {
         val sbmd = book.bookMetaData as SwordBookMetaData
         val conf = sbmd.configFile
 
@@ -205,16 +208,16 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         return null
     }
 
-    @Throws(InstallException::class)
-    override fun install(book: Book) {
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    override suspend fun install(book: Book) {
         install(book, null)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#install(org.crosswire.jsword.book.Book)
      */
-    @Throws(InstallException::class)
-    override fun install(book: Book, jobId: String?) {
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    override suspend fun install(book: Book, jobId: String?) {
         var jobId = jobId
         // // Is the book already installed? Then nothing to do.
         // if (Books.installed().getBook(book.getName()) != null)
@@ -229,7 +232,8 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         if (jobId == null) {
             jobId = Progress.INSTALL_BOOK.replace("%s", book.initials)
         }
-        val job = JobManager.createJob(jobId, jobName, currentThreadCanceller())
+        val bridge = CoroutineCancelBridge.current()
+        val job = JobManager.createJob(jobId, jobName, bridge.canceller)
 
         var temp: KUri? = null
         var fileName: String? = null
@@ -266,15 +270,24 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
 
         } catch (e: IOException) {
             log.error("Error in downloading " + fileName)
+            bridge.disarm()
             job.cancel()
             throw InstallException("Error in downloading " + fileName, e)
         } catch (e: InstallException) {
+            bridge.disarm()
             job.cancel()
             throw e
         } catch (e: BookException) {
+            bridge.disarm()
             job.cancel()
             throw InstallException("Something went wrong with the book ", e)
+        } catch (e: CancellationException) {
+            // The calling coroutine was cancelled: cancel the job too, so its listeners see it end.
+            bridge.disarm()
+            job.cancel()
+            throw e
         } finally {
+            bridge.disarm()
             job.done()
             // tidy up after ourselves
             // This is a best effort. If for some reason it does not delete now
@@ -292,8 +305,8 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#reloadBookList()
      */
-    @Throws(InstallException::class)
-    override fun reloadBookList() {
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    override suspend fun reloadBookList() {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
         val job = JobManager.createJob(Progress.RELOAD_BOOK_LIST, jobName, null)
@@ -349,20 +362,48 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#downloadSearchIndex(org.crosswire.jsword.book.Book, java.net.URI)
      */
-    @Throws(InstallException::class)
-    override fun downloadSearchIndex(book: Book, tempDest: KUri) {
+    @Throws(InstallException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    override suspend fun downloadSearchIndex(book: Book, tempDest: KUri) {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        val job = JobManager.createJob(Progress.DOWNLOAD_SEARCH_INDEX.replace("%s", book.initials), jobName, currentThreadCanceller())
+        val bridge = CoroutineCancelBridge.current()
+        val job = JobManager.createJob(Progress.DOWNLOAD_SEARCH_INDEX.replace("%s", book.initials), jobName, bridge.canceller)
         job.beginJob(jobName)
 
         try {
             download(job, packageDirectory + '/' + SEARCH_DIR, book.initials + ZIP_SUFFIX, tempDest)
         } catch (ex: InstallException) {
+            bridge.disarm()
+            job.cancel()
+            throw ex
+        } catch (ex: CancellationException) {
+            bridge.disarm()
             job.cancel()
             throw ex
         } finally {
+            bridge.disarm()
             job.done()
+        }
+    }
+
+    /**
+     * Connects a JSword job to the coroutine that runs it. Cancelling the job (the Progress API, for example the UI's
+     * cancel button) cancels the coroutine, which stops the transfer; cancelling the coroutine cancels the job (the
+     * CancellationException catch blocks of the suspend functions). The bridge is disarmed before the installer
+     * cancels its own job after a failure, so that an internal failure never cancels the caller's coroutine.
+     */
+    private class CoroutineCancelBridge(running: Job?) {
+        private val armed = atomic(true)
+
+        /** Null outside a coroutine Job: the job is then not cancelable. */
+        val canceller: (() -> Unit)? = if (running == null) null else ({ if (armed.value) running.cancel() })
+
+        fun disarm() {
+            armed.value = false
+        }
+
+        companion object {
+            suspend fun current() = CoroutineCancelBridge(currentCoroutineContext()[Job])
         }
     }
 
@@ -391,9 +432,11 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         val cacheDir = getCachedIndexDir()
         val confDir = NetUtil.lengthenURI(cacheDir!!, "mods.d.zip")
         val cache = getCachedIndexFile()
-        // If the cache file is missing, get a fresh copy
+        // A missing cache is not downloaded here (getBooks never touches the network); the caller reloads the
+        // book list explicitly. The list stays empty and unloaded, so a later getBooks sees a cache that appeared.
         if (!NetUtil.isFile(cache!!)) {
-            reloadBookList()
+            log.info("No cached index for {}; call reloadBookList()", host)
+            return
         }
 
         // If it is not missing and mods.d doesn't exist
