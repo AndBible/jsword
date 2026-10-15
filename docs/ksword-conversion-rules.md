@@ -307,3 +307,14 @@ explicitly throw `UnsupportedOperationException`. JVM default StringWriter write
 literal `"null"`; Native writer null String writes throw `NullPointerException`. Native slice and
 indentation bounds exceptions do not promise JVM StringIndexOutOfBoundsException identity. These are
 retained compatibility boundaries and explicit differences, not facade placeholders to delete blindly.
+
+## 29. K5b: book facade
+
+Placeholder; the final wording is written in K5b Task 20. Rules actually used in M1 to M3:
+- Locks (`synchronized`, monitors of `Books`, books and installers) become private atomicfu `SynchronizedObject` fields (section 19); the Book-instance locks in `:app` guard app state only.
+- Listener lists use `CopyOnWriteList` (section 20), keeping the snapshot semantics under firing; `Collections.unmodifiable*` become live read-only views whose mutators throw `UnsupportedOperationException`.
+- Regex splits and patterns use `kotlin.text.Regex` with a commonTest (section 21); `String.format` of a single `%s` becomes `replace`.
+- `Serializable`, `readObject` and `serialVersionUID` are dropped on moved classes; the allowlist records the removed fields (section 23).
+- Resources (for example `FTPMsg.properties`) move to `src/embeddedResources/` (section 25); reflection-based factories are replaced by the plugin registry entries.
+- File and URI APIs use the K4 storage spellings, `KFiles` and `pathUri` (section 27); a common class with no File API left gets no `*Jvm` holder.
+- The temporary current-thread canceller seam keeps installs cancelable on the JVM until M4 removes it.
