@@ -22,23 +22,19 @@
  */
 package org.crosswire.jsword.book.install.sword
 
-import java.io.File
-import java.io.IOException
-import java.net.URI
-import java.util.ArrayList
-import java.util.HashMap
+import kotlin.jvm.JvmField
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import okio.IOException
 
 import org.crosswire.common.progress.JobManager
 import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.CWProject
-import org.crosswire.common.util.CollectionUtil
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.FileUtilJvm
-import org.crosswire.common.util.IOUtil
-import org.crosswire.common.util.IOUtilJvm
+import org.crosswire.common.util.KFiles
+import org.crosswire.common.util.KUri
 import org.crosswire.common.util.NetUtil
-import org.crosswire.common.util.NetUtilJvm
 import org.crosswire.common.util.StringUtil
+import org.crosswire.common.util.pathUri
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.AbstractBookList
@@ -50,14 +46,18 @@ import org.crosswire.jsword.book.BookFilterIterator
 import org.crosswire.jsword.book.BookSet
 import org.crosswire.jsword.book.install.InstallException
 import org.crosswire.jsword.book.install.Installer
+import org.crosswire.jsword.book.install.SwordArchive
 import org.crosswire.jsword.book.sword.Backend
 import org.crosswire.jsword.book.sword.NullBackend
 import org.crosswire.jsword.book.sword.SwordBook
 import org.crosswire.jsword.book.sword.SwordBookDriver
 import org.crosswire.jsword.book.sword.SwordBookMetaData
-import org.crosswire.jsword.book.sword.SwordBookMetaDataJvm
-import org.crosswire.jsword.book.sword.SwordBookPathJvm
+import org.crosswire.jsword.book.sword.SwordBookPath
 import org.crosswire.jsword.book.sword.SwordConstants
+import org.crosswire.jsword.book.sword.StorageLocation
+import org.crosswire.jsword.book.sword.storageChild
+import org.crosswire.jsword.book.sword.storageExists
+import org.crosswire.jsword.book.sword.storageMove
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -81,7 +81,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      * @throws InstallException
      */
     @Throws(InstallException::class)
-    protected abstract fun download(job: Progress?, dir: String?, file: String?, dest: URI?)
+    protected abstract fun download(job: Progress?, dir: String?, file: String?, dest: KUri?)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#getInstallerDefinition()
@@ -110,15 +110,15 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      */
     override fun isNewer(book: Book): Boolean {
         val sbmd = book.bookMetaData as SwordBookMetaData
-        val conf = org.crosswire.jsword.book.sword.SwordBookMetaDataJvm.getConfigFile(sbmd)
+        val conf = sbmd.configFile
 
         // The conf may not exist in our download dir.
         // In this case we say that it should not be downloaded again.
-        if (conf == null || !conf.exists()) {
+        if (conf == null || !KFiles.exists(conf)) {
             return false
         }
 
-        val configURI = NetUtilJvm.getURI(conf)
+        val configURI = pathUri(conf)
 
         val remote = toRemoteURI(book)
         return NetUtil.isNewer(remote!!, configURI, proxyHost, proxyPort)
@@ -152,10 +152,13 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      * @see org.crosswire.jsword.book.basic.AbstractBookList#getBooks(org.crosswire.jsword.book.BookFilter)
      */
     override fun getBooks(filter: BookFilter?): MutableList<Book> {
-        val books: List<Book> = synchronized(this) {
+        val books: List<Book> = synchronized(lock) {
             getBooks()
         }
-        val temp = CollectionUtil.createList(BookFilterIterator(books, filter))
+        val temp = ArrayList<Book>()
+        for (book in BookFilterIterator(books, filter)) {
+            temp.add(book)
+        }
         return BookSet(temp)
     }
 
@@ -164,7 +167,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      */
     override fun getBook(book: String): Book? {
         val name = book
-        val books: List<Book> = synchronized(this) {
+        val books: List<Book> = synchronized(lock) {
             getBooks()
         }
         // Check name first
@@ -223,17 +226,18 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         // TRANSLATOR: Progress label indicating the installation of a book. {0} is a placeholder for the name of the book.
         val jobName = JSMsg.gettext("Installing book: {0}", sbmd.name)
         if (jobId == null) {
-            jobId = String.format(Progress.INSTALL_BOOK, book.initials)
+            jobId = Progress.INSTALL_BOOK.replace("%s", book.initials)
         }
+        // JVM-only: cancelling the job interrupts this worker thread, which the transport read turns into a
+        // download cancellation. The common job API (JobManager.createJob with a canceller callback) cannot name
+        // the current thread, so this stays until K5b Task 13 is settled (see its report).
         val job = org.crosswire.common.progress.JobManagerJvm.createJob(jobId, jobName, Thread.currentThread())
 
-        var temp: URI? = null
+        var temp: KUri? = null
         var fileName: String? = null
         try {
             // Don't bother setting a size, we'll do it later.
             job.beginJob(jobName)
-
-            Thread.yield()
 
             // TRANSLATOR: Progress label indicating the Initialization of installing of a book.
             job.sectionName = JSMsg.gettext("Initializing")
@@ -248,15 +252,17 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             job.isCancelable = false
             if (!job.isFinished) {
                 //copy into mods.d and modules under SWORD_HOME
-                val dldir = SwordBookPathJvm.getSwordDownloadDir()
-                IOUtilJvm.unpackZip(NetUtilJvm.getAsFile(temp), dldir, true, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
+                val dldir = SwordBookPath.getSwordDownloadLocation()
+                // The lexical File spelling of a file URI is its path, as File(uri.path) had it.
+                val tempSpelling = fileSpelling(temp)
+                SwordArchive.unpackZipSpelling(tempSpelling, dldir.spelling, true, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
 
                 //copy everything else into JSWORD_HOME
-                val jswordHome = NetUtilJvm.getAsFile(CWProject.instance().writableProjectDir!!)
-                IOUtilJvm.unpackZip(NetUtilJvm.getAsFile(temp), jswordHome, false, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
+                val jswordHome = fileSpelling(CWProject.instance().writableProjectDir!!)
+                SwordArchive.unpackZipSpelling(tempSpelling, jswordHome, false, SwordConstants.DIR_CONF, SwordConstants.DIR_DATA)
                 // TRANSLATOR: Progress label for installing the conf file for a book.
                 job.sectionName = JSMsg.gettext("Copying config file")
-                sbmd.library = NetUtilJvm.getURI(dldir)
+                sbmd.library = pathUri(dldir.path)
                 SwordBookDriver.registerNewBook(sbmd)
             }
 
@@ -292,12 +298,12 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     override fun reloadBookList() {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        val job = org.crosswire.common.progress.JobManagerJvm.createJob(Progress.RELOAD_BOOK_LIST, jobName, null)
+        val job = JobManager.createJob(Progress.RELOAD_BOOK_LIST, jobName, null)
 
         job.isNotifyUser = false
         job.beginJob(jobName)
 
-        var errors: List<File>? = null
+        var errors: List<okio.Path>? = null
         try {
             val cacheDir = getCachedIndexDir()
             val confDir = NetUtil.lengthenURI(cacheDir!!, "mods.d.zip")
@@ -306,17 +312,17 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             // It cannot be cancelled from this point forward
             job.isCancelable = false
             if (NetUtil.isFile(confDir!!)) {
-                val confDirPath = confDir.path
+                val confDirPath = confDir.getPath()!!
                 val confDirPathOld = confDirPath + ".old"
 
-                val dirConf = File(confDirPath)
-                val dirConfOld = File(confDirPathOld)
+                val dirConf = StorageLocation(confDirPath)
+                val dirConfOld = StorageLocation(confDirPathOld)
                 // Get rid of the old. It shouldn't be there, but just in case
-                if (dirConfOld.exists()) {
-                    FileUtilJvm.delete(dirConfOld)
+                if (storageExists(dirConfOld)) {
+                    KFiles.deleteRecursively(dirConfOld.path)
                 }
-                if (!dirConf.renameTo(dirConfOld)) {
-                    errors = FileUtilJvm.delete(File(confDirPath))
+                if (!storageMove(dirConf, dirConfOld)) {
+                    errors = KFiles.deleteRecursively(dirConf.path)
                 }
                 // TODO(DM): list all that failed
                 if (errors != null && !errors.isEmpty()) {
@@ -327,7 +333,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
 
                 unpack(cacheDir, cache)
                 // Best effort to delete
-                FileUtilJvm.delete(dirConfOld)
+                KFiles.deleteRecursively(dirConfOld.path)
             }
 
             loaded = false
@@ -346,10 +352,13 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      * @see org.crosswire.jsword.book.install.Installer#downloadSearchIndex(org.crosswire.jsword.book.Book, java.net.URI)
      */
     @Throws(InstallException::class)
-    override fun downloadSearchIndex(book: Book, tempDest: URI) {
+    override fun downloadSearchIndex(book: Book, tempDest: KUri) {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        val job = org.crosswire.common.progress.JobManagerJvm.createJob(String.format(Progress.DOWNLOAD_SEARCH_INDEX, book.initials), jobName, Thread.currentThread())
+        // JVM-only: cancelling the job interrupts this worker thread, which the transport read turns into a
+        // download cancellation. The common job API (JobManager.createJob with a canceller callback) cannot name
+        // the current thread, so this stays until K5b Task 13 is settled (see its report).
+        val job = org.crosswire.common.progress.JobManagerJvm.createJob(Progress.DOWNLOAD_SEARCH_INDEX.replace("%s", book.initials), jobName, Thread.currentThread())
         job.beginJob(jobName)
 
         try {
@@ -366,9 +375,9 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      * Unpack the cached index file to disk
      */
     @Throws(IOException::class)
-    protected open fun unpack(cacheDir: URI?, cache: URI?) {
-        org.crosswire.jsword.book.install.SwordArchive.tarGzConfsToZipSpelling(
-            NetUtilJvm.getAsFile(cache!!).path, File(cacheDir!!.path, "mods.d.zip").path
+    protected open fun unpack(cacheDir: KUri?, cache: KUri?) {
+        SwordArchive.tarGzConfsToZipSpelling(
+            fileSpelling(cache!!), storageChild(StorageLocation(cacheDir!!.getPath()!!), "mods.d.zip").spelling
         )
     }
 
@@ -401,9 +410,9 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
             unpack(cacheDir, cache)
         }
 
-        org.crosswire.jsword.book.install.SwordArchive.visitConfZipSpelling(NetUtilJvm.getAsFile(confDir).path) { path, buffer ->
+        SwordArchive.visitConfZipSpelling(fileSpelling(confDir)) { path, buffer ->
                 // Set the path to something that gives the path to the zip and the entry in the zip
-                val sbmd = SwordBookMetaData(buffer, confDir.path + '!' + path)
+                val sbmd = SwordBookMetaData(buffer, confDir.getPath() + '!' + path)
                 sbmd.setDriver(fake)
 
                 // skip any book that is not supported.
@@ -534,7 +543,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      * The URL for the cached index file for this installer
      */
     @Throws(InstallException::class)
-    protected open fun getCachedIndexDir(): URI? {
+    protected open fun getCachedIndexDir(): KUri? {
         try {
             return CWProject.instance().getWritableProjectSubdir(getTempFileExtension(host, catalogDirectory), true)
         } catch (ex: IOException) {
@@ -546,7 +555,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      * The URL for the cached index file for this installer
      */
     @Throws(InstallException::class)
-    protected open fun getCachedIndexFile(): URI? {
+    protected open fun getCachedIndexFile(): KUri? {
         return NetUtil.lengthenURI(getCachedIndexDir()!!, FILE_LIST_GZ)
     }
 
@@ -588,6 +597,11 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     override fun hashCode(): Int {
         return host!!.hashCode() + packageDirectory!!.hashCode()
     }
+
+    /**
+     * Guards the book list reads (rule 19: was the monitor of the installer instance).
+     */
+    private val lock = SynchronizedObject()
 
     /**
      * A map of the books in this download area
@@ -674,6 +688,12 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         /**
          * What are we using as a temp filename?
          */
+        /**
+         * The lexical File spelling of a file URI (what `File(uri.path).path` gave): its decoded path, normalised
+         * the way the storage hooks spell file names.
+         */
+        private fun fileSpelling(uri: KUri): String = StorageLocation(uri.getPath()!!).spelling
+
         private fun getTempFileExtension(host: String?, catalogDir: String?): String {
             return DOWNLOAD_PREFIX + host + catalogDir!!.replace('/', '_')
         }
