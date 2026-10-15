@@ -65,11 +65,4 @@ open class DefaultSearchRequest
      * The actual search request
      */
     override val request: String? = theRequest
-
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = -5973134101547369187L
-    }
 }

@@ -19,15 +19,13 @@
  */
 package org.crosswire.jsword.index.search
 
-import java.io.Serializable
-
 /**
  * A SearchRequest consists of a string and modifiers for the search.
  * 
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-interface SearchRequest : Serializable {
+interface SearchRequest {
     /**
      * @return the modifications to this SearchRequest
      */

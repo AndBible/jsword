@@ -25,10 +25,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 import org.crosswire.jsword.index.query.QueryDecoratorFactory;
 import org.junit.Test;
@@ -170,16 +166,6 @@ public class SearchTypeCharacterizationTest {
         assertEquals(-1, m.getMaxResults());
     }
 
-    @Test
-    public void modifierSurvivesSerialization() throws Exception {
-        DefaultSearchModifier m = new DefaultSearchModifier();
-        m.setRanked(true);
-        m.setMaxResults(42);
-        DefaultSearchModifier copy = roundTrip(m);
-        assertTrue(copy.isRanked());
-        assertEquals(42, copy.getMaxResults());
-    }
-
     // ---- DefaultSearchRequest ----
 
     @Test
@@ -202,26 +188,5 @@ public class SearchTypeCharacterizationTest {
         DefaultSearchRequest r = new DefaultSearchRequest(null, null);
         assertNull(r.getRequest());
         assertNull(r.getSearchModifier());
-    }
-
-    @Test
-    public void requestRoundTripsThroughSerialization() throws Exception {
-        DefaultSearchModifier m = new DefaultSearchModifier();
-        m.setRanked(true);
-        m.setMaxResults(7);
-        DefaultSearchRequest copy = roundTrip(new DefaultSearchRequest("caf\u00E9 \u03BB\u03CC\u03B3\u03BF\u03C2", m));
-        assertEquals("caf\u00E9 \u03BB\u03CC\u03B3\u03BF\u03C2", copy.getRequest());
-        assertTrue(copy.getSearchModifier().isRanked());
-        assertEquals(7, copy.getSearchModifier().getMaxResults());
-        assertNull(roundTrip(new DefaultSearchRequest("x")).getSearchModifier());
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T roundTrip(T o) throws Exception {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bytes);
-        out.writeObject(o);
-        out.close();
-        return (T) new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray())).readObject();
     }
 }

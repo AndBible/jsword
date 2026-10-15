@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.index.search
 
-import java.io.Serializable
-
 /**
  * A SearchModifier consists of the kinds of changes that can be done to a
  * search.
@@ -28,7 +26,7 @@ import java.io.Serializable
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-interface SearchModifier : Serializable {
+interface SearchModifier {
     /**
      * @return true if the results of the search request should be ranked
      */

@@ -60,18 +60,11 @@ open class DefaultSearchModifier
      * @see org.crosswire.jsword.index.search.SearchModifier#getMaxResults()
      */
     /**
-     * The maximum number of results to provide. A value of Integer.MAX_VALUE,
+     * The maximum number of results to provide. A value of Int.MAX_VALUE,
      * the default, means get all results.
      * 
      * @param newMaxResults
      *            the maxResults to set
      */
-    override var maxResults: Int = Integer.MAX_VALUE
-
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 0L
-    }
+    override var maxResults: Int = Int.MAX_VALUE
 }

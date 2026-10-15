@@ -1,6 +1,6 @@
 # K5b common-ready candidates; Tasks 4, 10, 14 perform the moves.
 org/crosswire/jsword/index/AbstractIndex.kt #done
-org/crosswire/jsword/index/BookIndexer.kt
+org/crosswire/jsword/index/BookIndexer.kt #done
 org/crosswire/jsword/index/Index.kt #done
 org/crosswire/jsword/index/IndexManager.kt #done
 org/crosswire/jsword/index/IndexManagerFactory.kt #done
@@ -23,10 +23,10 @@ org/crosswire/jsword/index/query/QueryBuilderFactory.kt #done
 org/crosswire/jsword/index/query/QueryDecorator.kt #done
 org/crosswire/jsword/index/query/QueryDecoratorFactory.kt #done
 org/crosswire/jsword/index/query/RangeQuery.kt #done
-org/crosswire/jsword/index/search/DefaultSearchModifier.kt
-org/crosswire/jsword/index/search/DefaultSearchRequest.kt
-org/crosswire/jsword/index/search/SearchModifier.kt
-org/crosswire/jsword/index/search/SearchRequest.kt
+org/crosswire/jsword/index/search/DefaultSearchModifier.kt #done
+org/crosswire/jsword/index/search/DefaultSearchRequest.kt #done
+org/crosswire/jsword/index/search/SearchModifier.kt #done
+org/crosswire/jsword/index/search/SearchRequest.kt #done
 org/crosswire/jsword/index/search/SearchType.kt #done
 org/crosswire/jsword/index/search/Searcher.kt #done
 org/crosswire/jsword/index/search/SearcherFactory.kt #done
