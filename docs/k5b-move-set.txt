@@ -1,1 +1,13 @@
 # K5b common-ready candidates; Tasks 4, 10, 14 perform the moves.
+org/crosswire/jsword/book/BooksEvent.kt #done
+org/crosswire/jsword/book/BooksListener.kt #done
+org/crosswire/jsword/book/BookList.kt #done
+org/crosswire/jsword/book/AbstractBookList.kt #done
+org/crosswire/jsword/book/BookFilter.kt #done
+org/crosswire/jsword/book/BookFilters.kt #done
+org/crosswire/jsword/book/BookFilterIterator.kt #done
+org/crosswire/jsword/book/BookSet.kt #done
+org/crosswire/jsword/book/BookProvider.kt #done
+org/crosswire/jsword/book/UnAccenter.kt #done
+org/crosswire/jsword/book/DataPolice.kt #done
+org/crosswire/jsword/book/BookData.kt

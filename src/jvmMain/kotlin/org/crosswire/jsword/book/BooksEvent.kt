@@ -19,10 +19,6 @@
  */
 package org.crosswire.jsword.book
 
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.util.EventObject
-
 /**
  * A BooksEvent is fired whenever a Bible is added or removed from the system.
  * 
@@ -40,11 +36,17 @@ open class BooksEvent
  * @param added
  *            True if the changed Bible is an addition.
  */
-(source: Any?, book: Book?, private var added: Boolean) : EventObject(source) {
+(source: Any?, book: Book?, private var added: Boolean) {
+    private val source: Any = requireNotNull(source) { "null source" }
+
+    /**
+     * The object on which the event initially occurred (was `EventObject.getSource`, K5b rule 26).
+     */
+    open fun getSource(): Any = source
+
     /**
      * The name of the changed Bible
      */
-    @Transient
     private var changedBook: Book? = book
 
     /**
@@ -62,25 +64,4 @@ open class BooksEvent
      */
     open val isAddition: Boolean
         get() = added
-
-    /**
-     * Serialization support.
-     *
-     * @param is the input stream
-     * @throws IOException if an I/O error occurred
-     * @throws ClassNotFoundException this class cannot be recreated.
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`is`: ObjectInputStream) {
-        // Broken but we don't serialize events
-        changedBook = null
-        `is`.defaultReadObject()
-    }
-
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3834876879554819894L
-    }
 }

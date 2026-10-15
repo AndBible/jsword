@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book
 
-import java.util.NoSuchElementException
-
 /**
  * An iterator that filters as it goes.
  * 

@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book
 
-import java.util.EventListener
-
 /**
  * BiblesListeners are able to be notified about changes to the numbers of
  * Bibles installed on the system.
@@ -28,7 +26,7 @@ import java.util.EventListener
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface BooksListener : EventListener {
+interface BooksListener {
     /**
      * Called whenever a new Bible is added to the system.
      *

@@ -19,10 +19,7 @@
  */
 package org.crosswire.jsword.book
 
-import java.util.Collections
-import java.util.concurrent.CopyOnWriteArrayList
-
-import org.crosswire.common.util.CollectionUtil
+import org.crosswire.common.util.CopyOnWriteList
 
 /**
  * A basic implementation of BookList. The methods in this abstract class are
@@ -40,18 +37,21 @@ abstract class AbstractBookList
     /**
      * The list of listeners
      */
-    private var listeners: MutableList<BooksListener?> = CopyOnWriteArrayList()
+    private var listeners: MutableList<BooksListener?> = CopyOnWriteList()
 
     init {
-        listeners = CopyOnWriteArrayList()
+        listeners = CopyOnWriteList()
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#getBooks(org.crosswire.jsword.book.BookFilter)
      */
     override fun getBooks(filter: BookFilter?): MutableList<Book> {
-        val temp = CollectionUtil.createList(BookFilterIterator(getBooks(), filter))
-        return Collections.unmodifiableList(temp)
+        val temp = ArrayList<Book>()
+        for (book in BookFilterIterator(getBooks(), filter)) {
+            temp.add(book)
+        }
+        return UnmodifiableBookList(temp)
     }
 
     /* (non-Javadoc)
@@ -88,4 +88,17 @@ abstract class AbstractBookList
             }
         }
     }
+}
+
+/**
+ * A read-only list over [delegate] whose mutators throw [UnsupportedOperationException], as
+ * `Collections.unmodifiableList` did (K5b rule 26).
+ */
+private class UnmodifiableBookList(private val delegate: List<Book>) : AbstractMutableList<Book>() {
+    override val size: Int get() = delegate.size
+    override fun get(index: Int): Book = delegate[index]
+    override fun add(index: Int, element: Book): Unit = throw UnsupportedOperationException()
+    override fun removeAt(index: Int): Book = throw UnsupportedOperationException()
+    override fun set(index: Int, element: Book): Book = throw UnsupportedOperationException()
+    override fun clear(): Unit = throw UnsupportedOperationException()
 }

@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.book
 
+import kotlinx.atomicfu.atomic
 import org.crosswire.jsword.passage.Key
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
@@ -49,7 +50,7 @@ private constructor() {
          */
         @JvmStatic
         actual fun report(book: Book?, key: Key?, message: String?) {
-            if (!reporting) {
+            if (!reporting.value) {
                 return
             }
             val buf = StringBuilder()
@@ -73,21 +74,15 @@ private constructor() {
          */
         @JvmStatic
         actual var isReporting: Boolean
-            get() {
-                synchronized(DataPolice::class.java) {
-                    return reporting
-                }
-            }
+            get() = reporting.value
             set(value) {
-                synchronized(DataPolice::class.java) {
-                    reporting = value
-                }
+                reporting.value = value
             }
 
         /**
          * Whether to report problems or not. By default, reporting is off.
          */
-        private var reporting = false
+        private val reporting = atomic(false)
 
         /**
          * The log stream

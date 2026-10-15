@@ -19,13 +19,14 @@
  */
 package org.crosswire.jsword.book
 
-import java.util.Collections
-import java.util.TreeSet
-
 import org.crosswire.common.util.Filter
+import org.crosswire.common.util.SortedArraySet
 
-open class BookSet : ArrayList<Book>, MutableSet<Book> {
-    constructor() : super()
+open class BookSet : AbstractMutableList<Book> {
+    /** The sorted, duplicate-free backing list (K5b rule 26: the class no longer extends `ArrayList`). */
+    private val items = ArrayList<Book>()
+
+    constructor()
 
     constructor(books: Collection<Book>) : this() {
         addAll(books)
@@ -39,7 +40,7 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
      */
     open val groups: Set<String>
         get() {
-            val results: MutableSet<String> = TreeSet()
+            val results: MutableSet<String> = SortedArraySet<String>()
             for (book in this) {
                 results.addAll(book.propertyKeys!!)
             }
@@ -57,7 +58,8 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
      * @return the values for a particular key.
      */
     open fun getGroup(key: String?): Set<Any> {
-        val results: MutableSet<Any> = TreeSet()
+        @Suppress("UNCHECKED_CAST")
+        val results: MutableSet<Any> = SortedArraySet<Any> { a, b -> (a as Comparable<Any>).compareTo(b) }
         for (book in this) {
             val property: Any? = book.getProperty(key)
             if (property != null) {
@@ -80,7 +82,7 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
     open fun filter(filter: Filter<Book>): BookSet {
         // create a copy of the list and
         // remove everything that fails the test.
-        val listSet = clone() as BookSet
+        val listSet = BookSet(this)
         val iter = listSet.iterator()
         while (iter.hasNext()) {
             val obj = iter.next()
@@ -105,9 +107,9 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
     final override fun add(element: Book): Boolean {
         // Add the item only if it is not in the list.
         // Add it into the list so that it is in sorted order.
-        val pos = Collections.binarySearch(this, element)
+        val pos = items.binarySearch(element)
         if (pos < 0) {
-            super.add(-pos - 1, element)
+            items.add(-pos - 1, element)
             return true
         }
         return false
@@ -153,13 +155,23 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
         return item
     }
 
-    /**
-     * Kotlin must be told which inherited implementation wins: Java picks the one of the superclass
-     * (ArrayList) over the default method of Set.
-     */
-    override fun spliterator(): java.util.Spliterator<Book> {
-        return super<ArrayList>.spliterator()
+    override val size: Int
+        get() = items.size
+
+    override fun get(index: Int): Book = items[index]
+
+    override fun removeAt(index: Int): Book = items.removeAt(index)
+
+    override fun clear() {
+        items.clear()
     }
+
+    // The ArrayList iterators were fail-fast and supported remove; keep that by delegating to the backing list.
+    override fun iterator(): MutableIterator<Book> = items.iterator()
+
+    override fun listIterator(): MutableListIterator<Book> = items.listIterator()
+
+    override fun listIterator(index: Int): MutableListIterator<Book> = items.listIterator(index)
 
     /**
      * GroupFilter does the SQL traditional group by.
@@ -169,12 +181,5 @@ open class BookSet : ArrayList<Book>, MutableSet<Book> {
             val property = obj.getProperty(key)
             return property != null && property == value
         }
-    }
-
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3258688806185154867L
     }
 }
