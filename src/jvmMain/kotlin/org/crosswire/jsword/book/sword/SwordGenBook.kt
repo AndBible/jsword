@@ -20,6 +20,8 @@
 package org.crosswire.jsword.book.sword
 
 import org.crosswire.common.activate.Activator
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import org.crosswire.common.activate.Lock
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg
@@ -74,6 +76,9 @@ open class SwordGenBook
     @Volatile
     private var active = false
 
+    /** Serializes activate and deactivate (the former `@Synchronized` Book monitor, rule 19). */
+    private val monitor = SynchronizedObject()
+
     /**
      * So we can quickly find a Key given the text for the key
      */
@@ -87,8 +92,7 @@ open class SwordGenBook
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.basic.AbstractBook#activate(org.crosswire.common.activate.Lock)
      */
-    @Synchronized
-    final override fun activate(lock: Lock?) {
+    final override fun activate(lock: Lock?) = synchronized(monitor) {
         super.activate(lock)
 
         val newSet = backend!!.readIndex()
@@ -112,8 +116,7 @@ open class SwordGenBook
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.basic.AbstractBook#deactivate(org.crosswire.common.activate.Lock)
      */
-    @Synchronized
-    final override fun deactivate(lock: Lock?) {
+    final override fun deactivate(lock: Lock?) = synchronized(monitor) {
         super.deactivate(lock)
 
         // Flip active=false BEFORE nulling the fields so that a concurrent

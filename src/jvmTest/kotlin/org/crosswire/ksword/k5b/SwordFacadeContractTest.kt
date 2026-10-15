@@ -138,3 +138,43 @@ class SwordFacadeContractTest {
         }
     }
 }
+
+/** Readers of a general book must survive concurrent activate/deactivate (the app deactivates on document switches). */
+class SwordGenBookActivationRaceTest {
+    @Test fun readersSurviveConcurrentActivateAndDeactivate() {
+        val book = K5bFixtureBook.create("K4GenBook") as SwordGenBook
+        val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+        val failures = java.util.concurrent.ConcurrentLinkedQueue<Throwable>()
+        val togglers = (1..2).map {
+            Thread {
+                try {
+                    while (!stop.get()) {
+                        org.crosswire.common.activate.Activator.deactivate(book)
+                        org.crosswire.common.activate.Activator.activate(book)
+                    }
+                } catch (t: Throwable) { failures += t }
+            }
+        }
+        val readers = (1..2).map {
+            Thread {
+                try {
+                    repeat(200) {
+                        book.getKey("Part 2")
+                        book.getKey("part 1")
+                        book.getGlobalKeyList().getChildCount()
+                    }
+                } catch (t: Throwable) { failures += t }
+            }
+        }
+        togglers.forEach { it.start() }
+        readers.forEach { it.start() }
+        readers.forEach { it.join(120_000) }
+        stop.set(true)
+        togglers.forEach { it.join(30_000) }
+        try {
+            assertTrue("failures: ${failures.map { it.stackTraceToString().lines().take(8).joinToString("\n") }}", failures.isEmpty())
+        } finally {
+            org.crosswire.common.activate.Activator.deactivate(book)
+        }
+    }
+}

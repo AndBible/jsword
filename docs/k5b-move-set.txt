@@ -24,3 +24,4 @@ org/crosswire/jsword/book/sword/SwordBook.kt #done
 org/crosswire/jsword/book/sword/SwordDictionary.kt #done
 org/crosswire/jsword/book/sword/SwordDailyDevotion.kt #done
 org/crosswire/jsword/book/sword/SwordBookDriver.kt #done
+org/crosswire/jsword/book/sword/SwordGenBook.kt #done
