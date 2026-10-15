@@ -22,8 +22,6 @@ package org.crosswire.jsword.book.install.sword
 import java.net.URI
 import java.net.URISyntaxException
 
-import javax.net.ssl.HttpsURLConnection
-
 import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.LucidException
 import org.crosswire.common.util.NetUtil
@@ -93,12 +91,9 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
     override fun indexLastUpdated(): Long? {
         try {
             val uri = URI(NetUtil.PROTOCOL_HTTPS, host, catalogDirectory + "/" + FILE_LIST_GZ, null)
-            val httpsURLConnection = uri.toURL().openConnection() as HttpsURLConnection
-            httpsURLConnection.connectTimeout = WebResource.getTimeout()
-            httpsURLConnection.readTimeout = WebResource.getTimeout()
-            val lastModified: Long = httpsURLConnection.lastModified
-            httpsURLConnection.disconnect()
-            return lastModified
+            val transport = WebResource.transport ?: return 0L
+            val body = transport.get(uri, WebResource.getTimeout())
+            try { return body.lastModified } finally { body.close() }
         } catch (e: Exception) {
             return 0L
         }
