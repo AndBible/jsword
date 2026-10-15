@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.index
 
+import kotlin.jvm.JvmField
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 

@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.index.query
 
+import kotlin.jvm.JvmStatic
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory

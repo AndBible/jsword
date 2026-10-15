@@ -4,6 +4,7 @@ import org.crosswire.common.activate.Lock
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.SwordBookMetaData
+import org.crosswire.jsword.index.IndexStatusListener
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.PassageKeyFactory
 import org.crosswire.jsword.versification.system.Versifications
@@ -14,6 +15,8 @@ internal actual fun filterTestBook(initials: String): Book = object : Book {
         "[$initials]\nDescription=Frozen filter context\nModDrv=RawText\nEncoding=UTF-8\n".encodeToByteArray(), initials)
     override fun getKey(name: String?): Key = PassageKeyFactory.instance().getKey(
         Versifications.instance().getVersification("KJV"), name)
+    override fun addIndexStatusListener(li: IndexStatusListener?) = Unit
+    override fun removeIndexStatusListener(li: IndexStatusListener?) = Unit
     override fun activate(lock: Lock?) = Unit
     override fun deactivate(lock: Lock?) = Unit
     override fun compareTo(other: Book): Int = initials.compareTo(other.initials)

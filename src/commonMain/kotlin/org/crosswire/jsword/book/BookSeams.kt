@@ -1,6 +1,7 @@
 package org.crosswire.jsword.book
 
 import org.crosswire.common.activate.Activatable
+import org.crosswire.jsword.index.IndexStatusListener
 import org.crosswire.jsword.passage.Key
 
 /** K4 forward declarations: common code only passes facades around until K5b.
@@ -10,6 +11,8 @@ expect interface Book : Activatable, Comparable<Book> {
     val initials: String
     var bookMetaData: BookMetaData
     fun getKey(name: String?): Key
+    fun addIndexStatusListener(li: IndexStatusListener?)
+    fun removeIndexStatusListener(li: IndexStatusListener?)
 }
 
 expect interface BookDriver {

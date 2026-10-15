@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.index.search
 
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 import org.crosswire.jsword.index.query.QueryDecorator
 import org.crosswire.jsword.index.query.QueryDecoratorFactory
 

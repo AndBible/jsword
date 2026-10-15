@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.index.search
 
+import kotlin.jvm.JvmStatic
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException

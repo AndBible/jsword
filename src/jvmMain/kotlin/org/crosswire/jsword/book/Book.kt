@@ -532,7 +532,7 @@ actual interface Book : Activatable, Comparable<Book> {
      * @param li
      *            the `IndexStatusListener` to be added
      */
-    fun addIndexStatusListener(li: IndexStatusListener?)
+    actual fun addIndexStatusListener(li: IndexStatusListener?)
 
     /**
      * Removes a `IndexStatusListener` from the listener list.
@@ -540,7 +540,7 @@ actual interface Book : Activatable, Comparable<Book> {
      * @param li
      *            the `IndexStatusListener` to be removed
      */
-    fun removeIndexStatusListener(li: IndexStatusListener?)
+    actual fun removeIndexStatusListener(li: IndexStatusListener?)
 
     fun resetSearcher()
 }
