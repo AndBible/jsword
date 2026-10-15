@@ -19,9 +19,7 @@
  */
 package org.crosswire.common.xml
 
-import java.io.IOException
-import java.io.StringWriter
-import java.io.Writer
+import okio.IOException
 import fi.sykero.kdom.sax.Attributes
 import fi.sykero.kdom.sax.ContentHandler
 import fi.sykero.kdom.sax.Locator
@@ -47,10 +45,10 @@ open class PrettySerializingContentHandler
  *            the writer to use
  */
 @JvmOverloads
-constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null) : ContentHandler {
+constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: XmlWriter? = null) : ContentHandler {
     private var formatting: FormatType = theFormat
 
-    private var writer: Writer = theWriter ?: StringWriter()
+    private var writer: XmlWriter = theWriter ?: stringXmlWriter()
 
     override fun toString(): String {
         return writer.toString()

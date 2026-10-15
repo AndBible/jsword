@@ -19,7 +19,6 @@
  */
 package org.crosswire.common.xml
 
-import javax.xml.transform.TransformerException
 
 /**
  * A generic method of converting one SAX stream into another. This can be a
@@ -38,6 +37,6 @@ interface Converter {
      * @throws TransformerException
      *             If the transformation can't be completed
      */
-    @Throws(TransformerException::class)
+    @Throws(XmlTransformerException::class)
     fun convert(provider: SAXEventProvider?): SAXEventProvider?
 }
