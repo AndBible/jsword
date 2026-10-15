@@ -29,9 +29,6 @@ import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.VerseKey
 import fi.sykero.kdom.Document
 import fi.sykero.kdom.Element
-import java.util.ArrayList
-import java.util.Collections
-import java.util.HashMap
 
 /**
  * DefaultBookMetaData is an implementation of the of the BookMetaData
@@ -73,7 +70,7 @@ open class DefaultBookMetaData
      * @see org.crosswire.jsword.book.BookMetaData#getPropertyKeys()
      */
     override val propertyKeys: Set<String>?
-        get() = Collections.unmodifiableSet(props.keys)
+        get() = UnmodifiableKeyView(props.keys)
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookMetaData#getProperty(java.lang.String)
@@ -257,6 +254,24 @@ open class DefaultBookMetaData
         valueElement.addContent(expandedValue)
 
         table.addContent(rowEle)
+    }
+
+    /**
+     * Live read-only view of the property keys, the replacement of `Collections.unmodifiableSet` (rule 26): it
+     * reflects later changes of the map, and neither the set nor its iterator can remove.
+     */
+    private class UnmodifiableKeyView(private val keys: Set<String>) : AbstractSet<String>() {
+        override val size: Int get() = keys.size
+
+        override fun contains(element: String): Boolean = keys.contains(element)
+
+        override fun iterator(): Iterator<String> {
+            val source = keys.iterator()
+            return object : Iterator<String> {
+                override fun hasNext(): Boolean = source.hasNext()
+                override fun next(): String = source.next()
+            }
+        }
     }
 
     private companion object {

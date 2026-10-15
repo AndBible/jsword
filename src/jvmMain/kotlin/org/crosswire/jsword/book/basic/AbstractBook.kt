@@ -24,6 +24,7 @@
 package org.crosswire.jsword.book.basic
 
 import org.crosswire.common.activate.Lock
+import org.crosswire.common.util.CopyOnWriteList
 import org.crosswire.common.util.Language
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookCategory
@@ -45,7 +46,6 @@ import org.crosswire.jsword.index.search.SearcherFactory
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
 import fi.sykero.kdom.Document
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * AbstractBook implements a few of the more generic methods of Book. This class
@@ -80,7 +80,7 @@ abstract class AbstractBook
     /**
      * The list of property change listeners
      */
-    private var listeners: MutableList<IndexStatusListener>? = CopyOnWriteArrayList()
+    private var listeners: MutableList<IndexStatusListener>? = CopyOnWriteList()
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.Book#getScope()
@@ -364,7 +364,7 @@ abstract class AbstractBook
      */
     override fun addIndexStatusListener(li: IndexStatusListener?) {
         if (listeners == null) {
-            listeners = CopyOnWriteArrayList()
+            listeners = CopyOnWriteList()
         }
         listeners!!.add(li!!)
     }
@@ -423,7 +423,7 @@ abstract class AbstractBook
 
         // Check that that is the same as this
         // Don't use instanceof since that breaks inheritance
-        if (other.javaClass != this.javaClass) {
+        if (other::class != this::class) {
             return false
         }
 

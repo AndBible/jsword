@@ -815,3 +815,4 @@ org.crosswire.jsword.book.BooksEvent + C class public extends java.lang.Object i
 org.crosswire.jsword.book.BooksEvent + M public getSource(): java.lang.Object throws [] # K5b common, rule 26: plain class instead of java.util.EventObject, getSource() kept with the non-null source check
 org.crosswire.jsword.book.BooksListener - C interface public extends null implements [java.util.EventListener] # K5b common, rule 26: BooksListener no longer extends java.util.EventListener
 org.crosswire.jsword.book.BooksListener + C interface public extends null implements [] # K5b common, rule 26: BooksListener no longer extends java.util.EventListener
+org.crosswire.jsword.book.Books - M public final getDriversByClass(java.lang.Class): org.crosswire.jsword.book.BookDriver[] throws [] # K5b delete

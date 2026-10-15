@@ -44,8 +44,9 @@ import fi.sykero.kdom.Content
 import fi.sykero.kdom.Element
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import java.util.HashSet
-import java.util.LinkedHashSet
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import kotlin.concurrent.Volatile
 
 /**
  * An abstract implementation of Book that lets implementors just concentrate on
@@ -83,6 +84,13 @@ abstract class AbstractPassageBook
      */
     @Volatile
     private var bibleBooksCache: Set<BibleBook>? = null
+
+    /**
+     * Guards the lazy initialisation of [bibleBooksCache] (formerly the monitor of this book, K5b D4).
+     * AndBible's own `synchronized(book)` blocks (index scheduling, OSIS fragment cache) guard other state and
+     * do not rely on this exclusion.
+     */
+    private val bibleBooksLock = SynchronizedObject()
 
     init {
         keyf = PassageKeyFactory.instance()
@@ -255,7 +263,7 @@ abstract class AbstractPassageBook
     open val bibleBooks: Set<BibleBook>
         get() {
             if (bibleBooksCache == null) {
-                synchronized(this) {
+                synchronized(bibleBooksLock) {
                     if (bibleBooksCache == null) {
                         bibleBooksCache = getBibleBooksInternal()
                     }

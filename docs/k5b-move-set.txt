@@ -13,3 +13,10 @@ org/crosswire/jsword/book/DataPolice.kt #done
 org/crosswire/jsword/book/BookData.kt #done
 org/crosswire/jsword/book/OSISUtil.kt #done
 org/crosswire/jsword/book/study/StrongsNumber.kt #done
+org/crosswire/jsword/book/Book.kt #done
+org/crosswire/jsword/book/BookDriver.kt #done
+org/crosswire/jsword/book/Books.kt #done
+org/crosswire/jsword/book/basic/AbstractBook.kt #done
+org/crosswire/jsword/book/basic/AbstractBookDriver.kt #done
+org/crosswire/jsword/book/basic/AbstractPassageBook.kt #done
+org/crosswire/jsword/book/basic/DefaultBookMetaData.kt #done

@@ -19,13 +19,15 @@
  */
 package org.crosswire.jsword.book
 
-import java.lang.reflect.InvocationTargetException
-import java.util.TreeSet
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
+import kotlin.jvm.JvmStatic
 
 import org.crosswire.common.activate.Activator
-import org.crosswire.common.util.CollectionUtil
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Reporter
+import org.crosswire.common.util.SortedArraySet
+import org.crosswire.common.util.currentTimeMillis
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
@@ -47,7 +49,7 @@ private constructor() : AbstractBookList() {
     /**
      * The collection of Books
      */
-    private var books: MutableSet<Book> = TreeSet()
+    private var books: MutableSet<Book> = SortedArraySet(Comparator { a, b -> a.compareTo(b) })
 
     /**
      * The map of book initials
@@ -64,20 +66,24 @@ private constructor() : AbstractBookList() {
      */
     private var driverSet: MutableSet<BookDriver> = HashSet()
 
+    /**
+     * Guards books, initials, names and driverSet together (formerly the monitor of this instance, K5b D4).
+     * Reentrant, because registerDriver calls addBook and removeBook.
+     */
+    private val lock = SynchronizedObject()
+
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#getBooks()
      */
-    @Synchronized
-    override fun getBooks(): MutableList<Book> {
-        return CollectionUtil.createList(books)
+    override fun getBooks(): MutableList<Book> = synchronized(lock) {
+        copyToList(books)
     }
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.BookList#getBooks(org.crosswire.jsword.book.BookFilter)
      */
-    @Synchronized
-    override fun getBooks(filter: BookFilter?): MutableList<Book> {
-        return CollectionUtil.createList(BookFilterIterator(books, filter))
+    override fun getBooks(filter: BookFilter?): MutableList<Book> = synchronized(lock) {
+        copyToList(BookFilterIterator(books, filter))
     }
 
     /**
@@ -88,8 +94,9 @@ private constructor() : AbstractBookList() {
      * @param name The initials or name of the book to find
      * @return the book or null
      */
-    @Synchronized
-    fun getBook(name: String?): Book? {
+    fun getBook(name: String?): Book? = synchronized(lock) { getBookLocked(name) }
+
+    private fun getBookLocked(name: String?): Book? {
         if (name == null) {
             return null
         }
@@ -120,8 +127,9 @@ private constructor() : AbstractBookList() {
      *
      * @param book the book to add to this book list
      */
-    @Synchronized
-    fun addBook(book: Book?) {
+    fun addBook(book: Book?) = synchronized(lock) { addBookLocked(book) }
+
+    private fun addBookLocked(book: Book?) {
         if (book == null) return
 
         // If we are upgrading module, we need to remove existing data first.
@@ -145,9 +153,10 @@ private constructor() : AbstractBookList() {
      * @param book the book to be removed from this book list
      * @throws BookException when an error occurs when performing this method
      */
-    @Synchronized
     @Throws(BookException::class)
-    fun removeBook(book: Book) {
+    fun removeBook(book: Book) = synchronized(lock) { removeBookLocked(book) }
+
+    private fun removeBookLocked(book: Book) {
         // log.debug("unregistering book: {}", bmd.getName());
 
         Activator.deactivate(book)
@@ -171,17 +180,21 @@ private constructor() : AbstractBookList() {
      *            The BookDriver to add
      * @throws BookException when an error occurs when performing this method
      */
-    @Synchronized
     @Throws(BookException::class)
-    fun registerDriver(driver: BookDriver) {
-        log.debug("begin registering driver: {}", driver.javaClass.getName())
+    fun registerDriver(driver: BookDriver) = synchronized(lock) { registerDriverLocked(driver) }
+
+    private fun registerDriverLocked(driver: BookDriver) {
+        log.debug("begin registering driver: {}", driver::class.simpleName)
 
         driverSet.add(driver)
 
         // Go through all the books and add all the new ones.
         // Remove those that are not known to the driver, but used to be.
         val bookArray = driver.getBooks()
-        val current = CollectionUtil.createSet(BookFilterIterator(books, BookFilters.getBooksByDriver(driver)))
+        val current: MutableSet<Book> = HashSet()
+        for (b in BookFilterIterator(books, BookFilters.getBooksByDriver(driver))) {
+            current.add(b)
+        }
 
         for (j in bookArray.indices) {
             val b = bookArray[j]
@@ -201,27 +214,7 @@ private constructor() : AbstractBookList() {
             removeBook(book)
         }
 
-        log.debug("end registering driver: {}", driver.javaClass.getName())
-    }
-
-    /**
-     * Since Books keeps a track of drivers itself, including creating them when
-     * registered it can be hard to get a hold of the current book driver. This
-     * method gives access to the registered instances.
-     *
-     * @param type the type of BookDriver
-     * @return matching BookDrivers
-     */
-    @Synchronized
-    fun getDriversByClass(type: Class<out BookDriver>?): Array<BookDriver> {
-        val matches: MutableList<BookDriver> = ArrayList()
-        for (driver in driverSet) {
-            if (driver.javaClass === type) {
-                matches.add(driver)
-            }
-        }
-
-        return matches.toTypedArray()
+        log.debug("end registering driver: {}", driver::class.simpleName)
     }
 
     /**
@@ -230,9 +223,15 @@ private constructor() : AbstractBookList() {
      * @return Found int or the default value
      */
     val drivers: Array<BookDriver>
-        @Synchronized get() {
-            return driverSet.toTypedArray()
+        get() = synchronized(lock) { driverSet.toTypedArray() }
+
+    private fun copyToList(source: Iterable<Book>): MutableList<Book> {
+        val reply: MutableList<Book> = ArrayList()
+        for (b in source) {
+            reply.add(b)
         }
+        return reply
+    }
 
     /**
      * Registers all the drivers known to the program.
@@ -240,16 +239,14 @@ private constructor() : AbstractBookList() {
     private fun autoRegister() {
         val entries = PluginRegistry.entries(BookDriver::class)
 
-        log.debug("begin auto-registering {} drivers:", Integer.toString(entries.size))
+        log.debug("begin auto-registering {} drivers:", entries.size.toString())
 
         for (entry in entries) {
             try {
                 registerDriver(entry.create())
-            } catch (e: BookException) {
-                Reporter.informUser(Books::class.java, e)
             } catch (e: Exception) {
-                // The old reflective path reported every failure of a driver's creation to the user.
-                Reporter.informUser(Books::class.java, e)
+                // Every failure of a driver's creation, a BookException included, is reported to the user.
+                Reporter.informUser(this, e)
             }
         }
     }
@@ -280,9 +277,9 @@ private constructor() : AbstractBookList() {
         // When this was the last call in the constructor it resulted
         // in "instance" being null in something it called.
         init {
-            log.trace("Auto-registering start @ {}", System.currentTimeMillis().toString())
+            log.trace("Auto-registering start @ {}", currentTimeMillis().toString())
             instance.autoRegister()
-            log.trace("Auto-registering stop @ {}", System.currentTimeMillis().toString())
+            log.trace("Auto-registering stop @ {}", currentTimeMillis().toString())
         }
     }
 }

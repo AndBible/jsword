@@ -120,8 +120,8 @@ were removed because Kotlin collection implementations do not override Java
 
 ### Task 6 final File boundaries
 
-`MetaDataLocator` owns nullable Path locations; `MetaDataLocatorJvm` exposes File
-getters. `validatedFileUriPath(KUri): Path` in ResourceHomeHook.jvm.kt deliberately
+`MetaDataLocator` owns nullable Path locations; `MetaDataLocatorJvm` exposed File
+getters and was deleted in K5b Task 8 (no caller in jsword, `:app`, `sharedCore` or `sharedUi`). `validatedFileUriPath(KUri): Path` in ResourceHomeHook.jvm.kt deliberately
 uses File(URI), preserving rejection of non-file, relative, authority, query and
 fragment URIs. The iOS implementation validates the corresponding URI cases.
 Directory creation failure remains ignored and the computed location is returned.
