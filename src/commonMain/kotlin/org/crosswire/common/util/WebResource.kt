@@ -132,22 +132,21 @@ open class WebResource {
      *
      * @return the size of the file
      */
-    open val size: Int
-        get() {
-            try {
-                val response = requireTransport().head(uri!!, timeout)
-                if (response.status == 200) {
-                    return response.contentLength
-                }
-                val reason = response.reason
-                // TRANSLATOR: Common error condition: {0} is a placeholder for the
-                // URL of what could not be found.
-                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.getPath()))
-            } catch (e: IOException) {
-                return 0
+    open suspend fun getSize(): Int {
+        try {
+            val response = requireTransport().head(uri!!, timeout)
+            if (response.status == 200) {
+                return response.contentLength
             }
+            val reason = response.reason
+            // TRANSLATOR: Common error condition: {0} is a placeholder for the
+            // URL of what could not be found.
+            Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.getPath()))
+        } catch (e: IOException) {
             return 0
         }
+        return 0
+    }
 
     /**
      * Determine the last modified date of this WebResource.
@@ -157,22 +156,21 @@ open class WebResource {
      *
      * @return the last mod date of the file
      */
-    open val lastModified: Long
-        get() {
-            try {
-                val response = requireTransport().head(uri!!, timeout)
-                if (response.status == 200) {
-                    return response.lastModified
-                }
-                val reason = response.reason
-                // TRANSLATOR: Common error condition: {0} is a placeholder for the
-                // URL of what could not be found.
-                Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.getPath()))
-            } catch (e: IOException) {
-                return currentTimeMillis()
+    open suspend fun getLastModified(): Long {
+        try {
+            val response = requireTransport().head(uri!!, timeout)
+            if (response.status == 200) {
+                return response.lastModified
             }
+            val reason = response.reason
+            // TRANSLATOR: Common error condition: {0} is a placeholder for the
+            // URL of what could not be found.
+            Reporter.informUser(this, JSMsg.gettext("Unable to find: {0}", reason + ':' + uri!!.getPath()))
+        } catch (e: IOException) {
             return currentTimeMillis()
         }
+        return currentTimeMillis()
+    }
 
     /**
      * Copy this WebResource to the destination and report progress.
@@ -183,8 +181,8 @@ open class WebResource {
      *            the job on which to report progress
      * @throws LucidException when an error is encountered
      */
-    @Throws(LucidException::class)
-    open fun copy(dest: KUri?, meter: Progress?) {
+    @Throws(LucidException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    open suspend fun copy(dest: KUri?, meter: Progress?) {
         var `in`: HttpBody? = null
         var out: BufferedSink? = null
         var statusCode = 0
@@ -194,14 +192,14 @@ open class WebResource {
             // Initialize the meter, if present
             if (meter != null) {
                 // Find out how big it is
-                var size = `in`.contentLength
+                var size = `in`.contentLength()
                 // Sometimes the Content-Length is not given and we have to grab it via HEAD method
                 if (size == 0) {
-                    size = this.size
+                    size = this.getSize()
                 }
                 meter.totalWork = size
             }
-            statusCode = `in`.status
+            statusCode = `in`.status()
             `in`.prepareRead()
 
             // Download the index file
@@ -239,8 +237,8 @@ open class WebResource {
      * @param dest the destination URI
      * @throws LucidException when an error is encountered
      */
-    @Throws(LucidException::class)
-    open fun copy(dest: KUri?) {
+    @Throws(LucidException::class, kotlin.coroutines.cancellation.CancellationException::class)
+    open suspend fun copy(dest: KUri?) {
         copy(dest, null)
     }
 

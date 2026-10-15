@@ -55,26 +55,9 @@ private fun input(uri: KUri, directFile: Boolean = false): Source {
         if (name.isEmpty()) throw IOException("no entry name specified")
         return zip.source(jarEntry(zip, name))
     }
-    val body = transport(uri).get(uri, WebResource.getTimeout())
-    try {
-        body.prepareRead()
-        return object : Source {
-            override fun timeout() = Timeout.NONE
-            override fun close() = body.close()
-            override fun read(sink: Buffer, byteCount: Long): Long {
-                require(byteCount >= 0)
-                if (byteCount == 0L) return 0L
-                val bytes = ByteArray(minOf(byteCount, 8192L).toInt())
-                val count = body.read(bytes)
-                if (count < 0) return -1L
-                sink.write(bytes, 0, count)
-                return count.toLong()
-            }
-        }
-    } catch (failure: Throwable) {
-        try { body.close() } catch (_: IOException) { }
-        throw failure
-    }
+    // Remote bodies are suspend-only (D4): they are read through WebResource, never as a blocking Source.
+    transport(uri)
+    throw IOException("Remote URL input requires the suspend WebResource API: $uri")
 }
 
 internal actual fun netCheckResource(uri: KUri) { input(uri).close() }
@@ -90,7 +73,13 @@ internal actual fun netUrlSize(uri: KUri): Int =
             zip.jarEntry(name)?.size?.let { if (it > Int.MAX_VALUE) -1 else it.toInt() } ?: -1
         } catch (error: NetMalformedURLException) { throw error }
         catch (_: IOException) { -1 }
-    } else transport(uri).head(uri, WebResource.getTimeout()).contentLength
+    } else {
+        transport(uri) // unsupported schemes and a missing transport keep their exceptions
+        throw IllegalStateException("A remote size is suspend-only; use NetUtil.getSize: $uri")
+    }
+
+internal actual suspend fun netHttpsSize(uri: KUri): Int =
+    transport(uri).head(uri, WebResource.getTimeout()).contentLength
 
 internal actual fun netLoadProperties(uri: KUri): PropertyMap {
     var source: BufferedSource? = null
@@ -169,4 +158,10 @@ internal actual fun netUrlLastModified(uri: KUri): Long =
     } else if (urlScheme(uri) == "jar") {
         val (zip, name) = jar(uri)
         jarEntry(zip, name).let { it.jarModifiedMillis ?: archiveEntryTime(it) }
-    } else transport(uri).head(uri, WebResource.getTimeout()).lastModified
+    } else {
+        transport(uri)
+        throw IllegalStateException("A remote modification time is suspend-only; use NetUtil.getLastModified: $uri")
+    }
+
+internal actual suspend fun netHttpsLastModified(uri: KUri): Long =
+    transport(uri).head(uri, WebResource.getTimeout()).lastModified

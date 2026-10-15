@@ -551,20 +551,23 @@ private constructor() {
          * @return the size of that resource
          */
         @JvmStatic
-        fun getSize(uri: KUri): Int {
+        suspend fun getSize(uri: KUri): Int {
             return getSize(uri, null, null)
         }
 
         @JvmStatic
-        fun getSize(uri: KUri, proxyHost: String?): Int {
+        suspend fun getSize(uri: KUri, proxyHost: String?): Int {
             return getSize(uri, proxyHost, null)
         }
+
+        /** https goes through the host transport (suspend); every other scheme stays a non-suspend local helper. */
+        private fun isHttps(uri: KUri): Boolean = uri.getScheme()?.lowercase() == PROTOCOL_HTTPS
 
         /** The `Int` size of a file, or -1 when it does not fit (what `URLConnection.getContentLength` returned). */
         internal fun fileSizeToInt(size: Long): Int = if (size > Int.MAX_VALUE) -1 else size.toInt()
 
         @JvmStatic
-        fun getSize(uri: KUri, proxyHost: String?, proxyPort: Int?): Int {
+        suspend fun getSize(uri: KUri, proxyHost: String?, proxyPort: Int?): Int {
             if (uri.getScheme().equals(PROTOCOL_FILE)) {
                 val path = uri.getPath()!!.toPath()
                 // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
@@ -576,9 +579,12 @@ private constructor() {
             try {
                 if (uri.getScheme().equals(PROTOCOL_HTTP)) {
                     val resource = WebResource(uri, proxyHost, proxyPort)
-                    val size = resource.size
+                    val size = resource.getSize()
                     resource.shutdown()
                     return size
+                }
+                if (isHttps(uri)) {
+                    return netHttpsSize(uri)
                 }
 
                 return netUrlSize(uri)
@@ -595,7 +601,7 @@ private constructor() {
          * @return the last modified date
          */
         @JvmStatic
-        fun getLastModified(uri: KUri): Long {
+        suspend fun getLastModified(uri: KUri): Long {
             return getLastModified(uri, null, null)
         }
 
@@ -608,7 +614,7 @@ private constructor() {
          * @return the last modified date
          */
         @JvmStatic
-        fun getLastModified(uri: KUri, proxyHost: String?): Long {
+        suspend fun getLastModified(uri: KUri, proxyHost: String?): Long {
             return getLastModified(uri, proxyHost, null)
         }
 
@@ -622,7 +628,7 @@ private constructor() {
          * @return the last modified date
          */
         @JvmStatic
-        fun getLastModified(uri: KUri, proxyHost: String?, proxyPort: Int?): Long {
+        suspend fun getLastModified(uri: KUri, proxyHost: String?, proxyPort: Int?): Long {
             if (uri.getScheme().equals(PROTOCOL_FILE)) {
                 val path = uri.getPath()!!.toPath()
                 // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
@@ -634,9 +640,12 @@ private constructor() {
             try {
                 if (uri.getScheme().equals(PROTOCOL_HTTP)) {
                     val resource = WebResource(uri, proxyHost, proxyPort)
-                    val time = resource.lastModified
+                    val time = resource.getLastModified()
                     resource.shutdown()
                     return time
+                }
+                if (isHttps(uri)) {
+                    return netHttpsLastModified(uri)
                 }
 
                 return netUrlLastModified(uri)
@@ -655,7 +664,7 @@ private constructor() {
          * @return true if the left is newer
          */
         @JvmStatic
-        fun isNewer(left: KUri, right: KUri): Boolean {
+        suspend fun isNewer(left: KUri, right: KUri): Boolean {
             return isNewer(left, right, null, null)
         }
 
@@ -669,7 +678,7 @@ private constructor() {
          * @return true if the left is newer
          */
         @JvmStatic
-        fun isNewer(left: KUri, right: KUri, proxyHost: String?): Boolean {
+        suspend fun isNewer(left: KUri, right: KUri, proxyHost: String?): Boolean {
             return isNewer(left, right, proxyHost, null)
         }
 
@@ -684,7 +693,7 @@ private constructor() {
          * @return true if the left is newer
          */
         @JvmStatic
-        fun isNewer(left: KUri, right: KUri, proxyHost: String?, proxyPort: Int?): Boolean {
+        suspend fun isNewer(left: KUri, right: KUri, proxyHost: String?, proxyPort: Int?): Boolean {
             return getLastModified(left, proxyHost, proxyPort) > getLastModified(right, proxyHost, proxyPort)
         }
 
