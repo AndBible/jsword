@@ -22,8 +22,6 @@
  */
 package org.crosswire.jsword.book.study
 
-import org.crosswire.common.util.KswordLocale
-import org.crosswire.common.util.NumberFormats
 
 /**
  * A Strong's Number is either Greek or Hebrew, where the actual numbers for
@@ -269,7 +267,7 @@ open class StrongsNumber {
          */
         private val STRONGS_PATTERN: Regex = Regex("([GgHh])([0-9]*)!?([A-Za-z]+)?")
 
-        /** `DecimalFormat("0000")` in the default locale: at least four digits, no grouping. */
-        private fun zeroPad(number: Int): String = NumberFormats.pattern(number.toLong(), "0000", KswordLocale.default())
+        /** At least four ASCII digits, no grouping (the old `DecimalFormat("0000")`, but never locale digits). */
+        private fun zeroPad(number: Int): String = number.toString().padStart(4, '0')
     }
 }
