@@ -7,6 +7,7 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.install.InstallException
 import org.crosswire.jsword.book.install.sword.AbstractSwordInstaller
+import org.crosswire.jsword.book.install.sword.FTPMsg
 import org.crosswire.jsword.book.install.sword.HttpSwordInstaller
 import org.crosswire.jsword.book.install.sword.HttpSwordInstallerFactory
 import org.crosswire.jsword.book.install.sword.HttpsSwordInstaller
@@ -31,8 +32,8 @@ import java.util.zip.ZipOutputStream
 
 /**
  * Pins the behaviour the installers keep through their common-ready conversion (K5b Task 13): the factory url
- * parsing, the job ids, the unpacking of a package into the download directory and the JSWORD home and the lock
- * around the book list. Runs against a temporary CWProject home and download
+ * parsing, the job ids, the unpacking of a package into the download directory and the JSWORD home, the lock
+ * around the book list and the `FTPMsg` resource. Runs against a temporary CWProject home and download
  * directory that are restored afterwards; no network.
  */
 class InstallerCommonReadyTest {
@@ -216,5 +217,12 @@ class InstallerCommonReadyTest {
             installer.setHost("h.invalid"); installer.setPackageDirectory("/pkg")
             assertEquals("$scheme://h.invalid/pkg/K4RawText.zip", installer.toRemoteURI(book).toString())
         }
+    }
+
+    @Test fun ftpMessagesComeFromTheEmbeddedBundle() {
+        // lookup takes the resource key; the FTPMsg constants only select the "FTPMsg" bundle
+        assertEquals("Too many @ symbols in url: x@y", FTPMsg.URL_AT_COUNT.lookup("SwordInstallerFactory.URLAtCount", "x@y"))
+        assertEquals("Wrong number of : symbols in url: x", FTPMsg.URL_COLON_COUNT.lookup("SwordInstallerFactory.URLColonCount", "x"))
+        assertEquals("Error loading from cache", FTPMsg.AUTH_REFUSED.lookup("SwordInstaller.CacheError"))
     }
 }

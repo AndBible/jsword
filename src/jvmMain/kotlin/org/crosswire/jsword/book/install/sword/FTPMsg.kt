@@ -20,6 +20,7 @@
 package org.crosswire.jsword.book.install.sword
 
 import org.crosswire.common.util.MsgBase
+import kotlin.jvm.JvmField
 
 /**
  * Compile safe Msg resource settings.
