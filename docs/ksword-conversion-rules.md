@@ -269,5 +269,41 @@ These rules extend the commonization replacements above. Keep the JVM implementa
 - An `actual interface` may retain additional members and supertypes beyond its `expect`. Keep the complete JVM `Book`, `BookDriver` and `SourceFilter` actual API and supertypes unchanged; the common expect is only the subset common code needs. Do not prune the JVM interface to match the forward declaration.
 - Name platform seam holders consistently with the platform operation, using the `*Seams.kt` naming pattern for declarations such as `BookSeams.kt`, `SourceFilterSeams.kt` and `PropertyMapSuperclassSeams.kt`. Keep platform implementations in their source-set-specific files.
 - KUri Java getters are explicit functions in common (`getPath()`, `getScheme()`, etc.), not Kotlin properties. Its exact constructors/functions are inventoried in `jsword/docs/k4-seams.md`; no `resolve` property or function is part of K4.
-- Separate permanent platform operations (lexical File IO, formatting, clocks/schedulers, HTTP host access, archive/compression, JVM cloning/serialization and Java ABI bridges) from the temporary facade declarations/hooks. K5 removes the JDOM `Content`/`Document` placeholders; K5b removes the `Book`/`BookDriver`/`SourceFilter` forward declarations and `SwordFacadeHooks` after K5's `kdom` is available.
+- Separate permanent platform operations (lexical File IO, formatting, clocks/schedulers, HTTP host access, archive/compression, JVM cloning/serialization and Java ABI bridges) from the temporary facade declarations/hooks. K5 Tasks 18/21 removed the `Content`/`Document` placeholders and `SourceFilter` forward declaration. `Book`/`BookDriver` and the remaining `SwordFacadeHooks` await K5b; see §28 and `docs/k4-seams.md`.
 - Record evidence at the scope it proves: JVM tests establish JVM behavior; Native source compilation establishes source-set/type compatibility only. It does not prove macOS link/runtime, filesystem semantics, locale behavior, GCD lifecycle, inflater behavior, fixture provisioning or emulator behavior.
+
+## 28. K5: XML
+
+K5's XML/filter implementation is locally accepted through M3 (2026-10-15); final aggregate, timing,
+device and host simulator runtime gates remain outstanding. This is not completion of the book facade.
+
+| Old API | Common replacement / conversion rule |
+|---|---|
+| `org.jdom2`, `.filter`, `.output`, `.output.support`, `.internal`, `.util` | Same suffix under `fi.sykero.kdom`; `org.jdom2.input.JDOMParseException` becomes `fi.sykero.kdom.input.JDOMParseException`. Keep the JDOM-derived library's licence and documented subset boundary. |
+| No-argument `getX()` / `isX()` | Kotlin property `x` / `isX`. A matching fluent setter remains `setX(value): Self` **and** the property has a synthetic setter for Kotlin assignment. Void setters become plain `var` properties; parameterized getters and factory functions stay functions. Preserve exceptions such as `Namespace.uri` -> JVM `getURI`, and `XMLOutputter.xmlOutputProcessor` -> `getXMLOutputProcessor`. Do not replace the accepted property-plus-fluent API with property-only setters. |
+| `SAXBuilder` | `fi.sykero.kdom.input.KdomBuilder`, backed by xmlutil **1.0.2.1**. Common input is `String` / `ByteArray`; Reader/InputStream/File overloads are JVM extensions. Sword text retains strict DOCTYPE rejection and the original OSIS/ThML/GBF fallback chain; non-Sword/EPUB callers opt into `allowDocType = true` (no external subset loading). See kdom's translation notes for the bounded DTD/encoding differences. |
+| `org.xml.sax.*`, JDOM SAX output | `fi.sykero.kdom.sax.*` (`ContentHandler`, `DefaultHandler`, `Attributes`, `AttributesImpl`, `Locator`, exceptions) and `KdomEventProvider` for tree replay. `Attributes.length` is a property; callbacks use non-null parameters. ThML parses with `XmlEventParser(namespaceAware = false)` and keeps entities -> characters -> close -> tags order. |
+| XPath / jaxen expressions | Compose `fi.sykero.kdom.query` axes and name/attribute tests, not a general XPath engine. Match namespaces by URI; absolute queries on detached trees are empty. Preserve document order across multi-step paths, nearest-first reverse axes, and materialize lazy sequences with `.toList()` before mutating the tree. |
+| `BlockingQueue` builder pools | No builder pool or `java.util.concurrent` in common code; use the common builder directly. The app's JVM-only `CommonUtils.useKdomBuilder` queue remains outside this rule. |
+| Writer output | Common `Appendable`; OutputStream overloads are JVM extensions (`fi.sykero.kdom.output.output`). Preserve documented PrintStream overload binding, flush/close ownership, charset and null behavior rather than assuming every Writer/OutputStream call is equivalent. |
+
+kdom is independent of JSword/AndBible: production common dependencies are stdlib and xmlutil, not
+application utilities. Its README and `docs/translation-notes.md` own the API/behavior exceptions and
+their test references. JSword tests include `FilterCommonTest` and validating-resource JVM parity tests;
+compiling their Native source sets does not establish execution there.
+
+### Remaining boundaries after Task 21
+
+`docs/k4-seams.md` is the authoritative inventory. `Content`/`Document`, the `SourceFilter` forward
+declaration and `sourceFilterFor` hook are gone; the real common factory registers all six filters.
+K5b still owns `Book`/`BookDriver` forward declarations and `swordMetaDataToOsis`, `createSwordBook`,
+`registerSwordDriver`. Narrow `FilterOsis` construction (JVM factory alias to `OSISUtil.OSISFactory`)
+and `DataPolice` diagnostics remain facade-related seams that K5b may consolidate, not proof that
+`OSISUtil` or the whole book/install facade is common.
+
+Keep the genuine JVM filter clone/unknown-subclass contract, XML writer/transformer/diagnostic hooks,
+validating-resource loader and character-slice/checked-throws operations. Native validating resources
+explicitly throw `UnsupportedOperationException`. JVM default StringWriter writes a null String as
+literal `"null"`; Native writer null String writes throw `NullPointerException`. Native slice and
+indentation bounds exceptions do not promise JVM StringIndexOutOfBoundsException identity. These are
+retained compatibility boundaries and explicit differences, not facade placeholders to delete blindly.
