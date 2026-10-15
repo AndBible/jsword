@@ -19,9 +19,6 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.util.Date
-
-import org.crosswire.common.icu.DateFormatter
 import org.crosswire.jsword.passage.DefaultLeafKeyList
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.PreferredKey
@@ -40,12 +37,15 @@ open class SwordDailyDevotion
  * @param backend the means by which the resource is accessed
  */
 (sbmd: SwordBookMetaData, backend: Backend<*>?) : SwordDictionary(sbmd, backend), PreferredKey {
+    /** The source of today's key; tests replace it to fix the date. */
+    internal var todayKey: () -> String = ::todayDevotionKey
+
     /*
      * (non-Javadoc)
      *
      * @see org.crosswire.jsword.passage.PreferredKey#getPreferred()
      */
     override fun getPreferred(): Key {
-        return DefaultLeafKeyList(DateFormatter.getDateInstance().format(Date()))
+        return DefaultLeafKeyList(todayKey())
     }
 }

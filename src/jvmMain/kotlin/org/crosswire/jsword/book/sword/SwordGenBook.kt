@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.util.HashMap
-
 import org.crosswire.common.activate.Activator
 import org.crosswire.common.activate.Lock
 import org.crosswire.common.util.jswordAssert

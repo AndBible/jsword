@@ -20,3 +20,7 @@ org/crosswire/jsword/book/basic/AbstractBook.kt #done
 org/crosswire/jsword/book/basic/AbstractBookDriver.kt #done
 org/crosswire/jsword/book/basic/AbstractPassageBook.kt #done
 org/crosswire/jsword/book/basic/DefaultBookMetaData.kt #done
+org/crosswire/jsword/book/sword/SwordBook.kt #done
+org/crosswire/jsword/book/sword/SwordDictionary.kt #done
+org/crosswire/jsword/book/sword/SwordDailyDevotion.kt #done
+org/crosswire/jsword/book/sword/SwordBookDriver.kt #done

@@ -64,6 +64,12 @@ class SwordFacadeContractTest {
         assertTrue("$preferred in $candidates", preferred in candidates)
     }
 
+    @Test fun dailyDevotionUsesTheInjectedKeySource() {
+        val book = K5bFixtureBook.create("K4Devotion") as SwordDailyDevotion
+        book.todayKey = { "injected key" }
+        assertEquals("injected key", book.getPreferred().getName())
+    }
+
     /**
      * Every day of a leap year goes through DevotionDateFormat and back. DevotionDateFormat formats in the current
      * year, so only 29 February can fail, and only in a non-leap current year (it rolls over to 1 March). That is

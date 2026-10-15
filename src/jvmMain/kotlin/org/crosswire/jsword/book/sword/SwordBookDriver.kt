@@ -19,15 +19,12 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.io.File
-import java.io.IOException
-import java.net.URI
-import java.util.HashSet
+import okio.IOException
+import okio.Path.Companion.toPath
 
-import org.crosswire.common.util.FileUtil
-import org.crosswire.common.util.FileUtilJvm
-import org.crosswire.common.util.NetUtil
-import org.crosswire.common.util.NetUtilJvm
+import org.crosswire.common.util.KFiles
+import org.crosswire.common.util.KUri
+import org.crosswire.common.util.pathUri
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.Book
@@ -65,7 +62,7 @@ open class SwordBookDriver
      * @see org.crosswire.jsword.book.BookProvider#getBooks()
      */
     override fun getBooks(): Array<Book> {
-        val dirs = SwordBookPathJvm.getSwordPath()
+        val dirs = SwordBookPath.getSwordLocations()
         //initial size based on Guava's  newHashMapWithExpectedSize method:
         //http://docs.guava-libraries.googlecode.com/git/javadoc/src-html/com/google/common/collect/Maps.html#line.201
         val valid: MutableSet<Book> = HashSet(dirs.size + dirs.size / 3)
@@ -75,26 +72,26 @@ open class SwordBookDriver
         return valid.toTypedArray()
     }
 
-    private fun getBooks(valid: MutableSet<Book>, bookDir: File) {
-        val mods = File(bookDir, SwordConstants.DIR_CONF)
-        if (!(mods.isDirectory && mods.canRead())) {
+    private fun getBooks(valid: MutableSet<Book>, bookDir: StorageLocation) {
+        val mods = bookDir / SwordConstants.DIR_CONF
+        if (!(storageDirectory(mods) && storageCanRead(mods))) {
             LOGGER.debug("mods.d directory at {} does not exist or can't be read", mods)
             return
         }
 
-        val bookConfs = SwordBookPathJvm.getBookList(mods)
+        val bookConfs = SwordBookPath.getBookNames(mods)
 
         // Loop through the entries in this mods.d directory
-        val bookDirURI = NetUtilJvm.getURI(bookDir)
+        val bookDirURI = pathUri(storageAbsolute(bookDir).toPath())
         for (i in bookConfs!!.indices) {
             val bookConf = bookConfs[i]
             try {
                 var sbmd: SwordBookMetaData? = null
 
-                val configfile = File(mods, bookConf)
-                if (configfile.exists()) {
+                val configfile = mods / bookConf
+                if (storageExists(configfile)) {
                     // First time here chain is null, indicating that we are at the master BookMetaData
-                    sbmd = SwordBookMetaDataJvm.create(configfile, bookDirURI)
+                    sbmd = SwordBookMetaData(configfile, bookDirURI)
                 }
 
                 if (sbmd == null) {
@@ -136,9 +133,9 @@ open class SwordBookDriver
      */
     override fun isDeletable(dead: Book): Boolean {
         val sbmd = dead.bookMetaData as SwordBookMetaData
-        val confFile = SwordBookMetaDataJvm.getConfigFile(sbmd)
+        val confFile = sbmd.configLocation
         // We can only uninstall what we download into our download dir.
-        return confFile != null && confFile.exists()
+        return confFile != null && storageExists(confFile)
     }
 
     /* (non-Javadoc)
@@ -147,22 +144,22 @@ open class SwordBookDriver
     @Throws(BookException::class)
     override fun delete(dead: Book) {
         val sbmd = dead.bookMetaData as SwordBookMetaData
-        val confFile = SwordBookMetaDataJvm.getConfigFile(sbmd)
+        val confFile = sbmd.configLocation
 
         // We can only uninstall what we download into our download dir.
-        if (confFile == null || !confFile.exists()) {
+        if (confFile == null || !storageExists(confFile)) {
             // TRANSLATOR: Common error condition: The file could not be deleted. There can be many reasons.
             // {0} is a placeholder for the file.
             throw BookException(JSMsg.gettext("Unable to delete: {0}", confFile))
         }
 
         // Delete all conf files
-        var failures = FileUtilJvm.delete(confFile)
+        var failures = KFiles.deleteRecursively(confFile.path)
         if (failures.isEmpty()) {
             val loc = sbmd.location
             if (loc != null) {
-                val bookDir = File(loc.path)
-                failures = FileUtilJvm.delete(bookDir)
+                val bookDir = StorageLocation(loc.getPath()!!)
+                failures = KFiles.deleteRecursively(bookDir.path)
                 Books.installed().removeBook(dead)
             }
 
@@ -218,18 +215,18 @@ open class SwordBookDriver
             // So we have to get the bmd for the conf of the installed book.
             var bmd: SwordBookMetaData? = null
             // Before this was called the library was set so we can know where the conf and module are.
-            val bookDirURI: URI = sbmd.library!!
-            // Get a File representing the mods.d folder.
-            val mods = File(bookDirURI.path, SwordConstants.DIR_CONF)
+            val bookDirURI: KUri = sbmd.library!!
+            // Get the location of the mods.d folder.
+            val mods = StorageLocation(bookDirURI.getPath()!!) / SwordConstants.DIR_CONF
             // Get the name of the conf from the sbmd. Don't guess even though by convention it is guessable.
             val bookConf = sbmd.bookConf
-            // Get the config File.
-            val configfile = File(mods, bookConf)
+            // Get the config location.
+            val configfile = mods / bookConf!!
             // Verify that it exists
-            if (configfile.exists()) {
+            if (storageExists(configfile)) {
                 try {
                     // Now we can create the new bmd
-                    bmd = SwordBookMetaDataJvm.create(configfile, bookDirURI)
+                    bmd = SwordBookMetaData(configfile, bookDirURI)
                 } catch (e: IOException) {
                     LOGGER.warn("Couldn't create SwordBookMetaData", e)
                 }

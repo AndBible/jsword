@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.sword
 
-import java.util.ArrayList
-
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.JSOtherMsg
