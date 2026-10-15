@@ -5,8 +5,12 @@ import java.io.InterruptedIOException
 import javax.net.ssl.HttpsURLConnection
 
 /** JVM default: preserve the legacy HTTPS cast, global proxy handling and lazy metadata access. */
-class UrlConnectionHttpTransport : HttpTransport {
-    private fun connection(uri: KUri, timeoutMs: Int) = (uri.toURL().openConnection() as HttpsURLConnection).apply {
+class UrlConnectionHttpTransport internal constructor(
+    private val openHttpsConnection: (KUri) -> HttpsURLConnection
+) : HttpTransport {
+    constructor() : this({ uri -> uri.toURL().openConnection() as HttpsURLConnection })
+
+    private fun connection(uri: KUri, timeoutMs: Int) = openHttpsConnection(uri).apply {
         connectTimeout = timeoutMs
         readTimeout = timeoutMs
     }
@@ -28,7 +32,13 @@ class UrlConnectionHttpTransport : HttpTransport {
             override val status: Int get() = cancelled { connection.responseCode }
             override fun prepareRead() { cancelled { input = connection.inputStream } }
             override fun read(buf: ByteArray): Int = cancelled { checkNotNull(input).read(buf) }
-            override fun close() { input?.close() }
+            override fun close() {
+                try {
+                    input?.close()
+                } finally {
+                    connection.disconnect()
+                }
+            }
         }
     }
 
