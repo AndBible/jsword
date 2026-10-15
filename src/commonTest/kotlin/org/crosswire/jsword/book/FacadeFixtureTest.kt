@@ -6,13 +6,14 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import okio.FileSystem
-import org.crosswire.jsword.book.sword.SwordBookDriver
 import org.crosswire.jsword.book.sword.SwordBookPath
 import org.crosswire.jsword.index.IndexManagerFactory
+import org.crosswire.jsword.index.SearchUnsupportedException
 import org.crosswire.ksword.fixtures.fixtureRoot
 import org.crosswire.ksword.fixtures.isJvm
 
@@ -35,10 +36,10 @@ class FacadeFixtureTest {
     /** K4RawText4 has no registered SWORD book type (see FixtureModulesTest), so the facade never lists it. */
     private fun expectedInitials(): Set<String> = manifest().keys - "K4RawText4"
 
+    /** setAugmentPath re-registers the SWORD driver, so the fixture books are listed once it returns. */
     @BeforeTest fun install() {
         savedAugmentPath = SwordBookPath.getAugmentPath()
         SwordBookPath.setAugmentPath(arrayOf(fixtureRoot() / "space dir" / "ä"))
-        Books.installed().registerDriver(SwordBookDriver.instance())
     }
 
     /** Re-registering with the previous augment path drops the fixture books from the shared Books instance. */
@@ -52,6 +53,24 @@ class FacadeFixtureTest {
         val initials = Books.installed().getBooks().map { it.initials }.toSet()
         assertTrue(initials.containsAll(expected), "missing: ${expected - initials}")
         for (name in expected) assertNotNull(Books.installed().getBook(name), name)
+    }
+
+    /**
+     * Spec section 5.3: every fixture module reads its first manifest row through the facade
+     * (Books, SwordBook, SwordDictionary, SwordGenBook, SwordDailyDevotion) and yields OSIS content.
+     * The manifest values are the decoded raw texts FixtureModulesTest compares with the backends, including
+     * the cipher module (its conf carries the key, so the facade returns the deciphered text), the Latin-1
+     * and combining-character modules (compared as decoded strings) and the compressed modules.
+     */
+    @Test fun everyFixtureModuleReadsItsFirstManifestRowThroughTheFacade() {
+        for (initials in expectedInitials()) {
+            val (name, text) = manifest().getValue(initials).first()
+            val book = assertNotNull(Books.installed().getBook(initials), initials)
+            val key = book.getKey(name)
+            assertEquals(text, book.getRawText(key), "$initials $name raw text")
+            val osis = BookData(book, key).getOsisFragment(false)
+            assertTrue(osis.contentSize > 0, "$initials $name OSIS fragment has content")
+        }
     }
 
     @Test fun verseModuleReadsKnownTextAndOsis() {
@@ -72,17 +91,25 @@ class FacadeFixtureTest {
     }
 
     /**
-     * On iOS the default IndexManager is UnsupportedIndexManager, whose deleteIndex is a no-op: the driver
-     * path that deletes a book's index must not throw (and must not NPE on a missing registry default).
-     * On the JVM, Lucene's deleteIndex refuses a book without an index directory, so callers guard it with
-     * isIndexed; the guarded form is exercised on both platforms. Only deleteIndex is called, no fixture file
-     * is deleted.
+     * iOS has no search before K6: Book.find must refuse with SearchUnsupportedException (never an NPE from a
+     * missing registry default). On the JVM, find would run Lucene, so it is not called there.
      */
-    @Test fun deleteBookWithoutIndexManager() {
+    @Test fun findOnIosIsRefusedWithSearchUnsupportedException() {
+        if (isJvm) return
+        val book = assertNotNull(Books.installed().getBook("K4RawText"))
+        assertFailsWith<SearchUnsupportedException> { book.find("god") }
+    }
+
+    /**
+     * Calls IndexManager.deleteIndex on the default IndexManager for a fixture book that has no index.
+     * iOS: the default is UnsupportedIndexManager, so the call is a no-op and must not throw. JVM: Lucene's
+     * deleteIndex refuses a book without an index directory, so only the precondition (the book is not indexed)
+     * is checked there and deleteIndex is not called. No fixture file is deleted either way.
+     */
+    @Test fun deleteIndexOnDefaultIndexManagerIsHarmless() {
         val book = assertNotNull(Books.installed().getBook("K4RawText"))
         val indexManager = IndexManagerFactory.getIndexManager()
         assertFalse(indexManager.isIndexed(book), "fixture books have no index")
         if (!isJvm) indexManager.deleteIndex(book)
-        if (indexManager.isIndexed(book)) indexManager.deleteIndex(book)
     }
 }
