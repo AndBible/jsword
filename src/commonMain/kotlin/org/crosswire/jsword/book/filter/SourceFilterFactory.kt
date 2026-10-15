@@ -19,6 +19,9 @@
  */
 package org.crosswire.jsword.book.filter
 
+import kotlin.jvm.JvmStatic
+import kotlin.concurrent.Volatile
+
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory

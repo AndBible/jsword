@@ -265,7 +265,7 @@ class SwordBookMetaData : AbstractBookMetaData {
     val filter: SourceFilter
         get() {
             val sourcetype = getProperty(KEY_SOURCE_TYPE)
-            return sourceFilterFor(sourcetype)
+            return org.crosswire.jsword.book.filter.SourceFilterFactory.getFilter(sourcetype)
         }
 
     /**

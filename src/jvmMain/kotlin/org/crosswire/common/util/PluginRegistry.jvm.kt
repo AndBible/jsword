@@ -39,14 +39,9 @@ import org.crosswire.jsword.index.search.Searcher
  * Every implementation still lives in jvmMain, so all registrations are here.
  */
 internal actual fun registerPlatformPlugins(builder: PluginRegistryBuilder) {
+    registerSourceFilters(builder)
     builder.register(BookDriver::class, "sword", SwordBookDriver::class) { SwordBookDriver.instance() }
 
-    builder.register(SourceFilter::class, "default", PlainTextFilter::class) { PlainTextFilter() }
-    builder.register(SourceFilter::class, "gbf", GBFFilter::class) { GBFFilter() }
-    builder.register(SourceFilter::class, "osis", OSISFilter::class) { OSISFilter() }
-    builder.register(SourceFilter::class, "plaintext", PlainTextFilter::class) { PlainTextFilter() }
-    builder.register(SourceFilter::class, "tei", OSISFilter::class) { OSISFilter() }
-    builder.register(SourceFilter::class, "thml", THMLFilter::class) { THMLFilter() }
 
     builder.register(InstallerFactory::class, "sword-http", HttpSwordInstallerFactory::class) { HttpSwordInstallerFactory() }
     builder.register(InstallerFactory::class, "sword-https", HttpsSwordInstallerFactory::class) { HttpsSwordInstallerFactory() }

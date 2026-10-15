@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.filter.gbf
 
+import kotlin.jvm.JvmStatic
+
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.filter.gbf.GBFTags.BoldStartTag

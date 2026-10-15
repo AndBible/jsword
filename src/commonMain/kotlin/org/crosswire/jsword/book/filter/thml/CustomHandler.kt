@@ -19,6 +19,9 @@
  */
 package org.crosswire.jsword.book.filter.thml
 
+import org.crosswire.common.xml.xmlCharacters
+import org.crosswire.common.xml.JvmCallbackThrows
+
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
@@ -72,7 +75,7 @@ open class CustomHandler
     /* (non-Javadoc)
      * @see fi.sykero.kdom.sax.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, fi.sykero.kdom.sax.Attributes)
      */
-    @Throws(SAXException::class)
+    @JvmCallbackThrows(SAXException::class)
     override fun startElement(uri: String, localname: String, qname: String, attrs: Attributes) {
         var ele: Element? = null
 
@@ -105,7 +108,7 @@ open class CustomHandler
      */
     override fun characters(data: CharArray, offset: Int, length: Int) {
         // what we are adding
-        val text = String(data, offset, length)
+        val text = xmlCharacters(data, offset, length)
 
         if (stack.isEmpty()) {
             stack.addFirst(Text(text))

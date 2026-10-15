@@ -19,6 +19,8 @@
  */
 package org.crosswire.common.xml
 
+import kotlin.jvm.JvmOverloads
+
 import okio.IOException
 import fi.sykero.kdom.sax.Attributes
 import fi.sykero.kdom.sax.ContentHandler
@@ -134,7 +136,7 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: XmlWriter? = nu
             handlePending()
         }
 
-        val s = String(chars, start, length)
+        val s = xmlCharacters(chars, start, length)
         write(decorateCharacters(s))
         lookingForChars = true
     }

@@ -41,7 +41,6 @@ internal actual fun swordMetaDataToOsis(md: SwordBookMetaData): Document {
     return Document(table)
 }
 
-internal actual fun sourceFilterFor(sourceType: String?): SourceFilter = SourceFilterFactory.getFilter(sourceType)
 
 internal actual fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book =
     when (type.toString()) {

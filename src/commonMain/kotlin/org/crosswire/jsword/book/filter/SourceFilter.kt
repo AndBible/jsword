@@ -36,7 +36,7 @@ import fi.sykero.kdom.Content
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-actual interface SourceFilter : FilterCloneMarker {
+interface SourceFilter : FilterCloneMarker {
     /**
      * Converter from plain (encoded) text to OSIS data
      * 
@@ -55,5 +55,6 @@ actual interface SourceFilter : FilterCloneMarker {
      * 
      * @return A complete copy of ourselves
      */
+    @Suppress("NOTHING_TO_OVERRIDE") // JVM Cloneable exposes clone; Native marker has no Object.clone.
     public override fun clone(): SourceFilter
 }

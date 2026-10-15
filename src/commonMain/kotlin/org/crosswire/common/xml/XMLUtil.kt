@@ -22,6 +22,8 @@
  */
 package org.crosswire.common.xml
 
+import kotlin.jvm.JvmStatic
+
 import okio.IOException
 import org.crosswire.common.util.isJavaWhitespace
 import org.crosswire.common.util.PropertyMap

@@ -176,7 +176,7 @@ actual interface Book : Activatable, Comparable<Book> {
      *             If the name can not be parsed.
      */
     @Throws(NoSuchKeyException::class)
-    fun getKey(name: String?): Key
+    actual fun getKey(name: String?): Key
 
     /**
      * Fetch an empty Key to which we can add Keys. Not all implementations of
@@ -199,7 +199,7 @@ actual interface Book : Activatable, Comparable<Book> {
      *
      * @param bmd the BookMetaData that describes this book.
      */
-    var bookMetaData: BookMetaData
+    actual var bookMetaData: BookMetaData
 
     /**
      * Return an iterator that returns each key's OSIS in turn.
@@ -361,7 +361,7 @@ actual interface Book : Activatable, Comparable<Book> {
      *
      * @return The book's internal name
      */
-    val initials: String
+    actual val initials: String
 
     /**
      * Calculated field: Get an OSIS identifier for the OsisText.setOsisIDWork()
