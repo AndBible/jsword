@@ -561,6 +561,9 @@ private constructor() {
         }
 
         /** https goes through the host transport (suspend); every other scheme stays a non-suspend local helper. */
+        /** Schemes are case-insensitive (RFC 3986): http goes through WebResource, https through the host transport probe. */
+        private fun isHttp(uri: KUri): Boolean = uri.getScheme()?.lowercase() == PROTOCOL_HTTP
+
         private fun isHttps(uri: KUri): Boolean = uri.getScheme()?.lowercase() == PROTOCOL_HTTPS
 
         /** The `Int` size of a file, or -1 when it does not fit (what `URLConnection.getContentLength` returned). */
@@ -577,7 +580,7 @@ private constructor() {
             }
 
             try {
-                if (uri.getScheme().equals(PROTOCOL_HTTP)) {
+                if (isHttp(uri)) {
                     val resource = WebResource(uri, proxyHost, proxyPort)
                     val size = resource.getSize()
                     resource.shutdown()
@@ -638,7 +641,7 @@ private constructor() {
             }
 
             try {
-                if (uri.getScheme().equals(PROTOCOL_HTTP)) {
+                if (isHttp(uri)) {
                     val resource = WebResource(uri, proxyHost, proxyPort)
                     val time = resource.getLastModified()
                     resource.shutdown()
