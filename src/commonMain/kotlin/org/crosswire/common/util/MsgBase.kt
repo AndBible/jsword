@@ -58,7 +58,7 @@ open class MsgBase protected constructor(private val bundleName: String) {
     }
 
     private fun obtainString(key: String): String {
-        // A missing bundle (e.g. FTPMsg, whose properties sit in a package directory) degrades to the key, as before.
+        // A missing bundle degrades to the key, as before (FTPMsg's bundle is embedded now, so it is found).
         val value = try { localisedResources().getString(key) } catch (ex: MissingResourceException) { null }
         if (value == null) {
             log.error("Missing resource: Locale={} name={} package={}", KswordLocale.current(), key, this::class.qualifiedName ?: "")
