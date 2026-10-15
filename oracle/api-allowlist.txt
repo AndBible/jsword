@@ -3,8 +3,6 @@ org.crosswire.common.util.NetUtil + M public static toPath(java.net.URI): okio.P
 #   <class FQN> <+|-> <canonical ApiShape line> # <reason>
 # "+" approves an addition, "-" approves a removed/changed line (exceptional; reviewer must agree).
 org.crosswire.common.activate.Lock + K public () throws [] # Java ctor was package-private; Kotlin has no package visibility, internal compiles to public. Lock is only a token type.
-org.crosswire.common.config.ConfigEvent + M private-or-package final readObject(java.io.ObjectInputStream): void throws [java.io.IOException,java.lang.ClassNotFoundException] # Same method, now final (see above).
-org.crosswire.common.config.ConfigEvent - M private-or-package readObject(java.io.ObjectInputStream): void throws [java.io.IOException,java.lang.ClassNotFoundException] # Java private readObject is non-final; a Kotlin private function is always final (private open is not allowed). Serialization calls it by reflection, so the serialized form is unchanged.
 org.crosswire.common.config.ConfigException - F private-or-package static final serialVersionUID: long = 3258135764670689593 # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
 org.crosswire.common.icu.NumberShaper + C class public extends java.lang.Object implements [] # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
 org.crosswire.common.icu.NumberShaper - C class public extends java.lang.Object implements [java.io.Serializable] # K3 D1: remove Java serialization support; constructor/cache initializers remain unchanged.
@@ -41,8 +39,6 @@ org.crosswire.common.xml.XMLUtil + F public static final INSTANCE: org.crosswire
 org.crosswire.jsword.book.BookSet + M public spliterator(): java.util.Spliterator throws [] # Kotlin must resolve the conflict between ArrayList.spliterator and the default Set.spliterator explicitly (it refuses to compile otherwise); the override delegates to super<ArrayList>, which is what Java picked implicitly, so behaviour is unchanged.
 org.crosswire.jsword.book.BooksEvent + M private-or-package final readObject(java.io.ObjectInputStream): void throws [java.io.IOException,java.lang.ClassNotFoundException] # Same method, now final (see above).
 org.crosswire.jsword.book.BooksEvent - M private-or-package readObject(java.io.ObjectInputStream): void throws [java.io.IOException,java.lang.ClassNotFoundException] # Java private readObject/writeObject is non-final; a Kotlin private function is always final (private open is not allowed). Serialization calls it by reflection, so the serialized form is unchanged.
-org.crosswire.jsword.book.basic.DefaultBookmark + C class public extends java.lang.Object implements [java.lang.Cloneable,org.crosswire.jsword.book.Bookmark] # Same class, now also listing Cloneable directly (see above).
-org.crosswire.jsword.book.basic.DefaultBookmark - C class public extends java.lang.Object implements [org.crosswire.jsword.book.Bookmark] # Kotlin cannot call Object.clone() through `super` once Bookmark redeclares clone() abstractly; `super<Cloneable>.clone()` needs Cloneable as a direct supertype. Bookmark already extends Cloneable, so the extra interface is redundant.
 org.crosswire.jsword.book.filter.gbf.GBFFilter + C class public extends org.crosswire.jsword.book.filter.FilterCloneBase implements [org.crosswire.jsword.book.filter.SourceFilter] # K5 Task 20 clone superclass preserves genuine JVM Object.clone and supplies a portable-copy hook.
 org.crosswire.jsword.book.filter.gbf.GBFFilter - C class public extends java.lang.Object implements [org.crosswire.jsword.book.filter.SourceFilter] # Kotlin cannot call Object.clone() through `super` once SourceFilter redeclares clone() abstractly; `super<Cloneable>.clone()` needs Cloneable as a direct supertype. SourceFilter already extends Cloneable, so the extra interface is redundant.
 org.crosswire.jsword.book.filter.osis.OSISFilter + C class public extends org.crosswire.jsword.book.filter.FilterCloneBase implements [org.crosswire.jsword.book.filter.SourceFilter] # K5 Task 20 clone superclass preserves genuine JVM Object.clone and supplies a portable-copy hook.
@@ -57,14 +53,6 @@ org.crosswire.jsword.book.install.InstallerEvent - F private-or-package added: b
 org.crosswire.jsword.book.install.InstallerEvent - M private-or-package readObject(java.io.ObjectInputStream): void throws [java.io.IOException,java.lang.ClassNotFoundException] # Java private readObject is non-final; a Kotlin private function is always final (private open is not allowed). Serialization calls it by reflection, so the serialized form is unchanged.
 org.crosswire.jsword.book.install.sword.AbstractSwordInstaller + F protected static final log: org.crosswire.common.util.Logger # K2 F2: same field, new logger facade type.
 org.crosswire.jsword.book.install.sword.AbstractSwordInstaller - F protected static final log: org.slf4j.Logger # K2 F2: logger facade replaces org.slf4j.Logger; same calls compile.
-org.crosswire.jsword.book.readings.ReadingsKey + C class public extends org.crosswire.jsword.passage.DefaultLeafKeyList implements [java.lang.Cloneable] # K3 clone
-org.crosswire.jsword.book.readings.ReadingsKey + K public (java.lang.String,java.lang.String,org.crosswire.jsword.passage.Key) throws [] # Same constructor, now public (see above).
-org.crosswire.jsword.book.readings.ReadingsKey + K public (java.util.Date) throws [] # Same constructor, now public (see above).
-org.crosswire.jsword.book.readings.ReadingsKey - C class public extends org.crosswire.jsword.passage.DefaultLeafKeyList implements [] # K3 clone
-org.crosswire.jsword.book.readings.ReadingsKey - F private-or-package date: java.util.Date # K3 D1
-org.crosswire.jsword.book.readings.ReadingsKey - F private-or-package static final serialVersionUID: long = -5500401548068844993 # K3 D1
-org.crosswire.jsword.book.readings.ReadingsKey - K protected (java.lang.String,java.lang.String,org.crosswire.jsword.passage.Key) throws [] # Java ctor was protected, which in Java includes package access used by ReadingsBook in the same package; a Kotlin protected constructor is invisible to a package neighbour, so it is internal, which compiles to public.
-org.crosswire.jsword.book.readings.ReadingsKey - K protected (java.util.Date) throws [] # Java ctor was protected, which in Java includes package access used by ReadingsBook in the same package; a Kotlin protected constructor is invisible to a package neighbour, so it is internal, which compiles to public.
 org.crosswire.jsword.book.sword.RawLDBackend - F private-or-package final datasize: int # K3 D1
 org.crosswire.jsword.book.sword.RawLDBackend - F private-or-package final entrysize: int # K3 D1
 org.crosswire.jsword.book.sword.RawLDBackend - F private-or-package static final serialVersionUID: long = 818089833394450383 # K3 D1
@@ -531,22 +519,6 @@ org.crosswire.common.xml.XMLHandlerAdapter - <class> # K5 delete: no live users 
 org.crosswire.common.xml.XMLProcess - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
 
 # K5 M2 exact tree/SAX type relocations, retained ThML JAXP signatures unchanged.
-org.crosswire.common.config.AbstractReflectedChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.AbstractReflectedChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.Choice - M public abstract init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.Choice + M public abstract init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.ChoiceFactory - M public static getChoice(org.jdom2.Element,java.util.ResourceBundle): org.crosswire.common.config.Choice throws [java.lang.ReflectiveOperationException,org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.ChoiceFactory + M public static getChoice(fi.sykero.kdom.Element,java.util.ResourceBundle): org.crosswire.common.config.Choice throws [java.lang.ReflectiveOperationException,org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.Config - M public add(org.jdom2.Document,java.util.ResourceBundle): void throws [] # K5 kdom
-org.crosswire.common.config.Config + M public add(fi.sykero.kdom.Document,java.util.ResourceBundle): void throws [] # K5 kdom
-org.crosswire.common.config.IntOptionsChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.IntOptionsChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.MappedOptionsChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.MappedOptionsChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.StringArrayChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.StringArrayChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.StringOptionsChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
-org.crosswire.common.config.StringOptionsChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
 org.crosswire.common.xml.JDOMSAXEventProvider - K public (org.jdom2.Document) throws [] # K5 kdom
 org.crosswire.common.xml.JDOMSAXEventProvider - M public provideSAXEvents(org.xml.sax.ContentHandler): void throws [org.xml.sax.SAXException] # K5 kdom
 org.crosswire.common.xml.JDOMSAXEventProvider + K public (fi.sykero.kdom.Document) throws [] # K5 kdom
@@ -779,3 +751,37 @@ org.crosswire.jsword.book.filter.thml.CustomHandler - M public startElement(java
 org.crosswire.jsword.book.filter.thml.CustomHandler + C class public extends fi.sykero.kdom.sax.DefaultHandler implements [] # K5 Task 20 replaces the namespace-unaware ThML JAXP handler superclass and callback contract with kdom.
 org.crosswire.jsword.book.filter.thml.CustomHandler + M public startElement(java.lang.String,java.lang.String,java.lang.String,fi.sykero.kdom.sax.Attributes): void throws [fi.sykero.kdom.sax.SAXException] # K5 Task 20 replaces the namespace-unaware ThML JAXP handler superclass and callback contract with kdom.
 org.crosswire.jsword.book.filter.thml.THMLFilter + M protected portableFilterClone(): java.lang.Object throws [] # K5 Task 20 portable clone override for known filter copies; JVM clone still preserves host subclass fields.
+gnu.gpl.License - <class> # K5b delete
+org.crosswire.common.config.AbstractReflectedChoice - <class> # K5b delete
+org.crosswire.common.config.BooleanChoice - <class> # K5b delete
+org.crosswire.common.config.Choice - <class> # K5b delete
+org.crosswire.common.config.ChoiceFactory - <class> # K5b delete
+org.crosswire.common.config.ClassChoice - <class> # K5b delete
+org.crosswire.common.config.Config - <class> # K5b delete
+org.crosswire.common.config.ConfigEvent - <class> # K5b delete
+org.crosswire.common.config.ConfigListener - <class> # K5b delete
+org.crosswire.common.config.DirectoryChoice - <class> # K5b delete
+org.crosswire.common.config.FileChoice - <class> # K5b delete
+org.crosswire.common.config.FontChoice - <class> # K5b delete
+org.crosswire.common.config.IntOptionsChoice - <class> # K5b delete
+org.crosswire.common.config.MappedChoice - <class> # K5b delete
+org.crosswire.common.config.MappedOptionsChoice - <class> # K5b delete
+org.crosswire.common.config.MultipleChoice - <class> # K5b delete
+org.crosswire.common.config.NumberChoice - <class> # K5b delete
+org.crosswire.common.config.PathChoice - <class> # K5b delete
+org.crosswire.common.config.StartupException - <class> # K5b delete
+org.crosswire.common.config.StringArrayChoice - <class> # K5b delete
+org.crosswire.common.config.StringChoice - <class> # K5b delete
+org.crosswire.common.config.StringOptionsChoice - <class> # K5b delete
+org.crosswire.jsword.book.BookComparators - <class> # K5b delete
+org.crosswire.jsword.book.Bookmark - <class> # K5b delete
+org.crosswire.jsword.book.BookmarkFactory - <class> # K5b delete
+org.crosswire.jsword.book.DefaultBook - <class> # K5b delete
+org.crosswire.jsword.book.Defaults - <class> # K5b delete
+org.crosswire.jsword.book.SentenceUtil - <class> # K5b delete
+org.crosswire.jsword.book.basic.DefaultBookmark - <class> # K5b delete
+org.crosswire.jsword.book.readings.ReadingsBook - <class> # K5b delete
+org.crosswire.jsword.book.readings.ReadingsBookDriver - <class> # K5b delete
+org.crosswire.jsword.book.readings.ReadingsKey - <class> # K5b delete
+org.crosswire.jsword.book.study.StrongsMapSet - <class> # K5b delete
+org.crosswire.jsword.bridge.BookInstaller - <class> # K5b delete

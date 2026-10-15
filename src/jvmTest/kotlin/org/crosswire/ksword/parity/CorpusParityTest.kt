@@ -333,9 +333,4 @@ class CorpusParityTest {
         for (m in Oracle.call("corpus.modules").lines().filter { it.isNotBlank() }) assertSameLines("framework $m", both("corpus.osis.framework", m))
         for (v in listOf("KJV", "Synodal", "Catholic")) assertSameLines("verse $v", both("corpus.osis.verse", v))
     }
-
-    @Test
-    fun defaultBook() {
-        assertSameLines("defaultbook", both("corpus.defaultbook"))
-    }
 }

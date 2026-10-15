@@ -19,10 +19,11 @@
  */
 package org.crosswire.jsword.prerequisites;
 
-import org.crosswire.jsword.book.BookException;
 import org.crosswire.jsword.book.Books;
 import org.crosswire.jsword.book.install.InstallException;
-import org.crosswire.jsword.bridge.BookInstaller;
+import org.crosswire.jsword.book.Book;
+import org.crosswire.jsword.book.install.Installer;
+import org.crosswire.jsword.book.install.InstallManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,14 +50,12 @@ public class BookPreRequisitesTest {
             try {
                 if (installedBooks.getBook(BOOKS[ii]) == null) {
                     if (underTest == null) {
-                        underTest = new BookInstaller();
+                        underTest = new InstallManager().getInstaller("CrossWire");
                     }
                     LOGGER.info("Installing [{}]... Please wait...", BOOKS[ii]);
-                    underTest.installBook("CrossWire", underTest.getRepositoryBook("CrossWire", BOOKS[ii]));
+                    Book book = underTest.getBook(BOOKS[ii]);
+                    underTest.install(book);
                 }
-            } catch (BookException ex) {
-                ex.printStackTrace();
-                Assert.fail(ex.getMessage());
             } catch (InstallException ex) {
                 ex.printStackTrace();
                 Assert.fail(ex.getMessage());
@@ -64,7 +63,7 @@ public class BookPreRequisitesTest {
         }
     }
 
-    private BookInstaller underTest;
+    private Installer underTest;
     private Books installedBooks;
 
     /**

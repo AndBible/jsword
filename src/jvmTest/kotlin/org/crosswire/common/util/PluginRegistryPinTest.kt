@@ -17,25 +17,10 @@ class PluginRegistryPinTest {
         "org.crosswire.jsword.book.install.InstallerFactory" to listOf(
             "sword-http" to "org.crosswire.jsword.book.install.sword.HttpSwordInstallerFactory",
             "sword-https" to "org.crosswire.jsword.book.install.sword.HttpsSwordInstallerFactory"),
-        "org.crosswire.jsword.book.Bookmark" to listOf("default" to "org.crosswire.jsword.book.basic.DefaultBookmark"),
         "org.crosswire.jsword.index.IndexManager" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneIndexManager"),
         "org.crosswire.jsword.index.search.Searcher" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneSearcher"),
         "org.crosswire.jsword.index.query.QueryBuilder" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneQueryBuilder"),
         "org.crosswire.jsword.index.query.QueryDecorator" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneQueryDecorator"),
-        "org.crosswire.common.config.Choice" to listOf(
-            "string" to "org.crosswire.common.config.StringChoice",
-            "password" to "org.crosswire.common.config.StringChoice",
-            "boolean" to "org.crosswire.common.config.BooleanChoice",
-            "int-options" to "org.crosswire.common.config.IntOptionsChoice",
-            "map-options" to "org.crosswire.common.config.MappedOptionsChoice",
-            "string-options" to "org.crosswire.common.config.StringOptionsChoice",
-            "string-array" to "org.crosswire.common.config.StringArrayChoice",
-            "file" to "org.crosswire.common.config.FileChoice",
-            "path" to "org.crosswire.common.config.PathChoice",
-            "directory" to "org.crosswire.common.config.DirectoryChoice",
-            "number" to "org.crosswire.common.config.NumberChoice",
-            "font" to "org.crosswire.common.config.FontChoice",
-            "class" to "org.crosswire.common.config.ClassChoice"),
     )
 
     @Test fun registryMatchesThePluginFiles() {

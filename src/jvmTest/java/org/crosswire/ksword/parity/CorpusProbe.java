@@ -480,29 +480,6 @@ final class CorpusProbe {
                 }
                 return sb.toString();
             }
-            case "corpus.defaultbook": {
-                StringBuilder sb = new StringBuilder();
-                org.crosswire.jsword.book.DefaultBook d = new org.crosswire.jsword.book.DefaultBook(Books.installed(), org.crosswire.jsword.book.BookFilters.getOnlyBibles());
-                sb.append(d.getDefault()).append(' ').append(d.getDefaultName()).append('\n');
-                d.setDefaultByName("");
-                d.setDefaultByName("NoSuchBook");
-                sb.append(d.getDefault()).append('\n');
-                d.setDefaultByName("KJV");
-                sb.append(d.getDefaultName()).append('\n');
-                d.setDefaultConditionally(book("ESV2011"));
-                sb.append(d.getDefaultName()).append('\n');
-                d.setDefault(book("ESV2011"));
-                sb.append(d.getDefaultName()).append('\n');
-                // not a Bible: rejected by the filter
-                d.setDefault(book("Nave"));
-                sb.append(d.getDefaultName()).append('\n');
-                org.crosswire.jsword.book.DefaultBook fresh = new org.crosswire.jsword.book.DefaultBook(Books.installed(), org.crosswire.jsword.book.BookFilters.getOnlyBibles());
-                fresh.setDefaultConditionally(book("Nave"));
-                sb.append(fresh.getDefault()).append('\n');
-                fresh.setDefaultConditionally(book("KJV"));
-                sb.append(fresh.getDefaultName()).append('\n');
-                return sb.toString();
-            }
             default:
                 throw new IllegalArgumentException("Unknown parity op: " + op);
         }

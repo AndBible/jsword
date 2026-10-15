@@ -33,7 +33,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     BooksTest.class,
     BookMetaDataTest.class,
-    SentenceUtilTest.class,
     OsisTest.class
 })
 public class AllTests {

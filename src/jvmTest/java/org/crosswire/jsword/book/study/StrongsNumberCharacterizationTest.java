@@ -20,14 +20,12 @@
 package org.crosswire.jsword.book.study;
 
 import java.util.Arrays;
-import java.util.Locale;
-import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Characterization of {@link StrongsNumber} and {@link StrongsMapSet}: pins the
+ * Characterization of {@link StrongsNumber}: pins the
  * behaviour of the Java classes before they are converted to Kotlin. Expected
  * values were derived by reading the Java. The odd results (a number built from
  * a char and a short is never valid, a string that does not parse still "is a
@@ -174,44 +172,5 @@ public class StrongsNumberCharacterizationTest {
         Assert.assertNotEquals(a, "G3056");
         // Two inputs that do not parse are equal (U9999)
         Assert.assertEquals(new StrongsNumber("x"), new StrongsNumber(""));
-    }
-
-    @Test
-    public void testMapSetAddAndGet() {
-        StrongsMapSet map = new StrongsMapSet();
-        Assert.assertNull(map.get("G0001"));
-        map.add("G0001", "Alpha");
-        map.add("G0001", "ALPHA");
-        map.add("G0001", "beta");
-        map.add("H0002", "x");
-
-        Set<String> reps = map.get("G0001");
-        // Lower cased, de-duplicated and sorted
-        Assert.assertEquals(Arrays.asList("alpha", "beta"), Arrays.asList(reps.toArray()));
-        Assert.assertEquals(1, map.get("H0002").size());
-        Assert.assertNull(map.get("g0001"));
-        Assert.assertNull(map.get(null));
-        // The returned set is the live one
-        reps.add("gamma");
-        Assert.assertEquals(3, map.get("G0001").size());
-    }
-
-    @Test
-    public void testMapSetLowerCasesWithEnglishLocale() {
-        Locale saved = Locale.getDefault();
-        try {
-            Locale.setDefault(new Locale("tr", "TR"));
-            // Locale.ENGLISH is used: "I" becomes "i", not a dotless i
-            StrongsMapSet map = new StrongsMapSet();
-            map.add("G0001", "I");
-            Assert.assertEquals("i", map.get("G0001").iterator().next());
-        } finally {
-            Locale.setDefault(saved);
-        }
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testMapSetRejectsNullRepresentation() {
-        new StrongsMapSet().add("G0001", null);
     }
 }
