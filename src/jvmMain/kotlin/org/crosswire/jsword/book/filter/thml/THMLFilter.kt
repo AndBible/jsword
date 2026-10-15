@@ -25,10 +25,6 @@
  */
 package org.crosswire.jsword.book.filter.thml
 
-import java.io.IOException
-import java.io.StringReader
-import javax.xml.parsers.ParserConfigurationException
-import javax.xml.parsers.SAXParserFactory
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.common.xml.XMLUtil
@@ -36,13 +32,13 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
+import fi.sykero.kdom.input.XmlEventParser
 import fi.sykero.kdom.Content
 import fi.sykero.kdom.Element
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import org.xml.sax.InputSource
-import org.xml.sax.SAXException
-import org.xml.sax.SAXParseException
+import fi.sykero.kdom.sax.SAXException
+import fi.sykero.kdom.sax.SAXParseException
 
 /**
  * Filter to convert THML to OSIS format.
@@ -145,22 +141,14 @@ open class THMLFilter : SourceFilter, Cloneable {
         buf.append('<').append(TAG_ROOT).append('>').append(plain).append("</").append(TAG_ROOT).append('>')
         finalInput = buf.toString()
         try {
-            val `in` = StringReader(finalInput)
-            val `is` = InputSource(`in`)
-            val spf = SAXParserFactory.newInstance()
-            val parser = spf.newSAXParser()
             val handler = CustomHandler(book, key)
-
-            parser.parse(`is`, handler)
+            XmlEventParser(namespaceAware = false).parse(finalInput!!, handler)
             return handler.rootElement
         } catch (e: SAXParseException) {
             ex = e
         } catch (e: SAXException) {
             ex = e
-        } catch (e: IOException) {
-            ex = e
-        } catch (e: ParserConfigurationException) {
-            ex = e
+
         } catch (e: IllegalArgumentException) {
             // JDOM has a few exceptions which are all derived from this.
             ex = e

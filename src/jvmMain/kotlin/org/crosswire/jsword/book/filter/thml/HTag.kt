@@ -23,7 +23,7 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Element
-import org.xml.sax.Attributes
+import fi.sykero.kdom.sax.Attributes
 
 /**
  * THML Tag to process the h1, h2, h3, h4, h5, and h6 elements.

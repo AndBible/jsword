@@ -26,7 +26,7 @@ import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
 import fi.sykero.kdom.Element
 import fi.sykero.kdom.Text
-import org.xml.sax.Attributes
+import fi.sykero.kdom.sax.Attributes
 
 /**
  * THML Tag to process the sync element. A sync tag is always empty and

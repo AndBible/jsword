@@ -19,9 +19,6 @@
  */
 package org.crosswire.jsword.book.filter.thml
 
-import java.util.HashMap
-import java.util.LinkedList
-import java.util.Locale
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
@@ -29,9 +26,9 @@ import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
 import fi.sykero.kdom.Element
 import fi.sykero.kdom.Text
-import org.xml.sax.Attributes
-import org.xml.sax.SAXException
-import org.xml.sax.helpers.DefaultHandler
+import fi.sykero.kdom.sax.Attributes
+import fi.sykero.kdom.sax.SAXException
+import fi.sykero.kdom.sax.DefaultHandler
 
 /**
  * To convert SAX events into OSIS events.
@@ -70,10 +67,10 @@ open class CustomHandler
     /**
      * The stack of elements that we have created
      */
-    private var stack: LinkedList<Content?> = LinkedList()
+    private var stack: ArrayDeque<Content?> = ArrayDeque()
 
     /* (non-Javadoc)
-     * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     * @see fi.sykero.kdom.sax.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, fi.sykero.kdom.sax.Attributes)
      */
     @Throws(SAXException::class)
     override fun startElement(uri: String, localname: String, qname: String, attrs: Attributes) {
@@ -82,7 +79,7 @@ open class CustomHandler
         // If we are looking at the root element
         // then the stack is empty
         if (!stack.isEmpty()) {
-            val top: Any? = stack.peekFirst()
+            val top: Any? = stack.firstOrNull()
 
             // If the element and its descendants are to be ignored
             // then there is a null element on the stack
@@ -104,7 +101,7 @@ open class CustomHandler
     }
 
     /* (non-Javadoc)
-     * @see org.xml.sax.helpers.DefaultHandler#characters(char[], int, int)
+     * @see fi.sykero.kdom.sax.DefaultHandler#characters(char[], int, int)
      */
     override fun characters(data: CharArray, offset: Int, length: Int) {
         // what we are adding
@@ -116,7 +113,7 @@ open class CustomHandler
         }
 
         // What we are adding to
-        val top: Content? = stack.peekFirst()
+        val top: Content? = stack.firstOrNull()
 
         // If the element and its descendants are to be ignored
         // then there is a null element on the stack
@@ -151,7 +148,7 @@ open class CustomHandler
     }
 
     /* (non-Javadoc)
-     * @see org.xml.sax.helpers.DefaultHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
+     * @see fi.sykero.kdom.sax.DefaultHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
      */
     override fun endElement(uri: String, localname: String, qname: String) {
         if (stack.isEmpty()) {
@@ -196,7 +193,7 @@ open class CustomHandler
         // element names, which the spec disallows, but we might as well
         // look out for them
         if (t == null) {
-            t = TAG_MAP[name.lowercase(Locale.ENGLISH)]
+            t = TAG_MAP[name.lowercase()]
 
             if (t == null) {
                 DataPolice.report(book, key, "Unknown thml element: " + localname + " qname=" + name)

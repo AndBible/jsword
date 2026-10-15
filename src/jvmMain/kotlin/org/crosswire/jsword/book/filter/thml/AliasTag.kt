@@ -22,7 +22,7 @@ package org.crosswire.jsword.book.filter.thml
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Element
-import org.xml.sax.Attributes
+import fi.sykero.kdom.sax.Attributes
 
 /**
  * THML Tag to process the bold element.
