@@ -259,6 +259,25 @@ class BookListContractTest {
         assertNull(map[org.crosswire.jsword.passage.Verse(v11n, 7)])
     }
 
+    /** The same four properties on the replacement helper. */
+    @Test fun verseContentMapKeepsTreeMapSemantics() {
+        val v11n = org.crosswire.jsword.versification.system.Versifications.instance().getVersification("KJV")!!
+        val a5 = org.crosswire.jsword.passage.Verse(v11n, 5)
+        val a5again = org.crosswire.jsword.passage.Verse(v11n, 5)
+        val first = mutableListOf<fi.sykero.kdom.Content>(fi.sykero.kdom.Text("one"))
+        val second = mutableListOf<fi.sykero.kdom.Content>(fi.sykero.kdom.Text("two"))
+        val map = org.crosswire.jsword.book.VerseContentMap()
+        map[org.crosswire.jsword.passage.Verse(v11n, 9)] = first
+        map[a5] = first
+        map[org.crosswire.jsword.passage.Verse(v11n, 2)] = first
+        map[a5again] = second
+        assertEquals(3, map.size)
+        assertSame(second, map[a5])
+        assertSame(a5, map.entries.single { it.key.ordinal == 5 }.key)
+        assertEquals(listOf(2, 5, 9), map.entries.map { it.key.ordinal })
+        assertNull(map[org.crosswire.jsword.passage.Verse(v11n, 7)])
+    }
+
     /** The multi-book path builds its table through the verse-content map; its output is pinned by length and hash. */
     @Test fun bookDataTwoBookTable() {
         val kjv = requireNotNull(Books.installed().getBook("KJV"))

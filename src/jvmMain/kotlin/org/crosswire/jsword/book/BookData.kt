@@ -39,7 +39,6 @@ import fi.sykero.kdom.Element
 import fi.sykero.kdom.Namespace
 import fi.sykero.kdom.Text
 
-import java.util.TreeMap
 
 /**
  * BookData is the assembler of the OSIS that is returned by the filters. As
@@ -108,7 +107,7 @@ open class BookData : BookProvider {
         jswordAssert(books.size > 0) { "books" }
         jswordAssert(key != null) { "key" }
 
-        this.books = books.clone()
+        this.books = books.copyOf()
         this.keyField = key
         this.comparingBooks = compare
     }
@@ -190,7 +189,7 @@ open class BookData : BookProvider {
      */
     @Suppress("UNCHECKED_CAST")
     override fun getBooks(): Array<Book> {
-        return (if (books == null) null else books!!.clone() as Array<Book?>) as Array<Book>
+        return (if (books == null) null else books!!.copyOf()) as Array<Book>
     }
 
     /**
@@ -263,7 +262,7 @@ open class BookData : BookProvider {
 
 
             //now read the content and map it out
-            val booksContents = arrayOfNulls<BookVerseContent>(books.size)
+            val booksContents = arrayOfNulls<VerseContentMap>(books.size)
             for (i in books.indices) {
                 doDiffs = doDiffs or addHeaderAndSetShowDiffsState(row, showDiffs, i, ommittedVerses[i])
                 booksContents[i] = keyIteratorContentByVerse(
@@ -421,8 +420,8 @@ open class BookData : BookProvider {
      * @throws BookException if there is any problem with this request
      */
     @Throws(BookException::class)
-    private fun keyIteratorContentByVerse(v11n: Versification, iter: Iterator<Content>): BookVerseContent {
-        val contentsByOsisID = BookVerseContent()
+    private fun keyIteratorContentByVerse(v11n: Versification, iter: Iterator<Content>): VerseContentMap {
+        val contentsByOsisID = VerseContentMap()
 
         //we will be using this map later to track whi ch keys have been catered for in the order calculation
         var currentVerse: Verse? = null
@@ -551,12 +550,30 @@ open class BookData : BookProvider {
      * A temporary holder for a map that links each verse ID to its set of OSIS elements.
      * Used purely to avoid having too many generic/array notations entangled in the code
      */
-    private class BookVerseContent : TreeMap<Verse, MutableList<Content>>() {
-        private companion object {
-            /**
-             * Serialization ID
-             */
-            private const val serialVersionUID = -6508118172314227362L
-        }
+}
+
+/**
+ * Verse contents of one book, replacing a `TreeMap<Verse, MutableList<Content>>` (K5b rule 26). `Verse.compareTo`
+ * compares only the ordinal, so the map is keyed by ordinal. All keys of one instance come from one versification
+ * (`keyIteratorContentByVerse` builds one per book), which makes ordinal-only keying equivalent to the TreeMap.
+ * As in `TreeMap.put`, a second put for an equal ordinal replaces the value but keeps the first key object.
+ */
+internal class VerseContentMap {
+    /** A verse with its content, like a `Map.Entry`. */
+    class Entry(val key: Verse, var value: MutableList<Content>)
+
+    private val byOrdinal = HashMap<Int, Entry>()
+
+    operator fun set(key: Verse, value: MutableList<Content>) {
+        val existing = byOrdinal[key.ordinal]
+        if (existing != null) existing.value = value else byOrdinal[key.ordinal] = Entry(key, value)
     }
+
+    operator fun get(key: Verse): MutableList<Content>? = byOrdinal[key.ordinal]?.value
+
+    /** The entries in ascending ordinal order (a snapshot). */
+    val entries: List<Entry>
+        get() = byOrdinal.values.sortedBy { it.key.ordinal }
+
+    val size: Int get() = byOrdinal.size
 }

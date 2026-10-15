@@ -10,4 +10,4 @@ org/crosswire/jsword/book/BookSet.kt #done
 org/crosswire/jsword/book/BookProvider.kt #done
 org/crosswire/jsword/book/UnAccenter.kt #done
 org/crosswire/jsword/book/DataPolice.kt #done
-org/crosswire/jsword/book/BookData.kt
+org/crosswire/jsword/book/BookData.kt #done
