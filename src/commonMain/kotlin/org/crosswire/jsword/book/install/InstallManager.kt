@@ -365,7 +365,17 @@ class InstallManager {
         override fun get(key: String): Installer? = map[key]
     }
 
-    private class ReadOnlyEntry(override val key: String, override val value: Installer) : Map.Entry<String, Installer>
+    /**
+     * A read-only map entry with the `Map.Entry` equality contract (key and value equal, hash is the xor of both),
+     * so that `installers.entries.contains(entry)` and comparisons with entries of other maps work.
+     */
+    private class ReadOnlyEntry(override val key: String, override val value: Installer) : Map.Entry<String, Installer> {
+        override fun equals(other: Any?): Boolean = other is Map.Entry<*, *> && key == other.key && value == other.value
+
+        override fun hashCode(): Int = key.hashCode() xor value.hashCode()
+
+        override fun toString(): String = "$key=$value"
+    }
 
     companion object {
         // was package-private
