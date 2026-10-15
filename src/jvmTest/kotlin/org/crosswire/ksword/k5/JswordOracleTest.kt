@@ -46,7 +46,10 @@ class JswordOracleTest {
     }
 
     @Test fun syntheticJosephusRootIsRecordedButRealReadErrorsPropagate() = withExtraModules {
-        val book = requireNotNull(Books.installed().getBook("Josephus"))
+        val book = Books.installed().getBook("Josephus")
+        if (System.getProperty("k5.oracle.write") != null || System.getProperty("k5.oracle.check") != null) requireNotNull(book) { "Full oracle requires Josephus regression coverage" }
+        assumeTrue("Optional Josephus module not installed for normal CI", book != null)
+        requireNotNull(book)
         val keys = sample(book)
         val root = keys.first()
         assertEquals("", root.getOsisID())
