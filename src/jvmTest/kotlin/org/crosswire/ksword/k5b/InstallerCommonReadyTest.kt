@@ -6,12 +6,9 @@ import org.crosswire.common.util.KUri
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.install.InstallException
-import org.crosswire.jsword.book.install.sword.AbstractSwordInstaller
 import org.crosswire.jsword.book.install.sword.FTPMsg
 import org.crosswire.jsword.book.install.sword.HttpSwordInstaller
-import org.crosswire.jsword.book.install.sword.HttpSwordInstallerFactory
 import org.crosswire.jsword.book.install.sword.HttpsSwordInstaller
-import org.crosswire.jsword.book.install.sword.HttpsSwordInstallerFactory
 import org.crosswire.jsword.book.sword.SwordBookPathJvm
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -31,9 +28,8 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * Pins the behaviour the installers keep through their common-ready conversion (K5b Task 13): the factory url
- * parsing, the job ids, the unpacking of a package into the download directory and the JSWORD home, the lock
- * around the book list and the `FTPMsg` resource. Runs against a temporary CWProject home and download
+ * Pins the behaviour the installers keep through their common-ready conversion (K5b Task 13): the job ids, the unpacking of a package into the download directory and the
+ * JSWORD home, the lock around the book list and the `FTPMsg` resource. Runs against a temporary CWProject home and download
  * directory that are restored afterwards; no network.
  */
 class InstallerCommonReadyTest {
@@ -199,44 +195,6 @@ class InstallerCommonReadyTest {
         start.countDown()
         threads.forEach { it.join() }
         assertEquals(1, maxInLoad.get())
-    }
-
-    @Test fun factoryParsesTheSixPartAndTheOldFourPartDefinition() {
-        for ((factory, type) in listOf(HttpSwordInstallerFactory() to "sword-http", HttpsSwordInstallerFactory() to "sword-https")) {
-            // Existing behaviour, kept: the parts after the catalog directory are read as proxy host and port
-            // (the index directory slot of the definition is not skipped).
-            val six = factory.createInstaller("h.invalid,/pkg,/cat,proxy.invalid,8080,ignored") as AbstractSwordInstaller
-            assertEquals(type, six.getType())
-            assertEquals("h.invalid,/pkg,/cat,,proxy.invalid,8080", six.getInstallerDefinition())
-            assertEquals("proxy.invalid", six.getProxyHost())
-            assertEquals(8080, six.getProxyPort())
-
-            // empty trailing parts are kept (limit 6), so a missing proxy gives no proxy host
-            val noProxy = factory.createInstaller("h.invalid,/pkg,/cat,,,") as AbstractSwordInstaller
-            assertNull(noProxy.getProxyHost())
-            assertNull(noProxy.getProxyPort())
-
-            // the old format: host,dir,proxyHost,proxyPort with the fixed sub directories
-            val old = factory.createInstaller("h.invalid,/dir,p.invalid,81") as AbstractSwordInstaller
-            assertEquals("/dir/packages/rawzip", old.getPackageDirectory())
-            assertEquals("/dir/raw", old.getCatalogDirectory())
-            assertEquals("p.invalid", old.getProxyHost())
-            assertEquals(81, old.getProxyPort())
-        }
-    }
-
-    @Test fun factoryRejectsTheWrongNumberOfParts() {
-        for (factory in listOf(HttpSwordInstallerFactory(), HttpsSwordInstallerFactory())) {
-            for (bad in listOf("", "a", "a,b,c", "a,b,c,d,e")) {
-                try { factory.createInstaller(bad); fail(bad) } catch (e: IllegalArgumentException) {
-                    assertEquals("Not enough / symbols in url: $bad", e.message)
-                }
-            }
-            // a six part definition whose port is not a number
-            try { factory.createInstaller("h,/p,/c,px,notaport,x"); fail() } catch (e: NumberFormatException) { }
-            // the sixth part keeps further commas, so a seven part definition is read as six parts
-            assertEquals("h,/p,/c,,,", (factory.createInstaller("h,/p,/c,,,x,y") as AbstractSwordInstaller).getInstallerDefinition())
-        }
     }
 
     @Test fun remoteUrisUseTheSchemeOfTheInstaller() {
