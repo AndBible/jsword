@@ -67,7 +67,7 @@ private constructor() : AbstractBookList() {
     private var driverSet: MutableSet<BookDriver> = HashSet()
 
     /**
-     * Guards books, initials, names and driverSet together (formerly the monitor of this instance, K5b D4).
+     * Guards books, initials, names and driverSet together (formerly the monitor of this instance, rule §19).
      * Reentrant, because registerDriver calls addBook and removeBook.
      */
     private val lock = SynchronizedObject()

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # K5b guard (reuses the K5 guard): files marked "#done" in the move list must not use JVM-only APIs.
-# Heuristic; the real proof is the iOS compile after the move (K5b). Deleted after the move.
+# Heuristic; the real proof is the iOS compile after the move (K5b). Deleted after Task 14 (M3).
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 list="$here/docs/k5b-move-set.txt"

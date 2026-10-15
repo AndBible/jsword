@@ -86,7 +86,7 @@ abstract class AbstractPassageBook
     private var bibleBooksCache: Set<BibleBook>? = null
 
     /**
-     * Guards the lazy initialisation of [bibleBooksCache] (formerly the monitor of this book, K5b D4).
+     * Guards the lazy initialisation of [bibleBooksCache] (formerly the monitor of this book, rule §19).
      * AndBible's own `synchronized(book)` blocks (index scheduling, OSIS fragment cache) guard other state and
      * do not rely on this exclusion.
      */
