@@ -517,3 +517,15 @@ org.crosswire.common.util.NetUtil - M public static setURICacheDir(java.io.File)
 org.crosswire.common.util.NetUtil - M public static toURI(java.net.URL): java.net.URI throws [] # K4 split
 org.crosswire.common.util.NetUtil - M public static toURL(java.net.URI): java.net.URL throws [] # K4 split
 org.crosswire.common.util.NetUtil$URIFilterFilenameFilter - <class> # K4 split
+
+# K5 dead common.xml surface (live production/test caller inventory checked).
+org.crosswire.common.xml.HTMLSerializingContentHandler - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.RedLetterText - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.SAXEventProviderInputSource - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.SAXEventProviderXMLReader - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.SerializingContentHandler - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.StringSAXEventProvider - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.XMLFeature - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.XMLFeatureSet - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.XMLHandlerAdapter - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+org.crosswire.common.xml.XMLProcess - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.

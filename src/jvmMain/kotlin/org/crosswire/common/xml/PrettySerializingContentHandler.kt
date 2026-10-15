@@ -66,13 +66,13 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null)
     override fun endDocument() {
     }
 
-    override fun startPrefixMapping(prefix: String?, uri: String?) {
+    override fun startPrefixMapping(prefix: String, uri: String) {
     }
 
-    override fun endPrefixMapping(prefix: String?) {
+    override fun endPrefixMapping(prefix: String) {
     }
 
-    override fun startElement(uri: String?, localname: String?, qname: String?, attrs: Attributes) {
+    override fun startElement(uri: String, localname: String, qname: String, attrs: Attributes) {
         if (depth > 0) {
             handlePending()
         }
@@ -92,7 +92,7 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null)
         depth++
     }
 
-    override fun endElement(uri: String?, localname: String?, qname: String?) {
+    override fun endElement(uri: String, localname: String, qname: String) {
         depth--
         // Java cannot display empty tags <tag/> so most of the following is
         // commented out
@@ -145,7 +145,7 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null)
         characters(chars, start, length)
     }
 
-    override fun processingInstruction(target: String?, data: String?) {
+    override fun processingInstruction(target: String, data: String?) {
         handlePending()
 
         write(getPIStart())
@@ -159,7 +159,7 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: Writer? = null)
         }
     }
 
-    override fun skippedEntity(name: String?) {
+    override fun skippedEntity(name: String) {
     }
 
     protected open fun getTagStart(): String {

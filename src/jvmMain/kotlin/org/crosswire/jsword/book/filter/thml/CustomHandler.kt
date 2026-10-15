@@ -76,7 +76,7 @@ open class CustomHandler
      * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Throws(SAXException::class)
-    override fun startElement(uri: String?, localname: String?, qname: String?, attrs: Attributes?) {
+    override fun startElement(uri: String, localname: String, qname: String, attrs: Attributes) {
         var ele: Element? = null
 
         // If we are looking at the root element
@@ -153,7 +153,7 @@ open class CustomHandler
     /* (non-Javadoc)
      * @see org.xml.sax.helpers.DefaultHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
      */
-    override fun endElement(uri: String?, localname: String?, qname: String?) {
+    override fun endElement(uri: String, localname: String, qname: String) {
         if (stack.isEmpty()) {
             return
         }
@@ -182,9 +182,9 @@ open class CustomHandler
     open val rootElement: Element?
         get() = rootElementValue
 
-    private fun getTag(localname: String?, qname: String?): Tag? {
+    private fun getTag(localname: String, qname: String): Tag? {
         // sometimes qname is empty e.g. on Android 2.1
-        val name: String? = if (qname != null && qname.length > 0) {
+        val name: String = if (qname.isNotEmpty()) {
             qname
         } else {
             localname
@@ -196,7 +196,7 @@ open class CustomHandler
         // element names, which the spec disallows, but we might as well
         // look out for them
         if (t == null) {
-            t = TAG_MAP[name!!.lowercase(Locale.ENGLISH)]
+            t = TAG_MAP[name.lowercase(Locale.ENGLISH)]
 
             if (t == null) {
                 DataPolice.report(book, key, "Unknown thml element: " + localname + " qname=" + name)
