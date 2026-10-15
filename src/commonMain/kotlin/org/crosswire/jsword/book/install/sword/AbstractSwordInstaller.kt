@@ -681,14 +681,14 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         protected val log: Logger = LoggerFactory.getLogger(AbstractSwordInstaller::class)
 
         /**
-         * What are we using as a temp filename?
-         */
-        /**
          * The lexical File spelling of a file URI (what `File(uri.path).path` gave): its decoded path, normalised
          * the way the storage hooks spell file names.
          */
         private fun fileSpelling(uri: KUri): String = StorageLocation(uri.getPath()!!).spelling
 
+        /**
+         * What are we using as a temp filename?
+         */
         private fun getTempFileExtension(host: String?, catalogDir: String?): String {
             return DOWNLOAD_PREFIX + host + catalogDir!!.replace('/', '_')
         }
