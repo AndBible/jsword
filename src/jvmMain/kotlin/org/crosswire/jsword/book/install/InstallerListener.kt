@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.install
 
-import java.util.EventListener
-
 /**
  * InstallerListener are able to be notified about changes to the numbers of
  * Installers known to the system.
@@ -28,7 +26,7 @@ import java.util.EventListener
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-interface InstallerListener : EventListener {
+interface InstallerListener {
     /**
      * Called whenever a new Installer is added to the system.
      * 

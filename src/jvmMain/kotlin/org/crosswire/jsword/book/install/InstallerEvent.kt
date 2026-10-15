@@ -19,14 +19,12 @@
  */
 package org.crosswire.jsword.book.install
 
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.util.EventObject
-
 /**
  * An InstallerEvent is fired whenever an Installer is added or removed from the
  * system.
  * 
+ * Plain class instead of `java.util.EventObject` (K5b rule 26); `getSource()` is kept.
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
@@ -40,17 +38,23 @@ open class InstallerEvent
  * @param added
  *            True if the changed installer is an addition.
  */
-(source: Any?, installer: Installer?, private val added: Boolean) : EventObject(source) {
-    /**
-     * The name of the changed Bible
-     */
-    @Transient
-    private var changedInstaller: Installer? = installer
+(source: Any?, installer: Installer?, private val added: Boolean) {
+    private val source: Any = requireNotNull(source) { "null source" }
 
     /**
-     * Get the name of the changed Bible
+     * The object on which the event initially occurred (was `EventObject.getSource`, K5b rule 26).
+     */
+    open fun getSource(): Any = source
+
+    /**
+     * The changed installer
+     */
+    private val changedInstaller: Installer? = installer
+
+    /**
+     * Get the changed installer
      * 
-     * @return The Bible bmd
+     * @return The installer
      */
     open val installer: Installer?
         get() = changedInstaller
@@ -61,25 +65,4 @@ open class InstallerEvent
      */
     open val isAddition: Boolean
         get() = added
-
-    /**
-     * Serialization support.
-     * 
-     * @param is
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    @Throws(IOException::class, ClassNotFoundException::class)
-    private fun readObject(`is`: ObjectInputStream) {
-        // Broken but we don't serialize events
-        changedInstaller = null
-        `is`.defaultReadObject()
-    }
-
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3257290248836102194L
-    }
 }
