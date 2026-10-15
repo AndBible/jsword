@@ -33,7 +33,7 @@ interface SearchModifier {
     val isRanked: Boolean
 
     /**
-     * @return the maximum number of results, with Integer.MAX_VALUE meaning
+     * @return the maximum number of results, with Int.MAX_VALUE meaning
      *         all.
      */
     val maxResults: Int
