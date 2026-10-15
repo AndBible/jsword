@@ -138,8 +138,8 @@ class K5bInventoryTest {
         val tmp = java.nio.file.Files.createTempDirectory("k5b-catalog").toFile()
         val savedTransport = WebResource.transport
         WebResource.transport = object : HttpTransport {
-            override fun head(uri: KUri, timeoutMs: Int): HttpHead = throw AssertionError("network")
-            override fun get(uri: KUri, timeoutMs: Int): HttpBody = throw AssertionError("network")
+            override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead = throw AssertionError("network")
+            override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = throw AssertionError("network")
         }
         try {
             val installer = FixtureInstaller(tmp)

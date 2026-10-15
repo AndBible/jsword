@@ -1,79 +1,54 @@
 package org.crosswire.common.util
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.crosswire.common.progress.JobManager
-import org.crosswire.jsword.book.install.DownloadCancelledException
-import org.crosswire.jsword.book.install.DownloadException
 import org.junit.Test
 import java.nio.file.Files
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/** JVM temporarily: WebResource stays JVM until Task 16. */
-class WebResourceThreadCancellationTest {
-    private fun fixture(block: (java.io.File, MutableList<String>, HttpBody) -> Unit) {
+/** Cancelling the coroutine that runs WebResource.copy unblocks a host read, closes the body and propagates. */
+class WebResourceCoroutineCancellationTest {
+    @Test fun coroutineCancellationUnblocksHostReadAndClosesBody() = runBlocking {
         val old = WebResource.transport
-        val directory = Files.createTempDirectory("k4-fake").toFile()
-        val events = mutableListOf<String>()
-        val body = object : HttpBody {
-            override val contentLength: Int get() { events.add("length"); return 0 }
-            override val status: Int get() { events.add("status"); return 200 }
-            override fun prepareRead() { events.add("prepare") }
-            var read = false
-            override fun read(buf: ByteArray): Int {
-                events.add("read")
-                if (read) return -1
-                read = true
-                "body".toByteArray().copyInto(buf)
-                return 4
-            }
-            override fun close() { events.add("close") }
-        }
-        try {
-            WebResource.transport = object : HttpTransport {
-                override fun head(uri: KUri, timeoutMs: Int): HttpHead { events.add("head"); return HttpHead(200, "OK", 4, 123) }
-                override fun get(uri: KUri, timeoutMs: Int): HttpBody { events.add("get"); return body }
-            }
-            block(directory, events, body)
-        } finally {
-            WebResource.transport = old
-            directory.deleteRecursively()
-        }
-    }
-
-    @Test fun jobCancellationUnblocksHostReadAndPropagatesDownloadCancellation() = fixture { directory, _, _ ->
-        val entered = java.util.concurrent.CountDownLatch(1)
-        val cancelled = java.util.concurrent.CountDownLatch(1)
-        val failure = java.util.concurrent.atomic.AtomicReference<Throwable>()
+        val directory = Files.createTempDirectory("k5b-cancel").toFile()
+        val entered = CompletableDeferred<Unit>()
         var closed = false
         WebResource.transport = object : HttpTransport {
-            override fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
-            override fun get(uri: KUri, timeoutMs: Int) = object : HttpBody {
-                override val contentLength = 4
-                override val status = 200
-                override fun prepareRead() = Unit
-                override fun read(buf: ByteArray): Int {
-                    entered.countDown()
-                    check(cancelled.await(2, java.util.concurrent.TimeUnit.SECONDS))
-                    throw TransportCancelledException()
+            override suspend fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
+            override suspend fun get(uri: KUri, timeoutMs: Int) = object : HttpBody {
+                override suspend fun contentLength() = 4
+                override suspend fun status() = 200
+                override suspend fun prepareRead() = Unit
+                override suspend fun read(buf: ByteArray): Int {
+                    entered.complete(Unit)
+                    awaitCancellation()
                 }
                 override fun close() { closed = true }
             }
         }
-        val job = JobManager.createJob("blocked-host", "blocked-host") { cancelled.countDown() }
-        val worker = Thread {
-            try { WebResource(KUri("https://fake/body")).copy(directory.resolve("body").toURI(), job) }
-            catch (ex: Throwable) { failure.set(ex) }
-        }
+        val meter = JobManager.createJob("blocked-host", "blocked-host") { }
+        var failure: Throwable? = null
         try {
-            worker.start()
-            assertTrue(entered.await(2, java.util.concurrent.TimeUnit.SECONDS))
-            job.cancel()
-            worker.join(2000)
-            assertTrue(!worker.isAlive)
-            assertTrue(failure.get() is DownloadCancelledException)
-            assertTrue(closed)
-        } finally { cancelled.countDown(); worker.join(2000); job.done() }
+            val worker = launch(Dispatchers.IO) {
+                try { WebResource(KUri("https://fake/body")).copy(directory.resolve("body").toURI(), meter) }
+                catch (ex: Throwable) { failure = ex; throw ex }
+            }
+            withTimeout(2000) { entered.await() }
+            worker.cancelAndJoin()
+            assertTrue(failure is CancellationException, "got $failure")
+            assertEquals(true, closed)
+        } finally {
+            WebResource.transport = old
+            directory.deleteRecursively()
+            meter.done()
+        }
     }
-
 }

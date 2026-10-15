@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.net.URI
 import javax.net.ssl.HttpsURLConnection
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -51,25 +52,25 @@ class UrlConnectionHttpTransportCleanupTest {
         connection
     }
 
-    @Test fun metadataOnlyCloseDisconnectsWithoutPreparingBody() {
+    @Test fun metadataOnlyCloseDisconnectsWithoutPreparingBody() = runTest {
         val events = mutableListOf<String>()
         val connection = RecordingConnection(URI("https://example.org/a"), events)
         val body = transport(connection).get(URI("https://example.org/a"), 4321)
-        assertEquals(1234L, body.lastModified)
+        assertEquals(1234L, body.lastModified())
         body.close()
         assertEquals(listOf("modified", "disconnect"), events)
         assertFalse(connection.bodyPrepared)
         assertTrue(connection.disconnected)
     }
 
-    @Test fun metadataFailureStillDisconnects() {
+    @Test fun metadataFailureStillDisconnects() = runTest {
         val events = mutableListOf<String>()
         val connection = RecordingConnection(URI("https://example.org/a"), events).apply {
             metadataFailure = IOException("headers failed")
         }
         val body = transport(connection).get(URI("https://example.org/a"), 4321)
         try {
-            assertFailsWith<IOException> { body.lastModified }
+            assertFailsWith<IOException> { body.lastModified() }
         } finally {
             body.close()
         }
@@ -77,7 +78,7 @@ class UrlConnectionHttpTransportCleanupTest {
         assertTrue(connection.disconnected)
     }
 
-    @Test fun streamCloseFailureStillDisconnects() {
+    @Test fun streamCloseFailureStillDisconnects() = runTest {
         val events = mutableListOf<String>()
         val connection = RecordingConnection(URI("https://example.org/a"), events).apply {
             closeFailure = IOException("stream close failed")
@@ -89,7 +90,7 @@ class UrlConnectionHttpTransportCleanupTest {
         assertTrue(connection.disconnected)
     }
 
-    @Test fun configuredTimeoutIsAppliedToHttpsConnection() {
+    @Test fun configuredTimeoutIsAppliedToHttpsConnection() = runTest {
         val events = mutableListOf<String>()
         val connection = RecordingConnection(URI("https://example.org/a"), events)
         val body = transport(connection).get(URI("https://example.org/a"), 4321)

@@ -96,7 +96,7 @@ internal class TestHttpsServer : AutoCloseable {
             }
         }
 
-        fun <T> withTrustAll(block: () -> T): T {
+        inline fun <T> withTrustAll(block: () -> T): T {
             val factory = HttpsURLConnection.getDefaultSSLSocketFactory()
             val verifier = HttpsURLConnection.getDefaultHostnameVerifier()
             val trust = object : X509TrustManager {

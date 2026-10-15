@@ -32,7 +32,7 @@ class NativeUtilityProtocolCorrectionTest {
         Unit
     }
 
-    @Test fun relativeUrisRetainArgumentFailureAndUppercaseHttpsUsesHost() {
+    @Test fun relativeUrisRetainArgumentFailureAndUppercaseHttpsUsesHost() = kotlinx.coroutines.test.runTest {
         val relative = KUri("relative.properties")
         assertFailsWith<IllegalArgumentException> { netCheckResource(relative) }
         assertFailsWith<NullPointerException> { netLoadProperties(relative) }
@@ -41,15 +41,15 @@ class NativeUtilityProtocolCorrectionTest {
         val previous = WebResource.transport
         var requests = 0
         WebResource.transport = object : HttpTransport {
-            override fun get(uri: KUri, timeoutMs: Int): HttpBody = error("No GET expected")
-            override fun head(uri: KUri, timeoutMs: Int): HttpHead {
+            override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = error("No GET expected")
+            override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead {
                 requests++
                 return HttpHead(200, "OK", 7, 1234L)
             }
         }
         try {
             val uri = KUri("HTTPS://example.org/resource")
-            assertEquals(7, netUrlSize(uri)); assertEquals(1234L, netUrlLastModified(uri))
+            assertEquals(7, netHttpsSize(uri)); assertEquals(1234L, netHttpsLastModified(uri))
             assertEquals(2, requests)
         } finally { WebResource.transport = previous }
     }

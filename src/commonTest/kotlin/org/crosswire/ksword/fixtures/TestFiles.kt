@@ -5,7 +5,7 @@ import okio.Path
 import org.crosswire.common.util.NetUtil
 
 /** Real, isolated files for portable storage tests; always remove even on assertion failure. */
-internal fun withTestDirectory(block: (Path) -> Unit) {
+internal inline fun withTestDirectory(block: (Path) -> Unit) {
     val fs = FileSystem.SYSTEM
     val root = NetUtil.toPath(NetUtil.getTemporaryURI("k4-port", null))
     fs.delete(root)

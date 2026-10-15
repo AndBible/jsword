@@ -1,5 +1,6 @@
 package org.crosswire.common.util
 
+import kotlinx.coroutines.runBlocking
 import org.crosswire.common.progress.JobManager
 import org.crosswire.jsword.book.install.DownloadCancelledException
 import org.crosswire.jsword.book.install.DownloadException
@@ -11,7 +12,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class WebResourceCharacterizationTest {
-    private fun fixture(block: (TestHttpsServer, java.io.File) -> Unit) = TestHttpsServer.withTrustAll {
+    private fun fixture(block: suspend (TestHttpsServer, java.io.File) -> Unit) = runBlocking<Unit> { TestHttpsServer.withTrustAll {
         val timeout = WebResource.getTimeout()
         val directory = Files.createTempDirectory("k4-download").toFile()
         try {
@@ -20,7 +21,7 @@ class WebResourceCharacterizationTest {
             WebResource.setTimeout(timeout)
             directory.deleteRecursively()
         }
-    }
+    } }
 
     @Test fun installExceptionKeepsJvmSerializedDescriptor() {
         val descriptor = java.io.ObjectStreamClass.lookup(org.crosswire.jsword.book.install.InstallException::class.java)
@@ -63,27 +64,12 @@ class WebResourceCharacterizationTest {
         }
     }
 
-    @Test fun interruptDuringBlockedBodyEventuallyMapsTimeoutToCancellation() = fixture { server, directory ->
+    @Test fun stalledBodyMapsTheReadTimeoutToCancellation() = fixture { server, directory ->
         WebResource.setTimeout(400)
-        val failure = java.util.concurrent.atomic.AtomicReference<Throwable?>()
-        val worker = Thread {
-            try {
-                WebResource(server.uri("/stall")).copy(directory.resolve("body").toURI())
-            } catch (error: Throwable) { failure.set(error) }
-        }
-        try {
-            worker.start()
-            assertTrue(server.stalled.await(2, java.util.concurrent.TimeUnit.SECONDS))
-            worker.interrupt()
-            worker.join(2000)
-            assertTrue(!worker.isAlive, "blocked worker did not finish")
-            assertTrue(failure.get() is DownloadCancelledException, failure.get().toString())
-            assertEquals("k4-", directory.resolve("body").readText())
-        } finally {
-            worker.interrupt()
-            worker.join(2000)
-            check(!worker.isAlive)
-        }
+        val failure = runCatching { WebResource(server.uri("/stall")).copy(directory.resolve("body").toURI()) }.exceptionOrNull()
+        assertTrue(server.stalled.await(2, java.util.concurrent.TimeUnit.SECONDS))
+        assertTrue(failure is DownloadCancelledException, failure.toString())
+        assertEquals("k4-", directory.resolve("body").readText())
     }
 
     @Test fun refusedConnectionIsUnableToFind() = fixture { _, directory ->
@@ -94,9 +80,9 @@ class WebResourceCharacterizationTest {
     }
 
     @Test fun headMetadataAndRedirect() = fixture { server, directory ->
-        assertEquals(7, WebResource(server.uri("/ok")).size)
-        assertEquals(784887151000L, WebResource(server.uri("/lm")).lastModified)
-        assertEquals(0, WebResource(server.uri("/missing")).size)
+        assertEquals(7, WebResource(server.uri("/ok")).getSize())
+        assertEquals(784887151000L, WebResource(server.uri("/lm")).getLastModified())
+        assertEquals(0, WebResource(server.uri("/missing")).getSize())
         val dest = directory.resolve("body")
         WebResource(server.uri("/redirect")).copy(dest.toURI())
         assertEquals("k4-body", dest.readText())

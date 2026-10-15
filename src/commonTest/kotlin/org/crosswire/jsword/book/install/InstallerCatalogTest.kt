@@ -48,8 +48,8 @@ class InstallerCatalogTest {
     }
 
     private object NoNetwork : HttpTransport {
-        override fun head(uri: KUri, timeoutMs: Int): HttpHead = throw AssertionError("network")
-        override fun get(uri: KUri, timeoutMs: Int): HttpBody = throw AssertionError("network")
+        override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead = throw AssertionError("network")
+        override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = throw AssertionError("network")
     }
 
     /** The committed catalog; the iOS runner provisions it as `k5b/` below the fixture root, the JVM reads the resource directory. */

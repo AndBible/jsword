@@ -1,5 +1,6 @@
 package org.crosswire.common.util
 
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
@@ -172,7 +173,7 @@ class NetUtilFileCharacterizationTest {
     }
 
     @Test
-    fun sizeAndLastModifiedForFileAndMissing() {
+    fun sizeAndLastModifiedForFileAndMissing() = kotlinx.coroutines.runBlocking<Unit> {
         val file = tmp.newFile("f").apply { writeBytes(ByteArray(1234)); setLastModified(1_500_000_000_000L) }
         assertEquals(1234, NetUtil.getSize(uri(file)))
         assertEquals(1_500_000_000_000L, NetUtil.getLastModified(uri(file)))
@@ -247,7 +248,7 @@ class NetUtilFileCharacterizationTest {
     }
 
     @Test
-    fun uriWithPercentEncodedSpaceAndNonAsciiNameThroughDelegatingOps() {
+    fun uriWithPercentEncodedSpaceAndNonAsciiNameThroughDelegatingOps() = kotlinx.coroutines.runBlocking<Unit> {
         val dir = tmp.newFolder("my dir")
         val file = File(dir, "tiedosto \u00e4\u00f6 \u4e2d.txt").apply { writeBytes(ByteArray(7)) }
         val u = URI("file:" + file.toURI().rawPath) // percent-encoded form, as it arrives from the outside

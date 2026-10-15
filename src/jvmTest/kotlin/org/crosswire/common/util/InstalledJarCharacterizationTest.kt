@@ -1,5 +1,6 @@
 package org.crosswire.common.util
 
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.net.URI
 import java.util.zip.CRC32
@@ -26,7 +27,7 @@ class InstalledJarCharacterizationTest {
         file.setLastModified(1700000000000L)
     }
 
-    @Test fun installedStoredAndDeflatedJarUseExactCentralEntryBodySizeAndTime() {
+    @Test fun installedStoredAndDeflatedJarUseExactCentralEntryBodySizeAndTime() = runBlocking<Unit> {
         for (method in listOf(0, 8)) {
             val file = archive(method)
             val uri = URI("jar:${file.toURI()}!/exact/space%20name.properties")
@@ -39,7 +40,7 @@ class InstalledJarCharacterizationTest {
         }
     }
 
-    @Test fun missingEntryAndMalformedJarRetainPerOperationErrorPolicy() {
+    @Test fun missingEntryAndMalformedJarRetainPerOperationErrorPolicy() = runBlocking<Unit> {
         val file = archive(0)
         val missing = URI("jar:${file.toURI()}!/missing")
         assertFailsWith<java.io.FileNotFoundException> { netCheckResource(missing) }
@@ -52,7 +53,7 @@ class InstalledJarCharacterizationTest {
         assertEquals(0, NetUtil.getSize(malformed))
     }
 
-    @Test fun jarIgnoresUnicodePathExtraAndPrefersExtendedCentralTimestamp() {
+    @Test fun jarIgnoresUnicodePathExtraAndPrefersExtendedCentralTimestamp() = runBlocking<Unit> {
         val file = File(tmp.root, "extras.jar")
         ZipArchiveOutputStream(file).use { zip ->
             val entry = ZipArchiveEntry("legacy.properties").apply {
@@ -78,7 +79,7 @@ class InstalledJarCharacterizationTest {
         assertNull(parsed.jarEntry("unicode.properties"))
     }
 
-    @Test fun jarTimestampExtraOrderAndSignedUnixSecondsMatchRealJdk() {
+    @Test fun jarTimestampExtraOrderAndSignedUnixSecondsMatchRealJdk() = runBlocking<Unit> {
         fun field(tag: Int, body: ByteArray) = okio.Buffer().writeShortLe(tag).writeShortLe(body.size).write(body).readByteArray()
         fun unix(seconds: Int) = field(0x5455, okio.Buffer().writeByte(1).writeIntLe(seconds).readByteArray())
         fun ntfs(millis: Long) = field(10, okio.Buffer().writeIntLe(0).writeShortLe(1).writeShortLe(24)
@@ -101,7 +102,7 @@ class InstalledJarCharacterizationTest {
         }
     }
 
-    @Test fun duplicateJarLookupUsesActualJdkWinnerNotCommonsFirstEntry() {
+    @Test fun duplicateJarLookupUsesActualJdkWinnerNotCommonsFirstEntry() = runBlocking<Unit> {
         val file = File(tmp.root, "duplicates.jar")
         ZipArchiveOutputStream(file).use { zip ->
             for ((index, body) in listOf("key=first\n", "key=second\n").withIndex()) {
@@ -120,7 +121,7 @@ class InstalledJarCharacterizationTest {
         assertContentEquals("key=first\n".encodeToByteArray(), IOUtil.getZipEntry(file.path + "!same.properties"))
     }
 
-    @Test fun literalSplitOpensArchiveBeforeMissingEntryIndexAndIgnoresEmptySeparators() {
+    @Test fun literalSplitOpensArchiveBeforeMissingEntryIndexAndIgnoresEmptySeparators() = runBlocking<Unit> {
         val file = archive(0)
         assertFailsWith<java.io.IOException> { IOUtil.getZipEntry(File(tmp.root, "missing.zip").path) }
         assertFailsWith<java.io.IOException> { IOUtil.getZipEntry(file.path + "!") }

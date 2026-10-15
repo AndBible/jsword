@@ -46,42 +46,29 @@ class NativeUtilityIoTest {
         assertEquals("invalid", NetMalformedURLException("invalid").message)
     }
 
-    @Test fun httpPropertiesCloseBodyOnSuccessAndParsingAndFilterFailures() {
+    @Test fun remoteInputIsSuspendOnlyAndRemoteMetadataUsesHead() = kotlinx.coroutines.test.runTest {
         val previous = WebResource.transport
-        val bodies = mutableListOf<Body>()
         val requests = mutableListOf<String>()
         WebResource.transport = object : HttpTransport {
-            override fun head(uri: KUri, timeoutMs: Int): HttpHead {
+            override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead {
                 requests.add("HEAD")
                 return HttpHead(200, "OK", 19, 1234L)
             }
-            override fun get(uri: KUri, timeoutMs: Int): HttpBody {
+            override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody {
                 requests.add("GET")
-                return bodies.removeAt(0)
+                throw IllegalStateException("remote bodies are read through WebResource, never as a blocking Source")
             }
         }
         try {
             val uri = KUri("https://example.org/properties")
-            val good = Body("key=value\n")
-            bodies.add(good)
-            assertEquals("value", netLoadProperties(uri)["key"])
-            assertTrue(good.prepared); assertTrue(good.closes >= 1)
-            val malformed = Body("key=\\u12xz\n")
-            bodies.add(malformed)
-            assertFailsWith<IllegalArgumentException> { netLoadProperties(uri) }
-            assertTrue(malformed.closes >= 1)
-            val index = Body("one\n")
-            bodies.add(index)
-            assertFailsWith<IllegalStateException> {
-                netListByIndexFile(uri, object : URIFilter {
-                    override fun accept(name: String?): Boolean = throw IllegalStateException("filter")
-                })
-            }
-            assertTrue(index.closes >= 1)
-            assertEquals(19, netUrlSize(uri)); assertEquals(1234L, netUrlLastModified(uri))
-            assertEquals(listOf("GET", "GET", "GET", "HEAD", "HEAD"), requests)
+            // K5b D4: a blocking Source over a suspend body does not exist; these fail without a request.
+            assertFailsWith<IOException> { netLoadProperties(uri) }
+            assertFailsWith<IOException> { netCheckResource(uri) }
+            assertFailsWith<IOException> { netListByIndexFile(uri, null) }
+            assertEquals(19, netHttpsSize(uri)); assertEquals(1234L, netHttpsLastModified(uri))
+            assertEquals(listOf("HEAD", "HEAD"), requests)
             assertFailsWith<IOException> { netStoreProperties(PropertyMap(), uri, null) }
-            assertEquals(5, requests.size, "output must not silently use a GET transport")
+            assertEquals(2, requests.size, "output must not silently use a GET transport")
         } finally { WebResource.transport = previous }
     }
 
@@ -95,24 +82,5 @@ class NativeUtilityIoTest {
                 assertFailsWith<IOException> { netStoreProperties(null, uri, null) }
             }
         } finally { WebResource.transport = previous }
-    }
-
-    private class Body(text: String) : HttpBody {
-        private val bytes = text.encodeToByteArray()
-        private var offset = 0
-        var closes = 0
-        var prepared = false
-        override val status = 200
-        override val contentLength get() = bytes.size
-        override fun prepareRead() { prepared = true }
-        override fun read(buf: ByteArray): Int {
-            check(prepared)
-            if (offset == bytes.size) return -1
-            val count = minOf(buf.size, bytes.size - offset)
-            bytes.copyInto(buf, 0, offset, offset + count)
-            offset += count
-            return count
-        }
-        override fun close() { closes++ }
     }
 }

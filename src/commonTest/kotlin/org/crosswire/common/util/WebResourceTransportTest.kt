@@ -3,6 +3,7 @@ package org.crosswire.common.util
 import org.crosswire.common.progress.JobManager
 import org.crosswire.jsword.book.install.DownloadCancelledException
 import org.crosswire.jsword.book.install.DownloadException
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import okio.FileSystem
 import okio.Path
@@ -13,15 +14,15 @@ import kotlin.test.assertTrue
 
 /** Portable transport ordering; the original JVM thread-lifetime test stays on the JVM. */
 class WebResourceTransportTest {
-    private fun fixture(block: (Path, MutableList<String>, HttpBody) -> Unit) = withTestDirectory { directory ->
+    private fun fixture(block: suspend (Path, MutableList<String>, HttpBody) -> Unit) = runTest { withTestDirectory { directory ->
         val old = WebResource.transport
         val events = mutableListOf<String>()
         val body = object : HttpBody {
-            override val contentLength: Int get() { events.add("length"); return 0 }
-            override val status: Int get() { events.add("status"); return 200 }
-            override fun prepareRead() { events.add("prepare") }
+            override suspend fun contentLength(): Int { events.add("length"); return 0 }
+            override suspend fun status(): Int { events.add("status"); return 200 }
+            override suspend fun prepareRead() { events.add("prepare") }
             var read = false
-            override fun read(buf: ByteArray): Int {
+            override suspend fun read(buf: ByteArray): Int {
                 events.add("read")
                 if (read) return -1
                 read = true
@@ -32,14 +33,14 @@ class WebResourceTransportTest {
         }
         try {
             WebResource.transport = object : HttpTransport {
-                override fun head(uri: KUri, timeoutMs: Int): HttpHead { events.add("head"); return HttpHead(200, "OK", 4, 123) }
-                override fun get(uri: KUri, timeoutMs: Int): HttpBody { events.add("get"); return body }
+                override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead { events.add("head"); return HttpHead(200, "OK", 4, 123) }
+                override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody { events.add("get"); return body }
             }
             block(directory, events, body)
         } finally {
             WebResource.transport = old
         }
-    }
+    } }
 
     @Test fun injectedTransportUsesLegacyOrderAndHeadForZeroOnly() = fixture { directory, events, _ ->
         val job = JobManager.createJob("k4")
@@ -53,9 +54,9 @@ class WebResourceTransportTest {
 
     @Test fun preparationFailureDoesNotTruncateOutputAndClosesBody() = fixture { directory, events, body ->
         WebResource.transport = object : HttpTransport {
-            override fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
-            override fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody by body {
-                override fun prepareRead() { events.add("prepare-failure"); throw okio.IOException("input") }
+            override suspend fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
+            override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody by body {
+                override suspend fun prepareRead() { events.add("prepare-failure"); throw okio.IOException("input") }
             }
         }
         val dest = directory / "body"
@@ -69,10 +70,10 @@ class WebResourceTransportTest {
     @Test fun cancellationAfterPartialReadClosesInputBeforeOutputFlush() = fixture { directory, events, body ->
         val dest = directory / "body"
         WebResource.transport = object : HttpTransport {
-            override fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
-            override fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody by body {
+            override suspend fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
+            override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody by body {
                 var read = false
-                override fun read(buf: ByteArray): Int {
+                override suspend fun read(buf: ByteArray): Int {
                     if (read) throw TransportCancelledException()
                     read = true
                     "body".encodeToByteArray().copyInto(buf)
