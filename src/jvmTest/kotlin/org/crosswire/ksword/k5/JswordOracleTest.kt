@@ -85,6 +85,7 @@ class JswordOracleTest {
             assertTrue(failures.any { "John.3.16" in it })
             assertTrue(failures.any { "extra.tsv" in it })
             assertTrue(failures.any { "missing.tsv" in it })
+            assertTrue(differences(dir, mapOf("KJV.osis.tsv" to File(dir, "KJV.osis.tsv").readText() + "\n")).any { "section=KJV.osis.tsv" in it })
         } finally { dir.deleteRecursively() }
     }
 
@@ -104,8 +105,10 @@ class JswordOracleTest {
         fun differences(dir: File, actual: Map<String, String>): List<String> {
             val names = (actual.keys + dir.listFiles().orEmpty().filter { it.isFile }.map { it.name }).sorted()
             return names.distinct().flatMap { name ->
-                val old = File(dir, name).takeIf { it.exists() }?.readText()?.trimEnd('\n')?.lines().orEmpty()
-                val new = actual[name]?.trimEnd('\n')?.lines().orEmpty()
+                val baseline = File(dir, name)
+                if (!baseline.exists() || name !in actual) return@flatMap listOf("module=${name.substringBefore('.')} key=? section=$name offset=0 missing=${if (!baseline.exists()) "baseline" else "actual"}")
+                val old = baseline.readText().split('\n')
+                val new = actual.getValue(name).split('\n')
                 (0 until maxOf(old.size, new.size)).mapNotNull { i ->
                     val a = old.getOrNull(i); val b = new.getOrNull(i)
                     if (a == b) null else {
