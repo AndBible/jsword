@@ -25,13 +25,12 @@
  */
 package org.crosswire.jsword.book.filter.gbf
 
-import java.util.ArrayList
-import java.util.LinkedList
 
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.FilterCloneBase
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
@@ -45,13 +44,13 @@ import fi.sykero.kdom.Content
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class GBFFilter : SourceFilter, Cloneable {
+open class GBFFilter : FilterCloneBase(), SourceFilter {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
      */
     override fun toOSIS(book: Book?, key: Key?, plain: String?): MutableList<Content> {
         val ele = OSISUtil.factory().createDiv()
-        val stack = LinkedList<Content>()
+        val stack = ArrayDeque<Content>()
         stack.addFirst(ele)
 
         // String.trim() in Java removes every char <= ' ', which differs from Kotlin's trim()
@@ -69,15 +68,9 @@ open class GBFFilter : SourceFilter, Cloneable {
         return ele.removeContent()
     }
 
-    override fun clone(): GBFFilter {
-        var clone: GBFFilter? = null
-        try {
-            clone = super<Cloneable>.clone() as GBFFilter
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    override fun clone(): GBFFilter = shallowFilterClone() as GBFFilter
+
+    override fun portableFilterClone(): Any = GBFFilter()
 
     /**
      * Turn the string into a list of tags in the order that they appear in the
@@ -106,14 +99,14 @@ open class GBFFilter : SourceFilter, Cloneable {
                 // then report it as a potential problem
                 if (ltpos >= 0
                         && ltpos < remains.length + 1
-                        && Character.isUpperCase(remains[ltpos + 1]))
+                        && remains[ltpos + 1].isUpperCase())
                 {
                     DataPolice.report(book, key, "Possible bad GBF tag" + remains)
                 }
                 if (gtpos != -1 && ltpos >= 0) {
                     DataPolice.report(book, key, "Possible bad GBF tag" + remains)
                 }
-                val pos = Math.max(ltpos, gtpos) + 1
+                val pos = maxOf(ltpos, gtpos) + 1
                 // If there were not any <, > or either ended the string
                 // then we only have text.
                 if (pos == 0 || pos == remains.length) {
@@ -131,7 +124,7 @@ open class GBFFilter : SourceFilter, Cloneable {
             // Note that in JST, there are spurious html tags and
             // this will treat them as valid GBF text.
             val firstChar = remains[ltpos + 1]
-            if (!Character.isUpperCase(firstChar)) {
+            if (!firstChar.isUpperCase()) {
                 taglist.add(GBFTagBuilders.getTextTag(remains.substring(0, gtpos + 1)))
                 remains = remains.substring(gtpos + 1)
                 continue

@@ -34,6 +34,7 @@ import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.FilterCloneBase
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
@@ -48,7 +49,7 @@ import fi.sykero.kdom.input.KdomBuilder
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class OSISFilter : SourceFilter, Cloneable {
+open class OSISFilter : FilterCloneBase(), SourceFilter {
 
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
@@ -147,15 +148,9 @@ open class OSISFilter : SourceFilter, Cloneable {
         return ele.removeContent()
     }
 
-    override fun clone(): OSISFilter {
-        var clone: OSISFilter? = null
-        try {
-            clone = super<Cloneable>.clone() as OSISFilter
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    override fun clone(): OSISFilter = shallowFilterClone() as OSISFilter
+
+    override fun portableFilterClone(): Any = OSISFilter()
 
     private fun cleanTags(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things

@@ -30,6 +30,7 @@ import org.crosswire.common.util.jswordAssert
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.FilterCloneBase
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.input.XmlEventParser
@@ -53,7 +54,7 @@ import fi.sykero.kdom.sax.SAXParseException
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class THMLFilter : SourceFilter, Cloneable {
+open class THMLFilter : FilterCloneBase(), SourceFilter {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
      */
@@ -65,16 +66,16 @@ open class THMLFilter : SourceFilter, Cloneable {
             if (failure is SAXParseException) {
                 val spe: SAXParseException = failure
                 val colNumber = spe.columnNumber
-                val start = Math.max(0, colNumber - 40)
-                val stop = Math.min(finalInput!!.length, colNumber + 40)
+                val start = maxOf(0, colNumber - 40)
+                val stop = minOf(finalInput!!.length, colNumber + 40)
                 val here = stop - start
                 log.warn("Could not fix {}({}) by {}: Error here({},{},{}): {}",
                          book!!.initials,
                          key!!.getName(),
                          errorMessage,
-                         Integer.toString(colNumber),
-                         Integer.toString(finalInput!!.length),
-                         Integer.toString(here),
+                         colNumber.toString(),
+                         finalInput!!.length.toString(),
+                         here.toString(),
                          finalInput!!.substring(start, stop))
             } else {
                 log.warn("Could not fix {}({}) by {}: {}",
@@ -89,15 +90,9 @@ open class THMLFilter : SourceFilter, Cloneable {
         return ele.removeContent()
     }
 
-    override fun clone(): THMLFilter {
-        var clone: THMLFilter? = null
-        try {
-            clone = super<Cloneable>.clone() as THMLFilter
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    override fun clone(): THMLFilter = shallowFilterClone() as THMLFilter
+
+    override fun portableFilterClone(): Any = THMLFilter()
 
     private fun cleanParse(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things

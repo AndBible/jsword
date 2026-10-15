@@ -23,7 +23,6 @@ import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
-import java.util.Locale
 
 /**
  * A simple container for all the known SourceFilters.
@@ -46,7 +45,7 @@ private constructor() {
          */
         @JvmStatic
         fun getFilter(lookup: String?): SourceFilter {
-            var reply = filters[lookup!!.lowercase(Locale.ENGLISH)]
+            var reply = filters[lookup!!.lowercase()]
 
             if (reply == null) {
                 reply = deft
@@ -73,7 +72,7 @@ private constructor() {
          */
         @JvmStatic
         fun addFilter(name: String?, instance: SourceFilter?) {
-            filters[name!!.lowercase(Locale.ENGLISH)] = instance
+            filters[name!!.lowercase()] = instance
         }
 
         /**

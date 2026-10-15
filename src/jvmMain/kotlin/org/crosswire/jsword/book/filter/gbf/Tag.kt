@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.book.filter.gbf
 
-import java.util.LinkedList
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.passage.Key
@@ -39,5 +38,5 @@ interface Tag {
      * @param key 
      * @param osisStack 
      */
-    fun updateOsisStack(book: Book?, key: Key?, osisStack: LinkedList<Content>)
+    fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>)
 }

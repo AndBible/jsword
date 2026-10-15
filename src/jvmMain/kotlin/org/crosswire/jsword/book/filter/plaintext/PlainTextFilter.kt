@@ -26,6 +26,7 @@ import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.filter.FilterCloneBase
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
@@ -38,7 +39,7 @@ import fi.sykero.kdom.Content
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-open class PlainTextFilter : SourceFilter, Cloneable {
+open class PlainTextFilter : FilterCloneBase(), SourceFilter {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.filter.Filter#toOSIS(org.crosswire.jsword.book.Book, org.crosswire.jsword.passage.Key, java.lang.String)
      */
@@ -61,13 +62,7 @@ open class PlainTextFilter : SourceFilter, Cloneable {
         return ele.removeContent()
     }
 
-    override fun clone(): PlainTextFilter {
-        var clone: PlainTextFilter? = null
-        try {
-            clone = super<Cloneable>.clone() as PlainTextFilter
-        } catch (e: CloneNotSupportedException) {
-            jswordAssert(false) { e }
-        }
-        return clone!!
-    }
+    override fun clone(): PlainTextFilter = shallowFilterClone() as PlainTextFilter
+
+    override fun portableFilterClone(): Any = PlainTextFilter()
 }

@@ -19,7 +19,6 @@
  */
 package org.crosswire.jsword.book.filter.gbf
 
-import java.util.HashMap
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.filter.gbf.GBFTags.BoldStartTag

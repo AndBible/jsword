@@ -36,7 +36,7 @@ import fi.sykero.kdom.Content
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-actual interface SourceFilter : Cloneable {
+actual interface SourceFilter {
     /**
      * Converter from plain (encoded) text to OSIS data
      * 
@@ -55,5 +55,5 @@ actual interface SourceFilter : Cloneable {
      * 
      * @return A complete copy of ourselves
      */
-    public override fun clone(): SourceFilter
+    fun clone(): SourceFilter
 }
