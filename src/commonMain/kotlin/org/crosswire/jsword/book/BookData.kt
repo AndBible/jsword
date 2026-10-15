@@ -118,6 +118,9 @@ open class BookData : BookProvider {
      * @return the root of the OSIS document representing this data
      * @throws BookException if there is any problem with this request
      */
+    // Native Throws excludes getters; retain the JVM checked-exception contract.
+    @Suppress("WRONG_ANNOTATION_TARGET", "WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET")
+    @get:Throws(BookException::class)
     open val osis: Element
         get() {
             if (osisRoot == null) {
@@ -138,6 +141,9 @@ open class BookData : BookProvider {
      * @return the fragment of the OSIS document representing this data
      * @throws BookException if there is any problem with this request
      */
+    // Native Throws excludes getters; retain the JVM checked-exception contract.
+    @Suppress("WRONG_ANNOTATION_TARGET", "WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET")
+    @get:Throws(BookException::class)
     open val osisFragment: Element
         get() {
             if (fragment == null) {
