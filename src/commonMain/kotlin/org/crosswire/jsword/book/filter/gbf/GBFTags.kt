@@ -137,7 +137,7 @@ class GBFTags private constructor() {
 
             val pop: Any = osisStack.removeFirst()
             if (pop !is Element) {
-                DataPolice.report(book, key, "expected to pop a Note, but found " + pop::class.simpleName)
+                DataPolice.report(book, key, "expected to pop a Note, but found " + gbfDiagnosticClassName(pop))
                 return
             }
 

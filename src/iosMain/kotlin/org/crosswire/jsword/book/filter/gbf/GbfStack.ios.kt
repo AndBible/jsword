@@ -1,5 +1,7 @@
 package org.crosswire.jsword.book.filter.gbf
 
+internal actual fun gbfDiagnosticClassName(value: Any): String? = value::class.simpleName
+
 actual class GbfStack<E> actual constructor() {
     private val elements = ArrayDeque<E>()
     actual fun isEmpty(): Boolean = elements.isEmpty()
