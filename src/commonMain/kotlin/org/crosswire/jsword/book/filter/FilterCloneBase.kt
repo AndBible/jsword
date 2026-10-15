@@ -5,3 +5,5 @@ expect abstract class FilterCloneBase() {
     protected fun shallowFilterClone(): Any
     protected open fun portableFilterClone(): Any
 }
+
+expect interface FilterCloneMarker

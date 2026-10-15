@@ -22,14 +22,8 @@
  */
 package org.crosswire.jsword.book.filter.osis
 
-import java.io.IOException
-import java.io.StringReader
-import java.util.Arrays
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.BlockingQueue
-import java.util.regex.Pattern
+import okio.IOException
 
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
@@ -88,7 +82,7 @@ open class OSISFilter : FilterCloneBase(), SourceFilter {
             }
         } else */
         if (book!!.initials == "MapM") {
-            for (tag in Arrays.asList("cell", "row", "table")) {
+            for (tag in listOf("cell", "row", "table")) {
                 val startPos = clean!!.indexOf("<" + tag + ">")
                 val endPos = clean.indexOf("</" + tag + ">")
                 if (endPos != -1 && (startPos == -1 || startPos > endPos)) {
@@ -150,7 +144,10 @@ open class OSISFilter : FilterCloneBase(), SourceFilter {
 
     override fun clone(): OSISFilter = shallowFilterClone() as OSISFilter
 
-    override fun portableFilterClone(): Any = OSISFilter()
+    override fun portableFilterClone(): Any {
+        check(this::class == OSISFilter::class) { "Host subclass must provide a portable clone" }
+        return OSISFilter()
+    }
 
     private fun cleanTags(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things
@@ -175,58 +172,8 @@ open class OSISFilter : FilterCloneBase(), SourceFilter {
      */
     @Throws(JDOMException::class, IOException::class)
     private fun parse(plain: String?): Element {
-        var builder = saxBuilders.poll()
-        if (builder == null) {
-            //then we have no sax builders available, so let's create a new one and store
-            builder = KdomBuilder()
-            // With JDom 1.x it was important to set Fast Reconfigure on re-usable KdomBuilders
-            // This is the default with 2.x and this method does nothing
-            // builder.setFastReconfigure(true);
-        }
-
-        // create a root element to house our document fragment
-        var `in`: StringReader? = null
-        val div: Element
-        try {
-            // Need to contain it in something that we remove when returning it to the user.
-            `in` = StringReader("<xxx>" + plain + "</xxx>")
-            val doc = builder.build(`in`)
-            div = doc.rootElement
-        } finally {
-            if (`in` != null) {
-                `in`.close()
-            }
-        }
-
-        //return builder to queue, or offer a new one. Ignore return value as we don't care whether the builder is going to be re-used
-        saxBuilders.offer(builder)
-
-        return div
+        // Builders carry no shared parsing state; allocate per call rather than sharing a JVM queue.
+        return KdomBuilder().build("<xxx>" + plain + "</xxx>").rootElement
     }
 
-    // space for 32 re-usable sax builders, but doesn't bound the number available to the callers
-    private val saxBuilders: BlockingQueue<KdomBuilder> = ArrayBlockingQueue(32)
-
-    private companion object {
-        /**
-         * Pattern to find the start of a div. Used to convert to a milestoned version.
-         */
-        private val DIV_START: Pattern = Pattern.compile("<div>", Pattern.LITERAL)
-        /**
-         * Pattern to find the end of a div. Used to convert to a milestoned version.
-         */
-        private val DIV_END: Pattern = Pattern.compile("</div>", Pattern.LITERAL)
-        /**
-         * Pattern to find the end of a chapter. Used to convert to a milestoned version.
-         */
-        private val CHAPTER_END: Pattern = Pattern.compile("</chapter>", Pattern.LITERAL)
-        /**
-         * Pattern to find the start of a speech. Used to convert to a milestoned version.
-         */
-        private val SPEECH_START: Pattern = Pattern.compile("<speech>", Pattern.LITERAL)
-        /**
-         * Pattern to find the end of a speech. Used to convert to a milestoned version.
-         */
-        private val SPEECH_END: Pattern = Pattern.compile("</speech>", Pattern.LITERAL)
-    }
 }

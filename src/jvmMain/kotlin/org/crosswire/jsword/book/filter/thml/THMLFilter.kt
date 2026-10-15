@@ -26,7 +26,6 @@
 package org.crosswire.jsword.book.filter.thml
 
 
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
@@ -92,7 +91,10 @@ open class THMLFilter : FilterCloneBase(), SourceFilter {
 
     override fun clone(): THMLFilter = shallowFilterClone() as THMLFilter
 
-    override fun portableFilterClone(): Any = THMLFilter()
+    override fun portableFilterClone(): Any {
+        check(this::class == THMLFilter::class) { "Host subclass must provide a portable clone" }
+        return THMLFilter()
+    }
 
     private fun cleanParse(book: Book?, key: Key?, plain: String?): Element? {
         // So just try to strip out all XML looking things

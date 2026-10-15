@@ -26,7 +26,6 @@
 package org.crosswire.jsword.book.filter.gbf
 
 
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.book.OSISUtil
@@ -70,7 +69,10 @@ open class GBFFilter : FilterCloneBase(), SourceFilter {
 
     override fun clone(): GBFFilter = shallowFilterClone() as GBFFilter
 
-    override fun portableFilterClone(): Any = GBFFilter()
+    override fun portableFilterClone(): Any {
+        check(this::class == GBFFilter::class) { "Host subclass must provide a portable clone" }
+        return GBFFilter()
+    }
 
     /**
      * Turn the string into a list of tags in the order that they appear in the

@@ -23,7 +23,6 @@
 package org.crosswire.jsword.book.filter.plaintext
 
 import org.crosswire.common.util.StringUtil
-import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.FilterCloneBase
@@ -64,5 +63,8 @@ open class PlainTextFilter : FilterCloneBase(), SourceFilter {
 
     override fun clone(): PlainTextFilter = shallowFilterClone() as PlainTextFilter
 
-    override fun portableFilterClone(): Any = PlainTextFilter()
+    override fun portableFilterClone(): Any {
+        check(this::class == PlainTextFilter::class) { "Host subclass must provide a portable clone" }
+        return PlainTextFilter()
+    }
 }

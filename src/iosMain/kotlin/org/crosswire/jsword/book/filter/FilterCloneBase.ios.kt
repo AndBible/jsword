@@ -5,3 +5,5 @@ actual abstract class FilterCloneBase actual constructor() {
     protected actual open fun portableFilterClone(): Any =
         throw UnsupportedOperationException("Host subclass must provide a portable clone")
 }
+
+actual interface FilterCloneMarker

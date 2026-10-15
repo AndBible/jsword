@@ -20,7 +20,6 @@
 package org.crosswire.jsword.book.filter.gbf
 
 
-import org.crosswire.common.util.ClassUtil
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice

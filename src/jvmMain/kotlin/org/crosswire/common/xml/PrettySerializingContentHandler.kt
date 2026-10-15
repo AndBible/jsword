@@ -205,14 +205,14 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: XmlWriter? = nu
     }
 
     protected open fun decorateIndent(indentLevel: Int): String {
-        return String(indentation, 0, indentLevel).intern()
+        return xmlIndentation(indentation, indentLevel)
     }
 
     protected open fun write(obj: String?) {
         try {
             writer.write(obj)
         } catch (e: IOException) {
-            e.printStackTrace(System.err)
+            reportXmlWriteFailure(e)
         }
     }
 
@@ -220,7 +220,7 @@ constructor(theFormat: FormatType = FormatType.AS_IS, theWriter: XmlWriter? = nu
         try {
             writer.write(obj.code)
         } catch (e: IOException) {
-            e.printStackTrace(System.err)
+            reportXmlWriteFailure(e)
         }
     }
 

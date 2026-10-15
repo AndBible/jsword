@@ -9,3 +9,8 @@ expect abstract class XmlWriter {
 internal expect fun stringXmlWriter(): XmlWriter
 
 expect open class XmlTransformerException : Exception
+
+/** Preserve the legacy write-failure diagnostic without changing callback propagation. */
+internal expect fun reportXmlWriteFailure(error: okio.IOException)
+
+internal expect fun xmlIndentation(chars: CharArray, length: Int): String

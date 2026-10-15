@@ -23,6 +23,7 @@
 package org.crosswire.common.xml
 
 import okio.IOException
+import org.crosswire.common.util.isJavaWhitespace
 import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.jswordAssert
 import fi.sykero.kdom.Document
@@ -273,7 +274,7 @@ object XMLUtil {
                 var closePos = result.indexOf('>', m.range.last + 1)
                 if (closePos == -1)
                     return null
-                while (result[closePos - 1].isWhitespace()) closePos--
+                while (result[closePos - 1].isJavaWhitespace()) closePos--
                 if (result[closePos - 1] != '/') {
                     if (match == "<l") lTagFound = true
                     if (match == "<lg") lgTagFound = true
