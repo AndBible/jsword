@@ -15,6 +15,7 @@ import fi.sykero.kdom.output.XMLOutputter
 import fi.sykero.kdom.output.Format
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -235,6 +236,39 @@ class BookListContractTest {
         val gen11 = XMLOutputter(Format.getRawFormat()).outputString(BookData(book, book.getKey("Gen.1.1")).getOsisFragment(false))
         assertTrue(gen11.contains("beginning"))
         assertTrue(BookData(book, book.getKey("Gen.1.1")).firstBook === book)
+    }
+
+    /** Four TreeMap properties the `BookData` verse-content map must keep: collapse, first key, value replace, order. */
+    @Test fun treeMapVerseContentSemantics() {
+        val v11n = org.crosswire.jsword.versification.system.Versifications.instance().getVersification("KJV")!!
+        val a5 = org.crosswire.jsword.passage.Verse(v11n, 5)
+        val a5again = org.crosswire.jsword.passage.Verse(v11n, 5)
+        val a2 = org.crosswire.jsword.passage.Verse(v11n, 2)
+        val a9 = org.crosswire.jsword.passage.Verse(v11n, 9)
+        val first = mutableListOf<fi.sykero.kdom.Content>(fi.sykero.kdom.Text("one"))
+        val second = mutableListOf<fi.sykero.kdom.Content>(fi.sykero.kdom.Text("two"))
+        val map = java.util.TreeMap<org.crosswire.jsword.passage.Verse, MutableList<fi.sykero.kdom.Content>>()
+        map[a9] = first
+        map[a5] = first
+        map[a2] = first
+        map[a5again] = second
+        assertEquals(3, map.size)
+        assertSame(second, map[a5])
+        assertSame(a5, map.entries.single { it.key.ordinal == 5 }.key)
+        assertEquals(listOf(2, 5, 9), map.entries.map { it.key.ordinal })
+        assertNull(map[org.crosswire.jsword.passage.Verse(v11n, 7)])
+    }
+
+    /** The multi-book path builds its table through the verse-content map; its output is pinned by length and hash. */
+    @Test fun bookDataTwoBookTable() {
+        val kjv = requireNotNull(Books.installed().getBook("KJV"))
+        val isv = requireNotNull(Books.installed().getBook("ISV"))
+        val key = kjv.getKey("Gen.1.1-Gen.1.3")
+        val xml = XMLOutputter(Format.getRawFormat()).outputString(BookData(arrayOf(kjv, isv), key, true).getOsisFragment(false))
+        val hash = java.security.MessageDigest.getInstance("SHA-256").digest(xml.toByteArray()).joinToString("") { "%02x".format(it) }
+        assertEquals(2087, xml.length)
+        assertEquals("39c7a97a6db3540035aa1de159aa0ba7a5e76bed394b337f1dd72240cd5a8689", hash)
+        assertTrue(xml.contains("<table"))
     }
 
     private companion object {
