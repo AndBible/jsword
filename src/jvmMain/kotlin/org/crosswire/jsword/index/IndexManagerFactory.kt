@@ -43,7 +43,7 @@ private constructor() {
          */
         @JvmStatic
         fun getIndexManager(): IndexManager {
-            return instance!!
+            return instance ?: throw SearchUnsupportedException()
         }
 
         /**
@@ -61,7 +61,7 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginRegistry.default(IndexManager::class)!!.create()
+                instance = PluginRegistry.default(IndexManager::class)?.create() ?: throw SearchUnsupportedException()
             } catch (e: Exception) {
                 log.error("createIndexManager failed", e)
             }

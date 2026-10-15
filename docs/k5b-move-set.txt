@@ -1,32 +1,33 @@
 # K5b common-ready candidates; Tasks 4, 10, 14 perform the moves.
-org/crosswire/jsword/index/AbstractIndex.kt
+org/crosswire/jsword/index/AbstractIndex.kt #done
 org/crosswire/jsword/index/BookIndexer.kt
-org/crosswire/jsword/index/Index.kt
-org/crosswire/jsword/index/IndexManager.kt
-org/crosswire/jsword/index/IndexManagerFactory.kt
-org/crosswire/jsword/index/IndexPolicy.kt
-org/crosswire/jsword/index/IndexPolicyAdapter.kt
-org/crosswire/jsword/index/IndexStatusEvent.kt
-org/crosswire/jsword/index/IndexStatusListener.kt
-org/crosswire/jsword/index/query/AbstractBinaryQuery.kt
-org/crosswire/jsword/index/query/AbstractQuery.kt
-org/crosswire/jsword/index/query/AndNotQuery.kt
-org/crosswire/jsword/index/query/AndQuery.kt
-org/crosswire/jsword/index/query/BaseQuery.kt
-org/crosswire/jsword/index/query/BinaryQuery.kt
-org/crosswire/jsword/index/query/BlurQuery.kt
-org/crosswire/jsword/index/query/NullQuery.kt
-org/crosswire/jsword/index/query/OrQuery.kt
-org/crosswire/jsword/index/query/Query.kt
-org/crosswire/jsword/index/query/QueryBuilder.kt
-org/crosswire/jsword/index/query/QueryBuilderFactory.kt
-org/crosswire/jsword/index/query/QueryDecorator.kt
-org/crosswire/jsword/index/query/QueryDecoratorFactory.kt
-org/crosswire/jsword/index/query/RangeQuery.kt
+org/crosswire/jsword/index/Index.kt #done
+org/crosswire/jsword/index/IndexManager.kt #done
+org/crosswire/jsword/index/IndexManagerFactory.kt #done
+org/crosswire/jsword/index/IndexPolicy.kt #done
+org/crosswire/jsword/index/IndexPolicyAdapter.kt #done
+org/crosswire/jsword/index/IndexStatusEvent.kt #done
+org/crosswire/jsword/index/IndexStatusListener.kt #done
+org/crosswire/jsword/index/query/AbstractBinaryQuery.kt #done
+org/crosswire/jsword/index/query/AbstractQuery.kt #done
+org/crosswire/jsword/index/query/AndNotQuery.kt #done
+org/crosswire/jsword/index/query/AndQuery.kt #done
+org/crosswire/jsword/index/query/BaseQuery.kt #done
+org/crosswire/jsword/index/query/BinaryQuery.kt #done
+org/crosswire/jsword/index/query/BlurQuery.kt #done
+org/crosswire/jsword/index/query/NullQuery.kt #done
+org/crosswire/jsword/index/query/OrQuery.kt #done
+org/crosswire/jsword/index/query/Query.kt #done
+org/crosswire/jsword/index/query/QueryBuilder.kt #done
+org/crosswire/jsword/index/query/QueryBuilderFactory.kt #done
+org/crosswire/jsword/index/query/QueryDecorator.kt #done
+org/crosswire/jsword/index/query/QueryDecoratorFactory.kt #done
+org/crosswire/jsword/index/query/RangeQuery.kt #done
 org/crosswire/jsword/index/search/DefaultSearchModifier.kt
 org/crosswire/jsword/index/search/DefaultSearchRequest.kt
 org/crosswire/jsword/index/search/SearchModifier.kt
 org/crosswire/jsword/index/search/SearchRequest.kt
-org/crosswire/jsword/index/search/SearchType.kt
-org/crosswire/jsword/index/search/Searcher.kt
-org/crosswire/jsword/index/search/SearcherFactory.kt
+org/crosswire/jsword/index/search/SearchType.kt #done
+org/crosswire/jsword/index/search/Searcher.kt #done
+org/crosswire/jsword/index/search/SearcherFactory.kt #done
+org/crosswire/jsword/index/SearchUnsupportedException.kt #done

@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.index
 
-import java.util.EventObject
-
 /**
  * An IndexStatusEvent is fired whenever the IndexStatus of a book has changed.
  * 
@@ -35,16 +33,16 @@ open class IndexStatusEvent
  * @param status
  *            The new status of the book.
  */
-(source: Any?, status: IndexStatus?) : EventObject(source) {
+(source: Any?, status: IndexStatus?) {
+    private val source: Any = requireNotNull(source) { "null source" }
+
+    /**
+     * @return the object on which the event initially occurred
+     */
+    open fun getSource(): Any = source
+
     /**
      * @return Returns the indexStatus.
      */
     open val indexStatus: IndexStatus? = status
-
-    private companion object {
-        /**
-         * Serialization ID
-         */
-        private const val serialVersionUID = 3834876879554819894L
-    }
 }

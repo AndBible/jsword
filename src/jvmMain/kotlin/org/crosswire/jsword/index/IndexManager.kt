@@ -25,7 +25,7 @@ package org.crosswire.jsword.index
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 
-import java.net.URI
+import org.crosswire.common.util.KUri
 
 /**
  * Manages the life-cycle of an Index.
@@ -87,7 +87,7 @@ interface IndexManager {
      * @throws BookException 
      */
     @Throws(BookException::class)
-    fun installDownloadedIndex(book: Book?, tempDest: URI?)
+    fun installDownloadedIndex(book: Book?, tempDest: KUri?)
 
     /**
      * Tidy up after yourself and remove all the files that make up any indexes

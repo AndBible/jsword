@@ -25,7 +25,6 @@ package org.crosswire.jsword.book.basic
 
 import org.crosswire.common.activate.Lock
 import org.crosswire.common.util.Language
-import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookCategory
 import org.crosswire.jsword.book.BookDriver
@@ -130,11 +129,7 @@ abstract class AbstractBook
     @Throws(BookException::class)
     override fun find(request: SearchRequest?): Key? {
         if (searcher == null) {
-            try {
-                searcher = SearcherFactory.createSearcher(this)
-            } catch (ex: InstantiationException) {
-                throw BookException(JSOtherMsg.lookupText("Failed to initialize the search index"), ex)
-            }
+            searcher = SearcherFactory.createSearcher(this)
         }
 
         return searcher!!.search(request)

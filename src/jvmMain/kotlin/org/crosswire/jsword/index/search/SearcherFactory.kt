@@ -22,11 +22,13 @@ package org.crosswire.jsword.index.search
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.index.IndexManagerFactory
+import org.crosswire.jsword.index.SearchUnsupportedException
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
-import java.io.IOException
+import okio.IOException
 
 /**
  * Factory method for creating a new Searcher.
@@ -45,25 +47,27 @@ private constructor() {
          * 
          * @param book the book
          * @return the searcher
-         * @throws InstantiationException 
+         * @throws BookException when the search index cannot be opened or the searcher cannot be created
          */
         @JvmStatic
-        @Throws(InstantiationException::class)
+        @Throws(BookException::class)
         fun createSearcher(book: Book?): Searcher {
             try {
                 val imanager = IndexManagerFactory.getIndexManager()
                 val index = imanager.getIndex(book)
 
-                val parser = PluginRegistry.default(Searcher::class)!!.create()
+                val parser = PluginRegistry.default(Searcher::class)?.create() ?: throw SearchUnsupportedException()
                 parser.init(index)
 
                 return parser
+            } catch (e: SearchUnsupportedException) {
+                throw e
             } catch (e: IOException) {
                 log.error("createSearcher failed", e)
-                throw InstantiationException()
+                throw BookException(JSOtherMsg.lookupText("Failed to initialize the search index"), e)
             } catch (e: BookException) {
                 log.error("createSearcher failed", e)
-                throw InstantiationException()
+                throw BookException(JSOtherMsg.lookupText("Failed to initialize the search index"), e)
             }
         }
 

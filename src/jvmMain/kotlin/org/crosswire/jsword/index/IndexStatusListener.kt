@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.index
 
-import java.util.EventListener
-
 /**
  * IndexStatusListeners are able to be notified about changes to the IndexStatus
  * of a book.
@@ -28,7 +26,7 @@ import java.util.EventListener
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-interface IndexStatusListener : EventListener {
+interface IndexStatusListener {
     /**
      * Called whenever the IndexStatus of a book has changed.
      * 

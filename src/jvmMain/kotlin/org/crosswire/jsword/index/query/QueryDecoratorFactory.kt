@@ -22,6 +22,7 @@ package org.crosswire.jsword.index.query
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
+import org.crosswire.jsword.index.SearchUnsupportedException
 
 
 /**
@@ -43,7 +44,7 @@ private constructor() {
          */
         @JvmStatic
         fun getSearchSyntax(): QueryDecorator {
-            return instance!!
+            return instance ?: throw SearchUnsupportedException()
         }
 
         /**
@@ -61,7 +62,7 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginRegistry.default(QueryDecorator::class)!!.create()
+                instance = PluginRegistry.default(QueryDecorator::class)?.create() ?: throw SearchUnsupportedException()
             } catch (e: Exception) {
                 log.error("create QueryDecorator failed", e)
             }
