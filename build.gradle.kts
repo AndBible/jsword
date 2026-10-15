@@ -28,6 +28,8 @@ kotlin {
             api("fi.sykero:kdom:0.1.0-SNAPSHOT")
             implementation("org.jetbrains.kotlinx:atomicfu:0.33.0")
             api("com.squareup.okio:okio:3.9.0")
+            // Suspend download port (K5b D4); keep in step with and-bible's gradle/libs.versions.toml (coroutines = "1.11.0").
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         }
         jvmMain.dependencies {
             implementation("org.apache.commons:commons-compress:1.12")
@@ -40,6 +42,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation("com.squareup.okio:okio-fakefilesystem:3.9.0")
+            // runTest for the suspend transport/installer tests; common because commonTest hosts them too.
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
         }
         jvmTest.dependencies {
             implementation("org.jdom:jdom2:2.0.6.1")
