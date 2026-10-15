@@ -19,8 +19,6 @@
  */
 package org.crosswire.jsword.book.install.sword
 
-import java.util.regex.Pattern
-
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.book.install.Installer
 import org.crosswire.jsword.book.install.InstallerFactory
@@ -59,7 +57,7 @@ open class HttpSwordInstallerFactory : InstallerFactory {
         }
     }
 
-    private fun createInstaller(parts: Array<String>): Installer {
+    private fun createInstaller(parts: List<String>): Installer {
         val reply: AbstractSwordInstaller = HttpSwordInstaller()
 
         reply.setHost(parts[0])
@@ -68,14 +66,14 @@ open class HttpSwordInstallerFactory : InstallerFactory {
         if (parts[3].length > 0) {
             reply.setProxyHost(parts[3])
             if (parts[4].length > 0) {
-                reply.setProxyPort(Integer.valueOf(parts[4]))
+                reply.setProxyPort(parts[4].toInt())
             }
         }
 
         return reply
     }
 
-    private fun createOldInstaller(parts: Array<String>): Installer {
+    private fun createOldInstaller(parts: List<String>): Installer {
         val reply: AbstractSwordInstaller = HttpSwordInstaller()
 
         reply.setHost(parts[0])
@@ -84,14 +82,14 @@ open class HttpSwordInstallerFactory : InstallerFactory {
         if (parts[2].length > 0) {
             reply.setProxyHost(parts[2])
             if (parts[3].length > 0) {
-                reply.setProxyPort(Integer.valueOf(parts[3]))
+                reply.setProxyPort(parts[3].toInt())
             }
         }
 
         return reply
     }
 
-    private val commaPattern: Pattern = Pattern.compile(",")
+    private val commaPattern: Regex = Regex(",")
 
     companion object {
         /**

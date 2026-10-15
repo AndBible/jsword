@@ -4,3 +4,7 @@ org/crosswire/jsword/book/install/Installer.kt #done
 org/crosswire/jsword/book/install/InstallerEvent.kt #done
 org/crosswire/jsword/book/install/InstallerListener.kt #done
 org/crosswire/jsword/book/install/InstallerFactory.kt #done
+org/crosswire/jsword/book/install/sword/HttpSwordInstallerFactory.kt #done
+org/crosswire/jsword/book/install/sword/HttpsSwordInstallerFactory.kt #done
+org/crosswire/jsword/book/install/sword/HttpSwordInstaller.kt #done
+org/crosswire/jsword/book/install/sword/HttpsSwordInstaller.kt #done

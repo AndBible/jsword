@@ -19,13 +19,12 @@
  */
 package org.crosswire.jsword.book.install.sword
 
-import java.net.URI
-import java.net.URISyntaxException
-
 import org.crosswire.common.progress.Progress
+import org.crosswire.common.util.KUri
 import org.crosswire.common.util.LucidException
 import org.crosswire.common.util.NetUtil
 import org.crosswire.common.util.WebResource
+import org.crosswire.common.util.netUriSyntaxFailure
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.install.InstallException
@@ -61,23 +60,25 @@ open class HttpSwordInstaller : AbstractSwordInstaller() {
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.install.Installer#toRemoteURI(org.crosswire.jsword.book.Book)
      */
-    override fun toRemoteURI(book: Book): URI? {
+    override fun toRemoteURI(book: Book): KUri? {
         try {
-            return URI(NetUtil.PROTOCOL_HTTP, host, packageDirectory + '/' + book.initials + ZIP_SUFFIX, null)
-        } catch (e: URISyntaxException) {
+            return KUri(NetUtil.PROTOCOL_HTTP, host, packageDirectory + '/' + book.initials + ZIP_SUFFIX, null)
+        } catch (e: Exception) {
+            if (!netUriSyntaxFailure(e)) throw e
             return null
         }
     }
 
     /* (non-Javadoc)
-     * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#download(org.crosswire.common.progress.Progress, java.lang.String, java.lang.String, java.net.URI)
+     * @see org.crosswire.jsword.book.install.sword.AbstractSwordInstaller#download(org.crosswire.common.progress.Progress, java.lang.String, java.lang.String, KUri)
      */
     @Throws(InstallException::class)
-    override fun download(job: Progress?, dir: String?, file: String?, dest: URI?) {
-        val uri: URI
+    override fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+        val uri: KUri
         try {
-            uri = URI(NetUtil.PROTOCOL_HTTP, host, dir + '/' + file, null)
-        } catch (ex: URISyntaxException) {
+            uri = KUri(NetUtil.PROTOCOL_HTTP, host, dir + '/' + file, null)
+        } catch (ex: Exception) {
+            if (!netUriSyntaxFailure(ex)) throw ex
             // TRANSLATOR: Common error condition: {0} is a placeholder for the URL of what could not be found.
             throw InstallException(JSMsg.gettext("Unable to find: {0}", dir + '/' + file), ex)
         }
@@ -97,7 +98,7 @@ open class HttpSwordInstaller : AbstractSwordInstaller() {
      * @throws LucidException
      */
     @Throws(LucidException::class)
-    private fun copy(job: Progress?, uri: URI, dest: URI?) {
+    private fun copy(job: Progress?, uri: KUri, dest: KUri?) {
         if (job != null) {
             // TRANSLATOR: Progress label for downloading one or more files.
             job.sectionName = JSMsg.gettext("Downloading files")
