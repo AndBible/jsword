@@ -25,7 +25,7 @@ package org.crosswire.jsword.book.install
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookList
 
-import java.net.URI
+import org.crosswire.common.util.KUri
 
 /**
  * An interface that allows us to download from a specific source of Bible data.
@@ -62,7 +62,7 @@ interface Installer : BookList {
      *            The book meta-data to get a URI from.
      * @return the remote URI for the BookMetaData
      */
-    fun toRemoteURI(book: Book): URI?
+    fun toRemoteURI(book: Book): KUri?
 
     /**
      * Get a list of BookMetaData objects that represent downloadable books. If
@@ -144,7 +144,7 @@ interface Installer : BookList {
      * @throws InstallException 
      */
     @Throws(InstallException::class)
-    fun downloadSearchIndex(book: Book, tempDest: URI)
+    fun downloadSearchIndex(book: Book, tempDest: KUri)
 
     /** remove the cached book list to clear memory
      */

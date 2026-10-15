@@ -19,24 +19,21 @@
  */
 package org.crosswire.jsword.book.install
 
-import org.crosswire.common.util.CWClassLoader
+import okio.IOException
 import org.crosswire.common.util.CWProject
+import org.crosswire.common.util.CopyOnWriteList
 import org.crosswire.common.util.FileUtil
+import org.crosswire.common.util.KswordResources
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import org.crosswire.common.util.NetUtil
+import org.crosswire.common.util.PluginEntry
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.PropertiesCharset
 import org.crosswire.common.util.PropertiesParser
-import org.crosswire.common.util.KswordResources
 import org.crosswire.common.util.PropertyMap
-import org.crosswire.common.util.ReflectionUtil
 import org.crosswire.common.util.Reporter
-import org.crosswire.common.util.jswordAssert
-import org.crosswire.common.util.Logger
-import org.crosswire.common.util.LoggerFactory
-
-import java.io.IOException
-import java.util.Collections
-import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.jvm.JvmStatic
 
 /**
  * A manager to abstract out the non-view specific book installation tasks.
@@ -47,9 +44,9 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class InstallManager {
     /**
-     * The map of installer factories
+     * The map of installer factories, in registry order
      */
-    private var factories: MutableMap<String, Class<InstallerFactory>>? = null
+    private var factories: Map<String, PluginEntry<InstallerFactory>> = LinkedHashMap()
 
     /**
      * The list of discovered installers
@@ -57,9 +54,9 @@ class InstallManager {
     private var installersMap: MutableMap<String, Installer> = LinkedHashMap<String, Installer>()
 
     /**
-     * The list of listeners
+     * The list of listeners (a snapshot-iterating copy-on-write list, rule 20)
      */
-    private var listeners: MutableList<InstallerListener> = CopyOnWriteArrayList<InstallerListener>()
+    private var listeners: MutableList<InstallerListener> = CopyOnWriteList<InstallerListener>()
 
     /**
      * Simple ctor
@@ -67,28 +64,22 @@ class InstallManager {
     init {
         try {
             val sitemap: PropertyMap = preloadedSitemap ?: loadSitemap()
-            @Suppress("UNCHECKED_CAST")
-            factories = PluginRegistry.entries(InstallerFactory::class).associateTo(LinkedHashMap()) { it.name to (it.implClass.java as Class<InstallerFactory>) }
+            factories = PluginRegistry.entries(InstallerFactory::class).associateTo(LinkedHashMap()) { it.name to it }
             var i = 0
             var def = sitemap.get(PREFIX + ++i)
             while (def != null) {
-                try {
-                    val parts = def.split(",", limit = 3)
-                    val type = parts[0]
-                    val name = parts[1]
-                    val rest = parts[2]
+                val parts = def.split(",", limit = 3)
+                val type = parts[0]
+                val name = parts[1]
+                val rest = parts[2]
 
-                    val clazz = factories!![type]
-                    if (clazz == null) {
-                        log.warn("Unable to get class for {}", type)
-                    } else {
-                        val ifactory = ReflectionUtil.construct<InstallerFactory>(clazz)
-                        val installer = ifactory.createInstaller(rest)
+                val entry = factories[type]
+                if (entry == null) {
+                    log.warn("Unable to get class for {}", type)
+                } else {
+                    val installer = entry.create().createInstaller(rest)
 
-                        internalAdd(name, installer)
-                    }
-                } catch (e: ReflectiveOperationException) {
-                    Reporter.informUser(this, e)
+                    internalAdd(name, installer)
                 }
                 def = sitemap.get(PREFIX + ++i)
             }
@@ -99,10 +90,11 @@ class InstallManager {
 
     /**
      * The user's saved site list (`<FQN>.plugin`, written by [save] into a JSword home directory) overrides
-     * the embedded default, as it did when the default was a classpath resource.
+     * the embedded default, as it did when the default was a classpath resource. The homes are the readable
+     * project directories of [CWProject] (the same list the JVM class loader was given).
      */
     private fun loadSitemap(): PropertyMap {
-        val saved = CWClassLoader.findHomeResource(javaClass.name + FileUtil.EXTENSION_PLUGIN)
+        val saved = findSavedSitemap()
         if (saved != null) {
             return NetUtil.loadProperties(saved)
         }
@@ -110,6 +102,17 @@ class InstallManager {
         // Only `<home>/<FQN>.plugin`, which save() writes, is honoured now.
         val embedded = KswordResources.bytes("InstallManager.plugin") ?: return PropertyMap()
         return PropertyMap().apply { putAll(PropertiesParser.parse(embedded, PropertiesCharset.LATIN1)) }
+    }
+
+    /** The first readable `<home>/<FQN>.plugin`, or null. */
+    private fun findSavedSitemap(): org.crosswire.common.util.KUri? {
+        for (home in CWProject.instance().projectResourceDirs) {
+            val candidate = NetUtil.lengthenURI(home!!, SITEMAP_NAME + FileUtil.EXTENSION_PLUGIN)
+            if (NetUtil.canRead(candidate!!)) {
+                return candidate
+            }
+        }
+        return null
     }
 
     /**
@@ -123,7 +126,7 @@ class InstallManager {
         for (name in installersMap.keys) {
             val installer = installersMap[name]!!
             // Clear the buffer
-            buf.delete(0, buf.length)
+            buf.clear()
             buf.append(installer.getType())
             buf.append(',')
             buf.append(name)
@@ -131,7 +134,7 @@ class InstallManager {
             buf.append(installer.getInstallerDefinition())
             props.put(PREFIX + i++, buf.toString())
         }
-        val outputURI = CWProject.instance().getWritableURI(javaClass.name, FileUtil.EXTENSION_PLUGIN)
+        val outputURI = CWProject.instance().getWritableURI(SITEMAP_NAME, FileUtil.EXTENSION_PLUGIN)
         try {
             NetUtil.storeProperties(props, outputURI!!, "Saved Installer Sites")
         } catch (e: IOException) {
@@ -145,7 +148,7 @@ class InstallManager {
      * @return the set of all installer factory names
      */
     val installerFactoryNames: Set<String>
-        get() = Collections.unmodifiableSet(factories!!.keys)
+        get() = UnmodifiableNameView(factories.keys)
 
     /**
      * Find the registered name of the InstallerFactory that created the given
@@ -156,21 +159,14 @@ class InstallManager {
      * @return the name of the factory for the installer
      */
     fun getFactoryNameForInstaller(installer: Installer): String? {
-        val match: Class<out Installer> = installer.javaClass
-        for (name in factories!!.keys) {
-            val factclazz = factories!![name]
-            try {
-                val ifactory = ReflectionUtil.construct<InstallerFactory>(factclazz)
-                val clazz: Class<out Installer> = ifactory.createInstaller().javaClass
-                if (clazz == match) {
-                    return name
-                }
-            } catch (e: ReflectiveOperationException) {
-                log.warn("Failed to instantiate installer factory: {}={}", name, factclazz!!.name, e)
+        val match = installer::class
+        for ((name, entry) in factories) {
+            if (entry.create().createInstaller()::class == match) {
+                return name
             }
         }
 
-        log.warn("Failed to find factory name for {} among the {} factories.", installer, Integer.toString(factories!!.size))
+        log.warn("Failed to find factory name for {} among the {} factories.", installer, factories.size.toString())
         return null
     }
 
@@ -190,7 +186,7 @@ class InstallManager {
             }
         }
 
-        log.warn("Failed to find installer name for {} among the {} installers.", installer, Integer.toString(installersMap.size))
+        log.warn("Failed to find installer name for {} among the {} installers.", installer, installersMap.size.toString())
         for (name in installersMap.keys) {
             val test = installersMap[name]
             log.warn("  it isn't equal to {}", test!!.getInstallerDefinition())
@@ -203,15 +199,12 @@ class InstallManager {
      * 
      * @param name
      *            The InstallerFactory name to look-up
-     * @return The found InstallerFactory or null if the name was not found
+     * @return The found InstallerFactory; an unknown or null name throws a NullPointerException (the old
+     *            reflective construction of a null class did the same, despite the old documentation)
      */
     fun getInstallerFactory(name: String?): InstallerFactory? {
-        try {
-            return ReflectionUtil.construct<InstallerFactory>(if (name == null) null else factories!![name])
-        } catch (e: ReflectiveOperationException) {
-            jswordAssert(false) { e }
-        }
-        return null
+        val entry = if (name == null) null else factories[name]
+        return entry!!.create()
     }
 
     /**
@@ -219,7 +212,7 @@ class InstallManager {
      * @return a map of named installers
      */
     val installers: Map<String, Installer>
-        get() = Collections.unmodifiableMap(installersMap)
+        get() = UnmodifiableInstallerView(installersMap)
 
     /**
      * Find an installer by name
@@ -289,20 +282,20 @@ class InstallManager {
     }
 
     /**
-     * Remove a BibleListener from our list of listeners
+     * Add an InstallerListener to our list of listeners
      * 
      * @param li
-     *            The old listener
+     *            The new listener
      */
     fun addInstallerListener(li: InstallerListener) {
         listeners.add(li)
     }
 
     /**
-     * Add a BibleListener to our list of listeners
+     * Remove an InstallerListener from our list of listeners
      * 
      * @param li
-     *            The new listener
+     *            The old listener
      */
     fun removeBooksListener(li: InstallerListener) {
         listeners.remove(li)
@@ -329,6 +322,51 @@ class InstallManager {
         }
     }
 
+    /**
+     * Live read-only view of the factory names, the replacement of `Collections.unmodifiableSet` (rule 26): it
+     * reflects later changes, and neither the set nor its iterator can remove.
+     */
+    private class UnmodifiableNameView(private val names: Set<String>) : AbstractSet<String>() {
+        override val size: Int get() = names.size
+
+        override fun contains(element: String): Boolean = names.contains(element)
+
+        override fun iterator(): Iterator<String> {
+            val source = names.iterator()
+            return object : Iterator<String> {
+                override fun hasNext(): Boolean = source.hasNext()
+                override fun next(): String = source.next()
+            }
+        }
+    }
+
+    /**
+     * Live read-only view of the installers by name, the replacement of `Collections.unmodifiableMap` (rule 26):
+     * mutators of the map, its entry set and its iterators throw `UnsupportedOperationException`.
+     */
+    private class UnmodifiableInstallerView(private val map: Map<String, Installer>) : AbstractMap<String, Installer>() {
+        override val entries: Set<Map.Entry<String, Installer>>
+            get() = object : AbstractSet<Map.Entry<String, Installer>>() {
+                override val size: Int get() = map.size
+
+                override fun iterator(): Iterator<Map.Entry<String, Installer>> {
+                    val source = map.entries.iterator()
+                    return object : Iterator<Map.Entry<String, Installer>> {
+                        override fun hasNext(): Boolean = source.hasNext()
+                        override fun next(): Map.Entry<String, Installer> = source.next().let { ReadOnlyEntry(it.key, it.value) }
+                    }
+                }
+            }
+
+        override val size: Int get() = map.size
+
+        override fun containsKey(key: String): Boolean = map.containsKey(key)
+
+        override fun get(key: String): Installer? = map[key]
+    }
+
+    private class ReadOnlyEntry(override val key: String, override val value: Installer) : Map.Entry<String, Installer>
+
     companion object {
         // was package-private
         internal var preloadedSitemap: PropertyMap? = null
@@ -342,6 +380,12 @@ class InstallManager {
          * The prefix for the keys in the installer property file.
          */
         private const val PREFIX = "Installer."
+
+        /**
+         * The fully qualified class name of this class: the base name of the saved site list
+         * (`<name>.plugin` in a JSword home). Pinned by the saved files of existing users.
+         */
+        private const val SITEMAP_NAME = "org.crosswire.jsword.book.install.InstallManager"
 
         /**
          * The log stream
