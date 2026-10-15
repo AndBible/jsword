@@ -42,6 +42,20 @@ class OracleStateIsolationTest {
         originalActivated.zip(activated).forEach { (original, current) -> assertSame(original, current) }
     }
 
+    @Test fun installationOrderRegressionRestoresUninitializedManager() {
+        val managerField = OpenFileStateManager::class.java.getDeclaredField("manager").apply { isAccessible = true }
+        val original = managerField.get(null)
+        try {
+            managerField.set(null, null)
+            optionalModuleReadMustNotPoisonLaterInstalledModuleState()
+            assertNull("The regression fixture must preserve an uninitialized singleton", managerField.get(null))
+        } finally {
+            // Also close a leaked manager when this test detects the historical fixture defect.
+            (managerField.get(null) as OpenFileStateManager?)?.shutDown()
+            managerField.set(null, original)
+        }
+    }
+
     @Test fun optionalModuleReadMustNotPoisonLaterInstalledModuleState() {
         val registry = Books.installed()
         val installed = registry.getBook("Josephus")
@@ -52,7 +66,7 @@ class OracleStateIsolationTest {
         val original = fields.map { it.get(registry) }
         val managerField = OpenFileStateManager::class.java
             .getDeclaredField("manager").apply { isAccessible = true }
-        val manager = OpenFileStateManager.instance()
+        val manager = managerField.get(null)
         val isolated = OpenFileStateManager.createForTest(60, 60)
         val downloadField = SwordBookPath::class.java
             .getDeclaredField("overrideDownloadDir").apply { isAccessible = true }
