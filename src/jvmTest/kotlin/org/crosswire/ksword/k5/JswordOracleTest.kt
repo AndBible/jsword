@@ -36,7 +36,13 @@ class JswordOracleTest {
                     val raw = book.getRawText(key)
                     val stages = if (type in listOf("OSIS", "THML", "GBF")) CorpusDumpTest().stages(book, type, raw) else emptyList()
                     val xml = XMLOutputter(Format.getRawFormat()).outputString(BookData(book, key).getOsisFragment(false))
-                    rows.append(row(key.getOsisID(), (stages.size - 1).coerceAtLeast(0).toString(), digest(xml), xml))
+                    val stageIndex = when (stages.lastOrNull()?.first) {
+                        "osis-entities", "thml-chars" -> 1
+                        "osis-reclosed", "thml-close" -> 2
+                        "osis-tags", "thml-tags" -> 3
+                        else -> 0
+                    }
+                    rows.append(row(key.getOsisID(), stageIndex.toString(), digest(xml), xml))
                     // Keep the original source AND each attempted parser input, not just the final OSIS.
                     rawRows.append(row(key.getOsisID(), "source", digest(raw), raw))
                     for ((stage, text) in stages) rawRows.append(row(key.getOsisID(), stage, digest(text), text))
@@ -53,6 +59,19 @@ class JswordOracleTest {
         } finally {
             SwordBookPathJvm.setAugmentPath(previous)
         }
+    }
+
+    @Test fun realFragmentAndFallbackInputsAreCaptured() {
+        val book = requireNotNull(Books.installed().getBook("KJV"))
+        val key = book.getKey("Gen.1.1")
+        val xml = XMLOutputter(Format.getRawFormat()).outputString(BookData(book, key).getOsisFragment(false))
+        assertTrue(xml.contains("beginning"))
+        val osis = CorpusDumpTest().stages(book, "OSIS", "<p>unclosed")
+        assertEquals("osis-raw", osis.first().first)
+        assertTrue(osis.size > 1)
+        val thml = CorpusDumpTest().stages(book, "THML", "<p>A<br>B</p>")
+        assertEquals(listOf("thml-entities", "thml-chars", "thml-close"), thml.map { it.first })
+        assertTrue(thml.last().second.contains("<br"))
     }
 
     @Test fun comparisonReportsEveryChangedMissingAndExtraEntry() {
