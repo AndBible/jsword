@@ -1,11 +1,17 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package org.crosswire.jsword.book.sword
 
+import platform.Foundation.NSCalendar
+import platform.Foundation.NSCalendarUnitDay
+import platform.Foundation.NSCalendarUnitMonth
 import platform.Foundation.NSDate
-import platform.Foundation.NSDateFormatter
-import platform.Foundation.NSDateFormatterMediumStyle
 
-/** Medium date style of the current instant, the same style [DevotionDateFormat] uses for the keys. */
+/**
+ * Today's month and day in the current calendar, formatted the way key titles are ([DevotionDateFormat] uses
+ * the year 2000), so the result can equal a devotion key title.
+ */
 internal actual fun todayDevotionKey(): String {
-    val formatter = NSDateFormatter().apply { dateStyle = NSDateFormatterMediumStyle }
-    return formatter.stringFromDate(NSDate())
+    val parts = NSCalendar.currentCalendar.components(NSCalendarUnitMonth or NSCalendarUnitDay, NSDate())
+    return DevotionDateFormat.format(parts.month.toInt(), parts.day.toInt())
 }
