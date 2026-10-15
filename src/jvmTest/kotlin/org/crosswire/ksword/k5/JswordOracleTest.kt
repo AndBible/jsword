@@ -2,6 +2,8 @@ package org.crosswire.ksword.k5
 
 import java.io.File
 import java.security.MessageDigest
+import org.crosswire.common.activate.Activatable
+import org.crosswire.common.activate.Activator
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookData
 import org.crosswire.jsword.book.Books
@@ -20,12 +22,7 @@ class JswordOracleTest {
         val check = System.getProperty("k5.oracle.check")
         assumeTrue("Set k5.oracle.write or k5.oracle.check", write != null || check != null)
         require((write == null) != (check == null)) { "Choose exactly one oracle mode" }
-        val previous = SwordBookPathJvm.getAugmentPath()
-        try {
-            val root = File(System.getProperty("k5.project.root"))
-            val extras = File(root, ".local/k5-sword").walkTopDown()
-                .filter { it.isDirectory && File(it, "mods.d").isDirectory }.toList()
-            SwordBookPathJvm.setAugmentPath((previous.toList() + extras).distinct().toTypedArray())
+        withExtraModules {
             val sections = sortedMapOf<String, String>()
             val coverage = StringBuilder()
             for (book in Books.installed().getBooks().sortedBy { it.initials }) {
@@ -40,8 +37,6 @@ class JswordOracleTest {
             val dir = File(write ?: check!!)
             if (write != null) { dir.mkdirs(); sections.forEach { (name, text) -> File(dir, name).writeText(text) } }
             else assertTrue(differences(dir, sections).joinToString("\n"), differences(dir, sections).isEmpty())
-        } finally {
-            SwordBookPathJvm.setAugmentPath(previous)
         }
     }
 
@@ -106,14 +101,53 @@ class JswordOracleTest {
         } finally { dir.deleteRecursively() }
     }
 
-    private fun withExtraModules(action: () -> Unit) {
-        val previous = SwordBookPathJvm.getAugmentPath()
-        try {
-            val root = File(requireNotNull(System.getProperty("k5.project.root")))
-            val extras = File(root, ".local/k5-sword").walkTopDown().filter { it.isDirectory && File(it, "mods.d").isDirectory }.toList()
-            SwordBookPathJvm.setAugmentPath((previous.toList() + extras).distinct().toTypedArray())
-            action()
-        } finally { SwordBookPathJvm.setAugmentPath(previous) }
+    internal fun withExtraModules(action: () -> Unit) {
+        val registry = Books.installed()
+        val fields = listOf("books", "initials", "names", "driverSet").map {
+            Books::class.java.getDeclaredField(it).apply { isAccessible = true }
+        }
+        val augment = org.crosswire.jsword.book.sword.SwordBookPath::class.java
+            .getDeclaredField("augmentPath").apply { isAccessible = true }
+        val managerField = org.crosswire.jsword.book.sword.state.OpenFileStateManager::class.java
+            .getDeclaredField("manager").apply { isAccessible = true }
+        val activatedField = Activator::class.java.getDeclaredField("activated").apply { isAccessible = true }
+        @Suppress("UNCHECKED_CAST")
+        val activated = activatedField.get(null) as MutableList<Activatable>
+        synchronized(registry) {
+            val originalActivated = activated.toList()
+            val originalRegistry = fields.map { it.get(registry) }
+            val originalAugment = augment.get(null)
+            val originalManager = managerField.get(null)
+            val isolatedManager = org.crosswire.jsword.book.sword.state.OpenFileStateManager.createForTest(60, 60)
+            val previous = SwordBookPathJvm.getAugmentPath()
+            try {
+                // Discovery creates new metadata. Its pooled states must not escape into later tests.
+                fields[0].set(registry, java.util.TreeSet<Book>())
+                fields[1].set(registry, HashMap<String, Book>())
+                fields[2].set(registry, HashMap<String, Book>())
+                fields[3].set(registry, HashSet<org.crosswire.jsword.book.BookDriver>())
+                managerField.set(null, isolatedManager)
+                val root = File(requireNotNull(System.getProperty("k5.project.root")))
+                val extras = File(root, ".local/k5-sword").walkTopDown().filter { it.isDirectory && File(it, "mods.d").isDirectory }.toList()
+                SwordBookPathJvm.setAugmentPath((previous.toList() + extras).distinct().toTypedArray())
+                action()
+            } finally {
+                try {
+                    // Backends activate index objects too; close only objects created in this scope.
+                    activated.toList().filter { current -> originalActivated.none { it === current } }
+                        .forEach { Activator.deactivate(it) }
+                } finally {
+                    try {
+                        isolatedManager.shutDown()
+                    } finally {
+                        // Restore exact objects, not a rescan with equal-but-distinct metadata.
+                        managerField.set(null, originalManager)
+                        augment.set(null, originalAugment)
+                        fields.zip(originalRegistry).forEach { (field, original) -> field.set(registry, original) }
+                    }
+                }
+            }
+        }
     }
 
     private fun capture(book: Book, keys: List<Key>): Pair<String, String> {
