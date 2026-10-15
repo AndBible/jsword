@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.book
 
+import kotlin.jvm.JvmStatic
 import kotlinx.atomicfu.atomic
 import org.crosswire.jsword.passage.Key
 import org.crosswire.common.util.Logger

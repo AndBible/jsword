@@ -119,7 +119,6 @@ open class BookData : BookProvider {
      * @throws BookException if there is any problem with this request
      */
     open val osis: Element
-        @Throws(BookException::class)
         get() {
             if (osisRoot == null) {
                 // TODO(DMS): Determine the proper representation of the OSISWork
@@ -140,7 +139,6 @@ open class BookData : BookProvider {
      * @throws BookException if there is any problem with this request
      */
     open val osisFragment: Element
-        @Throws(BookException::class)
         get() {
             if (fragment == null) {
                 fragment = getOsisContent(true)

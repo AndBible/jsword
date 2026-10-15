@@ -19,6 +19,7 @@
  */
 package org.crosswire.jsword.book
 
+import kotlin.jvm.JvmStatic
 import org.crosswire.common.diff.Difference
 import org.crosswire.common.diff.EditType
 import org.crosswire.jsword.JSOtherMsg
@@ -1067,7 +1068,7 @@ private constructor() {
                 if (rtf.startsWith("\\pard", i)) {
                     val currentElement = stack.popElement() as Element
                     currentElement.addContent(text.toString())
-                    text.delete(0, text.length)
+                    text.clear()
                     stack.clear()
                     stack.addLast(div)
                     i += if (i + 5 < strlen && rtf[i + 5] == ' ') 5 else 4
@@ -1079,7 +1080,7 @@ private constructor() {
                 if (rtf.startsWith("\\par", i)) {
                     val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
-                    text.delete(0, text.length)
+                    text.clear()
                     currentElement.addContent(OSISUtil.factory.createLB())
                     i += if (i + 4 < strlen && rtf[i + 4] == ' ') 4 else 3
                     i++
@@ -1093,7 +1094,7 @@ private constructor() {
                     centerDiv.setAttribute(OSIS_ATTR_TYPE, "x-center")
                     val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
-                    text.delete(0, text.length)
+                    text.clear()
                     currentElement.addContent(centerDiv)
                     stack.addLast(centerDiv)
                     // skip following space, if any
@@ -1134,7 +1135,7 @@ private constructor() {
                 if (rtf.startsWith("\\i0", i) || rtf.startsWith("\\b0", i)) {
                     val currentElement = stack.popElement() as Element
                     currentElement.addContent(text.toString())
-                    text.delete(0, text.length)
+                    text.clear()
                     i += if (i + 3 < strlen && rtf[i + 3] == ' ') 3 else 2
                     i++
                     continue
@@ -1153,7 +1154,7 @@ private constructor() {
                     hiElement.setAttribute(OSIS_ATTR_TYPE, HI_ITALIC)
                     val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
-                    text.delete(0, text.length)
+                    text.clear()
                     currentElement.addContent(hiElement)
                     stack.addLast(hiElement)
                     i += if (i + 2 < strlen && rtf[i + 2] == ' ') 2 else 1
@@ -1167,7 +1168,7 @@ private constructor() {
                     hiElement.setAttribute(OSIS_ATTR_TYPE, HI_BOLD)
                     val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
-                    text.delete(0, text.length)
+                    text.clear()
                     currentElement.addContent(hiElement)
                     stack.addLast(hiElement)
                     i += if (i + 2 < strlen && rtf[i + 2] == ' ') 2 else 1

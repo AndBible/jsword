@@ -19,6 +19,8 @@
  */
 package org.crosswire.jsword.book.sword
 
+import kotlin.concurrent.Volatile
+import kotlin.jvm.JvmField
 import org.crosswire.common.activate.Activator
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
