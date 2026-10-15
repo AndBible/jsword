@@ -21,7 +21,7 @@ package org.crosswire.jsword.book.filter.thml
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
-import org.crosswire.jsword.book.filter.FilterOsis as OSISUtil
+import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Content
 import fi.sykero.kdom.Element

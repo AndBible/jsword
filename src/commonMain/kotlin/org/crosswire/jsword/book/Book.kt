@@ -132,7 +132,7 @@ import fi.sykero.kdom.Document
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-actual interface Book : Activatable, Comparable<Book> {
+interface Book : Activatable, Comparable<Book> {
     /**
      * Get a complete list of index entries. Create a Key that encompasses all
      * of the known valid keys for the given context. For a dictionary this will
@@ -176,7 +176,7 @@ actual interface Book : Activatable, Comparable<Book> {
      *             If the name can not be parsed.
      */
     @Throws(NoSuchKeyException::class)
-    actual fun getKey(name: String?): Key
+    fun getKey(name: String?): Key
 
     /**
      * Fetch an empty Key to which we can add Keys. Not all implementations of
@@ -199,7 +199,7 @@ actual interface Book : Activatable, Comparable<Book> {
      *
      * @param bmd the BookMetaData that describes this book.
      */
-    actual var bookMetaData: BookMetaData
+    var bookMetaData: BookMetaData
 
     /**
      * Return an iterator that returns each key's OSIS in turn.
@@ -361,7 +361,7 @@ actual interface Book : Activatable, Comparable<Book> {
      *
      * @return The book's internal name
      */
-    actual val initials: String
+    val initials: String
 
     /**
      * Calculated field: Get an OSIS identifier for the OsisText.setOsisIDWork()
@@ -532,7 +532,7 @@ actual interface Book : Activatable, Comparable<Book> {
      * @param li
      *            the `IndexStatusListener` to be added
      */
-    actual fun addIndexStatusListener(li: IndexStatusListener?)
+    fun addIndexStatusListener(li: IndexStatusListener?)
 
     /**
      * Removes a `IndexStatusListener` from the listener list.
@@ -540,7 +540,7 @@ actual interface Book : Activatable, Comparable<Book> {
      * @param li
      *            the `IndexStatusListener` to be removed
      */
-    actual fun removeIndexStatusListener(li: IndexStatusListener?)
+    fun removeIndexStatusListener(li: IndexStatusListener?)
 
     fun resetSearcher()
 }

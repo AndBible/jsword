@@ -260,3 +260,16 @@ abstract class BookType
         }
     }
 }
+
+/** Constructs the Book class that matches a SWORD book type (formerly the K4 facade hook). */
+internal fun createSwordBook(type: BookType, sbmd: SwordBookMetaData, backend: Backend<*>): Book =
+    when (type.toString()) {
+        "RawLD", "RawLD4", "zLD" -> if (sbmd.bookCategory == BookCategory.DAILY_DEVOTIONS) {
+            SwordDailyDevotion(sbmd, backend)
+        } else {
+            SwordDictionary(sbmd, backend)
+        }
+        "RawGenBook" -> SwordGenBook(sbmd, backend)
+        "RawText", "zText", "zText4", "RawCom", "RawCom4", "zCom", "zCom4", "HREFCom", "RawFiles" -> SwordBook(sbmd, backend)
+        else -> throw UnsupportedOperationException("Unknown book type: $type")
+    }

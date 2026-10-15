@@ -23,7 +23,7 @@ package org.crosswire.jsword.book.filter.gbf
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
-import org.crosswire.jsword.book.filter.FilterOsis as OSISUtil
+import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.NoSuchKeyException
 import org.crosswire.jsword.passage.Passage
@@ -454,6 +454,6 @@ class GBFTags private constructor() {
         /**
          * To create OSIS DOM nodes.
          */
-        private val OSIS_FACTORY: org.crosswire.jsword.book.filter.FilterOsisFactory = OSISUtil.factory()
+        private val OSIS_FACTORY: OSISUtil.OSISFactory = OSISUtil.factory()
     }
 }

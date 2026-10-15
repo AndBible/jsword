@@ -25,7 +25,7 @@ package org.crosswire.jsword.book
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-actual interface BookDriver : BookProvider {
+interface BookDriver : BookProvider {
     /**
      * Is this name capable of creating writing data in the correct format as
      * well as reading it?
@@ -73,5 +73,5 @@ actual interface BookDriver : BookProvider {
      *
      * @return a short name for this BookDriver
      */
-    actual fun getDriverName(): String
+    fun getDriverName(): String
 }

@@ -28,7 +28,7 @@ package org.crosswire.jsword.book.filter.thml
 
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
-import org.crosswire.jsword.book.filter.FilterOsis as OSISUtil
+import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.FilterCloneBase
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key

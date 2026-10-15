@@ -22,7 +22,7 @@ package org.crosswire.jsword.book.filter.thml
 import kotlin.jvm.JvmOverloads
 
 import org.crosswire.jsword.book.Book
-import org.crosswire.jsword.book.filter.FilterOsis as OSISUtil
+import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
 import fi.sykero.kdom.Element
 import fi.sykero.kdom.sax.Attributes

@@ -30,6 +30,7 @@ import org.crosswire.common.util.OSType
 import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.StringUtil
 import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.Books
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -73,7 +74,7 @@ private constructor() {
             augmentPath = newDirs.copyOf()
 
             // Now we need to (re)register ourselves
-            registerSwordDriver()
+            Books.installed().registerDriver(SwordBookDriver.instance())
         }
 
         /**

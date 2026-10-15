@@ -43,6 +43,9 @@ import org.crosswire.jsword.book.basic.AbstractBookMetaData
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.versification.system.Versifications
 import fi.sykero.kdom.Document
+import fi.sykero.kdom.Element
+import org.crosswire.common.xml.XMLUtil
+import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -1125,4 +1128,92 @@ class SwordBookMetaData : AbstractBookMetaData {
          */
         private val LOGGER: Logger = LoggerFactory.getLogger(SwordBookMetaData::class)
     }
+}
+
+private fun swordMetaDataToOsis(md: SwordBookMetaData): Document {
+    val knownKeys: MutableList<String> = ArrayList(md.osisConfig.keys)
+    val factory = OSISUtil.factory()
+    val table = factory.createTable()
+    var row: Element? = toRow(factory, "Initials", md.initials)
+    table.addContent(row!!)
+    // Each key gets one row.
+    for (key in SwordBookMetaData.OSIS_INFO) {
+        knownKeys.remove(key)
+        row = toRow(md, factory, key)
+        if (row != null) {
+            table.addContent(row)
+        }
+    }
+    // Output the rest in the order that they are in the conf
+    // however, don't show those that should be hidden.
+    val hide = SwordBookMetaData.HIDDEN.asList()
+    for (key in knownKeys) {
+        if (hide.contains(key)) {
+            continue
+        }
+        row = toRow(md, factory, key)
+        if (row != null) {
+            table.addContent(row)
+        }
+    }
+    return Document(table)
+}
+
+private fun toRow(factory: OSISUtil.OSISFactory, key: String, value: String): Element {
+    val nameEle = toKeyCell(factory, key)
+
+    val valueElement = factory.createCell()
+    valueElement.addContent(value)
+
+    // Each key gets one row.
+    val rowEle = factory.createRow()
+    rowEle.addContent(nameEle)
+    rowEle.addContent(valueElement)
+    return rowEle
+}
+
+private fun toRow(md: SwordBookMetaData, factory: OSISUtil.OSISFactory, key: String): Element? {
+    val size = md.osisConfig.size(key)
+    if (size == 0) {
+        return null
+    }
+
+    // See if it is a predefined type
+    val type = ConfigEntryType.fromString(key)
+    val nameEle = toKeyCell(factory, key)
+
+    val valueElement = factory.createCell()
+    for (j in 0 until size) {
+        if (j > 0) {
+            valueElement.addContent(factory.createLB())
+        }
+
+        var text = md.osisConfig.get(key, j)
+        if (type != null && !type.isText() && type.isAllowed(text)) {
+            text = type.convert(text)!!.toString()
+        }
+        text = XMLUtil.escape(text)
+        if (type != null && type.allowsRTF()) {
+            valueElement.addContent(OSISUtil.rtfToOsis(text!!))
+        } else {
+            valueElement.addContent(text)
+        }
+    }
+
+    // Each key gets one row.
+    val rowEle = factory.createRow()
+    rowEle.addContent(nameEle)
+    rowEle.addContent(valueElement)
+
+    return rowEle
+}
+
+private fun toKeyCell(factory: OSISUtil.OSISFactory, key: String): Element {
+    val nameEle = factory.createCell()
+    val hiEle = factory.createHI()
+    hiEle.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD)
+    nameEle.addContent(hiEle)
+    // I18N(DMS): use name to lookup translation.
+    hiEle.addContent(key)
+    return nameEle
 }

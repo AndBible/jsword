@@ -32,12 +32,12 @@ import org.crosswire.common.util.LoggerFactory
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-actual class DataPolice
+class DataPolice
 /**
  * Prevent instantiation
  */
 private constructor() {
-    actual companion object {
+    companion object {
         /**
          * Report a message against the current book and key.
          * 
@@ -49,7 +49,7 @@ private constructor() {
          *            the police report.
          */
         @JvmStatic
-        actual fun report(book: Book?, key: Key?, message: String?) {
+        fun report(book: Book?, key: Key?, message: String?) {
             if (!reporting.value) {
                 return
             }
@@ -73,7 +73,7 @@ private constructor() {
          * Whether to report found problems. Turn on reporting of found problems.
          */
         @JvmStatic
-        actual var isReporting: Boolean
+        var isReporting: Boolean
             get() = reporting.value
             set(value) {
                 reporting.value = value
