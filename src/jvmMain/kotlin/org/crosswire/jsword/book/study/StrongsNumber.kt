@@ -22,8 +22,8 @@
  */
 package org.crosswire.jsword.book.study
 
-import java.text.DecimalFormat
-import java.util.regex.Pattern
+import org.crosswire.common.util.KswordLocale
+import org.crosswire.common.util.NumberFormats
 
 /**
  * A Strong's Number is either Greek or Hebrew, where the actual numbers for
@@ -88,7 +88,7 @@ open class StrongsNumber {
     open fun getStrongsNumber(): String {
         val buf = StringBuilder(5)
         buf.append(language)
-        buf.append(ZERO_PAD.format(strongsNumber.toLong()))
+        buf.append(zeroPad(strongsNumber))
         return buf.toString()
     }
 
@@ -101,7 +101,7 @@ open class StrongsNumber {
         get() {
             val buf = StringBuilder(5)
             buf.append(language)
-            buf.append(ZERO_PAD.format(strongsNumber.toLong()))
+            buf.append(zeroPad(strongsNumber))
             if (part != null) {
                 buf.append(part)
             }
@@ -184,7 +184,7 @@ open class StrongsNumber {
             return true
         }
 
-        if (other == null || javaClass != other.javaClass) {
+        if (other == null || this::class != other::class) {
             return false
         }
 
@@ -215,12 +215,12 @@ open class StrongsNumber {
         part = ""
 
         // Does it match
-        val m = STRONGS_PATTERN.matcher(text)
-        if (!m.lookingAt()) {
+        val m = STRONGS_PATTERN.matchAt(text!!, 0)
+        if (m == null) {
             return false
         }
 
-        val lang = m.group(1)
+        val lang = m.groupValues[1]
         language = lang[0]
         when (language) {
             'g' -> language = 'G'
@@ -232,14 +232,14 @@ open class StrongsNumber {
 
         // Get the number after the G or H
         try {
-            strongsNumber = Integer.parseInt(m.group(2))
+            strongsNumber = m.groupValues[2].toInt()
         } catch (e: NumberFormatException) {
             strongsNumber = 0 // An invalid Strong's Number
             return false
         }
 
         // FYI: OSIS refers to what follows a ! as a grain
-        part = m.group(3)
+        part = m.groups[3]?.value
         return true
     }
 
@@ -267,7 +267,9 @@ open class StrongsNumber {
         /**
          * The pattern of an acceptable Strong's number.
          */
-        private val STRONGS_PATTERN: Pattern = Pattern.compile("([GgHh])([0-9]*)!?([A-Za-z]+)?")
-        private val ZERO_PAD: DecimalFormat = DecimalFormat("0000")
+        private val STRONGS_PATTERN: Regex = Regex("([GgHh])([0-9]*)!?([A-Za-z]+)?")
+
+        /** `DecimalFormat("0000")` in the default locale: at least four digits, no grouping. */
+        private fun zeroPad(number: Int): String = NumberFormats.pattern(number.toLong(), "0000", KswordLocale.default())
     }
 }

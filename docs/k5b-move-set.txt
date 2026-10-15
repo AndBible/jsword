@@ -12,3 +12,4 @@ org/crosswire/jsword/book/UnAccenter.kt #done
 org/crosswire/jsword/book/DataPolice.kt #done
 org/crosswire/jsword/book/BookData.kt #done
 org/crosswire/jsword/book/OSISUtil.kt #done
+org/crosswire/jsword/book/study/StrongsNumber.kt #done
