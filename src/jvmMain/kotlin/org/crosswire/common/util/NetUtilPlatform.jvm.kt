@@ -11,7 +11,15 @@ internal actual fun netUriSyntaxFailure(error: Throwable): Boolean = error is UR
 internal actual fun netCanRead(uri: KUri): Boolean = File(uri.path).canRead()
 internal actual fun netCanWrite(uri: KUri): Boolean = File(uri.path).canWrite()
 internal actual fun netCheckResource(uri: KUri) { uri.toURL().openStream().close() }
-internal actual fun netUrlSize(uri: KUri): Int = uri.toURL().openConnection().contentLength
+internal actual fun netUrlSize(uri: KUri): Int =
+    if (uri.scheme == "https") httpsProbe(uri) { it.contentLength } else uri.toURL().openConnection().contentLength
+
+/** GET headers through the host transport (D3); the body is never read. */
+private inline fun <T> httpsProbe(uri: KUri, read: (HttpBody) -> T): T {
+    val transport = WebResource.transport ?: throw IllegalStateException("No HttpTransport set")
+    val body = transport.get(uri, WebResource.getTimeout())
+    try { return read(body) } finally { body.close() }
+}
 private const val TEMP_SUFFIX = "tmp"
 internal actual fun netLoadProperties(uri: KUri): PropertyMap {
     var ins: InputStream? = null
@@ -56,6 +64,7 @@ internal actual fun netListByIndexFile(index: KUri, filter: URIFilter?): Array<S
 }
 
 internal actual fun netUrlLastModified(uri: KUri): Long {
+        if (uri.scheme == "https") return httpsProbe(uri) { it.lastModified }
         val urlConnection = uri.toURL().openConnection()
         var time = urlConnection.lastModified
 
