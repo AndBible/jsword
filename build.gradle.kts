@@ -133,6 +133,11 @@ tasks.withType<Test>().configureEach {
     for (flag in listOf("k5.corpus.out", "k5.corpus.max", "k5.oracle.write", "k5.oracle.check")) {
         System.getProperty(flag)?.let { systemProperty(flag, it) }
     }
+    // K5b inventory, catalog fixture and Books startup timing tools: plain -D system properties, passed on when set.
+    systemProperty("k5b.project.dir", layout.projectDirectory.asFile.absolutePath)
+    for (flag in listOf("k5b.inventory.write", "k5b.inventory.check", "k5b.fixture.write", "k5b.timing", "k5b.timing.out")) {
+        System.getProperty(flag)?.let { systemProperty(flag, it) }
+    }
 }
 
 tasks.named<Test>("jvmTest") {
