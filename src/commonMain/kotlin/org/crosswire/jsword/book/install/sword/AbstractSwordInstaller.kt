@@ -28,7 +28,10 @@ import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import okio.IOException
 
 import org.crosswire.common.progress.JobManager
@@ -48,6 +51,7 @@ import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.BookFilter
 import org.crosswire.jsword.book.BookFilterIterator
 import org.crosswire.jsword.book.BookSet
+import org.crosswire.jsword.book.install.DownloadCancelledException
 import org.crosswire.jsword.book.install.InstallException
 import org.crosswire.jsword.book.install.Installer
 import org.crosswire.jsword.book.install.SwordArchive
@@ -232,7 +236,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         if (jobId == null) {
             jobId = Progress.INSTALL_BOOK.replace("%s", book.initials)
         }
-        val bridge = CoroutineCancelBridge.current()
+        val bridge = CancelBridge()
         val job = JobManager.createJob(jobId, jobName, bridge.canceller)
 
         var temp: KUri? = null
@@ -248,7 +252,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
 
             fileName = packageDirectory + "/" + sbmd.initials + ZIP_SUFFIX
 
-            download(job, packageDirectory, sbmd.initials + ZIP_SUFFIX, temp)
+            bridge.download(toRemoteURI(book)) { download(job, packageDirectory, sbmd.initials + ZIP_SUFFIX, temp) }
 
             // Once the unzipping is started, we need to continue
             job.isCancelable = false
@@ -366,12 +370,12 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     override suspend fun downloadSearchIndex(book: Book, tempDest: KUri) {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        val bridge = CoroutineCancelBridge.current()
+        val bridge = CancelBridge()
         val job = JobManager.createJob(Progress.DOWNLOAD_SEARCH_INDEX.replace("%s", book.initials), jobName, bridge.canceller)
         job.beginJob(jobName)
 
         try {
-            download(job, packageDirectory + '/' + SEARCH_DIR, book.initials + ZIP_SUFFIX, tempDest)
+            bridge.download(toRemoteURI(book)) { download(job, packageDirectory + '/' + SEARCH_DIR, book.initials + ZIP_SUFFIX, tempDest) }
         } catch (ex: InstallException) {
             bridge.disarm()
             job.cancel()
@@ -387,23 +391,64 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     }
 
     /**
-     * Connects a JSword job to the coroutine that runs it. Cancelling the job (the Progress API, for example the UI's
-     * cancel button) cancels the coroutine, which stops the transfer; cancelling the coroutine cancels the job (the
-     * CancellationException catch blocks of the suspend functions). The bridge is disarmed before the installer
-     * cancels its own job after a failure, so that an internal failure never cancels the caller's coroutine.
+     * Connects a JSword job to the coroutines of the download phase of a suspend install.
+     *
+     * - The job's canceller (the Progress API, for example the UI's cancel button) cancels only the install-owned
+     *   scope that [download] runs in, never the caller's coroutine. [download] then ends with
+     *   [DownloadCancelledException] for the given uri while the caller stays active, exactly what the thread
+     *   interrupt produced before K5b.
+     * - A cancelled caller coroutine passes through as its own CancellationException; the catch blocks of the suspend
+     *   functions then cancel the job (the coroutine-to-job direction).
+     * - The bridge is disarmed when the download phase ends (the job is not cancelable from then on, and a later
+     *   Progress cancel must not touch anything) and before the installer cancels its own job after a failure, so an
+     *   internal failure never cancels anything.
      */
-    private class CoroutineCancelBridge(running: Job?) {
+    private class CancelBridge {
         private val armed = atomic(true)
+        private val userCancelled = atomic(false)
+        private val scope = atomic<Job?>(null)
 
-        /** Null outside a coroutine Job: the job is then not cancelable. */
-        val canceller: (() -> Unit)? = if (running == null) null else ({ if (armed.value) running.cancel() })
+        /** Handed to the JSword job. */
+        val canceller: () -> Unit = {
+            if (armed.value) {
+                userCancelled.value = true
+                scope.value?.cancel()
+            }
+        }
 
         fun disarm() {
             armed.value = false
         }
 
-        companion object {
-            suspend fun current() = CoroutineCancelBridge(currentCoroutineContext()[Job])
+        /** Runs [block] in an install-owned scope that [canceller] can cancel; a user cancel becomes [DownloadCancelledException]. */
+        suspend fun <T> download(uri: KUri?, block: suspend () -> T): T {
+            // A failure of the block is carried out of the scope as is: the coroutines stack-trace recovery would
+            // otherwise hand the caller a copy of the exception instead of the instance the download threw.
+            var failure: Throwable? = null
+            var value: T? = null
+            try {
+                coroutineScope {
+                    scope.value = coroutineContext[Job]
+                    if (userCancelled.value) cancel() // pressed before the scope existed
+                    try {
+                        value = block()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Throwable) {
+                        failure = e
+                    } finally {
+                        armed.value = false // the download phase is over: nothing is cancelable any more
+                        scope.value = null
+                    }
+                }
+            } catch (e: CancellationException) {
+                // Only the inner scope was cancelled and the caller is still active: that is the user's cancel.
+                if (userCancelled.value && currentCoroutineContext().isActive) throw DownloadCancelledException(uri)
+                throw e
+            }
+            failure?.let { throw it }
+            @Suppress("UNCHECKED_CAST")
+            return value as T
         }
     }
 
@@ -435,7 +480,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         // A missing cache is not downloaded here (getBooks never touches the network); the caller reloads the
         // book list explicitly. The list stays empty and unloaded, so a later getBooks sees a cache that appeared.
         if (!NetUtil.isFile(cache!!)) {
-            log.info("No cached index for {}; call reloadBookList()", host)
+            if (!missingCacheLogged.getAndSet(true)) log.info("No cached index for {}; call reloadBookList()", host)
             return
         }
 
@@ -690,6 +735,9 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      */
     @JvmField
     protected var loaded: Boolean = false
+
+    /** The missing-cache info is logged once per installer instance, not on every getBooks(). */
+    private val missingCacheLogged = atomic(false)
 
     companion object {
         /**

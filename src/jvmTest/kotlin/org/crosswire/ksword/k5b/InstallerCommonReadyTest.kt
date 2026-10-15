@@ -1,6 +1,7 @@
 package org.crosswire.ksword.k5b
 
 import kotlinx.coroutines.async
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -9,6 +10,7 @@ import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.KUri
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.book.install.DownloadCancelledException
 import org.crosswire.jsword.book.install.InstallException
 import org.crosswire.jsword.book.install.sword.FTPMsg
 import org.crosswire.jsword.book.install.sword.HttpSwordInstaller
@@ -168,24 +170,89 @@ class InstallerCommonReadyTest {
             }
         }
 
-    @Test fun cancellingTheJobCancelsTheInstallingCoroutine() = runBlocking<Unit> {
+    /**
+     * (a) A user cancel through the Progress API stops the transfer and surfaces as DownloadCancelledException (the
+     * pre-K5b type and message) while the CALLER's coroutine stays active and can keep working.
+     */
+    @Test fun cancellingTheJobThrowsDownloadCancelledAndLeavesTheCallerActive() = runBlocking<Unit> {
         for (searchIndex in listOf(false, true)) {
             val cancelled = AtomicInteger()
             val started = kotlinx.coroutines.CompletableDeferred<Progress>()
             val installer = blockedInstaller(started, cancelled).also { it.reloadBookList() }
             val book = installer.getBook("K4RawText")!!
-            val worker = async(kotlinx.coroutines.Dispatchers.Default) {
-                if (searchIndex) installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) else installer.install(book)
+            val outcome = kotlinx.coroutines.CompletableDeferred<String>()
+            val worker = launch(kotlinx.coroutines.Dispatchers.Default) {
+                try {
+                    if (searchIndex) installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) else installer.install(book)
+                    outcome.complete("no exception")
+                } catch (e: DownloadCancelledException) {
+                    val activeAfterCancel = isActive
+                    kotlinx.coroutines.delay(10) // the caller's next suspension point must not throw
+                    outcome.complete("${e.message}|active=$activeAfterCancel|continued")
+                } catch (e: Throwable) {
+                    outcome.complete("wrong exception $e")
+                }
             }
             val job = kotlinx.coroutines.withTimeout(5_000) { started.await() }
             job.cancel() // the Progress API, as the UI's cancel button does
-            val failure = kotlinx.coroutines.withTimeout(5_000) { runCatching { worker.await() }.exceptionOrNull() }
-            assertTrue("got $failure", failure is kotlinx.coroutines.CancellationException)
+            val result = kotlinx.coroutines.withTimeout(5_000) { outcome.await() }
+            assertEquals("Downloading http://local.invalid/pkg/K4RawText.zip was cancelled|active=true|continued", result)
+            kotlinx.coroutines.withTimeout(5_000) { worker.join() }
+            assertTrue("the caller must not have been cancelled", !worker.isCancelled)
             assertEquals(1, cancelled.get())
             assertTrue(job.isFinished)
             // the module is not installed and no partial download is registered
             assertNull(Books.installed().getBook("K4RawText"))
         }
+    }
+
+    /**
+     * (c) A Progress cancel after the download phase (here: the moment the job turns non-cancelable) cancels nothing:
+     * the install returns normally and the caller's next suspension point does not throw. The bridge is disarmed when
+     * the download phase ends.
+     */
+    @Test fun cancellingTheJobAfterTheDownloadPhaseCancelsNothing() = runBlocking<Unit> {
+        var fired = false
+        val installer = object : LocalInstaller(K5bCatalogFixture.bytes(K5bCatalogFixture.confDir()), packageZip()) {
+            override suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+                if (file != "mods.d.tar.gz") {
+                    // a per-job listener fires when install turns the job non-cancelable, i.e. the download phase is over
+                    (job as org.crosswire.common.progress.Job).addWorkListener(object : org.crosswire.common.progress.WorkListener {
+                        override fun workProgressed(ev: org.crosswire.common.progress.WorkEvent) {}
+                        override fun workStateChanged(ev: org.crosswire.common.progress.WorkEvent) {
+                            if (!fired && !ev.job.isCancelable) {
+                                fired = true
+                                ev.job.cancel()
+                            }
+                        }
+                    })
+                }
+                super.download(job, dir, file, dest)
+            }
+        }.also { it.reloadBookList() }
+        val book = installer.getBook("K4RawText")!!
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            installer.install(book)
+            val stillActive = isActive
+            kotlinx.coroutines.delay(10)
+            stillActive
+        }
+        assertTrue(fired)
+        assertTrue(result)
+    }
+
+    /** (d) An internal failure never cancels the caller. */
+    @Test fun anInternalFailureDoesNotCancelTheCaller() = runBlocking<Unit> {
+        val installer = localInstaller()
+        val book = installer.getBook("K4RawText")!!
+        installer.failure = InstallException("no way")
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            try { installer.install(book); "no exception" } catch (e: InstallException) {
+                kotlinx.coroutines.delay(10)
+                "failed|active=$isActive"
+            }
+        }
+        assertEquals("failed|active=true", result)
     }
 
     @Test fun cancellingTheCoroutineCancelsTheJob() = runBlocking<Unit> {
