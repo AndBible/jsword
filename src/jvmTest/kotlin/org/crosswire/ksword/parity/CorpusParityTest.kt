@@ -44,7 +44,12 @@ class CorpusParityTest {
     // Only a single known-input operation may relocate its result's typed failure token.
     private fun sameFailureRecord(oracle: String?, current: String?, echoedInput: String? = null, verifiedFailure: Boolean = false): Boolean {
         if (oracle == current) return true
-        if (oracle == null || current == null || echoedInput == null || !verifiedFailure) return false
+        if (oracle == null || current == null || echoedInput == null) return false
+        // K5b Task 7: the common RTF converter keeps its element stack in an ArrayDeque and cannot throw
+        // java.util.EmptyStackException; an unbalanced \b0 or \i0 now ends in a NoSuchElementException.
+        if (oracle == "$echoedInput => !java.util.EmptyStackException: null\n" &&
+            current == "$echoedInput => !java.util.NoSuchElementException: RTF element stack is empty\n") return true
+        if (!verifiedFailure) return false
         val prefix = "$echoedInput => !"
         val old = "org.jdom2.IllegalDataException:"
         val relocated = "fi.sykero.kdom.IllegalDataException:"
@@ -80,6 +85,13 @@ class CorpusParityTest {
         val relocated = "x => !fi.sykero.kdom.IllegalDataException: exact message\n"
         assertTrue(sameFailureRecord(old, relocated, "x", true))
         assertTrue(!sameFailureRecord(old, relocated, null))
+        val emptyStackOld = "x => !java.util.EmptyStackException: null\n"
+        val emptyStackNew = "x => !java.util.NoSuchElementException: RTF element stack is empty\n"
+        assertTrue(sameFailureRecord(emptyStackOld, emptyStackNew, "x"))
+        assertTrue(!sameFailureRecord(emptyStackOld, emptyStackNew, "y"))
+        assertTrue(!sameFailureRecord(emptyStackOld, emptyStackNew, null))
+        assertTrue(!sameFailureRecord(emptyStackOld, emptyStackNew.replace("empty", "full"), "x"))
+        assertTrue(!sameFailureRecord("x => <p>ok</p>\n", emptyStackNew, "x"))
         assertTrue(!sameFailureRecord(old, relocated + " changed", "x"))
         assertTrue(!sameFailureRecord(old, relocated.replace("IllegalDataException", "JDOMException"), "x"))
         assertTrue(!sameFailureRecord(old, relocated.replace("x =>", "y =>"), "x"))

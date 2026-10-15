@@ -49,7 +49,7 @@ internal object OsisUtilContractProbe {
     } catch (e: NumberFormatException) {
         "EXC:NumberFormatException"
     } catch (e: RuntimeException) {
-        // java.util.EmptyStackException on the old code, NoSuchElementException on an ArrayDeque stack.
+        // java.util.EmptyStackException on the old code, NoSuchElementException after the conversion.
         "EXC:StackUnderflow"
     }
 

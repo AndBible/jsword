@@ -33,9 +33,9 @@ import fi.sykero.kdom.Content
 import fi.sykero.kdom.Element
 import fi.sykero.kdom.Text
 import org.crosswire.common.util.Logger
+import org.crosswire.common.util.isJavaWhitespace
 import org.crosswire.common.util.LoggerFactory
 
-import java.util.regex.Pattern
 
 /**
  * Some simple utilities to help working with OSIS classes.
@@ -699,7 +699,7 @@ private constructor() {
                     // Ignore empty text nodes and do not add 
                     if (text.length != 0) {
                         //do not add spaces when within a OSIS seg
-                        if (lastIndex >= 0 && !Character.isWhitespace(buffer[lastIndex]) && !Character.isWhitespace(text[0])) {
+                        if (lastIndex >= 0 && !buffer[lastIndex].isJavaWhitespace() && !text[0].isJavaWhitespace()) {
                             buffer.append(' ')
                         }
                         buffer.append(text)
@@ -763,9 +763,8 @@ private constructor() {
                 val ele = content as Element
                 val attr = ele.getAttributeValue(OSISUtil.ATTRIBUTE_W_LEMMA)
                 if (attr != null) {
-                    val matcher = strongsNumberPattern.matcher(attr)
-                    while (matcher.find()) {
-                        var strongsNum = matcher.group(1)
+                    for (match in strongsNumberPattern.findAll(attr)) {
+                        var strongsNum = match.groupValues[1]
                         if (buffer.length > 0) {
                             buffer.append(' ')
                         }
@@ -898,7 +897,7 @@ private constructor() {
                     // containing entities.
                     val lastIndex = buffer.length - 1
                     val text = data.text
-                    if (lastIndex >= 0 && !Character.isWhitespace(buffer[lastIndex]) && (text.length == 0 || !Character.isWhitespace(text[0])) && OSIS_ELEMENT_SEG != parent.name) {
+                    if (lastIndex >= 0 && !buffer[lastIndex].isJavaWhitespace() && (text.length == 0 || !text[0].isJavaWhitespace()) && OSIS_ELEMENT_SEG != parent.name) {
                         buffer.append(' ')
                     }
                     buffer.append(text)
@@ -914,7 +913,7 @@ private constructor() {
                 // Ignore extra-biblical text
                 if (EXTRA_BIBLICAL_ELEMENTS.contains(element.name)) {
                     val canonical = element.getAttributeValue(OSISUtil.OSIS_ATTR_CANONICAL)
-                    result = java.lang.Boolean.parseBoolean(canonical)
+                    result = canonical.equals("true", ignoreCase = true)
                 }
             }
 
@@ -1042,8 +1041,11 @@ private constructor() {
         @JvmStatic
         fun rtfToOsis(rtf: String): MutableList<Content> {
             val div = factory().createDiv()
-            val stack = java.util.Stack<Content>()
-            stack.push(div)
+            // Used as a stack: addLast/removeLast/last keep the push/pop/peek order of java.util.Stack.
+            // Popping or peeking an empty stack (an unbalanced \b0 or \i0) used to throw
+            // java.util.EmptyStackException; common code throws NoSuchElementException with a fixed message.
+            val stack = ArrayDeque<Content>()
+            stack.addLast(div)
 
             val strlen = rtf.length
 
@@ -1063,11 +1065,11 @@ private constructor() {
 
                 // Used to end all open attributes. Only \qc in our implementation.
                 if (rtf.startsWith("\\pard", i)) {
-                    val currentElement = stack.pop() as Element
+                    val currentElement = stack.popElement() as Element
                     currentElement.addContent(text.toString())
                     text.delete(0, text.length)
                     stack.clear()
-                    stack.push(div)
+                    stack.addLast(div)
                     i += if (i + 5 < strlen && rtf[i + 5] == ' ') 5 else 4
                     i++
                     continue
@@ -1075,7 +1077,7 @@ private constructor() {
 
                 // Simulate a paragraph break.
                 if (rtf.startsWith("\\par", i)) {
-                    val currentElement = stack.peek() as Element
+                    val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
                     text.delete(0, text.length)
                     currentElement.addContent(OSISUtil.factory.createLB())
@@ -1089,11 +1091,11 @@ private constructor() {
                 if (rtf.startsWith("\\qc", i)) {
                     val centerDiv = OSISUtil.factory.createDiv()
                     centerDiv.setAttribute(OSIS_ATTR_TYPE, "x-center")
-                    val currentElement = stack.peek() as Element
+                    val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
                     text.delete(0, text.length)
                     currentElement.addContent(centerDiv)
-                    stack.push(centerDiv)
+                    stack.addLast(centerDiv)
                     // skip following space, if any
                     i += if (i + 3 < strlen && rtf[i + 3] == ' ') 3 else 2
                     i++
@@ -1106,7 +1108,7 @@ private constructor() {
                     i += 2
                     while (i < strlen) {
                         val curDigit = rtf[i]
-                        if (curDigit != '-' && !Character.isDigit(curDigit)) {
+                        if (curDigit != '-' && !curDigit.isDigit()) {
                             break
                         }
                         buf.append(curDigit)
@@ -1117,7 +1119,7 @@ private constructor() {
                     // signed
                     // charAt(i) is the substitution character if Unicode is not
                     // supported
-                    var value = Integer.parseInt(buf.toString())
+                    var value = buf.toString().toInt()
                     if (value < 0) {
                         value += 65536
                     }
@@ -1130,7 +1132,7 @@ private constructor() {
 
                 // close italic and bold
                 if (rtf.startsWith("\\i0", i) || rtf.startsWith("\\b0", i)) {
-                    val currentElement = stack.pop() as Element
+                    val currentElement = stack.popElement() as Element
                     currentElement.addContent(text.toString())
                     text.delete(0, text.length)
                     i += if (i + 3 < strlen && rtf[i + 3] == ' ') 3 else 2
@@ -1149,11 +1151,11 @@ private constructor() {
                 if (rtf.startsWith("\\i", i)) {
                     val hiElement = OSISUtil.factory.createHI()
                     hiElement.setAttribute(OSIS_ATTR_TYPE, HI_ITALIC)
-                    val currentElement = stack.peek() as Element
+                    val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
                     text.delete(0, text.length)
                     currentElement.addContent(hiElement)
-                    stack.push(hiElement)
+                    stack.addLast(hiElement)
                     i += if (i + 2 < strlen && rtf[i + 2] == ' ') 2 else 1
                     i++
                     continue
@@ -1163,11 +1165,11 @@ private constructor() {
                 if (rtf.startsWith("\\b", i)) {
                     val hiElement = OSISUtil.factory.createHI()
                     hiElement.setAttribute(OSIS_ATTR_TYPE, HI_BOLD)
-                    val currentElement = stack.peek() as Element
+                    val currentElement = stack.peekElement() as Element
                     currentElement.addContent(text.toString())
                     text.delete(0, text.length)
                     currentElement.addContent(hiElement)
-                    stack.push(hiElement)
+                    stack.addLast(hiElement)
                     i += if (i + 2 < strlen && rtf[i + 2] == ' ') 2 else 1
                     i++
                     continue
@@ -1238,7 +1240,7 @@ private constructor() {
             } else if (sub is Element) {
                 recurseChildren(sub, buffer)
             } else {
-                log.error("unknown type: {}", sub.javaClass.name)
+                log.error("unknown type: {}", sub::class.simpleName)
             }
         }
 
@@ -1258,6 +1260,14 @@ private constructor() {
         }
 
         private const val strongsNumber = "strong:([GgHh][0-9]+!?[A-Za-z]*)"
-        private val strongsNumberPattern: Pattern = Pattern.compile(strongsNumber)
+        private val strongsNumberPattern: Regex = Regex(strongsNumber)
+
+        private fun ArrayDeque<Content>.popElement(): Content =
+            if (isEmpty()) throw NoSuchElementException(RTF_STACK_EMPTY) else removeLast()
+
+        private fun ArrayDeque<Content>.peekElement(): Content =
+            if (isEmpty()) throw NoSuchElementException(RTF_STACK_EMPTY) else last()
+
+        private const val RTF_STACK_EMPTY = "RTF element stack is empty"
     }
 }
