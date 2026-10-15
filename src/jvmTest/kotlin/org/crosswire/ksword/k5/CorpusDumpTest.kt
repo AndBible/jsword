@@ -80,7 +80,7 @@ class CorpusDumpTest {
         for ((k, v) in counts) println("K5CORPUS $k $v")
     }
 
-    private fun stages(book: Book, type: String, raw: String): List<Pair<String, String>> = when (type) {
+    internal fun stages(book: Book, type: String, raw: String): List<Pair<String, String>> = when (type) {
         "GBF" -> listOf("gbf-raw" to raw)
         "OSIS" -> osisStages(book, raw)
         else -> thmlStages(raw)

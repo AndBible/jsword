@@ -128,7 +128,8 @@ tasks.withType<Test>().configureEach {
         systemProperty(flag, providers.gradleProperty(flag).getOrElse("false"))
     }
     // K5 corpus dump (CorpusDumpTest): plain -D system properties of the Gradle invocation, passed on when set.
-    for (flag in listOf("k5.corpus.out", "k5.corpus.max")) {
+    systemProperty("k5.project.root", rootProject.projectDir.absolutePath)
+    for (flag in listOf("k5.corpus.out", "k5.corpus.max", "k5.oracle.write", "k5.oracle.check")) {
         System.getProperty(flag)?.let { systemProperty(flag, it) }
     }
 }
