@@ -155,11 +155,16 @@ tasks.named<Test>("jvmTest") {
 val generatedFixtureResourcesDir = layout.buildDirectory.dir("generated/ksword/iosTest/kotlin")
 val generateK4FixtureResources by tasks.registering {
     val root = layout.projectDirectory.dir("src/commonTest/resources/k4-modules")
+    // K5b: the committed SWORD catalog (InstallerCatalogTest) is provisioned next to the modules as "k5b/<name>".
+    val k5bRoot = layout.projectDirectory.dir("src/commonTest/resources/k5b")
     inputs.files(fileTree(root)).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(fileTree(k5bRoot)).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(generatedFixtureResourcesDir)
     doLast {
         check(root.file("manifest.tsv").asFile.isFile) { "Frozen k4-modules manifest is required" }
-        val files = root.asFile.walkTopDown().filter { it.isFile }.sortedBy { it.relativeTo(root.asFile).invariantSeparatorsPath }.toList()
+        val named = (root.asFile.walkTopDown().filter { it.isFile }.map { it.relativeTo(root.asFile).invariantSeparatorsPath to it } +
+            k5bRoot.asFile.walkTopDown().filter { it.isFile }.map { "k5b/" + it.relativeTo(k5bRoot.asFile).invariantSeparatorsPath to it })
+            .sortedBy { it.first }.toList()
         val out = generatedFixtureResourcesDir.get().file("org/crosswire/ksword/fixtures/K4FixtureResources.kt").asFile
         out.parentFile.mkdirs()
         out.bufferedWriter().use { w ->
@@ -170,8 +175,7 @@ val generateK4FixtureResources by tasks.registering {
             w.appendLine("@OptIn(ExperimentalEncodingApi::class)")
             w.appendLine("internal object K4FixtureResources {")
             w.appendLine("    fun files(): Sequence<Pair<String, ByteArray>> = sequence {")
-            for (f in files) {
-                val name = f.relativeTo(root.asFile).invariantSeparatorsPath
+            for ((name, f) in named) {
                 check(name.none { it == '$' || it == '\"' || it == '\\' }) { "Unsafe fixture path: $name" }
                 val chunks = JBase64.getEncoder().encodeToString(f.readBytes()).chunked(60_000)
                 w.appendLine("        yield(\"$name\" to Base64.decode(arrayOf<String>(")
