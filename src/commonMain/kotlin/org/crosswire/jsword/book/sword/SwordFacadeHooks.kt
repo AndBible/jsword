@@ -1,7 +1,7 @@
 package org.crosswire.jsword.book.sword
 
 import okio.*
-import org.crosswire.common.kdom.Document
+import fi.sykero.kdom.Document
 import org.crosswire.common.util.*
 import org.crosswire.jsword.book.*
 import org.crosswire.jsword.book.sword.*

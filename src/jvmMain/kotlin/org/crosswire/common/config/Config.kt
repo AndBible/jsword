@@ -135,7 +135,7 @@ import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.Reporter
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
-import org.jdom2.Document
+import fi.sykero.kdom.Document
 import org.crosswire.common.util.LoggerFactory
 
 /**

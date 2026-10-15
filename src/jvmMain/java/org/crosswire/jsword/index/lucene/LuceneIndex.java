@@ -68,7 +68,7 @@ import org.crosswire.jsword.passage.Verse;
 import org.crosswire.jsword.passage.VerseFactory;
 import org.crosswire.jsword.versification.Versification;
 import org.crosswire.jsword.versification.system.Versifications;
-import org.jdom2.Element;
+import fi.sykero.kdom.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

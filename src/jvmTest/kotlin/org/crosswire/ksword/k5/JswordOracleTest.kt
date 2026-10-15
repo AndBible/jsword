@@ -10,8 +10,8 @@ import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.sword.SwordBookMetaData
 import org.crosswire.jsword.book.sword.SwordBookPathJvm
 import org.crosswire.jsword.passage.Key
-import org.jdom2.output.Format
-import org.jdom2.output.XMLOutputter
+import fi.sykero.kdom.output.Format
+import fi.sykero.kdom.output.XMLOutputter
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -191,7 +191,7 @@ class JswordOracleTest {
         val index = acceptingStage(stages.map { it.second }) { wrapped ->
             try { parse.invoke(org.crosswire.jsword.book.filter.osis.OSISFilter(), wrapped.removePrefix("<xxx>").removeSuffix("</xxx>")) != null }
             catch (e: java.lang.reflect.InvocationTargetException) {
-                if (e.cause is org.jdom2.JDOMException || e.cause is java.io.IOException) false else throw e
+                if (e.cause is fi.sykero.kdom.JDOMException || e.cause is java.io.IOException) false else throw e
             }
         }
         val stageIndex = if (index < 0) -1 else when (stages[index].first) { "osis-entities" -> 1; "osis-reclosed" -> 2; "osis-tags" -> 3; else -> 0 }

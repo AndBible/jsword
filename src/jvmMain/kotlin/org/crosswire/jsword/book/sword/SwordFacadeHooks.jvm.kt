@@ -1,6 +1,6 @@
 package org.crosswire.jsword.book.sword
 
-import org.crosswire.common.kdom.Document
+import fi.sykero.kdom.Document
 import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookCategory
@@ -8,7 +8,7 @@ import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.book.filter.SourceFilterFactory
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 import java.util.Arrays
 
 /** K4 facade boundaries, JVM-only until their parameter types move in Task 16. */
@@ -17,7 +17,7 @@ internal actual fun swordMetaDataToOsis(md: SwordBookMetaData): Document {
     val factory = OSISUtil.factory()
     val table = factory.createTable()
     var row: Element? = toRow(factory, "Initials", md.initials)
-    table.addContent(row)
+    table.addContent(row!!)
     // Each key gets one row.
     for (key in SwordBookMetaData.OSIS_INFO) {
         knownKeys.remove(key)

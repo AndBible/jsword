@@ -529,3 +529,245 @@ org.crosswire.common.xml.XMLFeature - <class> # K5 delete: no live users outside
 org.crosswire.common.xml.XMLFeatureSet - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
 org.crosswire.common.xml.XMLHandlerAdapter - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
 org.crosswire.common.xml.XMLProcess - <class> # K5 delete: no live users outside D3 classes and their retired characterization tests.
+
+# K5 M2 exact tree/SAX type relocations, retained ThML JAXP signatures unchanged.
+org.crosswire.common.config.AbstractReflectedChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.AbstractReflectedChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.Choice - M public abstract init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.Choice + M public abstract init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.ChoiceFactory - M public static getChoice(org.jdom2.Element,java.util.ResourceBundle): org.crosswire.common.config.Choice throws [java.lang.ReflectiveOperationException,org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.ChoiceFactory + M public static getChoice(fi.sykero.kdom.Element,java.util.ResourceBundle): org.crosswire.common.config.Choice throws [java.lang.ReflectiveOperationException,org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.Config - M public add(org.jdom2.Document,java.util.ResourceBundle): void throws [] # K5 kdom
+org.crosswire.common.config.Config + M public add(fi.sykero.kdom.Document,java.util.ResourceBundle): void throws [] # K5 kdom
+org.crosswire.common.config.IntOptionsChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.IntOptionsChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.MappedOptionsChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.MappedOptionsChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.StringArrayChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.StringArrayChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.StringOptionsChoice - M public init(org.jdom2.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.config.StringOptionsChoice + M public init(fi.sykero.kdom.Element,java.util.ResourceBundle): void throws [org.crosswire.common.config.StartupException] # K5 kdom
+org.crosswire.common.xml.JDOMSAXEventProvider - K public (org.jdom2.Document) throws [] # K5 kdom
+org.crosswire.common.xml.JDOMSAXEventProvider - M public provideSAXEvents(org.xml.sax.ContentHandler): void throws [org.xml.sax.SAXException] # K5 kdom
+org.crosswire.common.xml.JDOMSAXEventProvider + K public (fi.sykero.kdom.Document) throws [] # K5 kdom
+org.crosswire.common.xml.JDOMSAXEventProvider + M public provideSAXEvents(fi.sykero.kdom.sax.ContentHandler): void throws [fi.sykero.kdom.sax.SAXException] # K5 kdom
+org.crosswire.common.xml.PrettySerializingContentHandler - C class public extends java.lang.Object implements [org.xml.sax.ContentHandler] # K5 kdom
+org.crosswire.common.xml.PrettySerializingContentHandler - M public setDocumentLocator(org.xml.sax.Locator): void throws [] # K5 kdom
+org.crosswire.common.xml.PrettySerializingContentHandler - M public startElement(java.lang.String,java.lang.String,java.lang.String,org.xml.sax.Attributes): void throws [] # K5 kdom
+org.crosswire.common.xml.PrettySerializingContentHandler + C class public extends java.lang.Object implements [fi.sykero.kdom.sax.ContentHandler] # K5 kdom
+org.crosswire.common.xml.PrettySerializingContentHandler + M public setDocumentLocator(fi.sykero.kdom.sax.Locator): void throws [] # K5 kdom
+org.crosswire.common.xml.PrettySerializingContentHandler + M public startElement(java.lang.String,java.lang.String,java.lang.String,fi.sykero.kdom.sax.Attributes): void throws [] # K5 kdom
+org.crosswire.common.xml.SAXEventProvider - M public abstract provideSAXEvents(org.xml.sax.ContentHandler): void throws [org.xml.sax.SAXException] # K5 kdom
+org.crosswire.common.xml.SAXEventProvider + M public abstract provideSAXEvents(fi.sykero.kdom.sax.ContentHandler): void throws [fi.sykero.kdom.sax.SAXException] # K5 kdom
+org.crosswire.common.xml.XMLUtil - M public static debugSAXAttributes(org.xml.sax.Attributes): void throws [] # K5 kdom
+org.crosswire.common.xml.XMLUtil - M public static getAttributeName(org.xml.sax.Attributes,int): java.lang.String throws [] # K5 kdom
+org.crosswire.common.xml.XMLUtil - M public static getDocument(java.lang.String): org.jdom2.Document throws [java.io.IOException,org.jdom2.JDOMException] # K5 kdom
+org.crosswire.common.xml.XMLUtil - M public static writeToString(org.crosswire.common.xml.SAXEventProvider): java.lang.String throws [org.xml.sax.SAXException] # K5 kdom
+org.crosswire.common.xml.XMLUtil + M public static debugSAXAttributes(fi.sykero.kdom.sax.Attributes): void throws [] # K5 kdom
+org.crosswire.common.xml.XMLUtil + M public static getAttributeName(fi.sykero.kdom.sax.Attributes,int): java.lang.String throws [] # K5 kdom
+org.crosswire.common.xml.XMLUtil + M public static getDocument(java.lang.String): fi.sykero.kdom.Document throws [fi.sykero.kdom.JDOMException,java.io.IOException] # K5 kdom
+org.crosswire.common.xml.XMLUtil + M public static writeToString(org.crosswire.common.xml.SAXEventProvider): java.lang.String throws [fi.sykero.kdom.sax.SAXException] # K5 kdom
+org.crosswire.jsword.book.Book - M public abstract toOSIS(): org.jdom2.Document throws [] # K5 kdom
+org.crosswire.jsword.book.Book + M public abstract toOSIS(): fi.sykero.kdom.Document throws [] # K5 kdom
+org.crosswire.jsword.book.BookData - M public getOsis(): org.jdom2.Element throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.BookData - M public getOsisFragment(): org.jdom2.Element throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.BookData - M public getOsisFragment(boolean): org.jdom2.Element throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.BookData + M public getOsis(): fi.sykero.kdom.Element throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.BookData + M public getOsisFragment(): fi.sykero.kdom.Element throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.BookData + M public getOsisFragment(boolean): fi.sykero.kdom.Element throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.BookMetaData - M public abstract toOSIS(): org.jdom2.Document throws [] # K5 kdom
+org.crosswire.jsword.book.BookMetaData + M public abstract toOSIS(): fi.sykero.kdom.Document throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static createOsisFramework(org.crosswire.jsword.book.BookMetaData): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getCanonicalText(org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getDeepContent(org.jdom2.Element,java.lang.String): java.util.Collection throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getFragment(org.jdom2.Element): java.util.List throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getHeadings(org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getLexicalInformation(org.jdom2.Element,boolean): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getMorphologiesWithStrong(org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getNotes(org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getPlainText(org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getReferences(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.crosswire.jsword.versification.Versification,org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getStrongsNumbers(org.jdom2.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil - M public static getVerse(org.crosswire.jsword.versification.Versification,org.jdom2.Element): org.crosswire.jsword.passage.Verse throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static createOsisFramework(org.crosswire.jsword.book.BookMetaData): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getCanonicalText(fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getDeepContent(fi.sykero.kdom.Element,java.lang.String): java.util.Collection throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getFragment(fi.sykero.kdom.Element): java.util.List throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getHeadings(fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getLexicalInformation(fi.sykero.kdom.Element,boolean): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getMorphologiesWithStrong(fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getNotes(fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getPlainText(fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getReferences(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.crosswire.jsword.versification.Versification,fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getStrongsNumbers(fi.sykero.kdom.Element): java.lang.String throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil + M public static getVerse(org.crosswire.jsword.versification.Versification,fi.sykero.kdom.Element): org.crosswire.jsword.passage.Verse throws [org.crosswire.jsword.book.BookException] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createAbbr(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createCell(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createDiv(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createFigure(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createForeign(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createGeneratedTitle(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createHI(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createHeader(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createHeaderCell(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createItem(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createL(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createLB(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createLG(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createList(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createName(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createNote(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createOsis(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createOsisText(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createP(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createQ(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createReference(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createRow(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createSeg(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createSpeaker(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createSpeech(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createTable(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createText(java.lang.String): org.jdom2.Text throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createTitle(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createVerse(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createW(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory - M public createWork(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createAbbr(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createCell(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createDiv(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createFigure(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createForeign(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createGeneratedTitle(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createHI(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createHeader(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createHeaderCell(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createItem(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createL(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createLB(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createLG(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createList(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createName(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createNote(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createOsis(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createOsisText(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createP(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createQ(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createReference(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createRow(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createSeg(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createSpeaker(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createSpeech(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createTable(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createText(java.lang.String): fi.sykero.kdom.Text throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createTitle(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createVerse(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createW(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.OSISUtil$OSISFactory + M public createWork(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.basic.AbstractBook - M public toOSIS(): org.jdom2.Document throws [] # K5 kdom
+org.crosswire.jsword.book.basic.AbstractBook + M public toOSIS(): fi.sykero.kdom.Document throws [] # K5 kdom
+org.crosswire.jsword.book.basic.AbstractBookMetaData - M public toOSIS(): org.jdom2.Document throws [] # K5 kdom
+org.crosswire.jsword.book.basic.AbstractBookMetaData + M public toOSIS(): fi.sykero.kdom.Document throws [] # K5 kdom
+org.crosswire.jsword.book.basic.AbstractPassageBook - M public addOSIS(org.crosswire.jsword.passage.Key,org.jdom2.Element,java.util.List): void throws [] # K5 kdom
+org.crosswire.jsword.book.basic.AbstractPassageBook + M public addOSIS(org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,java.util.List): void throws [] # K5 kdom
+org.crosswire.jsword.book.basic.DefaultBookMetaData - M public toOSIS(): org.jdom2.Document throws [] # K5 kdom
+org.crosswire.jsword.book.basic.DefaultBookMetaData + M public toOSIS(): fi.sykero.kdom.Document throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ATag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ATag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AbbrTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AbbrTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AbstractTag - M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AbstractTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AbstractTag + M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AbstractTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AliasTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AliasTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AnonymousTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.AnonymousTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BigTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BigTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BlockquoteTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BlockquoteTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BrTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.BrTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.CenterTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.CenterTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.CitationTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.CitationTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.CustomHandler - M public getRootElement(): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.CustomHandler + M public getRootElement(): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.DivTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.DivTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.FontTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.FontTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ForeignTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ForeignTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.HTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.HTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ITag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ITag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.IgnoreTag - M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.IgnoreTag + M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ImgTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ImgTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.LTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.LTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.LiTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.LiTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.NameTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.NameTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.NoteTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.NoteTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.OlTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.OlTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.PTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.PTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.QTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.QTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.RootTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.RootTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.STag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.STag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ScripRefTag - M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ScripRefTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ScripRefTag + M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ScripRefTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ScriptureTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ScriptureTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SkipTag - M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SkipTag + M public processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SmallTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SmallTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SubTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SubTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SupTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SupTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SyncTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.SyncTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TableTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TableTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.Tag - M public abstract processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.Tag - M public abstract processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.Tag + M public abstract processContent(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element): void throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.Tag + M public abstract processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TdTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TdTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TermTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TermTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ThTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.ThTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TrTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TrTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TtTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.TtTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.UTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.UTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.UlTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.UlTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.VerseTag - M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,org.jdom2.Element,org.xml.sax.Attributes): org.jdom2.Element throws [] # K5 kdom
+org.crosswire.jsword.book.filter.thml.VerseTag + M public processTag(org.crosswire.jsword.book.Book,org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,org.xml.sax.Attributes): fi.sykero.kdom.Element throws [] # K5 kdom
+org.crosswire.jsword.book.sword.SwordBook - M public addOSIS(org.crosswire.jsword.passage.Key,org.jdom2.Element,java.util.List): void throws [] # K5 kdom
+org.crosswire.jsword.book.sword.SwordBook + M public addOSIS(org.crosswire.jsword.passage.Key,fi.sykero.kdom.Element,java.util.List): void throws [] # K5 kdom
+org.crosswire.jsword.book.sword.SwordBookMetaData - M public final toOSIS(): org.jdom2.Document throws [] # K5 kdom
+org.crosswire.jsword.book.sword.SwordBookMetaData + M public final toOSIS(): fi.sykero.kdom.Document throws [] # K5 kdom

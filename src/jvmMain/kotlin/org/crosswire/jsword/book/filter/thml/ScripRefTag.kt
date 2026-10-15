@@ -27,7 +27,7 @@ import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.passage.NoSuchKeyException
 import org.crosswire.jsword.passage.Passage
 import org.crosswire.jsword.passage.PassageKeyFactory
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 import org.xml.sax.Attributes
 
 /**

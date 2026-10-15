@@ -34,7 +34,7 @@ import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
+import fi.sykero.kdom.Content
 
 /**
  * Filter to convert GBF data to OSIS format.

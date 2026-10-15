@@ -22,8 +22,8 @@ package org.crosswire.jsword.book.filter.thml
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Element
-import org.jdom2.Namespace
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.Namespace
 import org.xml.sax.Attributes
 
 /**

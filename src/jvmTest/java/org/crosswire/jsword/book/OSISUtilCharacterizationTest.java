@@ -22,8 +22,8 @@ import java.util.List;
 
 import org.crosswire.jsword.versification.Versification;
 import org.crosswire.jsword.versification.system.Versifications;
-import org.jdom2.Content;
-import org.jdom2.Element;
+import fi.sykero.kdom.Content;
+import fi.sykero.kdom.Element;
 import org.junit.Assert;
 import org.junit.Test;
 

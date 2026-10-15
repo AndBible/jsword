@@ -1,6 +1,6 @@
 package org.crosswire.jsword.book.sword
 
-import org.crosswire.common.kdom.Document
+import fi.sykero.kdom.Document
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.filter.SourceFilter
 

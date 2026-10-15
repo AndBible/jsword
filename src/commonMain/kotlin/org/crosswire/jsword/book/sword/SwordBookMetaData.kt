@@ -42,7 +42,7 @@ import org.crosswire.jsword.book.MetaDataLocator
 import org.crosswire.jsword.book.basic.AbstractBookMetaData
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.versification.system.Versifications
-import org.crosswire.common.kdom.Document
+import fi.sykero.kdom.Document
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 

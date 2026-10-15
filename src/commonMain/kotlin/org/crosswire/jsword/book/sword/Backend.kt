@@ -24,7 +24,7 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor
 import org.crosswire.jsword.book.sword.state.OpenFileState
 import org.crosswire.jsword.passage.Key
-import org.crosswire.common.kdom.Content
+import fi.sykero.kdom.Content
 import okio.IOException
 
 /**

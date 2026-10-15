@@ -28,7 +28,7 @@ package org.crosswire.jsword.book.filter
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
+import fi.sykero.kdom.Content
 
 /**
  * A generic interface for things that can convert a String into OSIS data.

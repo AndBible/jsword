@@ -32,7 +32,7 @@ import org.crosswire.jsword.book.FeatureType;
 import org.crosswire.jsword.book.OSISUtil;
 import org.crosswire.jsword.passage.Key;
 import org.crosswire.jsword.passage.NoSuchKeyException;
-import org.jdom2.Element;
+import fi.sykero.kdom.Element;
 import org.junit.Assert;
 import org.junit.Test;
 

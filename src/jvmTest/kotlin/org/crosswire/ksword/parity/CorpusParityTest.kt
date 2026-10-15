@@ -38,7 +38,61 @@ class CorpusParityTest {
             if (detail != null && x != null) report.append(detail(x))
             if (++shown == 20) break
         }
-        fail(report.toString())
+        if (shown > 0) fail(report.toString())
+    }
+
+    // Only a single known-input operation may relocate its result's typed failure token.
+    private fun sameFailureRecord(oracle: String?, current: String?, echoedInput: String? = null, verifiedFailure: Boolean = false): Boolean {
+        if (oracle == current) return true
+        if (oracle == null || current == null || echoedInput == null || !verifiedFailure) return false
+        val prefix = "$echoedInput => !"
+        val old = "org.jdom2.IllegalDataException:"
+        val relocated = "fi.sykero.kdom.IllegalDataException:"
+        if (!oracle.startsWith(prefix + old)) return false
+        return current == prefix + relocated + oracle.substring(prefix.length + old.length)
+    }
+
+    private fun assertSingleResult(what: String, input: String, pair: Pair<String, String>, verifiedFailure: Boolean) {
+        assertTrue(sameFailureRecord(pair.first, pair.second, input, verifiedFailure), "$what differs for $input: $pair")
+    }
+
+    /** Status comes from typed calls, never from the ambiguous serialized failure-looking text. */
+    private fun verifiedIllegalDataFailure(operation: String, input: String): Boolean {
+        val current = runCatching {
+            if (operation == "rtf") org.crosswire.jsword.book.OSISUtil.rtfToOsis(input)
+            else org.crosswire.jsword.book.filter.plaintext.PlainTextFilter().toOSIS(null, null, input)
+        }.exceptionOrNull()
+        val reference = try {
+            if (operation == "rtf") Oracle.loader.loadClass("org.crosswire.jsword.book.OSISUtil")
+                .getMethod("rtfToOsis", String::class.java).invoke(null, input)
+            else {
+                val type = Oracle.loader.loadClass("org.crosswire.jsword.book.filter.plaintext.PlainTextFilter")
+                val method = type.methods.single { it.name == "toOSIS" && it.parameterCount == 3 }
+                method.invoke(type.getDeclaredConstructor().newInstance(), null, null, input)
+            }
+            null
+        } catch (e: java.lang.reflect.InvocationTargetException) { e.targetException }
+        return current is fi.sykero.kdom.IllegalDataException && reference?.javaClass?.name == "org.jdom2.IllegalDataException"
+    }
+
+    @Test fun failureTypeRelocationDoesNotMaskOtherDifferences() {
+        val old = "x => !org.jdom2.IllegalDataException: exact message\n"
+        val relocated = "x => !fi.sykero.kdom.IllegalDataException: exact message\n"
+        assertTrue(sameFailureRecord(old, relocated, "x", true))
+        assertTrue(!sameFailureRecord(old, relocated, null))
+        assertTrue(!sameFailureRecord(old, relocated + " changed", "x"))
+        assertTrue(!sameFailureRecord(old, relocated.replace("IllegalDataException", "JDOMException"), "x"))
+        assertTrue(!sameFailureRecord(old, relocated.replace("x =>", "y =>"), "x"))
+        assertTrue(!sameFailureRecord("x => <p>literal => !org.jdom2.IllegalDataException: exact</p>", "x => <p>literal => !fi.sykero.kdom.IllegalDataException: exact</p>", "x"))
+        val input = "literal => !org.jdom2.IllegalDataException: input"
+        assertTrue(!sameFailureRecord("$input => <p>success</p>", "${input.replace("org.jdom2", "fi.sykero.kdom")} => <p>success</p>", input))
+        assertTrue(!sameFailureRecord("$input => <p>org.jdom2.IllegalDataException</p>", "$input => <p>fi.sykero.kdom.IllegalDataException</p>", input))
+        val bare = "!org.jdom2.IllegalDataException: exact"
+        assertTrue(!verifiedIllegalDataFailure("rtf", bare))
+        assertTrue(!verifiedIllegalDataFailure("plaintext", bare))
+        assertEquals("$bare => $bare\n", both("corpus.osis.rtf", bare).first)
+        assertEquals("$bare => $bare\n", both("corpus.filter", "plaintext", "KJV", bare).first)
+        assertTrue(!sameFailureRecord("x => $bare", "x => ${bare.replace("org.jdom2", "fi.sykero.kdom")}", "x"))
     }
 
     /** Anti-vacuity for the filter probes: one non-empty line per input, and a '!' failure on only a small minority of them. A few
@@ -147,7 +201,7 @@ class CorpusParityTest {
             "\\u", "\\ux", "\\u12", "a\\parb", "a\\pard", "\\pard\\pard", "\\qcx", "\\i0", "\\b word\\par next\\b0",
             "caf\\u233? \\i au lait\\i0\\par"
         )
-        assertSameLines("rtf", both("corpus.osis.rtf", snippets.joinToString("\u0001")))
+        for (input in snippets) assertSingleResult("rtf", input, both("corpus.osis.rtf", input), verifiedIllegalDataFailure("rtf", input))
     }
 
     @Test
@@ -249,7 +303,10 @@ class CorpusParityTest {
         val result = both("corpus.filter", "plaintext", "KJV", inputs.joinToString("\u0001"))
         assertFilterProbeRan("oracle plaintext", result.first, inputs.size)
         assertFilterProbeRan("current plaintext", result.second, inputs.size)
-        assertSameLines("plaintext", result)
+        for (input in inputs) {
+            val echoed = input.replace("\r", "\\r").replace("\n", "\\n")
+            assertSingleResult("plaintext", echoed, both("corpus.filter", "plaintext", "KJV", input), verifiedIllegalDataFailure("plaintext", input))
+        }
     }
 
     @Test

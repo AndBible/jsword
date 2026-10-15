@@ -121,8 +121,8 @@ import org.crosswire.jsword.index.IndexStatusListener
 import org.crosswire.jsword.index.search.SearchRequest
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.NoSuchKeyException
-import org.jdom2.Content
-import org.jdom2.Document
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Document
 
 /**
  * Book is the most basic store of textual data - It can retrieve data either as

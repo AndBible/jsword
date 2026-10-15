@@ -36,8 +36,8 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
-import org.jdom2.Element
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import org.xml.sax.InputSource

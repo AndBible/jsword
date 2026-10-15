@@ -24,7 +24,7 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 import org.xml.sax.Attributes
 
 /**
@@ -56,11 +56,19 @@ open class FontTag : AbstractTag() {
             seg.setAttribute(OSISUtil.OSIS_ATTR_TYPE, type)
         } else {
             DataPolice.report(book, key, "Missing color/size attribute.")
-            XMLUtil.debugSAXAttributes(attrs)
+            debugLegacySaxAttributes(attrs)
         }
         if (ele != null) {
             ele.addContent(seg)
         }
         return seg
+    }
+}
+
+// Temporary JAXP diagnostic island, removed with the ThML parser in Task20.
+private fun debugLegacySaxAttributes(attrs: org.xml.sax.Attributes) {
+    val log = org.crosswire.common.util.LoggerFactory.getLogger(XMLUtil::class)
+    for (i in 0 until attrs.length) {
+        log.debug("attr[{}]: {}={}", Integer.toString(i), attrs.getQName(i), attrs.getValue(i))
     }
 }

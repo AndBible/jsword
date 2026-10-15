@@ -22,15 +22,15 @@ package org.crosswire.common.xml;
 import java.io.StringWriter;
 import java.util.MissingResourceException;
 
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.ProcessingInstruction;
+import fi.sykero.kdom.Document;
+import fi.sykero.kdom.Element;
+import fi.sykero.kdom.JDOMException;
+import fi.sykero.kdom.ProcessingInstruction;
 import org.junit.Assert;
 import org.junit.Test;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
+import fi.sykero.kdom.sax.ContentHandler;
+import fi.sykero.kdom.sax.SAXException;
+import fi.sykero.kdom.sax.AttributesImpl;
 
 /**
  * Characterization of the SAX serializers, the SAX providers and {@link XMLUtil}:
@@ -228,12 +228,35 @@ public class XMLSerializationCharacterizationTest {
                 XMLUtil.writeToString(new JDOMSAXEventProvider(tree())));
     }
 
+    private static final class NullableQNameAttributes implements fi.sykero.kdom.sax.Attributes {
+        private final String[] uris = {"u", "", ""};
+        private final String[] locals = {"local", "bare", "empty"};
+        private final String[] names = {"p:local", null, ""};
+        private final String[] values = {"1", "2", "3"};
+        public int getLength() { return 3; }
+        public String getURI(int i) { return i >= 0 && i < 3 ? uris[i] : null; }
+        public String getLocalName(int i) { return i >= 0 && i < 3 ? locals[i] : null; }
+        public String getQName(int i) { return i >= 0 && i < 3 ? names[i] : null; }
+        public String getType(int i) { return i >= 0 && i < 3 ? "CDATA" : null; }
+        public String getValue(int i) { return i >= 0 && i < 3 ? values[i] : null; }
+        public int getIndex(String uri, String local) {
+            for (int i = 0; i < 3; i++) if (uris[i].equals(uri) && locals[i].equals(local)) return i;
+            return -1;
+        }
+        public int getIndex(String name) {
+            for (int i = 0; i < 3; i++) if (java.util.Objects.equals(names[i], name)) return i;
+            return -1;
+        }
+        public String getType(String uri, String local) { return getType(getIndex(uri, local)); }
+        public String getType(String name) { return getType(getIndex(name)); }
+        public String getValue(String uri, String local) { return getValue(getIndex(uri, local)); }
+        public String getValue(String name) { return getValue(getIndex(name)); }
+    }
+
     @Test
     public void testAttributeName() {
-        AttributesImpl attrs = new AttributesImpl();
-        attrs.addAttribute("u", "local", "p:local", "CDATA", "1");
-        attrs.addAttribute("", "bare", null, "CDATA", "2");
-        attrs.addAttribute("", "empty", "", "CDATA", "3");
+        // Builders only accept nonnull names; exercise the nullable SAX interface contract directly.
+        fi.sykero.kdom.sax.Attributes attrs = new NullableQNameAttributes();
         Assert.assertEquals("p:local", XMLUtil.getAttributeName(attrs, 0));
         Assert.assertEquals("bare", XMLUtil.getAttributeName(attrs, 1));
         // Only null falls back; an empty qualified name is used as it is
@@ -325,6 +348,26 @@ public class XMLSerializationCharacterizationTest {
         Assert.assertEquals(" x>y", XMLUtil.cleanAllTags("<a word x>y"));
         // ... and since that start is never moved on, one earlier attribute keeps the tag open until '>'
         Assert.assertEquals(" x", XMLUtil.cleanAllTags("<a b=\"1\" word y>x"));
+    }
+
+    @Test
+    public void testGetDocumentPreservesDtdAugmentationAndContentOrder() throws Exception {
+        Document doc = XMLUtil.getDocument("XMLSerializationAugmentedDoc");
+        Element root = doc.getRootElement();
+        Assert.assertEquals("first", root.getAttributeValue("mode"));
+        Assert.assertFalse(root.getAttribute("mode").isSpecified());
+        Assert.assertEquals(fi.sykero.kdom.AttributeType.NMTOKEN, root.getAttribute("mode").getAttributeType());
+        Element item = root.getChildren().get(0);
+        Assert.assertEquals("urn:test", item.getNamespaceURI());
+        Assert.assertEquals("one", item.getAttributeValue("id", fi.sykero.kdom.Namespace.getNamespace("p", "urn:test")));
+        Assert.assertEquals("expanded", item.getText());
+        Assert.assertEquals("Text,Element,CDATA,Comment,ProcessingInstruction,Text", root.getContent().stream()
+                .map(node -> node.getClass().getSimpleName()).collect(java.util.stream.Collectors.joining(",")));
+        Assert.assertEquals("start", root.getContent(0).getValue());
+        Assert.assertEquals("<raw>", root.getContent(2).getValue());
+        Assert.assertEquals("end", root.getContent(5).getValue());
+        Assert.assertEquals("doc", doc.getDocType().getElementName());
+        Assert.assertEquals("", doc.getDocType().getInternalSubset());
     }
 
     @Test

@@ -22,7 +22,7 @@ package org.crosswire.common.config
 import java.util.ResourceBundle
 import java.util.TreeMap
 import org.crosswire.jsword.JSOtherMsg
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 import org.crosswire.common.util.LoggerFactory
 
 /**

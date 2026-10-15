@@ -24,9 +24,9 @@ import java.util.List;
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.Books;
 import org.crosswire.jsword.passage.NoSuchKeyException;
-import org.jdom2.Content;
-import org.jdom2.Element;
-import org.jdom2.output.XMLOutputter;
+import fi.sykero.kdom.Content;
+import fi.sykero.kdom.Element;
+import fi.sykero.kdom.output.XMLOutputter;
 import org.junit.Assert;
 import org.junit.Test;
 

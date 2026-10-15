@@ -33,7 +33,7 @@ import org.crosswire.jsword.passage.DefaultKeyList
 import org.crosswire.jsword.passage.DefaultLeafKeyList
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.NoSuchKeyException
-import org.jdom2.Content
+import fi.sykero.kdom.Content
 
 /**
  * A Sword version of Dictionary.

@@ -28,7 +28,7 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
+import fi.sykero.kdom.Content
 
 /**
  * Filter to convert plain text to OSIS format. Plain text is nothing more than

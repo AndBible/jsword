@@ -32,7 +32,7 @@ import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.passage.RestrictionType
 import org.crosswire.jsword.passage.Verse
-import org.crosswire.common.kdom.Content
+import fi.sykero.kdom.Content
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import okio.IOException

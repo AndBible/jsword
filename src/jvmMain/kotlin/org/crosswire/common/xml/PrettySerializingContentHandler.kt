@@ -22,9 +22,9 @@ package org.crosswire.common.xml
 import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
-import org.xml.sax.Attributes
-import org.xml.sax.ContentHandler
-import org.xml.sax.Locator
+import fi.sykero.kdom.sax.Attributes
+import fi.sykero.kdom.sax.ContentHandler
+import fi.sykero.kdom.sax.Locator
 
 /**
  * This class provides for the formatted serialization of a SAX stream to a

@@ -21,8 +21,8 @@ package org.crosswire.jsword.book;
 
 import java.io.ByteArrayOutputStream;
 
-import org.jdom2.Element;
-import org.jdom2.output.XMLOutputter;
+import fi.sykero.kdom.Element;
+import fi.sykero.kdom.output.XMLOutputter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,7 +63,7 @@ public class OsisTest {
 
         // create a Marshaller and marshal to System.out
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        outputter.output(blank, out);
+        fi.sykero.kdom.output.XMLOutputterJvmKt.output(outputter, blank, out);
         Assert.assertTrue(out.toString().trim().length() > 0);
     }
 

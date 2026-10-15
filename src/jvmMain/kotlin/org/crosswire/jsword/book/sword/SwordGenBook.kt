@@ -35,7 +35,7 @@ import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.NoSuchKeyException
 import org.crosswire.jsword.passage.ReadOnlyKeyList
 import org.crosswire.jsword.passage.VerseRange
-import org.jdom2.Content
+import fi.sykero.kdom.Content
 
 /**
  * A Sword version of a generic book.

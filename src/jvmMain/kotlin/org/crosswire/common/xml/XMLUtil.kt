@@ -28,14 +28,12 @@ import org.crosswire.common.util.FileUtil
 import org.crosswire.common.util.PropertyMap
 import org.crosswire.common.util.ResourceUtil
 import org.crosswire.common.util.jswordAssert
-import org.jdom2.Document
-import org.jdom2.JDOMException
-import org.jdom2.input.SAXBuilder
-import org.jdom2.input.sax.XMLReaders
+import fi.sykero.kdom.Document
+import fi.sykero.kdom.JDOMException
 import org.crosswire.common.util.LoggerFactory
-import org.xml.sax.Attributes
-import org.xml.sax.ContentHandler
-import org.xml.sax.SAXException
+import fi.sykero.kdom.sax.Attributes
+import fi.sykero.kdom.sax.ContentHandler
+import fi.sykero.kdom.sax.SAXException
 
 /**
  * Utilities for working with SAX XML parsing.
@@ -70,9 +68,7 @@ object XMLUtil {
         val `in` = ResourceUtil.getResourceAsStream(resource)
 
         log.debug("Loading {}.xml from classpath: [OK]", subject)
-        // With JDom 1.x this passed true
-        val builder = SAXBuilder(XMLReaders.DTDVALIDATING)
-        return builder.build(`in`)
+        return buildValidatedResource(`in`)
     }
 
     /**

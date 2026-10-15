@@ -44,8 +44,8 @@ import org.crosswire.jsword.index.search.SearchRequest
 import org.crosswire.jsword.index.search.Searcher
 import org.crosswire.jsword.index.search.SearcherFactory
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
-import org.jdom2.Document
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Document
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**

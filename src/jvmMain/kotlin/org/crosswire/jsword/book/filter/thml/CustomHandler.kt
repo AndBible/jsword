@@ -26,9 +26,9 @@ import java.util.Locale
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
-import org.jdom2.Element
-import org.jdom2.Text
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.Text
 import org.xml.sax.Attributes
 import org.xml.sax.SAXException
 import org.xml.sax.helpers.DefaultHandler

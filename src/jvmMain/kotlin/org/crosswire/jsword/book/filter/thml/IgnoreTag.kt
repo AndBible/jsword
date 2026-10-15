@@ -21,7 +21,7 @@ package org.crosswire.jsword.book.filter.thml
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 
 /**
  * Process the content of an element but to ignore the tag itself.
@@ -33,7 +33,7 @@ open class IgnoreTag(name: String) : AnonymousTag(name) {
 
     override fun processContent(book: Book?, key: Key?, ele: Element?) {
         // Replace the parent with this element
-        val parent = ele!!.parentElement
+        val parent = ele!!.parentElement!!
         parent.removeContent(ele)
         parent.addContent(ele.removeContent())
     }

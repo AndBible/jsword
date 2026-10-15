@@ -33,11 +33,11 @@ import org.crosswire.jsword.passage.Verse
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.VersificationsMapper
 import org.crosswire.jsword.versification.system.Versifications
-import org.jdom2.Content
-import org.jdom2.Document
-import org.jdom2.Element
-import org.jdom2.Namespace
-import org.jdom2.Text
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Document
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.Namespace
+import fi.sykero.kdom.Text
 
 import java.util.TreeMap
 

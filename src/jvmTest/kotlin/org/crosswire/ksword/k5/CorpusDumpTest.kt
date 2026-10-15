@@ -8,7 +8,8 @@ import org.crosswire.common.xml.XMLUtil
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.sword.SwordBookMetaData
-import org.jdom2.input.SAXBuilder
+import fi.sykero.kdom.input.build
+import fi.sykero.kdom.input.KdomBuilder
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.xml.sax.InputSource
@@ -100,7 +101,7 @@ class CorpusDumpTest {
             val wrapped = "<xxx>$text</xxx>"
             result.add(stage to wrapped)
             return try {
-                SAXBuilder().apply { setFeature("http://xml.org/sax/features/external-general-entities", false) }
+                KdomBuilder()
                     .build(StringReader(wrapped))
                 true
             } catch (e: Exception) { false }

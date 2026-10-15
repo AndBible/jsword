@@ -35,8 +35,8 @@ import java.util.ResourceBundle;
 import java.util.TreeMap;
 
 import org.crosswire.common.util.PropertyMap;
-import org.jdom2.Document;
-import org.jdom2.Element;
+import fi.sykero.kdom.Document;
+import fi.sykero.kdom.Element;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

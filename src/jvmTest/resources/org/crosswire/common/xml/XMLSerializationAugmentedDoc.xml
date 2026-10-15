@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE doc [
+<!ELEMENT doc (#PCDATA|p:item)*>
+<!ATTLIST doc xmlns:p CDATA #FIXED "urn:test" mode (first|second) "first">
+<!ELEMENT p:item (#PCDATA)>
+<!ATTLIST p:item p:id ID #REQUIRED>
+<!ENTITY word "expanded">
+]>
+<!--before--><?before data?><doc xmlns:p="urn:test">start<p:item p:id="one">&word;</p:item><![CDATA[<raw>]]><!--inside--><?inside value?>end</doc>

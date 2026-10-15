@@ -23,9 +23,9 @@ import java.util.List;
 
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.Books;
-import org.jdom2.Content;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import fi.sykero.kdom.Content;
+import fi.sykero.kdom.output.Format;
+import fi.sykero.kdom.output.XMLOutputter;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -247,9 +247,9 @@ public class GBFFilterCharacterizationTest {
         // then hi, then the empty trailing text.
         List<Content> result = filter("?! x<FI>y<Fi>");
         Assert.assertEquals(4, result.size());
-        Assert.assertEquals("?! ", ((org.jdom2.Text) result.get(0)).getText());
-        Assert.assertEquals("x", ((org.jdom2.Text) result.get(1)).getText());
-        Assert.assertEquals("hi", ((org.jdom2.Element) result.get(2)).getName());
+        Assert.assertEquals("?! ", ((fi.sykero.kdom.Text) result.get(0)).getText());
+        Assert.assertEquals("x", ((fi.sykero.kdom.Text) result.get(1)).getText());
+        Assert.assertEquals("hi", ((fi.sykero.kdom.Element) result.get(2)).getName());
         Assert.assertEquals("?! x<hi type=\"italic\">y</hi>", osis("?! x<FI>y<Fi>"));
     }
 

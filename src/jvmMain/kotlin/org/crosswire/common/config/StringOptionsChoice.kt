@@ -21,7 +21,7 @@ package org.crosswire.common.config
 
 import java.util.ResourceBundle
 import org.crosswire.jsword.JSOtherMsg
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 
 /**
  * A class to convert between strings and objects of a type.

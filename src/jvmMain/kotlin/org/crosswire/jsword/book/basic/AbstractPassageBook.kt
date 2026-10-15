@@ -40,8 +40,8 @@ import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.jsword.versification.VersificationsMapper
 import org.crosswire.jsword.versification.system.Versifications
-import org.jdom2.Content
-import org.jdom2.Element
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 import java.util.HashSet
@@ -150,7 +150,7 @@ abstract class AbstractPassageBook
      */
     open fun addOSIS(key: Key?, div: Element?, osisContent: MutableList<Content>?) {
         jswordAssert(key != null) { "Assertion failed" }
-        div!!.addContent(osisContent)
+        div!!.addContent(osisContent!!)
     }
 
     /**

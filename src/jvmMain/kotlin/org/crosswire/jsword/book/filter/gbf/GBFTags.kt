@@ -29,9 +29,9 @@ import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.NoSuchKeyException
 import org.crosswire.jsword.passage.Passage
-import org.jdom2.Content
-import org.jdom2.Element
-import org.jdom2.Text
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.Text
 
 /**
  * A holder of all of the GBF Tag Handler classes.

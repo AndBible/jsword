@@ -20,7 +20,7 @@
 package org.crosswire.common.config
 
 import java.util.ResourceBundle
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 
 /**
  * Choice is the fundamental building block of the config system.

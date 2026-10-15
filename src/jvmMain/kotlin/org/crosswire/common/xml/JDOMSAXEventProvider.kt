@@ -19,11 +19,10 @@
  */
 package org.crosswire.common.xml
 
-import org.jdom2.Document
-import org.jdom2.JDOMException
-import org.jdom2.output.SAXOutputter
-import org.xml.sax.ContentHandler
-import org.xml.sax.SAXException
+import fi.sykero.kdom.Document
+import fi.sykero.kdom.sax.KdomEventProvider
+import fi.sykero.kdom.sax.ContentHandler
+import fi.sykero.kdom.sax.SAXException
 
 /**
  * A SAXEventProvider that provides SAX events from a JDOM Document.
@@ -45,11 +44,11 @@ open class JDOMSAXEventProvider
 ) : SAXEventProvider {
     @Throws(SAXException::class)
     override fun provideSAXEvents(handler: ContentHandler?) {
+        val document = doc ?: return
         try {
-            val output = SAXOutputter(handler)
-            output.output(doc)
-        } catch (ex: JDOMException) {
-            throw SAXException(ex)
+            KdomEventProvider(document).provideSAXEvents(requireNotNull(handler))
+        } catch (e: SAXException) {
+            throw SAXException(fi.sykero.kdom.JDOMException("Encountered a SAX exception processing the Document: ", e))
         }
     }
 }

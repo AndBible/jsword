@@ -33,7 +33,7 @@ import org.crosswire.jsword.passage.Key;
 import org.crosswire.jsword.passage.PassageKeyFactory;
 import org.crosswire.jsword.book.sword.processing.RawTextToXmlProcessor;
 import org.crosswire.jsword.versification.system.Versifications;
-import org.jdom2.Content;
+import fi.sykero.kdom.Content;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;

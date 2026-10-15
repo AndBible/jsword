@@ -27,7 +27,7 @@ import org.crosswire.common.util.ClassUtil
 import org.crosswire.common.util.StringUtil
 import org.crosswire.common.util.jswordAssert
 import org.crosswire.jsword.JSOtherMsg
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 import org.crosswire.common.util.LoggerFactory
 
 /**

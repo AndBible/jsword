@@ -36,10 +36,11 @@ import org.crosswire.jsword.book.DataPolice
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.filter.SourceFilter
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
-import org.jdom2.Element
-import org.jdom2.JDOMException
-import org.jdom2.input.SAXBuilder
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.JDOMException
+import fi.sykero.kdom.input.build
+import fi.sykero.kdom.input.KdomBuilder
 
 /**
  * Filter to convert an OSIS XML string to OSIS format.
@@ -182,9 +183,8 @@ open class OSISFilter : SourceFilter, Cloneable {
         var builder = saxBuilders.poll()
         if (builder == null) {
             //then we have no sax builders available, so let's create a new one and store
-            builder = SAXBuilder()
-            builder.setFeature("http://xml.org/sax/features/external-general-entities", false)
-            // With JDom 1.x it was important to set Fast Reconfigure on re-usable SAXBuilders
+            builder = KdomBuilder()
+            // With JDom 1.x it was important to set Fast Reconfigure on re-usable KdomBuilders
             // This is the default with 2.x and this method does nothing
             // builder.setFastReconfigure(true);
         }
@@ -210,7 +210,7 @@ open class OSISFilter : SourceFilter, Cloneable {
     }
 
     // space for 32 re-usable sax builders, but doesn't bound the number available to the callers
-    private val saxBuilders: BlockingQueue<SAXBuilder> = ArrayBlockingQueue(32)
+    private val saxBuilders: BlockingQueue<KdomBuilder> = ArrayBlockingQueue(32)
 
     private companion object {
         /**

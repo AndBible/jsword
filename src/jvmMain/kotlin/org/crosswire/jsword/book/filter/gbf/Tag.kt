@@ -23,7 +23,7 @@ import java.util.LinkedList
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Content
+import fi.sykero.kdom.Content
 
 /**
  * GBF Tag interface.

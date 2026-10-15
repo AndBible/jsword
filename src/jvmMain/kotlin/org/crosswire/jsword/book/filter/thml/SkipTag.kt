@@ -21,7 +21,7 @@ package org.crosswire.jsword.book.filter.thml
 
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.passage.Key
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 
 /**
  * Skip the tag and it's content.
@@ -33,7 +33,7 @@ open class SkipTag(name: String) : AnonymousTag(name) {
 
     override fun processContent(book: Book?, key: Key?, ele: Element?) {
         // Remove this element and all it's children
-        val parent = ele!!.parentElement
+        val parent = ele!!.parentElement!!
         parent.removeContent(ele)
     }
 }

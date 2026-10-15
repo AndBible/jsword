@@ -19,8 +19,8 @@
  */
 package org.crosswire.common.xml
 
-import org.xml.sax.ContentHandler
-import org.xml.sax.SAXException
+import fi.sykero.kdom.sax.ContentHandler
+import fi.sykero.kdom.sax.SAXException
 
 /**
  * A simple way of giving someone a place from which to get SAX events.

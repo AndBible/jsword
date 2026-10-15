@@ -27,8 +27,8 @@ import org.crosswire.jsword.book.BookDriver
 import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.passage.VerseKey
-import org.jdom2.Document
-import org.jdom2.Element
+import fi.sykero.kdom.Document
+import fi.sykero.kdom.Element
 import java.util.ArrayList
 import java.util.Collections
 import java.util.HashMap

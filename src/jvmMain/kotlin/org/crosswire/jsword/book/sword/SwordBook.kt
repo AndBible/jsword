@@ -36,9 +36,9 @@ import org.crosswire.jsword.passage.KeyUtil
 import org.crosswire.jsword.passage.NoSuchKeyException
 import org.crosswire.jsword.passage.PassageKeyFactory
 import org.crosswire.jsword.passage.VerseKey
-import org.jdom2.Attribute
-import org.jdom2.Content
-import org.jdom2.Element
+import fi.sykero.kdom.Attribute
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -169,7 +169,7 @@ open class SwordBook
         for (content in osisContent!!) {
             if (content is Element) {
                 val ele: Element = content
-                if (ele.getName() == OSISUtil.OSIS_ELEMENT_VERSE) {
+                if (ele.name == OSISUtil.OSIS_ELEMENT_VERSE) {
                     super.addOSIS(key, div, osisContent)
                     return
                 }
@@ -238,7 +238,7 @@ open class SwordBook
         for (item in osisContent) {
             if (item is Element) {
                 val ele: Element = item
-                val name = ele.getName()
+                val name = ele.name
                 if (OSISUtil.OSIS_ELEMENT_VERSE == name) {
                     wrapped = true
                     ele.setAttribute("verseOrdinal", KeyUtil.getVerse(key).ordinal.toString())

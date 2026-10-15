@@ -23,7 +23,7 @@ import java.util.ResourceBundle
 import org.crosswire.common.util.ClassUtil
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.ReflectionUtil
-import org.jdom2.Element
+import fi.sykero.kdom.Element
 
 /**
  * Factory for the well known Choices.

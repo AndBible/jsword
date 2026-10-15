@@ -24,7 +24,7 @@ package org.crosswire.jsword.book.sword.processing
 
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.VerseRange
-import org.crosswire.common.kdom.Content
+import fi.sykero.kdom.Content
 
 /**
  * This interface declares operations to be carried out after Raw Text

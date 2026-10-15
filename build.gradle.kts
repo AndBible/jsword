@@ -25,6 +25,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api("fi.sykero:kdom:0.1.0-SNAPSHOT")
             implementation("org.jetbrains.kotlinx:atomicfu:0.33.0")
             api("com.squareup.okio:okio:3.9.0")
         }
@@ -33,7 +34,6 @@ kotlin {
             implementation("org.tukaani:xz:1.9")
             implementation("com.chenlb.mmseg4j:mmseg4j-analysis:1.8.6")
             implementation("com.chenlb.mmseg4j:mmseg4j-dic:1.8.6")
-            implementation("org.jdom:jdom2:2.0.6.1")
             implementation("org.apache.lucene:lucene-analyzers:3.6.2")
             implementation("org.slf4j:slf4j-api:1.7.6")
         }
@@ -42,6 +42,7 @@ kotlin {
             implementation("com.squareup.okio:okio-fakefilesystem:3.9.0")
         }
         jvmTest.dependencies {
+            implementation("org.jdom:jdom2:2.0.6.1")
             implementation("junit:junit:4.13")
             implementation(kotlin("test-junit"))
             implementation("org.slf4j:slf4j-simple:1.7.6")
@@ -236,6 +237,25 @@ val compileOracleProbe by tasks.registering(JavaCompile::class) {
     sourceCompatibility = "17"
     targetCompatibility = "17"
     javaCompiler.set(javaToolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+}
+
+// Only the current loader uses kdom; the frozen probe source/classpath above remain unchanged.
+val currentCorpusProbeDir = layout.buildDirectory.dir("generated/k5/currentCorpusProbe")
+val generateCurrentCorpusProbe by tasks.registering {
+    val original = layout.projectDirectory.file("src/jvmTest/java/org/crosswire/ksword/parity/CorpusProbe.java")
+    inputs.file(original)
+    outputs.dir(currentCorpusProbeDir)
+    doLast {
+        val output = currentCorpusProbeDir.get().file("org/crosswire/ksword/parity/CorpusProbe.java").asFile
+        output.parentFile.mkdirs()
+        output.writeText(original.asFile.readText().replace("org.jdom2.", "fi.sykero.kdom."))
+    }
+}
+tasks.named<JavaCompile>("compileJvmTestJava") {
+    dependsOn(generateCurrentCorpusProbe)
+    setSource(files(fileTree("src/jvmTest/java") {
+        exclude("org/crosswire/ksword/parity/CorpusProbe.java")
+    }, currentCorpusProbeDir))
 }
 
 val jvmTestCompilation = kotlin.jvm().compilations.getByName("test")

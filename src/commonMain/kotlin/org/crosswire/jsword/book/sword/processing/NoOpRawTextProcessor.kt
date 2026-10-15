@@ -21,7 +21,7 @@ package org.crosswire.jsword.book.sword.processing
 
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.VerseRange
-import org.crosswire.common.kdom.Content
+import fi.sykero.kdom.Content
 
 /**
  * A processor that does absolutely nothing.

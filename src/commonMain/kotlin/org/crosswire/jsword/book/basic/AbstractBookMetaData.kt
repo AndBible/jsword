@@ -26,7 +26,7 @@ import org.crosswire.jsword.book.BookMetaData
 import org.crosswire.jsword.book.FeatureType
 import org.crosswire.jsword.book.KeyType
 import org.crosswire.jsword.index.IndexStatus
-import org.crosswire.common.kdom.Document
+import fi.sykero.kdom.Document
 import org.crosswire.common.util.KUri
 
 /**
