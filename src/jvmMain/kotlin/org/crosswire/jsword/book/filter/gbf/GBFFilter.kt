@@ -49,7 +49,7 @@ open class GBFFilter : FilterCloneBase(), SourceFilter {
      */
     override fun toOSIS(book: Book?, key: Key?, plain: String?): MutableList<Content> {
         val ele = OSISUtil.factory().createDiv()
-        val stack = ArrayDeque<Content>()
+        val stack = GbfStack<Content>()
         stack.addFirst(ele)
 
         // String.trim() in Java removes every char <= ' ', which differs from Kotlin's trim()

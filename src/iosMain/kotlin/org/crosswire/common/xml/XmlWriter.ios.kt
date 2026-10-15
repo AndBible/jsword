@@ -1,16 +1,13 @@
 package org.crosswire.common.xml
 
 actual abstract class XmlWriter {
-    actual abstract fun write(text: String?)
-    actual abstract fun write(character: Int)
-}
-
-internal actual fun stringXmlWriter(): XmlWriter = object : XmlWriter() {
     private val text = StringBuilder()
-    override fun write(text: String?) { this.text.append(text ?: throw NullPointerException()) }
-    override fun write(character: Int) { text.append(character.toChar()) }
+    actual open fun write(text: String?) { this.text.append(text ?: throw NullPointerException()) }
+    actual open fun write(character: Int) { text.append(character.toChar()) }
     override fun toString(): String = text.toString()
 }
+
+internal actual fun stringXmlWriter(): XmlWriter = object : XmlWriter() {}
 
 actual open class XmlTransformerException : Exception()
 

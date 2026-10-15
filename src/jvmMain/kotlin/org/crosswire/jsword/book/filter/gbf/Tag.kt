@@ -38,5 +38,5 @@ interface Tag {
      * @param key 
      * @param osisStack 
      */
-    fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>)
+    fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>)
 }

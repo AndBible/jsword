@@ -64,4 +64,3 @@ open class FontTag : AbstractTag() {
         return seg
     }
 }
-

@@ -44,7 +44,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class DefaultEndTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             if (osisStack.isEmpty()) {
                 DataPolice.report(book, key, "Ignoring end tag without corresponding start tag: " + name)
                 return
@@ -58,7 +58,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class BoldStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createHI()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_BOLD)
             updateOsisStack(osisStack, ele)
@@ -70,7 +70,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class BookTitleStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createTitle()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "main")
             updateOsisStack(osisStack, ele)
@@ -78,7 +78,7 @@ class GBFTags private constructor() {
     }
 
     class CrossRefStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createReference()
 
             val refstr = name.substring(2)
@@ -97,7 +97,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class EOLTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
 
             val p = OSIS_FACTORY.createLB()
             if (osisStack.isEmpty()) {
@@ -117,7 +117,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class FootnoteStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createNote()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY)
             updateOsisStack(osisStack, ele)
@@ -129,7 +129,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class FootnoteEndTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             if (osisStack.isEmpty()) {
                 DataPolice.report(book, key, "Ignoring end tag without corresponding start tag: " + name)
                 return
@@ -157,7 +157,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class HeaderStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             updateOsisStack(osisStack, OSIS_FACTORY.createTitle())
         }
     }
@@ -167,7 +167,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class IgnoredTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
         }
     }
 
@@ -176,7 +176,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class ItalicStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createHI()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_ITALIC)
             updateOsisStack(osisStack, ele)
@@ -188,7 +188,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class JustifyRightTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             // LATER(joe): is seg the right thing?
             val ele = OSIS_FACTORY.createSeg()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.SEG_JUSTIFYRIGHT)
@@ -201,7 +201,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class JustifyLeftTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createSeg()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.SEG_JUSTIFYLEFT)
             updateOsisStack(osisStack, ele)
@@ -213,7 +213,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class OTQuoteStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             updateOsisStack(osisStack, OSIS_FACTORY.createQ())
         }
     }
@@ -223,7 +223,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class ParagraphTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
 
             if (osisStack.isEmpty()) {
                 val p = OSIS_FACTORY.createLB()
@@ -244,7 +244,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class PoetryStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             updateOsisStack(osisStack, OSIS_FACTORY.createLG())
         }
     }
@@ -254,7 +254,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class PsalmStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             // In OSIS Psalm titles are canonical
             val title = OSIS_FACTORY.createTitle()
             title.setAttribute(OSISUtil.OSIS_ATTR_TYPE, "psalm")
@@ -269,7 +269,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class RedLetterStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createQ()
             ele.setAttribute(OSISUtil.ATTRIBUTE_Q_WHO, "Jesus")
             updateOsisStack(osisStack, ele)
@@ -277,7 +277,7 @@ class GBFTags private constructor() {
     }
 
     class StrongsMorphTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val name = name.trim { it <= ' ' }
 
             val top = osisStack[0]
@@ -322,7 +322,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class StrongsWordTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             var empty = false
             val name = name.trim { it <= ' ' }
             var word: Element? = null
@@ -367,7 +367,7 @@ class GBFTags private constructor() {
             if (empty) {
                 // The last element of the osisStack is the wrapping div.
                 // Empty elements are merely appended to the parent container
-                top = osisStack.last()
+                top = osisStack.getLast()
                 if (top is Element) {
                     val ele = top
                     ele.addContent(word)
@@ -381,7 +381,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class TextFootnoteTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createNote()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.NOTETYPE_STUDY)
             updateOsisStack(osisStack, ele)
@@ -393,7 +393,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class TextTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             // Make sure that characters that XML requires to be escaped are.
             val text = XMLUtil.escape(name)
             if (osisStack.isEmpty()) {
@@ -405,7 +405,7 @@ class GBFTags private constructor() {
                     // Don't make this text the child of a preceding <w>
                     if (OSISUtil.OSIS_ELEMENT_W == ele.name) {
                         // The last element of the osisStack is the wrapping div.
-                        top = osisStack.last()
+                        top = osisStack.getLast()
                         if (top is Element) {
                             ele = top
                             ele.addContent(Text(text))
@@ -423,7 +423,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class TitleStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             updateOsisStack(osisStack, OSIS_FACTORY.createTitle())
         }
     }
@@ -433,7 +433,7 @@ class GBFTags private constructor() {
      * @param name
      */
     class UnderlineStartTag(name: String) : AbstractTag(name) {
-        override fun updateOsisStack(book: Book?, key: Key?, osisStack: ArrayDeque<Content>) {
+        override fun updateOsisStack(book: Book?, key: Key?, osisStack: GbfStack<Content>) {
             val ele = OSIS_FACTORY.createHI()
             ele.setAttribute(OSISUtil.OSIS_ATTR_TYPE, OSISUtil.HI_UNDERLINE)
             updateOsisStack(osisStack, ele)
@@ -442,7 +442,7 @@ class GBFTags private constructor() {
 
     private companion object {
         /* private */
-        private fun updateOsisStack(osisStack: ArrayDeque<Content>, content: Content) {
+        private fun updateOsisStack(osisStack: GbfStack<Content>, content: Content) {
             val top = osisStack[0]
             if (top is Element) {
                 val current = top
