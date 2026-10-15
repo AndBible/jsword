@@ -39,6 +39,7 @@ import org.crosswire.common.util.CWClassLoader;
 import org.crosswire.common.util.CWProject;
 import org.crosswire.common.util.NetUtil;
 import org.crosswire.common.util.NetUtilJvm;
+import org.crosswire.jsword.SuspendCalls;
 import org.crosswire.jsword.book.Book;
 import org.crosswire.jsword.book.BookFilters;
 import org.crosswire.jsword.book.Books;
@@ -197,7 +198,7 @@ public class SwordInstallerCharacterizationTest {
         URI remote;
 
         @Override
-        protected void download(Progress job, String dir, String file, URI dest) throws InstallException {
+        protected Object download(Progress job, String dir, String file, URI dest, kotlin.coroutines.Continuation<? super kotlin.Unit> continuation) throws InstallException {
             requests.add(dir + "|" + file);
             if (failure != null) {
                 throw failure;
@@ -207,6 +208,7 @@ public class SwordInstallerCharacterizationTest {
             } catch (IOException e) {
                 throw new InstallException("local copy failed", e);
             }
+            return kotlin.Unit.INSTANCE;
         }
 
         @Override
@@ -279,17 +281,23 @@ public class SwordInstallerCharacterizationTest {
         Book kjv = installer.getBook("KJV");
         Assert.assertNull(((SwordBookMetaData) kjv.getBookMetaData()).getConfigFile());
         // Without a conf file in the download dir the book is never newer; no remote is asked
-        Assert.assertFalse(installer.isNewer(kjv));
+        Assert.assertFalse(SuspendCalls.isNewer(installer, kjv));
     }
 
     @Test
-    public void testMissingCacheDownloadsTheCatalog() throws Exception {
+    public void testMissingCacheListsNothingUntilTheCatalogIsReloaded() throws Exception {
         LocalInstaller installer = new LocalInstaller();
         installer.setHost("missing.invalid");
         installer.setPackageDirectory("/pkg");
         installer.setCatalogDirectory("/cat");
         installer.catalog = catalog("kjv.conf", "strongsgreek.conf");
 
+        // getBooks never downloads (K5b D4)
+        Assert.assertTrue(installer.getBooks().isEmpty());
+        Assert.assertTrue(installer.requests.isEmpty());
+        Assert.assertFalse(installer.loaded);
+
+        SuspendCalls.reload(installer);
         Assert.assertEquals(Arrays.asList("KJV", "StrongsGreek"), initials(installer.getBooks()));
         Assert.assertEquals(Arrays.asList("/cat|mods.d.tar.gz"), installer.requests);
         // Loaded now: no second download
@@ -304,12 +312,15 @@ public class SwordInstallerCharacterizationTest {
         installer.setPackageDirectory("/pkg");
         installer.setCatalogDirectory("/cat");
         installer.catalog = catalog("kjv.conf", "strongsgreek.conf");
+        // getBooks never downloads: the catalog is fetched by an explicit reload
+        Assert.assertTrue(installer.getBooks().isEmpty());
+        SuspendCalls.reload(installer);
         Assert.assertEquals(2, installer.getBooks().size());
         File zip = new File(new File(installer.getCachedIndexDir().getPath()), "mods.d.zip");
         Assert.assertTrue(zip.isFile());
 
         installer.catalog = catalog("kjv.conf");
-        installer.reloadBookList();
+        SuspendCalls.reload(installer);
         Assert.assertFalse(installer.loaded);
         Assert.assertEquals(2, installer.requests.size());
         Assert.assertTrue(zip.isFile());
@@ -325,7 +336,7 @@ public class SwordInstallerCharacterizationTest {
         installer.setCatalogDirectory("/cat");
         installer.failure = new InstallException("boom");
         try {
-            installer.reloadBookList();
+            SuspendCalls.reload(installer);
             Assert.fail();
         } catch (InstallException expected) {
             Assert.assertSame(installer.failure, expected);
@@ -346,7 +357,7 @@ public class SwordInstallerCharacterizationTest {
         DownloadCancelledException cancelled = new DownloadCancelledException(URI.create("http://x/y"));
         installer.failure = cancelled;
         try {
-            installer.reloadBookList();
+            SuspendCalls.reload(installer);
             Assert.fail();
         } catch (DownloadCancelledException expected) {
             Assert.assertSame(cancelled, expected);
@@ -359,10 +370,11 @@ public class SwordInstallerCharacterizationTest {
         other.setPackageDirectory("/pkg");
         other.setCatalogDirectory("/cat");
         other.catalog = catalog("kjv.conf");
+        SuspendCalls.reload(other);
         Book kjv = other.getBook("KJV");
         other.failure = cancelled;
         try {
-            other.install(kjv);
+            SuspendCalls.install(other, kjv);
             Assert.fail();
         } catch (DownloadCancelledException expected) {
             Assert.assertSame(cancelled, expected);
@@ -378,10 +390,11 @@ public class SwordInstallerCharacterizationTest {
         installer.setPackageDirectory("/pkg");
         installer.setCatalogDirectory("/cat");
         installer.catalog = catalog("strongsgreek.conf");
+        SuspendCalls.reload(installer);
         Book book = installer.getBook("StrongsGreek");
         installer.failure = new InstallException("no way");
         try {
-            installer.install(book, "my-job-id");
+            SuspendCalls.install(installer, book, "my-job-id");
             Assert.fail();
         } catch (InstallException expected) {
             Assert.assertSame(installer.failure, expected);
@@ -403,11 +416,11 @@ public class SwordInstallerCharacterizationTest {
         installer.remote = remote.toURI();
 
         Assert.assertTrue(remote.setLastModified(conf.lastModified() + 3600 * 1000L));
-        Assert.assertTrue(installer.isNewer(installed));
+        Assert.assertTrue(SuspendCalls.isNewer(installer, installed));
         Assert.assertTrue(remote.setLastModified(conf.lastModified() - 3600 * 1000L));
-        Assert.assertFalse(installer.isNewer(installed));
+        Assert.assertFalse(SuspendCalls.isNewer(installer, installed));
         Assert.assertTrue(remote.setLastModified(conf.lastModified()));
-        Assert.assertFalse(installer.isNewer(installed));
+        Assert.assertFalse(SuspendCalls.isNewer(installer, installed));
     }
 
     @Test
@@ -438,7 +451,7 @@ public class SwordInstallerCharacterizationTest {
     }
 
     @Test
-    public void testDefaults() {
+    public void testDefaults() throws Exception {
         HttpSwordInstaller installer = new HttpSwordInstaller();
         Assert.assertNull(installer.getHost());
         Assert.assertEquals("", installer.getPackageDirectory());
@@ -448,7 +461,7 @@ public class SwordInstallerCharacterizationTest {
         Assert.assertNull(installer.getProxyPort());
         Assert.assertFalse(installer.loaded);
         Assert.assertEquals("sword-http", installer.getType());
-        Assert.assertEquals(Long.valueOf(0L), installer.indexLastUpdated());
+        Assert.assertEquals(Long.valueOf(0L), SuspendCalls.indexLastUpdated(installer));
     }
 
     @Test
@@ -460,6 +473,7 @@ public class SwordInstallerCharacterizationTest {
         installer.catalog = catalog("kjv.conf");
         installer.setProxyHost("px");
         installer.setProxyPort(Integer.valueOf(3128));
+        SuspendCalls.reload(installer);
         installer.getBooks();
         Assert.assertTrue(installer.loaded);
 
@@ -560,10 +574,10 @@ public class SwordInstallerCharacterizationTest {
         https.setHost("localhost");
         https.setPackageDirectory("/pkg");
         // nobody is expected to listen on the default https port of the loopback interface
-        Assert.assertEquals(Long.valueOf(0L), https.indexLastUpdated());
+        Assert.assertEquals(Long.valueOf(0L), SuspendCalls.indexLastUpdated(https));
         File dest = new File(work, "x.zip");
         try {
-            https.download(null, "/dir", "file.zip", dest.toURI());
+            SuspendCalls.blocking(c -> https.download(null, "/dir", "file.zip", dest.toURI(), c));
             Assert.fail();
         } catch (InstallException expected) {
             Assert.assertEquals("Unable to find: https://localhost/dir/file.zip", expected.getMessage());

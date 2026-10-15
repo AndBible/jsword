@@ -1,5 +1,9 @@
 package org.crosswire.ksword.k5b
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.KUri
@@ -87,7 +91,7 @@ class InstallerCommonReadyTest {
             setHost("local.invalid"); setPackageDirectory("/pkg"); setCatalogDirectory("/cat")
         }
 
-        override fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+        override suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
             requests += "$dir|$file"
             jobIds += job?.jobID
             failure?.let { throw it }
@@ -95,9 +99,11 @@ class InstallerCommonReadyTest {
         }
     }
 
-    private fun localInstaller() = LocalInstaller(K5bCatalogFixture.bytes(K5bCatalogFixture.confDir()), packageZip())
+    /** getBooks never downloads (K5b D4): the catalog is loaded by an explicit reloadBookList(), the job id log starts with it. */
+    private suspend fun localInstaller() = LocalInstaller(K5bCatalogFixture.bytes(K5bCatalogFixture.confDir()), packageZip())
+        .also { it.reloadBookList() }
 
-    @Test fun installUnpacksThePackageAndRegistersTheBook() {
+    @Test fun installUnpacksThePackageAndRegistersTheBook() = runBlocking<Unit> {
         val installer = localInstaller()
         val book = installer.getBook("K4RawText")!!
         installer.install(book)
@@ -119,7 +125,7 @@ class InstallerCommonReadyTest {
             installed.getRawText(installed.getKey("Gen.1.1")).trim())
     }
 
-    @Test fun installWithAJobIdUsesItAndAFailureLeavesNothingBehind() {
+    @Test fun installWithAJobIdUsesItAndAFailureLeavesNothingBehind() = runBlocking<Unit> {
         val installer = localInstaller()
         val book = installer.getBook("K4RawText")!!
         installer.failure = InstallException("no way")
@@ -134,11 +140,12 @@ class InstallerCommonReadyTest {
         assertFalse(File(downloadDir, "mods.d").exists())
     }
 
-    @Test fun jobIdsAreFormattedLiterally() {
+    @Test fun jobIdsAreFormattedLiterally() = runBlocking<Unit> {
         val installer = localInstaller()
         val book = installer.getBook("K4RawText")!!
         installer.failure = InstallException("stop")
-        for (action in listOf({ installer.install(book) }, { installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) })) {
+        val actions = listOf<suspend () -> Unit>({ installer.install(book) }, { installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) })
+        for (action in actions) {
             try { action(); fail() } catch (expected: InstallException) { }
         }
         assertEquals("INSTALL_BOOK-K4RawText", installer.jobIds[1])
@@ -146,35 +153,59 @@ class InstallerCommonReadyTest {
         assertEquals("/pkg/search/jsword/L1|K4RawText.zip", installer.requests.last())
     }
 
-    @Test fun cancellingTheJobInterruptsTheInstallingThread() {
-        for (searchIndex in listOf(false, true)) {
-            val interrupted = AtomicInteger()
-            val installer = object : LocalInstaller(K5bCatalogFixture.bytes(K5bCatalogFixture.confDir()), packageZip()) {
-                override fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
-                    if (file == "mods.d.tar.gz") return super.download(job, dir, file, dest)
-                    // cancel from another thread while this (the installing) thread blocks
-                    Thread { job!!.cancel() }.start()
-                    try {
-                        Thread.sleep(10_000)
-                    } catch (e: InterruptedException) {
-                        interrupted.incrementAndGet()
-                        throw InstallException("cancelled")
-                    }
+    /** An installer whose package download waits until it is cancelled, as a transfer blocked on the network would. */
+    private fun blockedInstaller(started: kotlinx.coroutines.CompletableDeferred<Progress>, cancelled: AtomicInteger) =
+        object : LocalInstaller(K5bCatalogFixture.bytes(K5bCatalogFixture.confDir()), packageZip()) {
+            override suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+                if (file == "mods.d.tar.gz") return super.download(job, dir, file, dest)
+                started.complete(job!!)
+                try {
+                    kotlinx.coroutines.awaitCancellation()
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    cancelled.incrementAndGet()
+                    throw e
                 }
             }
+        }
+
+    @Test fun cancellingTheJobCancelsTheInstallingCoroutine() = runBlocking<Unit> {
+        for (searchIndex in listOf(false, true)) {
+            val cancelled = AtomicInteger()
+            val started = kotlinx.coroutines.CompletableDeferred<Progress>()
+            val installer = blockedInstaller(started, cancelled).also { it.reloadBookList() }
             val book = installer.getBook("K4RawText")!!
-            try {
+            val worker = async(kotlinx.coroutines.Dispatchers.Default) {
                 if (searchIndex) installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) else installer.install(book)
-                fail()
-            } catch (expected: InstallException) {
-                assertEquals("cancelled", expected.message)
             }
-            assertEquals(1, interrupted.get())
-            Thread.interrupted()
+            val job = kotlinx.coroutines.withTimeout(5_000) { started.await() }
+            job.cancel() // the Progress API, as the UI's cancel button does
+            val failure = kotlinx.coroutines.withTimeout(5_000) { runCatching { worker.await() }.exceptionOrNull() }
+            assertTrue("got $failure", failure is kotlinx.coroutines.CancellationException)
+            assertEquals(1, cancelled.get())
+            assertTrue(job.isFinished)
+            // the module is not installed and no partial download is registered
+            assertNull(Books.installed().getBook("K4RawText"))
         }
     }
 
-    @Test fun getBooksWithAFilterIsSerialisedWithTheCatalogLoad() {
+    @Test fun cancellingTheCoroutineCancelsTheJob() = runBlocking<Unit> {
+        for (searchIndex in listOf(false, true)) {
+            val cancelled = AtomicInteger()
+            val started = kotlinx.coroutines.CompletableDeferred<Progress>()
+            val installer = blockedInstaller(started, cancelled).also { it.reloadBookList() }
+            val book = installer.getBook("K4RawText")!!
+            val worker = launch(kotlinx.coroutines.Dispatchers.Default) {
+                if (searchIndex) installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) else installer.install(book)
+            }
+            val job = kotlinx.coroutines.withTimeout(5_000) { started.await() }
+            kotlinx.coroutines.withTimeout(5_000) { worker.cancelAndJoin() }
+            assertEquals(1, cancelled.get())
+            assertTrue(job.isFinished)
+            assertNull(Books.installed().getBook("K4RawText"))
+        }
+    }
+
+    @Test fun getBooksWithAFilterIsSerialisedWithTheCatalogLoad() = runBlocking<Unit> {
         val inLoad = AtomicInteger()
         val maxInLoad = AtomicInteger()
         val installer = object : HttpSwordInstaller() {
@@ -197,7 +228,7 @@ class InstallerCommonReadyTest {
         assertEquals(1, maxInLoad.get())
     }
 
-    @Test fun remoteUrisUseTheSchemeOfTheInstaller() {
+    @Test fun remoteUrisUseTheSchemeOfTheInstaller() = runBlocking<Unit> {
         val book = K5bFixtureBook.create("K4RawText")
         for ((installer, scheme) in listOf(HttpSwordInstaller() to "http", HttpsSwordInstaller() to "https")) {
             installer.setHost("h.invalid"); installer.setPackageDirectory("/pkg")
@@ -205,7 +236,7 @@ class InstallerCommonReadyTest {
         }
     }
 
-    @Test fun ftpMessagesComeFromTheEmbeddedBundle() {
+    @Test fun ftpMessagesComeFromTheEmbeddedBundle() = runBlocking<Unit> {
         // lookup takes the resource key; the FTPMsg constants only select the "FTPMsg" bundle
         assertEquals("Too many @ symbols in url: x@y", FTPMsg.URL_AT_COUNT.lookup("SwordInstallerFactory.URLAtCount", "x@y"))
         assertEquals("Wrong number of : symbols in url: x", FTPMsg.URL_COLON_COUNT.lookup("SwordInstallerFactory.URLColonCount", "x"))
