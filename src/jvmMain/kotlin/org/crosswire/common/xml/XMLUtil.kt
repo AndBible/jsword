@@ -22,11 +22,8 @@
  */
 package org.crosswire.common.xml
 
-import java.io.IOException
-import java.util.regex.Pattern
-import org.crosswire.common.util.FileUtil
+import okio.IOException
 import org.crosswire.common.util.PropertyMap
-import org.crosswire.common.util.ResourceUtil
 import org.crosswire.common.util.jswordAssert
 import fi.sykero.kdom.Document
 import fi.sykero.kdom.JDOMException
@@ -64,11 +61,7 @@ object XMLUtil {
     @JvmStatic
     @Throws(JDOMException::class, IOException::class)
     fun getDocument(subject: String?): Document {
-        val resource = subject + FileUtil.EXTENSION_XML
-        val `in` = ResourceUtil.getResourceAsStream(resource)
-
-        log.debug("Loading {}.xml from classpath: [OK]", subject)
-        return buildValidatedResource(`in`)
+        return loadValidatedResource(subject)
     }
 
     /**
@@ -112,7 +105,7 @@ object XMLUtil {
     @JvmStatic
     fun debugSAXAttributes(attrs: Attributes) {
         for (i in 0 until attrs.length) {
-            log.debug("attr[{}]: {}={}", Integer.toString(i), attrs.getQName(i), attrs.getValue(i))
+            log.debug("attr[{}]: {}={}", i.toString(), attrs.getQName(i), attrs.getValue(i))
         }
     }
 
@@ -175,7 +168,7 @@ object XMLUtil {
             }
 
             // Skip references of the kind &#ddd;
-            if (validCharacterEntityPattern.matcher(working.substring(amp)).find()) {
+            if (validCharacterEntityPattern.containsMatchIn(working.substring(amp))) {
                 cleanfrom = working.indexOf(';', amp) + 1
                 continue
             }
@@ -206,7 +199,7 @@ object XMLUtil {
 
                 // Did we end an entity without finding a closing ;
                 // Then treat it as an '&' that needs to be replaced with &amp;
-                if (!Character.isLetterOrDigit(c)) {
+                if (!c.isLetterOrDigit()) {
                     // String entity = working.substring(amp, i);
                     // String replace = "&amp;" + working.substring(amp + 1, i);
                     // log.warn("replacing invalid entity: '{}' with: '{}': {}", entity, replace, broken);
@@ -238,7 +231,7 @@ object XMLUtil {
      */
     @JvmStatic
     fun cleanAllCharacters(broken: String): String {
-        return invalidCharacterPattern.matcher(broken).replaceAll(" ")
+        return invalidCharacterPattern.replace(broken, " ")
     }
 
     /**
@@ -254,16 +247,16 @@ object XMLUtil {
     fun recloseTags(broken: String): String? {
         var result = broken
         // remove closing tags from the end
-        while (Pattern.matches(".*</[a-zA-Z]+>[ \t\r\n]*", result)) {
+        while (Regex(".*</[a-zA-Z]+>[ \t\r\n]*").matches(result)) {
             result = result.substring(0, result.lastIndexOf('<'))
         }
         // close tags again
         val openTags: MutableList<String> = ArrayList()
-        val m = Pattern.compile("</?[a-zA-Z]+").matcher(result)
+        val matches = Regex("</?[a-zA-Z]+").findAll(result)
         var lTagFound = false
         var lgTagFound = false
-        while (m.find()) {
-            val match = m.group()
+        for (m in matches) {
+            val match = m.value
             if (match.startsWith("</")) {
                 if (openTags.size == 0 && match == "</l" && !lTagFound) {
                     return recloseTags("<l>" + broken)
@@ -277,10 +270,10 @@ object XMLUtil {
                 if (match != "</" + lastTag)
                     return null
             } else {
-                var closePos = result.indexOf('>', m.end())
+                var closePos = result.indexOf('>', m.range.last + 1)
                 if (closePos == -1)
                     return null
-                while (Character.isWhitespace(result[closePos - 1])) closePos--
+                while (result[closePos - 1].isWhitespace()) closePos--
                 if (result[closePos - 1] != '/') {
                     if (match == "<l") lTagFound = true
                     if (match == "<lg") lgTagFound = true
@@ -309,7 +302,7 @@ object XMLUtil {
             return null
         }
 
-        return openHTMLTagPattern.matcher(broken).replaceAll("<\$1\$2/>")
+        return openHTMLTagPattern.replace(broken, "<\$1\$2/>")
     }
 
     /**
@@ -526,19 +519,19 @@ object XMLUtil {
     /**
      * Pattern for numeric entities.
      */
-    private val validCharacterEntityPattern = Pattern.compile("^&#x?\\d{2,4};")
+    private val validCharacterEntityPattern = Regex("^&#x?\\d{2,4};")
 
     /**
      * Pattern that negates the allowable XML 4 byte unicode characters. Valid
      * are: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] |
      * [#x10000-#x10FFFF]
      */
-    private val invalidCharacterPattern = Pattern.compile("[^\t\r\n\u0020-\uD7FF\uE000-\uFFFD]")
+    private val invalidCharacterPattern = Regex("[^\t\r\n\u0020-\uD7FF\uE000-\uFFFD]")
 
     /**
      * Pattern that matches open &lt;br&gt;,&lt;hr&gt; and &lt;img&gt; tags.
      */
-    private val openHTMLTagPattern = Pattern.compile("<(img|hr|br)([^>]*)(?<!/)>")
+    private val openHTMLTagPattern = Regex("<(img|hr|br)([^>]*)(?<!/)>")
 
     /**
      * The log stream
