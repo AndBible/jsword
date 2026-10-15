@@ -29,6 +29,7 @@ import okio.IOException
 
 import org.crosswire.common.progress.JobManager
 import org.crosswire.common.progress.Progress
+import org.crosswire.common.progress.currentThreadCanceller
 import org.crosswire.common.util.CWProject
 import org.crosswire.common.util.KFiles
 import org.crosswire.common.util.KUri
@@ -228,10 +229,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         if (jobId == null) {
             jobId = Progress.INSTALL_BOOK.replace("%s", book.initials)
         }
-        // JVM-only: cancelling the job interrupts this worker thread, which the transport read turns into a
-        // download cancellation. The common job API (JobManager.createJob with a canceller callback) cannot name
-        // the current thread, so this stays until K5b Task 13 is settled (see its report).
-        val job = org.crosswire.common.progress.JobManagerJvm.createJob(jobId, jobName, Thread.currentThread())
+        val job = JobManager.createJob(jobId, jobName, currentThreadCanceller())
 
         var temp: KUri? = null
         var fileName: String? = null
@@ -355,10 +353,7 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
     override fun downloadSearchIndex(book: Book, tempDest: KUri) {
         // TRANSLATOR: Progress label for downloading one or more files.
         val jobName = JSMsg.gettext("Downloading files")
-        // JVM-only: cancelling the job interrupts this worker thread, which the transport read turns into a
-        // download cancellation. The common job API (JobManager.createJob with a canceller callback) cannot name
-        // the current thread, so this stays until K5b Task 13 is settled (see its report).
-        val job = org.crosswire.common.progress.JobManagerJvm.createJob(Progress.DOWNLOAD_SEARCH_INDEX.replace("%s", book.initials), jobName, Thread.currentThread())
+        val job = JobManager.createJob(Progress.DOWNLOAD_SEARCH_INDEX.replace("%s", book.initials), jobName, currentThreadCanceller())
         job.beginJob(jobName)
 
         try {

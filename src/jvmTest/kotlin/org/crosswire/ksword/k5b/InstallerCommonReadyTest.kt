@@ -82,7 +82,7 @@ class InstallerCommonReadyTest {
     }
 
     /** An installer whose download writes local bytes and records what was asked for. */
-    private class LocalInstaller(val catalog: ByteArray, val zip: ByteArray) : HttpSwordInstaller() {
+    private open class LocalInstaller(val catalog: ByteArray, val zip: ByteArray) : HttpSwordInstaller() {
         val requests = mutableListOf<String>()
         val jobIds = mutableListOf<String?>()
         var failure: InstallException? = null
@@ -148,6 +148,34 @@ class InstallerCommonReadyTest {
         assertEquals("INSTALL_BOOK-K4RawText", installer.jobIds[1])
         assertEquals("DOWNLOAD_SEARCH_INDEX-K4RawText", installer.jobIds[2])
         assertEquals("/pkg/search/jsword/L1|K4RawText.zip", installer.requests.last())
+    }
+
+    @Test fun cancellingTheJobInterruptsTheInstallingThread() {
+        for (searchIndex in listOf(false, true)) {
+            val interrupted = AtomicInteger()
+            val installer = object : LocalInstaller(K5bCatalogFixture.bytes(K5bCatalogFixture.confDir()), packageZip()) {
+                override fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
+                    if (file == "mods.d.tar.gz") return super.download(job, dir, file, dest)
+                    // cancel from another thread while this (the installing) thread blocks
+                    Thread { job!!.cancel() }.start()
+                    try {
+                        Thread.sleep(10_000)
+                    } catch (e: InterruptedException) {
+                        interrupted.incrementAndGet()
+                        throw InstallException("cancelled")
+                    }
+                }
+            }
+            val book = installer.getBook("K4RawText")!!
+            try {
+                if (searchIndex) installer.downloadSearchIndex(book, KUri("file:/tmp/x.zip")) else installer.install(book)
+                fail()
+            } catch (expected: InstallException) {
+                assertEquals("cancelled", expected.message)
+            }
+            assertEquals(1, interrupted.get())
+            Thread.interrupted()
+        }
     }
 
     @Test fun getBooksWithAFilterIsSerialisedWithTheCatalogLoad() {
