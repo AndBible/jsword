@@ -9,3 +9,4 @@ org/crosswire/jsword/book/install/sword/HttpSwordInstallerFactory.kt #done
 org/crosswire/jsword/book/install/sword/HttpsSwordInstallerFactory.kt #done
 org/crosswire/jsword/book/install/sword/HttpSwordInstaller.kt #done
 org/crosswire/jsword/book/install/sword/HttpsSwordInstaller.kt #done
+org/crosswire/jsword/book/install/sword/AbstractSwordInstaller.kt #done
