@@ -294,7 +294,9 @@ class SearchCorpusParityTest {
         val none = Outcome(emptyList(), null)
         val hits = Outcome(listOf("Gen.1.1"), null)
         assertEquals("strongs-wildcard-case", approvedRule("strong:H72*", none, hits))
+        assertEquals("strongs-wildcard-case", approvedRule("strong:h7?25", none, hits), "a ?-only wildcard")
         assertEquals(null, approvedRule("strong:H7225", none, hits), "not a wildcard")
+        assertEquals(null, approvedRule("faith* strong:H7225", none, hits), "the wildcard is not on strong:")
         assertEquals(null, approvedRule("strong:H72*", hits, hits), "baseline had hits")
         assertEquals(null, approvedRule("strong:H72*", none, none), "no difference to approve")
     }
@@ -330,7 +332,7 @@ class SearchCorpusParityTest {
 
     private companion object {
         val RULES = listOf("K6-3-unsupported-syntax", "strong-phrase-or-fuzzy", "fuzzy-similarity-at-least-1", "nesting-over-200", "strongs-wildcard-case")
-        val STRONG_WILDCARD = Regex("(?i)strong:[^\\s()]*\\*")
+        val STRONG_WILDCARD = Regex("(?i)strong:[^\\s()]*[*?]")
         val FUZZY_INT = Regex("~1(\\.0+)?(\\s|\\)|$)")
     }
 }

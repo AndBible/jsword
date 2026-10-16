@@ -187,6 +187,8 @@ class FtsQueryEvaluatorTest {
         assertEquals(setOf(1L), run("strong:H72*"))
         assertEquals(setOf(1L), run("strong:h72*"))
         assertTrue(1L in run("strong:h*"))
+        assertEquals(setOf(1L), run("strong:h7?25"))
+        assertEquals(emptySet(), run("strong:H9*"))
     }
 
     @Test fun anEmptyQueryMatchesNothing() {

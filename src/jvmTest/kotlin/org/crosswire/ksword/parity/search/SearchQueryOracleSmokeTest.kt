@@ -53,6 +53,8 @@ class SearchQueryOracleSmokeTest {
         null
     }
 
+    private fun outcome(hits: List<String>?) = SearchCorpusParityTest.Outcome(hits, if (hits == null) "failed" else null)
+
     private fun run(initials: String, parity: List<String>) {
         val b = book(initials)
         val built = OracleSearch.call("buildIndex", K6Corpus.root.path, initials, File(dir, "base-$initials").path)
@@ -66,7 +68,9 @@ class SearchQueryOracleSmokeTest {
             val expected = baseline(initials, q)
             if (expected?.isNotEmpty() == true) nonEmpty++
             val actual = try { mine(index, q) } catch (e: UnsupportedSearchSyntaxException) { problems += "$initials '$q': unexpected ${e.message}"; continue }
-            if (expected != actual) {
+            // Approved difference (rule strongs-wildcard-case): the baseline finds nothing for strong: wildcards, here they match.
+            val approved = expected != null && SearchCorpusParityTest().approvedRule(q, outcome(expected), outcome(actual)) != null
+            if (expected != actual && !approved) {
                 problems += "$initials '$q': baseline ${expected?.let { "${it.size} ${it.take(3)}" } ?: "FAIL"}, mine ${actual?.let { "${it.size} ${it.take(3)}" } ?: "FAIL"}"
             }
         }
