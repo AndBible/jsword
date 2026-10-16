@@ -117,6 +117,7 @@ class GenerateIosSearchFixtures {
             .associate { it.substringBefore('\t') to it.substringAfter('\t', "") }
         check(texts.isNotEmpty() && texts.size == tokens.size) { "$initials: ${texts.size} texts, ${tokens.size} token lines" }
         val eligible = texts.keys.filter { texts.getValue(it).trim().length >= 12 && tokens[it].orEmpty().isNotBlank() }
+        // The seed is String.hashCode() of the module name: specified by the Java language, so stable across platforms and JVMs.
         val rnd = Random(initials.hashCode().toLong())
         val chosen = (0 until 200).map { b ->
             val from = b * eligible.size / 200

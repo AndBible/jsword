@@ -1,2 +1,3 @@
 src/embeddedResources/** -text
 src/iosEmbeddedResources/** -text
+src/commonTest/k6-fixtures/** -text
