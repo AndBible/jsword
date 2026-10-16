@@ -242,7 +242,9 @@ val baselineJar = layout.projectDirectory.file("oracle/jsword-baseline.jar")
 // ParityProbe compiled against the baseline jar, for the oracle class loader.
 val compileOracleProbe by tasks.registering(JavaCompile::class) {
     source(layout.projectDirectory.dir("src/jvmTest/java/org/crosswire/ksword/parity"))
-    include("*Probe.java")
+    // K6 search probe: baseline-only API, never part of compileJvmTestJava.
+    source(layout.projectDirectory.dir("src/oracleProbe/java"))
+    include("**/*Probe.java")
     classpath = files(baselineJar) + oracleThirdParty
     destinationDirectory.set(layout.buildDirectory.dir("oracleProbe/classes"))
     options.encoding = "UTF-8"
@@ -281,10 +283,34 @@ val parityTest by tasks.registering(Test::class) {
     classpath = files(jvmTestCompilation.output.allOutputs, jvmTestCompilation.runtimeDependencyFiles)
     useJUnit()
     filter { includeTestsMatching("org.crosswire.ksword.parity.*") }
+    exclude("org/crosswire/ksword/parity/search/**")
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
     systemProperty("ksword.projectDir", layout.projectDirectory.asFile.absolutePath)
     systemProperty("ksword.reportsDir", layout.buildDirectory.dir("reports/ksword").get().asFile.absolutePath)
+    val oracleClasspath = files(baselineJar, compileOracleProbe.map { it.destinationDirectory }) + oracleThirdParty
+    inputs.files(oracleClasspath)
+    jvmArgumentProviders.add(CommandLineArgumentProvider {
+        listOf("-Dksword.oracle.classpath=${oracleClasspath.asPath}")
+    })
+}
+
+// K6 search parity: needs the corpus from scripts/fetch-k6-corpus.sh (never skipped, K6Corpus fails when it is missing).
+val searchParityTest by tasks.registering(Test::class) {
+    group = "verification"
+    description = "K6 search parity against the frozen baseline Lucene index (needs .local/k6-corpus)."
+    dependsOn(compileOracleProbe, tasks.named("jvmTestClasses"))
+    testClassesDirs = jvmTestCompilation.output.classesDirs
+    classpath = files(jvmTestCompilation.output.allOutputs, jvmTestCompilation.runtimeDependencyFiles)
+    useJUnit()
+    // The baseline's Lucene 3.6.2 analyzers trip Lucene's own -ea check ("must be final"); production runs without -ea.
+    enableAssertions = false
+    filter { includeTestsMatching("org.crosswire.ksword.parity.search.*") }
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
+    systemProperty("ksword.projectDir", layout.projectDirectory.asFile.absolutePath)
+    systemProperty("ksword.reportsDir", layout.buildDirectory.dir("reports/ksword").get().asFile.absolutePath)
+    systemProperty("ksword.k6.corpus", rootProject.file(".local/k6-corpus").absolutePath)
     val oracleClasspath = files(baselineJar, compileOracleProbe.map { it.destinationDirectory }) + oracleThirdParty
     inputs.files(oracleClasspath)
     jvmArgumentProviders.add(CommandLineArgumentProvider {
