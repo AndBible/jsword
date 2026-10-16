@@ -9,6 +9,8 @@ import okio.Path
 import org.crosswire.common.progress.JobManager
 import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.CWProject
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.Book
@@ -48,10 +50,20 @@ class FtsIndexManager internal constructor(
     private val searchDir: Path = searchDir ?: projectSubdir(SearchFields.DIR_SEARCH)
     private val luceneDir: Path = luceneDir ?: projectSubdir(SearchFields.DIR_LEGACY_LUCENE)
     private val lock = SynchronizedObject()
+    // All three maps are keyed by [indexKey], the same (driver, safe initials) pair that names the index file.
     private val open = HashMap<String, FtsIndex>()
-    private val serialLock = SynchronizedObject()
     private val bookLocks = HashMap<String, SynchronizedObject>()
-    private val building = HashSet<String>()
+
+    /** Books scheduled or building, each with the token of the request that owns the registration. */
+    private val building = HashMap<String, Any>()
+
+    /**
+     * Held for a whole build under the serial policy, so only one book builds at a time. LOCK ORDER: [serialLock], then
+     * a book lock, then [lock] (which is only ever held briefly, never while waiting for another lock).
+     * [deleteIndex] takes only the book lock of its own book, never [serialLock]: it runs on the main thread, and
+     * must not wait for the build of another book (which takes minutes).
+     */
+    private val serialLock = SynchronizedObject()
 
     /** Test seams: run in [scheduleIndexCreation] once the book is registered, and in [deleteIndex] after it cancelled the job. */
     internal var scheduleHook: ((Book) -> Unit)? = null
@@ -71,11 +83,12 @@ class FtsIndexManager internal constructor(
     override fun getIndex(book: Book?): Index {
         requireNotNull(book) { "null book" }
         synchronized(lock) {
-            open[book.initials]?.let { return it }
+            val key = indexKey(book)
+            open[key]?.let { return it }
             val store = FtsIndexStore.open(finalPath(book))
                 // TRANSLATOR: Error condition: The search index of a book is missing, unreadable or of an incompatible version.
                 ?: throw BookException(JSMsg.gettext("The search index could not be opened. It may need to be rebuilt."))
-            return FtsIndex(book, store).also { open[book.initials] = it }
+            return FtsIndex(book, store).also { open[key] = it }
         }
     }
 
@@ -100,14 +113,18 @@ class FtsIndexManager internal constructor(
      * A request for a book that is already scheduled or building is dropped and returns immediately: the running build
      * serves both, so callers must observe the outcome through an [org.crosswire.jsword.index.IndexStatusListener].
      * The book leaves the "building" set, and its final status is set, inside the build lock, so a [deleteIndex] that
-     * waited for the build can be followed at once by a new request.
+     * waited for the build can be followed at once by a new request. A request still queued behind another book's
+     * build (serial policy) when its book is deleted is dropped silently: [deleteIndex] takes over its registration.
      */
     override fun scheduleIndexCreation(book: Book?) {
         requireNotNull(book) { "null book" }
         var registered = false
         var job: Progress? = null
+        val token = Any()
+        var key = ""
         try {
-            if (!synchronized(lock) { building.add(book.initials) }) return
+            key = indexKey(book)
+            if (!synchronized(lock) { if (building.containsKey(key)) false else { building[key] = token; true } }) return
             registered = true
             scheduleHook?.invoke(book)
             book.indexStatus = IndexStatus.SCHEDULED
@@ -119,11 +136,14 @@ class FtsIndexManager internal constructor(
             job = newJob
             newJob.beginJob(jobName)
             val currentPolicy = indexPolicy!!
-            // Serial policy: one build at a time overall; otherwise one per book (as Lucene's mutex choice).
-            val mutex = if (currentPolicy.isSerial()) serialLock else bookLock(book)
-            synchronized(mutex) {
+            // Serial policy: one build at a time overall, then the book's own lock inside it; otherwise one per book.
+            val run = {
+              synchronized(bookLock(key)) {
                 var finalStatus = IndexStatus.UNDONE
+                // Dropped by a deleteIndex while this request waited for the serial lock: touch nothing.
+                val owner = synchronized(lock) { building[key] === token }
                 try {
+                    if (!owner) throw IndexBuildCancelled()
                     fs.createDirectories(final.parent!!)
                     deleteDb(creating)
                     // The open index (if any) keeps serving searches from the old file until the rename below.
@@ -137,7 +157,7 @@ class FtsIndexManager internal constructor(
                     // still holds the evicted index is forwarded to the new one (see [FtsIndex.successor]).
                     val replaced = synchronized(lock) {
                         fs.atomicMove(creating, final)
-                        open.remove(book.initials)
+                        open.remove(key)
                     }
                     retire(book, replaced, reopen = true)
                     finalStatus = IndexStatus.DONE
@@ -155,19 +175,23 @@ class FtsIndexManager internal constructor(
                     Reporter.informUser(this, e)
                 } finally {
                     deleteDb(creating)
-                    book.indexStatus = finalStatus
+                    if (owner) book.indexStatus = finalStatus
                     newJob.done()
-                    synchronized(lock) { building.remove(book.initials) }
+                    if (owner) synchronized(lock) { building.remove(key) }
                     registered = false
                 }
+              }
             }
+            if (currentPolicy.isSerial()) synchronized(serialLock) { run() } else run()
         } catch (e: Exception) {
             Reporter.informUser(this, e)
         } finally {
             if (registered) { // failed before the build lock was reached
-                book.indexStatus = IndexStatus.UNDONE
+                if (synchronized(lock) { building[key] === token }) {
+                    book.indexStatus = IndexStatus.UNDONE
+                    synchronized(lock) { building.remove(key) }
+                }
                 job?.done()
-                synchronized(lock) { building.remove(book.initials) }
             }
         }
     }
@@ -175,13 +199,19 @@ class FtsIndexManager internal constructor(
     @Throws(BookException::class)
     override fun deleteIndex(book: Book?) {
         requireNotNull(book) { "null book" }
-        // A build in progress is cancelled and waited for (same mutex as the build), so it ends UNDONE quietly instead
-        // of failing at the rename after its files were deleted.
+        // A build of this book in progress is cancelled and waited for (the book lock it holds), so it ends UNDONE quietly
+        // instead of failing at the rename after its files were deleted. The serial lock is NOT taken: a build of another
+        // book must not block this call (see [serialLock]).
+        if (!hasDriver(book)) { book.indexStatus = IndexStatus.UNDONE; return } // no index location, nothing to delete
+        val key = indexKey(book)
+        val queued = synchronized(lock) { building[key] }
         JobManager.findJob(Progress.CREATE_INDEX.replace("%s", book.initials))?.cancel()
         deleteHook?.invoke(book)
-        val mutex = if (indexPolicy!!.isSerial()) serialLock else bookLock(book)
-        synchronized(mutex) {
-            retire(book, synchronized(lock) { open.remove(book.initials) }, reopen = false)
+        synchronized(bookLock(key)) {
+            // A request that is only queued behind another book's build (it does not hold the book lock) is dropped; one
+            // that was building has already left the set. A newer request is not touched (different token).
+            synchronized(lock) { if (queued != null && building[key] === queued) building.remove(key) }
+            retire(book, synchronized(lock) { open.remove(key) }, reopen = false)
             val final = finalPath(book)
             try {
                 deleteDb(creatingPath(final))
@@ -205,9 +235,57 @@ class FtsIndexManager internal constructor(
     /** Deletes the legacy Lucene index directory of [book] (and its `.creating` sibling), if any. */
     fun deleteLegacyLuceneIndex(book: Book) {
         if (!hasDriver(book)) return
-        val dir = legacyPath(book)
+        val dir = try { legacyPath(book) } catch (e: IllegalArgumentException) {
+            log.warn("Not deleting a legacy index outside the index directory: {}", e.message)
+            return
+        }
         fs.deleteRecursively(dir, mustExist = false)
         fs.deleteRecursively(creatingPath(dir), mustExist = false)
+    }
+
+    /**
+     * Frees the disk space of the legacy Lucene indexes of [installed] books: deletes the CONTENTS of each
+     * `lucene/<driver>/<initials>/` but keeps the (now empty) directory, because its existence is the "search engine
+     * changed, rebuild the index" signal ([hasLegacyLuceneIndex]). The directory goes when the new index is built
+     * ([deleteLegacyLuceneIndex]). Returns how many directories were emptied.
+     */
+    fun emptyLegacyLuceneIndexes(installed: Collection<Book>): Int {
+        var emptied = 0
+        for (book in installed) {
+            if (!hasDriver(book)) continue
+            val dir = try { legacyPath(book) } catch (e: IllegalArgumentException) { continue }
+            if (!fs.exists(dir) || fs.metadata(dir).isDirectory.not()) continue
+            val children = fs.list(dir)
+            if (children.isEmpty()) continue
+            for (c in children) fs.deleteRecursively(c, mustExist = false)
+            emptied++
+        }
+        return emptied
+    }
+
+    /**
+     * Deletes the index files `search/<driver>/<initials>.sqlite` (with their `.creating`, `-journal`, `-wal` and `-shm`
+     * files) of books that are not among [installed], and empty driver directories. An index of a document that was
+     * removed without going through the app (or whose delete failed) would otherwise stay forever. Returns how many
+     * books' files were removed. Call it only after every installed book is registered.
+     */
+    fun deleteOrphanIndexes(installed: Collection<Book>): Int {
+        if (!fs.exists(searchDir)) return 0
+        val keep = installed.filter { hasDriver(it) }.mapTo(HashSet()) { driverSegment(it) to safeSegment(it.initials) }
+        val orphans = HashSet<Pair<String, String>>()
+        for (driver in fs.list(searchDir)) {
+            if (!fs.metadata(driver).isDirectory) continue
+            for (f in fs.list(driver)) {
+                val at = f.name.lastIndexOf(".sqlite")
+                if (at <= 0) continue // not one of ours
+                val id = f.name.substring(0, at)
+                if ((driver.name to id) in keep) continue
+                fs.deleteRecursively(f, mustExist = false)
+                orphans += driver.name to id
+            }
+            if (fs.list(driver).isEmpty()) fs.delete(driver)
+        }
+        return orphans.size
     }
 
     /**
@@ -216,7 +294,7 @@ class FtsIndexManager internal constructor(
      */
     fun deleteOrphanLegacyLuceneIndexes(installed: Collection<Book>): Int {
         if (!fs.exists(luceneDir)) return 0
-        val keep = installed.mapTo(HashSet()) { driverSegment(it) to it.initials }
+        val keep = installed.filter { hasDriver(it) }.mapTo(HashSet()) { driverSegment(it) to safeSegment(it.initials) }
         var deleted = 0
         for (driver in fs.list(luceneDir)) {
             if (fs.metadata(driver).isDirectory.not()) continue
@@ -234,16 +312,28 @@ class FtsIndexManager internal constructor(
 
     private fun hasDriver(book: Book) = book.bookMetaData.driverName != null
 
-    private fun driverSegment(book: Book) = book.bookMetaData.driverName ?: error("book ${book.initials} has no driver")
+    private fun driverSegment(book: Book) = safeSegment(book.bookMetaData.driverName ?: error("book ${book.initials} has no driver"))
 
-    private fun finalPath(book: Book): Path = searchDir / driverSegment(book) / "${book.initials}.sqlite"
+    /** Key of the per-book caches and locks: the (driver, initials) pair of the file path, both as safe segments. */
+    private fun indexKey(book: Book) = driverSegment(book) + "/" + safeSegment(book.initials)
 
-    private fun legacyPath(book: Book): Path = luceneDir / driverSegment(book) / book.initials
+    internal fun finalPathForTest(book: Book): Path = finalPath(book)
+
+    private fun finalPath(book: Book): Path = contained(searchDir, driverSegment(book), "${safeSegment(book.initials)}.sqlite")
+
+    private fun legacyPath(book: Book): Path = contained(luceneDir, driverSegment(book), safeSegment(book.initials))
+
+    /** [base] / [segments], failing closed (IllegalArgumentException) if the result is not strictly below [base]. */
+    private fun contained(base: Path, vararg segments: String): Path {
+        val p = segments.fold(base) { a, s -> a / s }
+        require(isStrictlyUnder(base, p)) { "path escapes ${base.name}: $p" }
+        return p
+    }
 
     private fun creatingPath(p: Path): Path = p.parent!! / "${p.name}.creating"
 
-    private fun bookLock(book: Book): SynchronizedObject =
-        synchronized(lock) { bookLocks.getOrPut(book.initials) { SynchronizedObject() } }
+    private fun bookLock(key: String): SynchronizedObject =
+        synchronized(lock) { bookLocks.getOrPut(key) { SynchronizedObject() } }
 
     /**
      * Closes [index], just evicted from [open], and drops the book's cached searcher, which holds it. With [reopen] a
@@ -278,7 +368,38 @@ class FtsIndexManager internal constructor(
         }
     }
 
-    private companion object {
+    internal companion object {
+        private val log: Logger = LoggerFactory.getLogger(FtsIndexManager::class)
+
+        /**
+         * [name] as ONE safe file-name segment: it can never be empty, `.`/`..`, or contain a separator, so it cannot
+         * climb out of the directory it is appended to. Ordinary names (letters, digits, `_`, `-`, `.` not at the
+         * start, non-ASCII, ...) come out byte-for-byte unchanged, so existing index file names do not change.
+         * Percent-encoded as `%XX`: `/`, `\`, control characters (NUL included), DEL, a LEADING `.`, a drive-letter colon (`C:x`, which okio reads as a root), and a `%` that
+         * would otherwise look like an escape (so the mapping stays injective). An empty name becomes `%`.
+         */
+        fun safeSegment(name: String): String {
+            if (name.isEmpty()) return "%"
+            val sb = StringBuilder()
+            for ((i, c) in name.withIndex()) {
+                val escape = c == '/' || c == '\\' || c.code < 0x20 || c.code == 0x7f || (c == '.' && i == 0) || (c == ':' && i == 1 && name[0].isAsciiLetter()) ||
+                    (c == '%' && i + 2 < name.length && name[i + 1].isHexDigit() && name[i + 2].isHexDigit())
+                if (escape) sb.append('%').append(c.code.toString(16).uppercase().padStart(2, '0')) else sb.append(c)
+            }
+            return sb.toString()
+        }
+
+        private fun Char.isAsciiLetter() = this in 'a'..'z' || this in 'A'..'Z'
+
+        private fun Char.isHexDigit() = this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
+
+        /** True when [p] (normalised) is a proper descendant of [base] (normalised). */
+        fun isStrictlyUnder(base: Path, p: Path): Boolean {
+            val b = base.normalized().segments
+            val q = p.normalized().segments
+            return q.size > b.size && q.subList(0, b.size) == b && p.normalized().root == base.normalized().root
+        }
+
         fun projectSubdir(name: String): Path =
             CWProject.instance().getWritableProjectSubdirPath(name, false) ?: error("no writable project directory")
     }

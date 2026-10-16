@@ -10,6 +10,7 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookData
 import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.sword.SwordBookPath
+import org.crosswire.jsword.index.IndexPolicyAdapter
 import org.crosswire.jsword.index.IndexStatus
 import org.crosswire.jsword.index.fts.FtsIndexManager
 import org.crosswire.ksword.fixtures.fixtureRoot
@@ -53,7 +54,7 @@ class FtsIndexConcurrencyTest {
         dir.deleteRecursively()
     }
 
-    private fun book(): Book = assertNotNull(Books.installed().getBook("K4RawText")).also { statusBefore.getOrPut(it) { it.indexStatus } }
+    private fun book(initials: String = "K4RawText"): Book = assertNotNull(Books.installed().getBook(initials)).also { statusBefore.getOrPut(it) { it.indexStatus } }
 
     private val search get() = dir.resolve("search").toOkioPath()
 
@@ -159,6 +160,58 @@ class FtsIndexConcurrencyTest {
         assertFalse(builder.isAlive || deleter.isAlive)
         assertEquals(IndexStatus.DONE, b.indexStatus)
         assertTrue(m.isIndexed(b))
+        assertEquals(0, reports.get())
+    }
+
+    private fun serial(m: FtsIndexManager) = m.also { it.indexPolicy = object : IndexPolicyAdapter() { override fun isSerial() = true } }
+
+    /** I1: deleteIndex runs on the main thread; it must not wait for the (minutes long) build of ANOTHER book. */
+    @Test fun deleteIndexDoesNotWaitForAnotherBooksSerialBuild() {
+        val a = book("K4RawText")
+        val b = book("K4RawCom")
+        serial(manager(null)).scheduleIndexCreation(a)
+        assertTrue(files().isNotEmpty())
+        val gate = Gate()
+        val m = serial(manager(gate))
+        val builder = thread { m.scheduleIndexCreation(b) }
+        assertTrue(gate.started.await(20, TimeUnit.SECONDS)) // B holds the serial lock, blocked in its build
+        val deleted = CountDownLatch(1)
+        val deleter = thread { m.deleteIndex(a); deleted.countDown() }
+        assertTrue(deleted.await(10, TimeUnit.SECONDS), "deleteIndex(A) blocked behind the build of B")
+        deleter.join(5_000)
+        assertFalse(m.isIndexed(a))
+        assertEquals(IndexStatus.UNDONE, a.indexStatus)
+        gate.release.countDown()
+        builder.join(60_000)
+        assertFalse(builder.isAlive)
+        assertEquals(IndexStatus.DONE, b.indexStatus)
+        assertTrue(m.isIndexed(b))
+        assertEquals(0, reports.get())
+    }
+
+    /**
+     * A build of A that is only QUEUED behind B's build (serial policy) is dropped quietly when A is deleted, and a
+     * request right after the delete is not lost.
+     */
+    @Test fun deleteOfAQueuedBookDropsItAndALaterScheduleRuns() {
+        val a = book("K4RawText")
+        val b = book("K4RawCom")
+        val gate = Gate()
+        val m = serial(manager(gate))
+        val builderB = thread { m.scheduleIndexCreation(b) }
+        assertTrue(gate.started.await(20, TimeUnit.SECONDS))
+        val queuedA = thread { m.scheduleIndexCreation(a) } // waits for the serial lock
+        Thread.sleep(300)
+        m.deleteIndex(a)
+        assertEquals(IndexStatus.UNDONE, a.indexStatus)
+        val again = thread { m.scheduleIndexCreation(a) } // not dropped as "already building"
+        Thread.sleep(300)
+        gate.release.countDown()
+        listOf(builderB, queuedA, again).forEach { it.join(120_000); assertFalse(it.isAlive) }
+        assertEquals(IndexStatus.DONE, b.indexStatus)
+        assertEquals(IndexStatus.DONE, a.indexStatus)
+        assertTrue(m.isIndexed(a) && m.isIndexed(b))
+        assertTrue(files().none { it.name.contains(".creating") })
         assertEquals(0, reports.get())
     }
 

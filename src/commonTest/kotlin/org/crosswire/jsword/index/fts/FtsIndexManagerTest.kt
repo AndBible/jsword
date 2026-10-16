@@ -218,6 +218,102 @@ class FtsIndexManagerTest {
         assertFalse(m.hasLegacyLuceneIndex(b))
     }
 
+    /** A copy of [b] under other initials (the Book interface is delegated). */
+    private fun renamed(b: Book, name: String): Book = object : Book by b {
+        override val initials: String get() = name
+    }
+
+    @Test fun safeSegmentKeepsOrdinaryNamesAndNeutralisesHostileOnes() {
+        for (ok in listOf("KJV", "ChiUns", "Thai_KJV", "a-b", "v1.2", "a.b.c", "Ääkköset", "耶稣", "a b", "AB:c", "a b:c", "100%", "%zz"))
+            assertEquals(ok, FtsIndexManager.safeSegment(ok), ok)
+        for (bad in listOf("../x", "a/b", "..", ".", ".hidden", "C:\\x", "C:x", "", "a\u0000b", "a\nb", "../../..", "%2F", "a\\b")) {
+            val seg = FtsIndexManager.safeSegment(bad)
+            assertTrue(seg.isNotEmpty() && seg != "." && seg != "..", "'$bad' -> '$seg'")
+            assertFalse(seg.any { it == '/' || it == '\\' || it.code < 0x20 }, "'$bad' -> '$seg'")
+            assertFalse(seg.startsWith("."), "'$bad' -> '$seg'")
+        }
+        assertEquals("%2E./x".replace("/", "%2F"), FtsIndexManager.safeSegment("../x"))
+        // injective: an escape sequence typed by hand differs from the character it spells
+        assertTrue(FtsIndexManager.safeSegment("%2F") != FtsIndexManager.safeSegment("/"))
+    }
+
+    @Test fun hostileInitialsNeverEscapeTheIndexDirectories() {
+        val b = book("K4RawText")
+        val m = manager()
+        for (name in listOf("../x", "a/b", "..", ".hidden", "C:\\x", "C:x", "c:/x", "", "../../../..")) {
+            val hostile = renamed(b, name)
+            val file = m.finalPathForTest(hostile)
+            assertTrue(FtsIndexManager.isStrictlyUnder(searchDir, file), "$name -> $file")
+        }
+    }
+
+    @Test fun legacyDeleteWithAHostileNameDeletesNothingOutsideTheLuceneDirectory() {
+        val b = book("K4RawText")
+        val driver = b.bookMetaData.driverName!!
+        val victim = root / "victim"
+        fs.createDirectories(victim)
+        fs.write(victim / "keep.txt") { writeUtf8("precious") }
+        fs.createDirectories(luceneDir / driver)
+        val m = manager()
+        for (name in listOf("../../victim", "../../../victim", "..", "../../..")) {
+            m.deleteLegacyLuceneIndex(renamed(b, name))
+            m.deleteOrphanLegacyLuceneIndexes(listOf(b, renamed(b, name)))
+            m.emptyLegacyLuceneIndexes(listOf(b, renamed(b, name)))
+        }
+        assertTrue(fs.exists(victim / "keep.txt"))
+        assertTrue(fs.exists(luceneDir))
+        assertTrue(fs.exists(searchDir.parent!!)) // the whole temp root is still there
+    }
+
+    @Test fun anIndexOfAHostileNameIsBuiltInsideTheSearchDirectory() {
+        val b = book("K4RawText")
+        val m = manager()
+        val hostile = renamed(b, "../escape")
+        m.scheduleIndexCreation(hostile)
+        assertEquals(IndexStatus.DONE, hostile.indexStatus)
+        assertFalse(fs.exists(root / "escape.sqlite"))
+        assertTrue(fs.listRecursively(searchDir).any { it.name.endsWith(".sqlite") })
+        assertTrue(m.isIndexed(hostile))
+        m.deleteIndex(hostile)
+        assertFalse(m.isIndexed(hostile))
+    }
+
+    @Test fun orphanIndexFilesOfUninstalledBooksAreRemoved() {
+        val b = book("K4RawText")
+        val other = book("K4RawCom")
+        val driver = b.bookMetaData.driverName!!
+        val m = manager()
+        m.scheduleIndexCreation(b)
+        assertTrue(fs.exists(finalFile(b)))
+        val dir = searchDir / driver
+        for (suffix in listOf(".sqlite", ".sqlite.creating", ".sqlite-wal", ".sqlite-journal")) fs.write(dir / "Gone$suffix") { writeUtf8("x") }
+        fs.write(dir / "notes.txt") { writeUtf8("not an index") }
+        fs.createDirectories(searchDir / "OldDriver")
+        fs.write(searchDir / "OldDriver" / "Old.sqlite") { writeUtf8("x") }
+        assertEquals(2, m.deleteOrphanIndexes(listOf(b, other)))
+        assertTrue(fs.exists(finalFile(b)), "an installed book's index must survive")
+        assertTrue(m.isIndexed(b))
+        assertEquals(listOf("K4RawText.sqlite", "notes.txt"), fs.list(dir).map { it.name }.sorted())
+        assertFalse(fs.exists(searchDir / "OldDriver"))
+        assertEquals(0, m.deleteOrphanIndexes(listOf(b)))
+    }
+
+    @Test fun installedBooksLegacyContentsAreFreedButTheDirectoryStaysAsTheEngineChangedSignal() {
+        val b = book("K4RawText")
+        val driver = b.bookMetaData.driverName!!
+        val legacy = luceneDir / driver / b.initials
+        fs.createDirectories(legacy / "sub")
+        fs.write(legacy / "segments.gen") { writeUtf8("x") }
+        fs.write(legacy / "sub" / "_0.cfs") { writeUtf8("y") }
+        val m = manager()
+        assertEquals(1, m.emptyLegacyLuceneIndexes(listOf(b)))
+        assertTrue(fs.exists(legacy) && fs.list(legacy).isEmpty())
+        assertTrue(m.hasLegacyLuceneIndex(b))
+        assertEquals(0, m.emptyLegacyLuceneIndexes(listOf(b)))
+        m.scheduleIndexCreation(b)
+        assertFalse(m.hasLegacyLuceneIndex(b)) // the rebuild removes the directory itself
+    }
+
     @Test fun legacyDirectoryIsDeletedWhenTheNewIndexIsDone() {
         val b = book("K4RawText")
         val driver = b.bookMetaData.driverName!!
