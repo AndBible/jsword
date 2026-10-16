@@ -15,5 +15,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        // androidx.sqlite (sqlite-bundled) is only on Google's Maven; and-bible's root build already has google().
+        google()
     }
 }

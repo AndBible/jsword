@@ -30,6 +30,8 @@ kotlin {
             api("com.squareup.okio:okio:3.9.0")
             // Suspend download port (K5b D4); keep in step with and-bible's gradle/libs.versions.toml (coroutines = "1.11.0").
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+            // K6 FTS5 search index store; keep in step with and-bible `androidxSqlite` (gradle/libs.versions.toml).
+            implementation("androidx.sqlite:sqlite-bundled:2.7.1")
         }
         jvmMain.dependencies {
             implementation("org.apache.commons:commons-compress:1.12")
