@@ -156,6 +156,13 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
         }
     }
 
+    /** True when the on-disk catalog can be read, including a valid catalog with no supported books. */
+    fun hasCachedBookList(): Boolean {
+        if (!NetUtil.isFile(getCachedIndexFile()!!)) return false
+        getBooks()
+        return loaded
+    }
+
     /* (non-Javadoc)
      * @see org.crosswire.jsword.book.basic.AbstractBookList#getBooks(org.crosswire.jsword.book.BookFilter)
      */
@@ -457,9 +464,14 @@ abstract class AbstractSwordInstaller : AbstractBookList(), Installer, Comparabl
      */
     @Throws(IOException::class)
     protected open fun unpack(cacheDir: KUri?, cache: KUri?) {
-        SwordArchive.tarGzConfsToZipSpelling(
-            fileSpelling(cache!!), storageChild(StorageLocation(cacheDir!!.getPath()!!), "mods.d.zip").spelling
-        )
+        val confZip = storageChild(StorageLocation(cacheDir!!.getPath()!!), "mods.d.zip")
+        try {
+            SwordArchive.tarGzConfsToZipSpelling(fileSpelling(cache!!), confZip.spelling)
+        } catch (error: IOException) {
+            // A failed conversion may leave an empty ZIP; it must not certify a corrupt catalog as valid.
+            try { KFiles.deleteRecursively(confZip.path) } catch (cleanup: IOException) { error.addSuppressed(cleanup) }
+            throw error
+        }
     }
 
     /**
