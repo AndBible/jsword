@@ -6,6 +6,8 @@ import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.sword.SwordBookPathJvm
 import org.crosswire.jsword.index.analysis.AnalyzedToken
+import org.crosswire.jsword.index.analysis.GreekAnalyzer
+import org.crosswire.jsword.index.analysis.HebrewAnalyzer
 import org.crosswire.jsword.index.analysis.SimpleAnalyzer
 import org.crosswire.jsword.index.analysis.TextAnalyzer
 import org.crosswire.jsword.passage.Key
@@ -29,6 +31,9 @@ class AnalyzerCorpusParityTest {
     private fun analyzerFor(lang: String): TextAnalyzer? = when (lang) {
         // The baseline AnalyzerFactory has no "en" entry, so English falls back to the simple analyzer.
         "en" -> SimpleAnalyzer()
+        // The baseline AnalyzerFactory maps both modern and ancient Greek to GreekLuceneAnalyzer.
+        "el", "grc" -> GreekAnalyzer()
+        "he" -> HebrewAnalyzer()
         else -> null
     }
 
@@ -115,4 +120,10 @@ class AnalyzerCorpusParityTest {
     @Test fun everyKeyMatchesBaseline_KJV() = check("KJV")
 
     @Test fun everyKeyMatchesBaseline_MHC() = check("MHC")
+
+    @Test fun everyKeyMatchesBaseline_GreVamvas() = check("GreVamvas")
+
+    @Test fun everyKeyMatchesBaseline_Byz() = check("Byz")
+
+    @Test fun everyKeyMatchesBaseline_HebModern() = check("HebModern")
 }
