@@ -75,6 +75,16 @@ class LuceneSyntaxParserTest {
         }
     }
 
+    /** K6-3 syntax followed by a real parse error fails like Lucene (ParseException), not as "unsupported". */
+    @Test fun aParseErrorAfterUnsupportedSyntaxWins() {
+        for (q in listOf("heading:x )", "a^2 )", "[a TO b] )", "strong:\"h1 h2\" )", "strong:h1~ )", "heading:x (a", "a^2 \"b", "(a^2", "x:y AND", "[a TO b] [c")) {
+            assertFailsWith<QueryParseException>("'$q'") { LuceneSyntaxParser.parse(q, analyzer) }
+        }
+        for (q in listOf("heading:x", "a^2 b", "a^2 b^3", "heading:x AND (a b)", "[a TO b] c")) {
+            assertFailsWith<UnsupportedSearchSyntaxException>("'$q'") { LuceneSyntaxParser.parse(q, analyzer) }
+        }
+    }
+
     @Test fun bareOperatorsAreDroppedTerms() {
         assertEquals("content:faith", lucene("+ faith"))
         assertEquals("content:faith content:hope", lucene("faith + hope"))

@@ -41,7 +41,7 @@ import kotlin.test.fail
  * outside that (a resource, a library) is not seen: run `rm -rf jsword/build/k6-indexes` before gate runs.
  */
 class SearchCorpusParityTest {
-    private class Outcome(val hits: List<String>?, val failure: String?, val syntax: String? = null) {
+    internal class Outcome(val hits: List<String>?, val failure: String?, val syntax: String? = null) {
         override fun toString() = hits?.let { "${it.size} verses ${it.take(3)}" } ?: "FAIL($failure)"
         fun sameAs(o: Outcome) = if (hits != null) hits == o.hits else o.hits == null && failure == o.failure
     }
@@ -72,9 +72,11 @@ class SearchCorpusParityTest {
      * The approved-difference rules (ids as in `approved-differences.md`). Returns the rule that covers this
      * difference, or null. Every rule is narrow: it states the exact shape of both outcomes.
      */
-    private fun approvedRule(query: String, base: Outcome, mine: Outcome): String? {
+    internal fun approvedRule(query: String, base: Outcome, mine: Outcome): String? {
+        // Every rule describes a case where the baseline ACCEPTED the query (or failed in the one stated way); a mismatch where
+        // the baseline failed in some other way is never covered.
         // Matched on the syntax the parser reports (UnsupportedSearchSyntaxException.syntax), not on the query text.
-        mine.syntax?.let { syn ->
+        if (base.hits != null) mine.syntax?.let { syn ->
             if (syn == "^" || syn == "[a TO b]" || syn == "{a TO b}" || (syn.endsWith(":") && !syn.startsWith("strong:"))) return "K6-3-unsupported-syntax"
             if (syn == "strong:term~" || syn == "strong:\"phrase\"") return "strong-phrase-or-fuzzy"
         }
@@ -82,7 +84,8 @@ class SearchCorpusParityTest {
         if (base.failure == "IllegalArgumentException" && mine.failure == "BookException<-QueryParseException" && FUZZY_INT.containsMatchIn(query)) {
             return "fuzzy-similarity-at-least-1"
         }
-        if (query.count { it == '(' } > 200 && mine.failure?.startsWith("BookException") == true) return "nesting-over-200"
+        // the baseline succeeds up to about 2,000 levels (hits != null); a baseline failure is not this rule
+        if (base.hits != null && query.count { it == '(' } > 200 && mine.failure == "BookException<-QueryParseException") return "nesting-over-200"
         return null
     }
 
@@ -195,6 +198,9 @@ class SearchCorpusParityTest {
         var nonEmpty = 0
         var failures = 0
         val approvedCases = approvedCases(initials)
+        val detail = HashMap<String, String>()
+        val mustHit = MUST_HIT.getValue(initials)
+        val mustMissed = ArrayList<String>()
         val floorSet = EXPECTED_HITS.getValue(initials)
         var floorHits = 0
         try {
@@ -203,8 +209,10 @@ class SearchCorpusParityTest {
                 val q = spec.query
                 val base = baselineOutcome(root.path, initials, baseDir, q)
                 val mine = currentOutcome(searcher, q)
+                detail[q] = base.toString().take(40)
                 if (base.hits?.isNotEmpty() == true) nonEmpty++
                 if (base.hits == null) failures++
+                if (q in mustHit && !(base.hits?.isNotEmpty() == true && mine.hits?.isNotEmpty() == true)) mustMissed += "'$q': baseline $base, mine $mine"
                 if (q in floorSet && base.hits?.isNotEmpty() == true && mine.hits?.isNotEmpty() == true) floorHits++
                 if (base.sameAs(mine)) continue
                 val rule = approvedRule(q, base, mine) ?: if (q in approvedCases) "DIFF-case" else null
@@ -215,12 +223,14 @@ class SearchCorpusParityTest {
             manager.closeAllIndexes()
         }
         val ms = (System.nanoTime() - t0) / 1_000_000
+        if (System.getenv("K6_DETAIL") != null) queries.forEach { println("K6 DETAIL $initials ${if (it.expectHit) "hit" else "any"} ${detail[it.query]} :: ${it.query}") }
         println("K6 CORPUS $initials: ${queries.size} queries, $nonEmpty non-empty (baseline), $failures failing on both-or-baseline side, " +
             "${approved.size} approved differences, ${newDiffs.size} new; floor $floorHits/${floorSet.size}; " +
             "baseline index ${if (baseMs == 0L) "cached" else "${baseMs} ms"}, FTS index ${if (curCached) "cached" else "${curMs} ms"}, total ${ms} ms")
         approved.forEach { println("K6 APPROVED $initials $it") }
         // the floor: an all-empty regression cannot pass
         assertTrue(floorHits * 10 >= floorSet.size * 6, "$initials: only $floorHits of ${floorSet.size} expected-hit queries are non-empty on both sides (floor 60%)")
+        if (mustMissed.isNotEmpty()) fail("$initials: queries that must find verses on both sides are empty or failing:\n" + mustMissed.joinToString("\n"))
         if (newDiffs.isNotEmpty()) fail("NEW parity differences (${newDiffs.size}):\n" + newDiffs.joinToString("\n"))
     }
 
@@ -276,6 +286,24 @@ class SearchCorpusParityTest {
         } finally {
             empty.deleteRecursively()
         }
+    }
+
+    /** A rule never approves a mismatch where the baseline failed (`heading:x )`: Lucene's parse error, K6's Unsupported), and approves the accepted case. */
+    @Test fun rulesDoNotApproveMismatchesWhereTheBaselineFailed() {
+        val ok = Outcome(listOf("Gen.1.1"), null)
+        val parseFail = Outcome(null, kind("BookException", "ParseException"))
+        for (syn in listOf("heading:", "^", "[a TO b]", "{a TO b}", "strong:term~", "strong:\"phrase\"")) {
+            val mine = Outcome(null, "UnsupportedSearchSyntaxException", syn)
+            assertEquals(null, approvedRule("heading:x )", parseFail, mine), "baseline failed, syntax $syn")
+            assertTrue(approvedRule("q", ok, mine) != null, "baseline accepted, syntax $syn")
+        }
+        val typed = Outcome(null, "BookException<-QueryParseException")
+        val deep = "(".repeat(250) + "faith" + ")".repeat(250)
+        assertEquals("nesting-over-200", approvedRule(deep, ok, typed))
+        assertEquals(null, approvedRule(deep, parseFail, typed))
+        assertEquals(null, approvedRule("faith", ok, typed), "not deep")
+        assertEquals("fuzzy-similarity-at-least-1", approvedRule("faith~1", Outcome(null, "IllegalArgumentException"), typed))
+        assertEquals(null, approvedRule("faith~1", parseFail, typed))
     }
 
     @Test fun approvedDifferencesFileNamesEveryRuleTheTestKnows() {

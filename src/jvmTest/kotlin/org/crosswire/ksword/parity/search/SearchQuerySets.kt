@@ -28,6 +28,18 @@ val QUERY_SPECS: Map<String, List<SearchQuerySpec>> by lazy { MODULE_WORDS.mapVa
 /** The query strings of [QUERY_SPECS] per module (at least 25 each). */
 val QUERY_SETS: Map<String, List<String>> by lazy { QUERY_SPECS.mapValues { (_, specs) -> specs.map { it.query } } }
 
+/** Queries per module that MUST find verses on both sides (each one, not a share): the app-reachable shapes that would otherwise pass as two empty sets. */
+val MUST_HIT: Map<String, Set<String>> by lazy { MODULE_WORDS.keys.associateWith { m ->
+    MUST.getOrDefault(m, emptySet()) + listOfNotNull("+[1 Corinthians] *".takeIf { m != "WLC" }, "+[Song of Solomon] *".takeIf { m != "Byz" })
+} }
+
+private val MUST: Map<String, Set<String>> = mapOf(
+    "KJV" to setOf("+[Gen 1:1] strong:h7225", "+[John 1:1] strong:g746", "+[1 Corinthians] didst"),
+    "Byz" to setOf("+[John 1:1] strong:g746"),
+    "ChiUns" to setOf("+[Gen 1:1] strong:h7225", "+[John 1:1] strong:g746"),
+    "ChiUn" to setOf("+[Gen 1:1] strong:h7225", "+[John 1:1] strong:g746"),
+)
+
 /** Queries per module that should find verses (non-empty on both sides), input of the floor assertion. */
 val EXPECTED_HITS: Map<String, Set<String>> by lazy {
     QUERY_SPECS.mapValues { (_, specs) -> specs.filter { it.expectHit }.map { it.query }.toSet() }
@@ -55,6 +67,13 @@ private val GAP_PHRASES: Map<String, List<String>> = mapOf(
 private val EMPTY_TERM: Map<String, List<String>> = mapOf(
     "AraSVD" to listOf("من", "في", "من في", "+من +في", "\"من في\"", "ـ", "ً", "من AND ـ", "من OR ـ", "من*", "ـ*"),
     "FarOPV" to listOf("و", "از", "و از", "+و +از", "\"و از\"", "ـ", "‌", "و AND ‌", "از*", "ـ*"),
+)
+
+private val SWIFT_NON_EMPTY = setOf(
+    "any", "all", "phrase", "explicit_phrase", "prefix", "and", "or", "not", "unary_required_prohibited", "implicit_prohibited",
+    "spaced_plus_bare_operator", "spaced_minus_bare_operator", "spaced_bang_bare_operator", "attached_optional_required",
+    "and_attached_prohibited", "or_attached_prohibited", "required_pair_prohibited", "required_or_optional", "optional_or_required",
+    "grouped", "symbolic_and", "symbolic_or", "spaced_plus_middle_bare_operator", "spaced_minus_middle_bare_operator", "punctuation_cleanup",
 )
 
 /** `SearchControl.cleanSearchString` + `SearchType.decorate` for the fixture's word modes (the app builds the query this way). */
@@ -108,6 +127,12 @@ private fun buildSpecs(initials: String, mw: ModuleWords): List<SearchQuerySpec>
     hit("+[Gen-Rev] $a"); hit("-[Gen-Mal] $a"); any("-[Mat-Rev] $x1")
     any("+[Gen-Mal] +[Mat-Rev] $a")
     // a second bracket reaches Lucene's parser (the UI adds a section range, the JSword layer removes only the first): parse errors in both
+    any("heading:$a )"); any("$a^2 )"); any("[$a TO $b] )")
+    // a localized/multi-word section range on every module: the whole book 1 Corinthians (`*` matches every verse of the section)
+    // (WLC has no New Testament: the range fails on both sides; Byz has no Song of Solomon: empty on both)
+    if (initials != "WLC") hit("+[1 Corinthians] *") else any("+[1 Corinthians] *")
+    if (initials != "Byz") hit("+[Song of Solomon] *") else any("+[Song of Solomon] *")
+    any("+[1 Cor] *"); any("+[Rom 1:1-5] *")
     any("+[Gen-Mal] [Rom] $a"); any("+[Mat-Rev] [Rom] $a"); any("[Rom] $a")
     // the UI's section term with all-words text that carries a typed operator
     any(SearchType.ALL_WORDS.decorate("$x1 AND $x2")); any(SearchType.ALL_WORDS.decorate("$x1 NOT $x2"))
@@ -147,14 +172,17 @@ private fun buildSpecs(initials: String, mw: ModuleWords): List<SearchQuerySpec>
         any("神$faith~"); any("${a.take(1)}*$faith")
     }
     if (initials == "KJV") {
-        any("+[1 Corinthians] $a"); any("+[1 Corinthians] $x1"); any("+[1 Corinthians] " + SearchType.ALL_WORDS.decorate("$x1 $x2"))
+        hit("+[1 Corinthians] $a"); any("+[1 Corinthians] $x1"); any("+[1 Corinthians] " + SearchType.ALL_WORDS.decorate("$x1 $x2"))
         any("+[Song of Solomon] $a"); any("-[1 Corinthians] $x1")
         // spec 6.2: the Swift fixture's query cases, prepared as the app does (cleanSearchString + SearchType.decorate)
-        for (c in SWIFT_ORACLE_QUERY_CASES) any(swiftPrepare(c.input, c.wordMode))
+        // the cases whose verse sets are non-empty on KJV (checked against the baseline) must stay non-empty: they count for the floor
+        for (c in SWIFT_ORACLE_QUERY_CASES) swiftPrepare(c.input, c.wordMode).let { if (c.name in SWIFT_NON_EMPTY) hit(it) else any(it) }
     }
     // LinkControl.checkStrongs probes (the app's "does this module have Strong's" check, spec 4.4)
     if (initials in setOf("KJV", "ChiUns", "ChiUn", "Byz")) {
-        any("+[Gen 1:1] strong:h7225"); any("+[John 1:1] strong:g746"); any("+[Gen 1:1] strong:g746")
+        val probes = listOf("+[Gen 1:1] strong:h7225", "+[John 1:1] strong:g746", "+[Gen 1:1] strong:g746")
+        // where the module has the number at that verse (KJV: Gen 1:1 H7225 and John 1:1 G746; Byz: John 1:1 G746) it must hit
+        probes.forEachIndexed { i, q -> if ((initials in setOf("KJV", "ChiUns", "ChiUn") && i < 2) || (initials == "Byz" && i == 1)) hit(q) else any(q) }
     }
     // K6-9: Strong's numbers
     STRONGS[initials]?.let { s ->

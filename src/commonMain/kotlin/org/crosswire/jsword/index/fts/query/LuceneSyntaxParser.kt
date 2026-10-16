@@ -52,7 +52,14 @@ object LuceneSyntaxParser {
         // A lexical error anywhere fails the whole query in Lucene (as a ParseException), also when K6-3 syntax comes
         // first: report it before any `UnsupportedSearchSyntaxException`, so the failure kind equals the baseline's.
         tokens.lastOrNull()?.takeIf { it.kind == Kind.ERROR }?.let { throw QueryParseException(it.image) }
-        return Parser(tokens, analyzer).parseTop() ?: SearchNode.Bool(emptyList())
+        try {
+            return Parser(tokens, analyzer).parseTop() ?: SearchNode.Bool(emptyList())
+        } catch (unsupported: UnsupportedSearchSyntaxException) {
+            // Lucene accepts the K6-3 form, but a query that is also malformed later fails there with a ParseException:
+            // finish the parse leniently so that such a query gets the baseline's failure kind, not "unsupported".
+            Parser(tokens, analyzer).also { it.lenient = true }.parseTop()
+            throw unsupported
+        }
     }
 
     // ---- lexer ----
@@ -189,6 +196,21 @@ object LuceneSyntaxParser {
     private class Parser(val toks: List<Tok>, val analyzer: TextAnalyzer?) {
         var idx = 0
 
+        /** Second pass only (see [parse]): K6-3 syntax is noted and skipped instead of thrown, to find any parse error after it. */
+        var lenient = false
+
+        private fun unsupported(syntax: String) {
+            if (!lenient) throw UnsupportedSearchSyntaxException(syntax)
+        }
+
+        /** `^` boost (K6-3). Lenient: consumes the `^` and its number, as Lucene's Boost lexical state would. */
+        fun skipBoost() {
+            if (peek().kind != Kind.CARAT) return
+            unsupported("^")
+            idx++
+            if (peek().kind == Kind.TERM) idx++
+        }
+
         fun peek(k: Int = 0): Tok {
             val t = toks[minOf(idx + k, toks.size - 1)]
             if (t.kind == Kind.ERROR) throw QueryParseException(t.image)
@@ -263,7 +285,7 @@ object LuceneSyntaxParser {
                 val q = parseQuery(field, depth + 1)
                 if (peek().kind != Kind.RPAREN) throw QueryParseException("Cannot parse query: expected ')' but found '${peek().image}'")
                 idx++
-                if (peek().kind == Kind.CARAT) throw UnsupportedSearchSyntaxException("^")
+                skipBoost()
                 return q
             }
             return parseTerm(field)
@@ -274,12 +296,17 @@ object LuceneSyntaxParser {
             val tok = peek()
             when (tok.kind) {
                 Kind.TERM, Kind.STAR, Kind.PREFIXTERM, Kind.WILDTERM, Kind.BAREOPER -> idx++
-                Kind.RANGE -> throw UnsupportedSearchSyntaxException(if (tok.image.startsWith("[")) "[a TO b]" else "{a TO b}")
+                Kind.RANGE -> {
+                    unsupported(if (tok.image.startsWith("[")) "[a TO b]" else "{a TO b}")
+                    idx++
+                    skipBoost()
+                    return null
+                }
                 Kind.QUOTED -> return parseQuoted(field)
                 else -> throw QueryParseException("Cannot parse query: unexpected '${tok.image}'")
             }
             val slop = if (peek().kind == Kind.FUZZY_SLOP) next() else null
-            if (peek().kind == Kind.CARAT) throw UnsupportedSearchSyntaxException("^")
+            skipBoost()
             val image = if (tok.kind == Kind.BAREOPER) tok.image.substring(0, 1) else tok.image
             when {
                 tok.kind == Kind.STAR || tok.kind == Kind.WILDTERM -> {
@@ -300,7 +327,7 @@ object LuceneSyntaxParser {
                 }
                 slop != null -> {
                     requireField(field)
-                    if (field == SearchFields.STRONG) throw UnsupportedSearchSyntaxException("strong:term~")
+                    if (field == SearchFields.STRONG) { unsupported("strong:term~"); return null }
                     val similarity = slop.image.substring(1).toFloatOrNull() ?: DEFAULT_FUZZY_SIMILARITY
                     if (similarity < 0f || similarity > 1f) {
                         throw QueryParseException("Minimum similarity for a FuzzyQuery has to be between 0.0f and 1.0f !")
@@ -321,7 +348,7 @@ object LuceneSyntaxParser {
         fun parseQuoted(field: String): SearchNode? {
             val tok = next()
             val slopTok = if (peek().kind == Kind.FUZZY_SLOP) next() else null
-            if (peek().kind == Kind.CARAT) throw UnsupportedSearchSyntaxException("^")
+            skipBoost()
             requireField(field)
             val slop = slopTok?.image?.substring(1)?.toFloatOrNull()?.toInt() ?: 0
             val text = unescape(tok.image.substring(1, tok.image.length - 1))
@@ -330,14 +357,14 @@ object LuceneSyntaxParser {
                 // positions, which the strongs table does not keep.
                 // Count the numbers as written: `G3588!a` is one number (the filter emits its two tokens for it).
                 val numbers = text.split(Regex("\\s+")).filter { it.isNotEmpty() && StrongsTokens.normalize(it) != null }
-                if (numbers.size > 1) throw UnsupportedSearchSyntaxException("strong:\"phrase\"")
+                if (numbers.size > 1) { unsupported("strong:\"phrase\""); return null }
                 return if (numbers.isEmpty()) null else SearchNode.StrongTerm(text, false)
             }
             return if (isEmpty(text)) null else SearchNode.Phrase(text, slop)
         }
 
         fun requireField(field: String) {
-            if (field != DEFAULT_FIELD && field != SearchFields.STRONG) throw UnsupportedSearchSyntaxException("$field:")
+            if (field != DEFAULT_FIELD && field != SearchFields.STRONG) unsupported("$field:")
         }
 
         fun isEmpty(text: String): Boolean = analyzer != null && analyzer.analyze(text).isEmpty()
