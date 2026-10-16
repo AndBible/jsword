@@ -155,9 +155,12 @@ class FtsQueryEvaluatorTest {
     }
 
     @Test fun wildcardFuzzyAndProximityAreNotSilentlyWrong() {
-        for (q in listOf("\"god light\"~2")) {
-            assertFailsWith<UnsupportedSearchSyntaxException>(q) { run(q) }
-        }
+        assertEquals(emptySet(), run("\"god light\"~2"))
+        assertEquals(setOf(7L), run("\"god light\"~3"), "row 7 has light god: reverse order, one token between, slop 3")
+        assertEquals(setOf(2L, 7L), run("\"god light\"~4"))
+        assertEquals(setOf(7L), run("\"light god\"~1"))
+        assertEquals(setOf(7L), run("\"light god\"~5"))
+        assertEquals(setOf(2L, 7L), run("\"light god\"~6"))
         assertEquals(setOf(6L), run("\"well known\"~0"), "slop 0 is a plain phrase")
         assertEquals(setOf(2L, 3L, 6L, 7L), run("\"light\"~5"), "one token: a term, slop is irrelevant")
     }
@@ -184,5 +187,32 @@ class FtsQueryEvaluatorTest {
         assertEquals(emptySet(), run("\\*"))
         assertEquals(emptySet(), run("+ "))
         assertEquals(setOf(2L, 7L), run("\\* AND light AND god"))
+    }
+
+    /**
+     * The candidate query (FTS5 NEAR) must never lose a match: on random small rows with gaps (the analyzer drops "the"
+     * but keeps its position) a sloppy phrase gives exactly the rows the matcher accepts, found by brute force.
+     */
+    @Test fun sloppyPhraseEqualsBruteForceOverAllRows() {
+        val rnd = Random(1313)
+        val vocab = listOf("a", "b", "c", "d", "the")
+        val rs = FtsIndexStore.create(tmp()).also { stores += it }
+        rs.beginBuild()
+        for (id in 1L..300L) rs.addEntry(id, "X.1.$id", tokens(List(rnd.nextInt(1, 13)) { vocab[rnd.nextInt(vocab.size)] }.joinToString(" ")), emptyList())
+        rs.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, "test", SearchTokenCodec.ID, "T", "1.0", "fp"))
+        rs.commitBuild()
+        val ev = FtsQueryEvaluator(rs, analyzer)
+        var matched = 0
+        repeat(400) {
+            val text = List(rnd.nextInt(2, 6)) { vocab[rnd.nextInt(vocab.size)] }.joinToString(" ")
+            val slop = rnd.nextInt(1, 9)
+            val q = tokens(text)
+            val expected = if (q.size < 2) null else rs.allRowIds().filter { SloppyPhraseMatcher.matches(q, slop, rs.tokensOf(it)) }.toSet()
+            if (expected != null) {
+                assertEquals(expected, ev.evaluate(SearchNode.Phrase(text, slop)), "\"$text\"~$slop")
+                matched += expected.size
+            }
+        }
+        check(matched > 500) { "the generated phrases should match something: $matched" }
     }
 }

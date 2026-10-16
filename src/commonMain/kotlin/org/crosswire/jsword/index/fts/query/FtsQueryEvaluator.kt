@@ -30,7 +30,9 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  *   against the index vocabulary by [VocabularyExpansion] (Lucene's term-dictionary expansion) and the matches of
  *   the terms are united, [MATCH_BATCH] terms per query.
  *
- * Sloppy phrases are Task 13: until then evaluating one throws [UnsupportedSearchSyntaxException].
+ * - Sloppy [SearchNode.Phrase] (slop above 0, at least two tokens): candidates from an FTS5 `NEAR` over the single
+ *   terms (a superset by construction, see [sloppyCandidates]), then each candidate verified by [SloppyPhraseMatcher]
+ *   over the row's tokens (Lucene's `SloppyPhraseScorer`, by stream position).
  *
  * Every FTS5 expression is built defensively: each encoded token is quoted, nothing from the user reaches FTS5
  * syntax.
@@ -40,8 +42,7 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
         is SearchNode.Term -> phraseOrTerm(analyzer.analyze(node.text))
         is SearchNode.Phrase -> {
             val tokens = analyzer.analyze(node.text)
-            if (node.slop > 0 && tokens.size > 1) throw UnsupportedSearchSyntaxException("\"phrase\"~${node.slop}")
-            phraseOrTerm(tokens)
+            if (node.slop > 0 && tokens.size > 1) sloppy(tokens, node.slop) else phraseOrTerm(tokens)
         }
         is SearchNode.Bool -> evaluateBool(node)
         is SearchNode.StrongTerm -> {
@@ -108,6 +109,28 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
         return if (not.isEmpty()) positive else positive - not
     }
 
+    private fun sloppy(tokens: List<AnalyzedToken>, slop: Int): Set<Long> {
+        if (SloppyPhraseMatcher.hasSamePosition(tokens)) throw UnsupportedSearchSyntaxException("\"phrase\"~$slop with tokens at one position")
+        return sloppyCandidates(tokens, slop).filterTo(LinkedHashSet()) { SloppyPhraseMatcher.matches(tokens, slop, store.tokensOf(it)) }
+    }
+
+    /**
+     * Rows that contain every phrase term close enough to match. A sloppy match puts every term `i` within
+     * `[m + o_i, m + o_i + slop]` for some `m` (`o_i` the query offset), so all terms lie within a window of
+     * `o_last - o_first + slop + 1` positions. FTS5 `NEAR(t1 .. tn, N)` (one quoted token per phrase, any order)
+     * accepts a row when its terms fit a window of `N + 2` tokens: measured on SQLite 3.46, with `n` single-token phrases
+     * the least `N` is the number of non-matching tokens in the window plus `n - 2` (so a window of `w` tokens needs
+     * `N = w - 2`, independent of `n`). Hence `N = o_last - o_first + slop - 1`, never losing a Lucene match (the
+     * differential tests compare against brute force). A very long phrase falls back to the all-terms intersection.
+     */
+    private fun sloppyCandidates(tokens: List<AnalyzedToken>, slop: Int): Set<Long> {
+        val terms = tokens.map { quote(it.text) }
+        if (terms.size > MAX_NEAR_TERMS) return terms.map { store.match(it) }.reduce { a, b -> a intersect b }
+        val span = tokens.maxOf { it.position } - tokens.minOf { it.position }
+        val near = span.toLong() + slop - 1
+        return store.match(terms.joinToString(" ", "NEAR(", ", $near)"))
+    }
+
     /** One token: the token; several: one FTS5 phrase with a gap token for every skipped position. */
     private fun phraseOrTerm(tokens: List<AnalyzedToken>): Set<Long> {
         if (tokens.isEmpty()) return emptySet()
@@ -127,5 +150,8 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
     private companion object {
         /** Terms per FTS5 expression: far below the expression-depth and length limits of SQLite. */
         const val MATCH_BATCH = 200
+
+        /** Longest sloppy phrase given to FTS5 `NEAR`; longer ones use the plain intersection of their terms. */
+        const val MAX_NEAR_TERMS = 50
     }
 }

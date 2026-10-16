@@ -169,7 +169,7 @@ class SearchQueryOracleSmokeTest {
             "(+faith -hope) love", "+(-faith) love",
             // phrases and several-token terms
             "\"faith hope\"", "\"in the beginning\"", "\"the god\"", "\"a b\"", "\"the\"", "well-known", "beginning-god", "in-the", "fa\\ ith", "\"\\\"faith\\\"\"",
-            "\"faith hope\"~", "\"light\"", "\"light\"~3",
+            "\"faith hope\"~", "\"light\"", "\"light\"~3", "\"faith hope\"~3", "\"faith hope\"~1", "\"faith hope\"~3.5", "\"faith hope\"~1e1",
             // strong
             "strong:H07225", "strong:h7225", "strong:g26", "strong:h7225 AND god", "strong:h7225 AND light", "strong:h430 -god", "light AND strong:g26",
             "strong:xyz", "light AND strong:xyz", "strong:h7225 strong:g26", "content:faith", "strong:G3588!a", "strong:g3588",
@@ -195,9 +195,8 @@ class SearchQueryOracleSmokeTest {
             "heading:x", "faith^2", "[a TO b]", "{a TO b}", "strong:\"h7225 g26\"", "faith AND [a TO b]", "(faith hope)^2", "\"faith hope\"^3", "a:b",
         )
 
-        /** Task 13 evaluates these; until then they are rejected as unsupported. */
+        /** Nothing is pending since task 13 (sloppy phrases are evaluated; more shapes in `SearchProximityOracleTest`). */
         val PENDING_QUERIES: List<String> = listOf(
-            "\"faith hope\"~3", "\"faith hope\"~1", "\"faith hope\"~3.5", "\"faith hope\"~1e1",
         )
 
         /** Task 12: expansion shapes, including the escape cases of the task 11 review. */
