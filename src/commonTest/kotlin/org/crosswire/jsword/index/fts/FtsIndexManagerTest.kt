@@ -150,7 +150,7 @@ class FtsIndexManagerTest {
         val m = manager()
         m.scheduleIndexCreation(b)
         for (change in listOf<(FtsIndexMetadata) -> FtsIndexMetadata>(
-            { it.copy(analyzerId = "other") }, { it.copy(codec = "other") }, { it.copy(bookVersion = "9.9") },
+            { it.copy(schemaVersion = FTS_SCHEMA_VERSION + 1) }, { it.copy(analyzerId = "other") }, { it.copy(codec = "other") }, { it.copy(bookVersion = "9.9") },
         )) {
             m.scheduleIndexCreation(b)
             assertFalse(m.needsReindexing(b))
@@ -189,9 +189,51 @@ class FtsIndexManagerTest {
         val m = manager()
         m.scheduleIndexCreation(b)
         assertTrue(m.isIndexed(b))
-        FtsIndexStore.open(finalFile(b))!!.use { assertEquals(3, it.allRowIds().size) }
-        m.getIndex(b).find("love")
+        FtsIndexStore.open(finalFile(b))!!.use { assertEquals(setOf("G0025", "G0026", "G3056"), it.allRowIds().map { r -> it.osisRef(r) }.toSet()) }
+        // "world" occurs only in entry G0025 and "love" only in G0026 (K4 manifest), so each find has exactly one hit.
+        assertEquals(1, m.getIndex(b).find("world").getCardinality())
+        assertEquals(1, m.getIndex(b).find("love").getCardinality())
         m.closeAllIndexes()
+    }
+
+    private fun fragment(body: String): fi.sykero.kdom.Element = fi.sykero.kdom.Element("div").apply {
+        addContent("$body ")
+        addContent(fi.sykero.kdom.Element("w").setAttribute("lemma", "strong:H430").setText("beta"))
+        addContent(fi.sykero.kdom.Element("note").setText("gamma"))
+        addContent(fi.sykero.kdom.Element("title").setText("delta"))
+    }
+
+    /** K6-4: only canonical text is indexed; notes and headings are not; Strong's only when the book has the feature. */
+    @Test fun onlyCanonicalTextIsIndexedAndStrongsNeedTheBookFeature() {
+        val b = book("K4RawText")
+        val m = manager { _, _ -> fragment("alpha") }
+        m.scheduleIndexCreation(b)
+        val index = m.getIndex(b)
+        assertEquals(6, index.find("alpha").getCardinality())
+        assertEquals(6, index.find("beta").getCardinality())
+        assertEquals(0, index.find("gamma").getCardinality(), "note text")
+        assertEquals(0, index.find("delta").getCardinality(), "heading text")
+        m.closeAllIndexes()
+        FtsIndexStore.open(finalFile(b))!!.use { assertTrue(it.strongs("H0430").isEmpty(), "K4RawText has no Strong's feature") }
+    }
+
+    /** A rebuild replaces the file under a cached handle; getIndex must then serve the new data. */
+    @Test fun rebuildEvictsTheCachedIndex() {
+        val b = book("K4RawText")
+        var word = "alpha"
+        val m = manager { _, _ -> fragment(word) }
+        m.scheduleIndexCreation(b)
+        assertEquals(6, m.getIndex(b).find("alpha").getCardinality())
+        word = "omega"
+        m.scheduleIndexCreation(b)
+        assertEquals(6, m.getIndex(b).find("omega").getCardinality())
+        assertEquals(0, m.getIndex(b).find("alpha").getCardinality())
+        m.closeAllIndexes()
+    }
+
+    @Test fun getIndexOfAnUnindexedBookFailsWithAnAccurateMessage() {
+        val e = assertFailsWith<BookException> { manager().getIndex(book("K4RawText")) }
+        assertFalse(e.message!!.contains("Lucene"), e.message)
     }
 
     @Test fun findFailsWithWrappedNoSuchVerseExceptionForAnUnparseableKey() {

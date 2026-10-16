@@ -52,6 +52,7 @@ class FtsIndexManager internal constructor(
     private val open = HashMap<String, FtsIndex>()
     private val serialLock = SynchronizedObject()
     private val bookLocks = HashMap<String, SynchronizedObject>()
+    private val building = HashSet<String>()
     private var policy: IndexPolicy = IndexPolicyAdapter()
 
     init { deleteCreatingLeftovers() }
@@ -68,7 +69,8 @@ class FtsIndexManager internal constructor(
         synchronized(lock) {
             open[book.initials]?.let { return it }
             val store = FtsIndexStore.open(finalPath(book))
-                ?: throw BookException(JSMsg.gettext("Failed to initialize Lucene search engine."))
+                // TRANSLATOR: Error condition: The search index of a book is missing, unreadable or of an incompatible version.
+                ?: throw BookException(JSMsg.gettext("The search index could not be opened. It may need to be rebuilt."))
             return FtsIndex(book, store).also { open[book.initials] = it }
         }
     }
@@ -91,6 +93,8 @@ class FtsIndexManager internal constructor(
 
     override fun scheduleIndexCreation(book: Book?) {
         requireNotNull(book) { "null book" }
+        // A second request for a book that is already scheduled or building is dropped: the running build serves both.
+        if (!synchronized(lock) { building.add(book.initials) }) return
         book.indexStatus = IndexStatus.SCHEDULED
         var finalStatus = IndexStatus.UNDONE
         val final = finalPath(book)
@@ -115,6 +119,8 @@ class FtsIndexManager internal constructor(
                     job.isCancelable = false
                     if (cancelled.value || job.isFinished) throw IndexBuildCancelled()
                     fs.atomicMove(creating, final)
+                    // Evict a handle opened on the replaced file while the build ran; getIndex reopens the new one.
+                    closeOpen(book)
                     finalStatus = IndexStatus.DONE
                     if (errors.isNotEmpty()) {
                         // TRANSLATOR: It is likely that one or more verses could not be indexed due to errors in those verses.
@@ -133,6 +139,7 @@ class FtsIndexManager internal constructor(
         } finally {
             book.indexStatus = finalStatus
             job.done()
+            synchronized(lock) { building.remove(book.initials) }
         }
     }
 
@@ -144,17 +151,23 @@ class FtsIndexManager internal constructor(
     @Throws(BookException::class)
     override fun deleteIndex(book: Book?) {
         requireNotNull(book) { "null book" }
-        closeOpen(book)
-        val final = finalPath(book)
-        try {
-            deleteDb(creatingPath(final))
-            deleteDb(final)
-        } catch (e: IOException) {
-            // TRANSLATOR: Error condition: The index could not be deleted.
-            throw BookException(JSMsg.gettext("Failed to delete search index."), e)
+        // A build in progress is cancelled and waited for (same mutex as the build), so it ends UNDONE quietly instead
+        // of failing at the rename after its files were deleted.
+        JobManager.findJob(Progress.CREATE_INDEX.replace("%s", book.initials))?.cancel()
+        val mutex = if (indexPolicy!!.isSerial()) serialLock else bookLock(book)
+        synchronized(mutex) {
+            closeOpen(book)
+            val final = finalPath(book)
+            try {
+                deleteDb(creatingPath(final))
+                deleteDb(final)
+            } catch (e: IOException) {
+                // TRANSLATOR: Error condition: The index could not be deleted.
+                throw BookException(JSMsg.gettext("Failed to delete search index."), e)
+            }
+            book.indexStatus = IndexStatus.UNDONE
+            book.resetSearcher()
         }
-        book.indexStatus = IndexStatus.UNDONE
-        book.resetSearcher()
     }
 
     override fun closeAllIndexes() {
