@@ -22,6 +22,8 @@ import org.crosswire.jsword.index.lucene.LuceneIndex;
 import org.crosswire.jsword.index.lucene.analysis.AbstractBookAnalyzer;
 import org.crosswire.jsword.index.lucene.analysis.AnalyzerFactory;
 import org.crosswire.jsword.index.lucene.analysis.SimpleLuceneAnalyzer;
+import org.crosswire.jsword.index.lucene.analysis.StrongsNumberFilter;
+import org.apache.lucene.analysis.WhitespaceTokenizer;
 import org.crosswire.jsword.passage.Key;
 import org.crosswire.jsword.passage.Verse;
 
@@ -57,11 +59,29 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
                 case "find": return find(args.get(0), args.get(1), args.get(2), args.get(3));
                 case "stem": return stem(args.get(0), args.subList(1, args.size()));
                 case "version": return version();
+                case "strongs": return strongs(args.get(0));
                 default: return "!IllegalArgumentException: unknown op " + op;
             }
         } catch (Throwable t) {
             return "!" + t.getClass().getName() + ": " + t.getMessage();
         }
+    }
+
+    /** The baseline StrongsNumberFilter over WhitespaceTokenizer (the strong field analyzer, no book), one token per line. */
+    private static String strongs(String text) throws Exception {
+        TokenStream ts = new StrongsNumberFilter(new WhitespaceTokenizer(new StringReader(text)));
+        CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
+        StringBuilder out = new StringBuilder();
+        ts.reset();
+        boolean first = true;
+        while (ts.incrementToken()) {
+            if (!first) out.append('\n');
+            first = false;
+            out.append(term.toString());
+        }
+        ts.end();
+        ts.close();
+        return out.toString();
     }
 
     private static String version() throws Exception {
@@ -77,7 +97,7 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
         return new File(c.getProtectionDomain().getCodeSource().getLocation().toURI());
     }
 
-    /** The analyzer the baseline would create for a book of this language, with its factory defaults, no book. */
+    /** The analyzer the baseline would create for a book of this language, with its factory defaults, no book (Snowball: stemmer picked from the code). */
     private static AbstractBookAnalyzer analyzerFor(String lang) throws Exception {
         AnalyzerFactory factory = AnalyzerFactory.getInstance();
         String className = factory.getAnalyzerValue(new Language(lang));
@@ -91,6 +111,10 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
             } catch (ReflectiveOperationException e) {
                 throw new IllegalStateException("cannot construct " + className, e);
             }
+        }
+        if (analyzer instanceof org.crosswire.jsword.index.lucene.analysis.ConfigurableSnowballAnalyzer) {
+            // The stemmer is picked by setBook from the book language; with no book, pick it from the same code.
+            ((org.crosswire.jsword.index.lucene.analysis.ConfigurableSnowballAnalyzer) analyzer).pickStemmer(new Language(lang).getCode());
         }
         analyzer.setDoStemming(factory.getDefaultStemmingProperty());
         analyzer.setDoStopWords(factory.getDefaultStopWordProperty());
