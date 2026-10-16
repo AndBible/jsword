@@ -32,7 +32,8 @@ import org.crosswire.jsword.passage.Verse;
  * third-party jars); never part of the current code. Uses only baseline API. Failures are returned as
  * "!" + exception class + ": " + message.
  *
- * Ops: analyze, analyzeBook, canonicalText, buildIndex, find, stem, version (see k6 plan, Task 0).
+ * Ops: analyze, analyzeBook, canonicalText, buildIndex, find, stem, version (see k6 plan, Task 0), strongs (Task 8:
+ * the baseline StrongsNumberFilter over whitespace tokens).
  */
 public final class SearchProbe implements BiFunction<String, List<String>, String> {
     private static final String LUCENE_VERSION = "3.6.2";

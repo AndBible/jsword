@@ -1,5 +1,6 @@
 package org.crosswire.jsword.index.analysis
 
+import org.crosswire.common.util.Language
 import org.crosswire.jsword.book.Book
 
 /**
@@ -42,8 +43,15 @@ object BookAnalyzers {
     private val instances: Map<String, Lazy<TextAnalyzer>> =
         (ids.values + SIMPLE).distinct().associateWith { id -> lazy { create(id) } }
 
-    /** The id of the analyzer for [code], one of `simple`, `ar`, `cs`, `de`, `el`, `fa`, `he`, `mmseg`, `th`, `snowball-<Name>`. */
-    fun analyzerId(code: String?): String = code?.let { ids[it] } ?: SIMPLE
+    /**
+     * The id of the analyzer for [code], one of `simple`, `ar`, `cs`, `de`, `el`, `fa`, `he`, `mmseg`, `th`, `snowball-<Name>`.
+     * A specification with a region or script subtag (`zh-Hans`, `pt-BR`) is first reduced to its language code by
+     * [Language], as the baseline does, so it selects the analyzer of that code.
+     */
+    fun analyzerId(code: String?): String {
+        val key = if (code != null && code.contains('-')) Language(code).code else code
+        return key?.let { ids[it] } ?: SIMPLE
+    }
 
     /** The shared analyzer for [code] (see the class comment). */
     fun forLanguage(code: String?): TextAnalyzer = instances.getValue(analyzerId(code)).value
