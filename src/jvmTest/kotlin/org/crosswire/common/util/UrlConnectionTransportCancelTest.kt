@@ -103,4 +103,51 @@ class UrlConnectionTransportCancelTest {
             server.stop(0)
         }
     }
+
+    /**
+     * The read is really blocked (the server sent 2 bytes and then stalls; the test waits until the reader has been
+     * inside the socket read for a settling time) when the caller is cancelled. The JDK's disconnect() waits for the
+     * blocked read, so the caller must not wait for it: it returns at once, long before the 4 s read timeout. The old
+     * transport (watcher calling disconnect() inside the cancelled scope) took the whole timeout.
+     */
+    @Test fun cancellingAReaderBlockedInTheSocketReadReturnsAtOnce() = runTest {
+        val release = CountDownLatch(1)
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/stall") { exchange ->
+            exchange.sendResponseHeaders(200, 10)
+            exchange.responseBody.write(ByteArray(2))
+            exchange.responseBody.flush()
+            release.await(20, TimeUnit.SECONDS)
+            try { exchange.close() } catch (_: Exception) {}
+        }
+        server.start()
+        try {
+            val uri = URI("http://127.0.0.1:${server.address.port}/stall")
+            val transport = UrlConnectionHttpTransport { u -> DelegatingConnection(u.toURL().openConnection() as HttpURLConnection) }
+            var elapsedMs = Long.MAX_VALUE
+            var failure: Throwable? = null
+            withContext(Dispatchers.Default) {
+                val body = transport.get(uri, 4_000)
+                try {
+                    body.status()
+                    body.prepareRead()
+                    val buf = ByteArray(16)
+                    assertEquals(2, body.read(buf))
+                    val reader = launch {
+                        try { body.read(buf) } catch (e: Throwable) { failure = e; throw e }
+                    }
+                    delay(500) // settle: the reader is now blocked inside the socket read, holding the JDK stream lock
+                    val cancelledAt = System.nanoTime()
+                    withTimeout(3_000) { reader.cancelAndJoin() }
+                    elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cancelledAt)
+                    body.close() // must not wait for the blocked read either
+                } finally { release.countDown() }
+            }
+            assertTrue(elapsedMs < 1_000, "the cancelled caller waited $elapsedMs ms")
+            assertTrue(failure is CancellationException, "got $failure")
+        } finally {
+            release.countDown()
+            server.stop(0)
+        }
+    }
 }
