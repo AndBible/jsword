@@ -14,20 +14,20 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * © CrossWire Bible Society, 2007 - 2016
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.MissingResourceException;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.URI
+import java.util.MissingResourceException
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 /**
  * JUnit Test
@@ -35,83 +35,83 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class PropertyMapTest {
-    @Before
-    public void setUp() throws Exception {
-        m = new PropertyMap();
+class PropertyMapTest {
+    @BeforeTest
+    fun setUp() {
+        m = PropertyMap()
     }
 
     @Test
-    public void testBasic() {
-        Assert.assertEquals("Test for an element not present", null, m.get("diddly"));
-        m.put("diddly", "squat");
-        Assert.assertEquals("Test for a present element", "squat", m.get("diddly"));
+    fun testBasic() {
+        assertEquals(null, m.get("diddly"), "Test for an element not present")
+        m.put("diddly", "squat")
+        assertEquals("squat", m.get("diddly"), "Test for a present element")
     }
 
     @Test
-    public void testLoad() {
-        InputStream in = null;
+    fun testLoad() {
+        var input: InputStream? = null
         try {
-            in = ResourceUtil.getResourceAsStream(this.getClass(), "PropertyMap.properties");
-            PropertyMapJvm.load(m, in);
-        } catch (MissingResourceException e) {
-            Assert.fail("Unable to find PropertyMap.properties");
-        } catch (IOException e) {
-            Assert.fail("Unable to read PropertyMap.properties");
+            input = ResourceUtil.getResourceAsStream(javaClass, "PropertyMap.properties")
+            PropertyMapJvm.load(m, input)
+        } catch (e: MissingResourceException) {
+            fail("Unable to find PropertyMap.properties")
+        } catch (e: IOException) {
+            fail("Unable to read PropertyMap.properties")
         } finally {
-            IOUtil.close(in);
+            IOUtil.close(input)
         }
     }
 
     @Test
-    public void testRead() {
-        InputStream in = null;
+    fun testRead() {
+        var input: InputStream? = null
         try {
-            in = ResourceUtil.getResourceAsStream(this.getClass(), "PropertyMap.properties");
-            PropertyMapJvm.load(m, in);
-        } catch (MissingResourceException e) {
-            Assert.fail("Unable to find PropertyMap.properties");
-        } catch (IOException e) {
-            Assert.fail("Unable to read PropertyMap.properties");
+            input = ResourceUtil.getResourceAsStream(javaClass, "PropertyMap.properties")
+            PropertyMapJvm.load(m, input)
+        } catch (e: MissingResourceException) {
+            fail("Unable to find PropertyMap.properties")
+        } catch (e: IOException) {
+            fail("Unable to read PropertyMap.properties")
         } finally {
-            IOUtil.close(in);
+            IOUtil.close(input)
         }
-        Assert.assertEquals("Only one element was in the file", 1, m.size());
-        Assert.assertEquals("Test that the load worked", "I am", m.get("Here"));
+        assertEquals(1, m.size, "Only one element was in the file")
+        assertEquals("I am", m.get("Here"), "Test that the load worked")
     }
 
     @Test
-    public void testSave() {
-        m.put("Here", "Am I");
-        URI uri = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES);
-        OutputStream out = null;
+    fun testSave() {
+        m.put("Here", "Am I")
+        val uri: URI = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES)!!
+        var out: OutputStream? = null
         try {
-            out = NetUtilJvm.getOutputStream(uri);
-            PropertyMapJvm.store(m, out, "Test data can be deleted at any time");
-        } catch (IOException e) {
-            Assert.fail("Unable to save test.properties");
+            out = NetUtilJvm.getOutputStream(uri)
+            PropertyMapJvm.store(m, out, "Test data can be deleted at any time")
+        } catch (e: IOException) {
+            fail("Unable to save test.properties")
         } finally {
-            IOUtil.close(out);
+            IOUtil.close(out)
         }
     }
 
     @Test
-    public void testReload() {
-        Assert.assertEquals("The map is empty", 0, m.size());
+    fun testReload() {
+        assertEquals(0, m.size, "The map is empty")
 
-        InputStream is = null;
-        URI uri = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES);
+        var input: InputStream? = null
+        val uri: URI = CWProject.instance().getWritableURI("test", FileUtil.EXTENSION_PROPERTIES)!!
         try {
-            is = NetUtilJvm.getInputStream(uri);
-            PropertyMapJvm.load(m, is);
-        } catch (IOException e) {
-            Assert.fail("Unable to reload test.properties");
+            input = NetUtilJvm.getInputStream(uri)
+            PropertyMapJvm.load(m, input)
+        } catch (e: IOException) {
+            fail("Unable to reload test.properties")
         } finally {
-            IOUtil.close(is);
+            IOUtil.close(input)
         }
-        Assert.assertEquals("Only one element was in the file", 1, m.size());
-        Assert.assertEquals("Test that the save and reload worked", "Am I", m.get("Here"));
+        assertEquals(1, m.size, "Only one element was in the file")
+        assertEquals("Am I", m.get("Here"), "Test that the save and reload worked")
     }
 
-    private PropertyMap m;
+    private lateinit var m: PropertyMap
 }

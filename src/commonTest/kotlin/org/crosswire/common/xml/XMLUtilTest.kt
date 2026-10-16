@@ -17,87 +17,88 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.xml;
+package org.crosswire.common.xml
 
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class XMLUtilTest {
+class XMLUtilTest {
     @Test
-    public void testCleanAllEntities() {
-        Assert.assertNull(XMLUtil.cleanAllEntities(null));
+    fun testCleanAllEntities() {
+        assertNull(XMLUtil.cleanAllEntities(null))
 
-        Assert.assertEquals("", XMLUtil.cleanAllEntities(""));
-        Assert.assertEquals("aa", XMLUtil.cleanAllEntities("aa"));
-        Assert.assertEquals("<aa>", XMLUtil.cleanAllEntities("<aa>"));
-        Assert.assertEquals("<aa>aa", XMLUtil.cleanAllEntities("<aa>aa"));
-        Assert.assertEquals("<aa>aa;aa", XMLUtil.cleanAllEntities("<aa>aa;aa"));
-        Assert.assertEquals(";", XMLUtil.cleanAllEntities(";"));
+        assertEquals("", XMLUtil.cleanAllEntities(""))
+        assertEquals("aa", XMLUtil.cleanAllEntities("aa"))
+        assertEquals("<aa>", XMLUtil.cleanAllEntities("<aa>"))
+        assertEquals("<aa>aa", XMLUtil.cleanAllEntities("<aa>aa"))
+        assertEquals("<aa>aa;aa", XMLUtil.cleanAllEntities("<aa>aa;aa"))
+        assertEquals(";", XMLUtil.cleanAllEntities(";"))
 
-        Assert.assertEquals("aa &amp; aa", XMLUtil.cleanAllEntities("aa &amp; aa"));
-        Assert.assertEquals("aa &amp;amp aa", XMLUtil.cleanAllEntities("aa &amp aa"));
-        Assert.assertEquals("aa &amp;a-mp aa", XMLUtil.cleanAllEntities("aa &a-mp aa"));
-        Assert.assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &am; aa"));
-        Assert.assertEquals("aa &amp;am aa", XMLUtil.cleanAllEntities("aa &am aa"));
-        Assert.assertEquals("aa &amp;", XMLUtil.cleanAllEntities("aa &amp;"));
-        Assert.assertEquals("aa &amp;amp", XMLUtil.cleanAllEntities("aa &amp"));
-        Assert.assertEquals("aa  ", XMLUtil.cleanAllEntities("aa &am;"));
-        Assert.assertEquals("aa &amp;am", XMLUtil.cleanAllEntities("aa &am"));
-        Assert.assertEquals("aa &amp;a", XMLUtil.cleanAllEntities("aa &a"));
-        Assert.assertEquals("aa &amp;", XMLUtil.cleanAllEntities("aa &"));
+        assertEquals("aa &amp; aa", XMLUtil.cleanAllEntities("aa &amp; aa"))
+        assertEquals("aa &amp;amp aa", XMLUtil.cleanAllEntities("aa &amp aa"))
+        assertEquals("aa &amp;a-mp aa", XMLUtil.cleanAllEntities("aa &a-mp aa"))
+        assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &am; aa"))
+        assertEquals("aa &amp;am aa", XMLUtil.cleanAllEntities("aa &am aa"))
+        assertEquals("aa &amp;", XMLUtil.cleanAllEntities("aa &amp;"))
+        assertEquals("aa &amp;amp", XMLUtil.cleanAllEntities("aa &amp"))
+        assertEquals("aa  ", XMLUtil.cleanAllEntities("aa &am;"))
+        assertEquals("aa &amp;am", XMLUtil.cleanAllEntities("aa &am"))
+        assertEquals("aa &amp;a", XMLUtil.cleanAllEntities("aa &a"))
+        assertEquals("aa &amp;", XMLUtil.cleanAllEntities("aa &"))
 
-        Assert.assertEquals("aa \u00A0 aa", XMLUtil.cleanAllEntities("aa &nbsp; aa"));
-        Assert.assertEquals("aa &amp;nbsp aa", XMLUtil.cleanAllEntities("aa &nbsp aa"));
-        Assert.assertEquals("aa &amp;nb-sp aa", XMLUtil.cleanAllEntities("aa &nb-sp aa"));
-        Assert.assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &nb; aa"));
-        Assert.assertEquals("aa &amp;nb aa", XMLUtil.cleanAllEntities("aa &nb aa"));
+        assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &nbsp; aa"))
+        assertEquals("aa &amp;nbsp aa", XMLUtil.cleanAllEntities("aa &nbsp aa"))
+        assertEquals("aa &amp;nb-sp aa", XMLUtil.cleanAllEntities("aa &nb-sp aa"))
+        assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &nb; aa"))
+        assertEquals("aa &amp;nb aa", XMLUtil.cleanAllEntities("aa &nb aa"))
 
-        Assert.assertEquals("-&amp;-\u00A0-&lt;-&gt;-&quot;-\u00A3-\u20AC-", XMLUtil.cleanAllEntities("-&amp;-&nbsp;-&lt;-&gt;-&quot;-&pound;-&euro;-"));
+        assertEquals("-&amp;- -&lt;-&gt;-&quot;-£-€-", XMLUtil.cleanAllEntities("-&amp;-&nbsp;-&lt;-&gt;-&quot;-&pound;-&euro;-"))
     }
 
     @Test
-    public void testCleanAllTags() {
-        Assert.assertNull(XMLUtil.cleanAllTags(null));
+    fun testCleanAllTags() {
+        assertNull(XMLUtil.cleanAllTags(null))
 
-        Assert.assertEquals("", XMLUtil.cleanAllTags(""));
-        Assert.assertEquals("aa", XMLUtil.cleanAllTags("aa"));
-        Assert.assertEquals("aa &amp; aa", XMLUtil.cleanAllTags("aa &amp; aa"));
+        assertEquals("", XMLUtil.cleanAllTags(""))
+        assertEquals("aa", XMLUtil.cleanAllTags("aa"))
+        assertEquals("aa &amp; aa", XMLUtil.cleanAllTags("aa &amp; aa"))
 
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<a>"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<aa>"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("</aa>"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<aa wibble=\"wobble\">"));
-        Assert.assertEquals(" keep ", XMLUtil.cleanAllTags("<aa>keep</aa>"));
-        Assert.assertEquals(" keep ", XMLUtil.cleanAllTags("<aa>keep<aa>"));
-        Assert.assertEquals(" ke ep", XMLUtil.cleanAllTags("<aa>ke<aa>ep"));
-        Assert.assertEquals("ke  ep", XMLUtil.cleanAllTags("ke<aa><aa>ep"));
-        Assert.assertEquals("ke  ep   ke  ep", XMLUtil.cleanAllTags("ke<aa><aa>ep<bb> <cc>ke<aa><aa>ep"));
+        assertEquals(" ", XMLUtil.cleanAllTags("<a>"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<aa>"))
+        assertEquals(" ", XMLUtil.cleanAllTags("</aa>"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<aa wibble=\"wobble\">"))
+        assertEquals(" keep ", XMLUtil.cleanAllTags("<aa>keep</aa>"))
+        assertEquals(" keep ", XMLUtil.cleanAllTags("<aa>keep<aa>"))
+        assertEquals(" ke ep", XMLUtil.cleanAllTags("<aa>ke<aa>ep"))
+        assertEquals("ke  ep", XMLUtil.cleanAllTags("ke<aa><aa>ep"))
+        assertEquals("ke  ep   ke  ep", XMLUtil.cleanAllTags("ke<aa><aa>ep<bb> <cc>ke<aa><aa>ep"))
 
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<a"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<aa"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<aa;"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<\\"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<\\a"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<\\aa"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("<\\aa;"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("< "));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("< a"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("< aa"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("< aa;"));
-        Assert.assertEquals(" ", XMLUtil.cleanAllTags("< aa>"));
-        Assert.assertEquals("keep ", XMLUtil.cleanAllTags("keep<"));
-        Assert.assertEquals("keep ", XMLUtil.cleanAllTags("keep<a"));
-        Assert.assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa"));
-        Assert.assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa dont=\"want\""));
-        Assert.assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa dont=\"want\" keep"));
-        Assert.assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa dont=\"want\" keep>"));
+        assertEquals(" ", XMLUtil.cleanAllTags("<"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<a"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<aa"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<aa;"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<\\"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<\\a"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<\\aa"))
+        assertEquals(" ", XMLUtil.cleanAllTags("<\\aa;"))
+        assertEquals(" ", XMLUtil.cleanAllTags("< "))
+        assertEquals(" ", XMLUtil.cleanAllTags("< a"))
+        assertEquals(" ", XMLUtil.cleanAllTags("< aa"))
+        assertEquals(" ", XMLUtil.cleanAllTags("< aa;"))
+        assertEquals(" ", XMLUtil.cleanAllTags("< aa>"))
+        assertEquals("keep ", XMLUtil.cleanAllTags("keep<"))
+        assertEquals("keep ", XMLUtil.cleanAllTags("keep<a"))
+        assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa"))
+        assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa dont=\"want\""))
+        assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa dont=\"want\" keep"))
+        assertEquals("keep ", XMLUtil.cleanAllTags("keep<aa dont=\"want\" keep>"))
     }
 }

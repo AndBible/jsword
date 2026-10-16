@@ -17,175 +17,176 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.StringTokenizer;
-import java.util.regex.Pattern;
-
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import java.util.StringTokenizer
+import java.util.regex.Pattern
+import kotlin.test.Ignore
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class StringUtilTest {
+class StringUtilTest {
 
     @Test
-    public void testGetInitials() {
-        Assert.assertEquals("CoE", StringUtil.getInitials("Church of England"));
-        Assert.assertEquals("JDC", StringUtil.getInitials("Java DataBase Connectivity"));
-        Assert.assertEquals("", StringUtil.getInitials(""));
+    fun testGetInitials() {
+        assertEquals("CoE", StringUtil.getInitials("Church of England"))
+        assertEquals("JDC", StringUtil.getInitials("Java DataBase Connectivity"))
+        assertEquals("", StringUtil.getInitials(""))
     }
 
     @Test
-    public void testCreateTitle() {
-        Assert.assertEquals("One Two", StringUtil.createTitle("OneTwo"));
-        Assert.assertEquals("One Two", StringUtil.createTitle("one_two"));
-        Assert.assertEquals("ONe TWo", StringUtil.createTitle("ONeTWo"));
-        Assert.assertEquals("One Two", StringUtil.createTitle("One_Two"));
-        Assert.assertEquals("One Two", StringUtil.createTitle("One _Two"));
-        Assert.assertEquals("One Two", StringUtil.createTitle("one  _Two"));
+    fun testCreateTitle() {
+        assertEquals("One Two", StringUtil.createTitle("OneTwo"))
+        assertEquals("One Two", StringUtil.createTitle("one_two"))
+        assertEquals("ONe TWo", StringUtil.createTitle("ONeTWo"))
+        assertEquals("One Two", StringUtil.createTitle("One_Two"))
+        assertEquals("One Two", StringUtil.createTitle("One _Two"))
+        assertEquals("One Two", StringUtil.createTitle("one  _Two"))
     }
 
     @Test
-    public void testSplitWhitespace() {
-        Assert.assertArrayEquals("split null on ws", new String[] {}, StringUtil.split(null));
-        Assert.assertArrayEquals("split empty on ws", new String[] {}, StringUtil.split(""));
-        Assert.assertArrayEquals("split parts on middle ws", new String[] {"abc", "def"}, StringUtil.split("abc def"));
-        Assert.assertArrayEquals("split parts on many ws", new String[] {"abc", "def"}, StringUtil.split("abc  def"));
-        Assert.assertArrayEquals("split parts on surrounding ws", new String[] {"abc"}, StringUtil.split(" abc "));
-        Assert.assertArrayEquals("split parts on tab and new line ws", new String[] {"a", "b", "c"}, StringUtil.split("a\tb\nc"));
+    fun testSplitWhitespace() {
+        assertContentEquals(arrayOf<String>(), StringUtil.split(null), "split null on ws")
+        assertContentEquals(arrayOf<String>(), StringUtil.split(""), "split empty on ws")
+        assertContentEquals(arrayOf("abc", "def"), StringUtil.split("abc def"), "split parts on middle ws")
+        assertContentEquals(arrayOf("abc", "def"), StringUtil.split("abc  def"), "split parts on many ws")
+        assertContentEquals(arrayOf("abc"), StringUtil.split(" abc "), "split parts on surrounding ws")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.split("a\tb\nc"), "split parts on tab and new line ws")
     }
 
     @Test
-    public void testSplitWhitespaceMax() {
-        Assert.assertArrayEquals("split null on ws", new String[] {}, StringUtil.split(null, 1));
-        Assert.assertArrayEquals("split empty on ws", new String[] {}, StringUtil.split("", 1));
-        Assert.assertArrayEquals("split parts on middle ws", new String[] {"abc"}, StringUtil.split("abc def", 1));
-        Assert.assertArrayEquals("split parts on many ws", new String[] {"abc"}, StringUtil.split("abc  def", 1));
-        Assert.assertArrayEquals("split parts on surrounding ws", new String[] {"abc"}, StringUtil.split(" abc ", 1));
-        Assert.assertArrayEquals("split parts on tab and new line ws", new String[] {"a", "b"}, StringUtil.split("a\tb\nc", 2));
+    fun testSplitWhitespaceMax() {
+        assertContentEquals(arrayOf<String>(), StringUtil.split(null, 1), "split null on ws")
+        assertContentEquals(arrayOf<String>(), StringUtil.split("", 1), "split empty on ws")
+        assertContentEquals(arrayOf("abc"), StringUtil.split("abc def", 1), "split parts on middle ws")
+        assertContentEquals(arrayOf("abc"), StringUtil.split("abc  def", 1), "split parts on many ws")
+        assertContentEquals(arrayOf("abc"), StringUtil.split(" abc ", 1), "split parts on surrounding ws")
+        assertContentEquals(arrayOf("a", "b"), StringUtil.split("a\tb\nc", 2), "split parts on tab and new line ws")
     }
 
     @Test
-    public void testSplitChar() {
-        Assert.assertArrayEquals("split null on .", new String[] {}, StringUtil.split(null, '.'));
-        Assert.assertArrayEquals("split empty on .", new String[] {}, StringUtil.split("", '.'));
-        Assert.assertArrayEquals("split parts on .", new String[]{"a", "b", "c"}, StringUtil.split("a.b.c", '.'));
-        Assert.assertArrayEquals("split adjacent on .", new String[]{"a", "b", "c"}, StringUtil.split("a..b.c", '.'));
-        Assert.assertArrayEquals("split adjacent leading .", new String[]{"a", "b", "c"}, StringUtil.split(".a..b.c", '.'));
-        Assert.assertArrayEquals("split adjacent trailing .", new String[]{"a", "b", "c"}, StringUtil.split(".a..b.c.", '.'));
-        Assert.assertArrayEquals("split nothing on .", new String[]{"a:b:c"}, StringUtil.split("a:b:c", '.'));
+    fun testSplitChar() {
+        assertContentEquals(arrayOf<String>(), StringUtil.split(null, '.'), "split null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.split("", '.'), "split empty on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.split("a.b.c", '.'), "split parts on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.split("a..b.c", '.'), "split adjacent on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.split(".a..b.c", '.'), "split adjacent leading .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.split(".a..b.c.", '.'), "split adjacent trailing .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.split("a:b:c", '.'), "split nothing on .")
     }
 
     @Test
-    public void testSplitAllChar() {
-        Assert.assertArrayEquals("splitAll null on .", new String[]{}, StringUtil.splitAll(null, '.'));
-        Assert.assertArrayEquals("splitAll empty on .", new String[]{}, StringUtil.splitAll("", '.'));
-        Assert.assertArrayEquals("splitAll parts on .", new String[]{"a", "b", "c"}, StringUtil.splitAll("a.b.c", '.'));
-        Assert.assertArrayEquals("splitAll adjacent on .", new String[]{"a", "", "b", "c"}, StringUtil.splitAll("a..b.c", '.'));
-        Assert.assertArrayEquals("splitAll nothing on .", new String[]{"a:b:c"}, StringUtil.splitAll("a:b:c", '.'));
+    fun testSplitAllChar() {
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll(null, '.'), "splitAll null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll("", '.'), "splitAll empty on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.splitAll("a.b.c", '.'), "splitAll parts on .")
+        assertContentEquals(arrayOf("a", "", "b", "c"), StringUtil.splitAll("a..b.c", '.'), "splitAll adjacent on .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.splitAll("a:b:c", '.'), "splitAll nothing on .")
     }
 
     @Test
-    public void testSplitAllCharMax() {
-        Assert.assertArrayEquals("splitAll all null on .", new String[]{}, StringUtil.splitAll(null, '.', 0));
-        Assert.assertArrayEquals("splitAll all empty on .", new String[]{}, StringUtil.splitAll("", '.', 0));
-        Assert.assertArrayEquals("splitAll all parts on .", new String[]{"a", "b", "c"}, StringUtil.splitAll("a.b.c", '.', 0));
-        Assert.assertArrayEquals("splitAll all adjacent on .", new String[]{"a", "", "b", "c"}, StringUtil.splitAll("a..b.c", '.', 0));
-        Assert.assertArrayEquals("splitAll all nothing on .", new String[]{"a:b:c"}, StringUtil.splitAll("a:b:c", '.', 0));
-        Assert.assertArrayEquals("splitAll max null on .", new String[]{}, StringUtil.splitAll(null, '.', Integer.MAX_VALUE));
-        Assert.assertArrayEquals("splitAll max empty on .", new String[]{}, StringUtil.splitAll("", '.', Integer.MAX_VALUE));
-        Assert.assertArrayEquals("splitAll max parts on .", new String[]{"a", "b", "c"}, StringUtil.splitAll("a.b.c", '.', Integer.MAX_VALUE));
-        Assert.assertArrayEquals("splitAll max adjacent on .", new String[]{"a", "", "b", "c"}, StringUtil.splitAll("a..b.c", '.', Integer.MAX_VALUE));
-        Assert.assertArrayEquals("splitAll max nothing on .", new String[]{"a:b:c"}, StringUtil.splitAll("a:b:c", '.', Integer.MAX_VALUE));
-        Assert.assertArrayEquals("splitAll 3 null on .", new String[]{}, StringUtil.splitAll(null, '.', 3));
-        Assert.assertArrayEquals("splitAll 3 empty on .", new String[]{}, StringUtil.splitAll("", '.', 3));
-        Assert.assertArrayEquals("splitAll 3 parts on .", new String[]{"a", "b", "c"}, StringUtil.splitAll("a.b.c", '.', 3));
-        Assert.assertArrayEquals("splitAll 3 adjacent on .", new String[]{"a", "", "b"}, StringUtil.splitAll("a..b.c", '.', 3));
-        Assert.assertArrayEquals("splitAll 3 nothing on .", new String[]{"a:b:c"}, StringUtil.splitAll("a:b:c", '.', 3));
-        Assert.assertArrayEquals("splitAll 2 null on .", new String[]{}, StringUtil.splitAll(null, '.', 2));
-        Assert.assertArrayEquals("splitAll 2 empty on .", new String[]{}, StringUtil.splitAll("", '.', 2));
-        Assert.assertArrayEquals("splitAll 2 parts on .", new String[]{"a", "b"}, StringUtil.splitAll("a.b.c", '.', 2));
-        Assert.assertArrayEquals("splitAll 2 adjacent on .", new String[]{"a", ""}, StringUtil.splitAll("a..b.c", '.', 2));
-        Assert.assertArrayEquals("splitAll 2 nothing on .", new String[]{"a:b:c"}, StringUtil.splitAll("a:b:c", '.', 2));
-        Assert.assertArrayEquals("splitAll 1 null on .", new String[]{}, StringUtil.splitAll(null, '.', 1));
-        Assert.assertArrayEquals("splitAll 1 empty on .", new String[]{}, StringUtil.splitAll("", '.', 1));
-        Assert.assertArrayEquals("splitAll 1 parts on .", new String[]{"a"}, StringUtil.splitAll("a.b.c", '.', 1));
-        Assert.assertArrayEquals("splitAll 1 adjacent on .", new String[]{"a"}, StringUtil.splitAll("a..b.c", '.', 1));
-        Assert.assertArrayEquals("splitAll 1 nothing on .", new String[]{"a:b:c"}, StringUtil.splitAll("a:b:c", '.', 1));
+    fun testSplitAllCharMax() {
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll(null, '.', 0), "splitAll all null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll("", '.', 0), "splitAll all empty on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.splitAll("a.b.c", '.', 0), "splitAll all parts on .")
+        assertContentEquals(arrayOf("a", "", "b", "c"), StringUtil.splitAll("a..b.c", '.', 0), "splitAll all adjacent on .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.splitAll("a:b:c", '.', 0), "splitAll all nothing on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll(null, '.', Int.MAX_VALUE), "splitAll max null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll("", '.', Int.MAX_VALUE), "splitAll max empty on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.splitAll("a.b.c", '.', Int.MAX_VALUE), "splitAll max parts on .")
+        assertContentEquals(arrayOf("a", "", "b", "c"), StringUtil.splitAll("a..b.c", '.', Int.MAX_VALUE), "splitAll max adjacent on .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.splitAll("a:b:c", '.', Int.MAX_VALUE), "splitAll max nothing on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll(null, '.', 3), "splitAll 3 null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll("", '.', 3), "splitAll 3 empty on .")
+        assertContentEquals(arrayOf("a", "b", "c"), StringUtil.splitAll("a.b.c", '.', 3), "splitAll 3 parts on .")
+        assertContentEquals(arrayOf("a", "", "b"), StringUtil.splitAll("a..b.c", '.', 3), "splitAll 3 adjacent on .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.splitAll("a:b:c", '.', 3), "splitAll 3 nothing on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll(null, '.', 2), "splitAll 2 null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll("", '.', 2), "splitAll 2 empty on .")
+        assertContentEquals(arrayOf("a", "b"), StringUtil.splitAll("a.b.c", '.', 2), "splitAll 2 parts on .")
+        assertContentEquals(arrayOf("a", ""), StringUtil.splitAll("a..b.c", '.', 2), "splitAll 2 adjacent on .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.splitAll("a:b:c", '.', 2), "splitAll 2 nothing on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll(null, '.', 1), "splitAll 1 null on .")
+        assertContentEquals(arrayOf<String>(), StringUtil.splitAll("", '.', 1), "splitAll 1 empty on .")
+        assertContentEquals(arrayOf("a"), StringUtil.splitAll("a.b.c", '.', 1), "splitAll 1 parts on .")
+        assertContentEquals(arrayOf("a"), StringUtil.splitAll("a..b.c", '.', 1), "splitAll 1 adjacent on .")
+        assertContentEquals(arrayOf("a:b:c"), StringUtil.splitAll("a:b:c", '.', 1), "splitAll 1 nothing on .")
     }
 
     @Ignore
     @Test
-    public void bench() {
+    fun bench() {
 
-        String string = "a/b/c/d/e/f/g/h/i/j/asd/asdas/dasdjasodjoa/sjd/oajs/djoasjd/as/odj/jaowdj/oajw/odj/aojwd/oja/owjd/oja/wjdoja/wdj/awjdojaw/odj/oawjd/oja/wjdoawjdojaw/d/dff";
-        int n = 1000000;
+        val string = "a/b/c/d/e/f/g/h/i/j/asd/asdas/dasdjasodjoa/sjd/oajs/djoasjd/as/odj/jaowdj/oajw/odj/aojwd/oja/owjd/oja/wjdoja/wdj/awjdojaw/odj/oawjd/oja/wjdoawjdojaw/d/dff"
+        val n = 1000000
 
-        long start;
+        var start: Long
 
-        for (int t = 1; t <= 3; ++t) {
-            System.out.println("Run #" + t);
+        for (t in 1..3) {
+            println("Run #$t")
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                Pattern.compile("/").split(string, 0);
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                Pattern.compile("/").split(string, 0)
             }
-            System.out.println("Java 6 string.split: " + (System.currentTimeMillis() - start));
+            println("Java 6 string.split: " + (System.currentTimeMillis() - start))
 
-            Pattern splitter = Pattern.compile("/");
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                splitter.split(string);
+            val splitter = Pattern.compile("/")
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                splitter.split(string)
             }
-            System.out.println("Pattern.split: " + (System.currentTimeMillis() - start));
+            println("Pattern.split: " + (System.currentTimeMillis() - start))
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                StringTokenizer s = new StringTokenizer(string, "/");
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                val s = StringTokenizer(string, "/")
                 while (s.hasMoreElements()) {
-                    s.nextElement();
+                    s.nextElement()
                 }
             }
-            System.out.println("StringTokenizer: " + (System.currentTimeMillis() - start));
+            println("StringTokenizer: " + (System.currentTimeMillis() - start))
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                string.split("/");
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                // Java's String.split(regex) is translated to splitLikeJava (rules section 4)
+                string.splitLikeJava(Regex("/"))
             }
-            System.out.println("Java 7 string.split: " + (System.currentTimeMillis() - start));
+            println("Java 7 string.split: " + (System.currentTimeMillis() - start))
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                StringUtil.splitAll(string, '/');
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                StringUtil.splitAll(string, '/')
             }
-            System.out.println("StringUtil.splitAll: " + (System.currentTimeMillis() - start));
+            println("StringUtil.splitAll: " + (System.currentTimeMillis() - start))
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                StringUtil.splitAll(string, '/', Integer.MAX_VALUE);
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                StringUtil.splitAll(string, '/', Int.MAX_VALUE)
             }
-            System.out.println("StringUtil.splitAll max: " + (System.currentTimeMillis() - start));
+            println("StringUtil.splitAll max: " + (System.currentTimeMillis() - start))
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                StringUtil.split(string, '/');
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                StringUtil.split(string, '/')
             }
-            System.out.println("StringUtil.split char: " + (System.currentTimeMillis() - start));
+            println("StringUtil.split char: " + (System.currentTimeMillis() - start))
 
-            start = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-                StringUtil.split(string, '/', Integer.MAX_VALUE);
+            start = System.currentTimeMillis()
+            for (i in 0 until n) {
+                StringUtil.split(string, '/', Int.MAX_VALUE)
             }
-            System.out.println("StringUtil.split char max: " + (System.currentTimeMillis() - start));
+            println("StringUtil.split char max: " + (System.currentTimeMillis() - start))
 
-            System.out.println("");
+            println("")
         }
     }
 }

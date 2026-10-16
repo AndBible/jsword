@@ -14,526 +14,507 @@
  *      59 Temple Place - Suite 330
  *      Boston, MA 02111-1307, USA
  *
- * \u00A9 CrossWire Bible Society, 2026
+ * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.io.File
+import java.io.StringWriter
+import java.nio.charset.StandardCharsets
+import java.util.Arrays
+import java.util.ArrayList
+import java.util.HashSet
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /**
- * Characterization of {@link IniSection} and {@link Ini}: pins how they parse, what they
+ * Characterization of [IniSection] and [Ini]: pins how they parse, what they
  * keep and their quirks before they are converted to Kotlin.
  * Expected values were derived by reading the parsers, not by observing them.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class IniCharacterizationTest {
-    private static final String UTF8 = "UTF-8";
-    private static final String NL = System.getProperty("line.separator");
+class IniCharacterizationTest {
+    @get:Rule
+    val folder = TemporaryFolder()
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-
-    /** Greek lambda omicron gamma omicron sigma */
-    private static final String LOGOS = "\u03BB\u03CC\u03B3\u03BF\u03C2";
-    private static final String AAKKOSET = "\u00C4\u00E4kk\u00F6set";
-
-    private static final String CONF = "\uFEFF".substring(1)
-            + "[ Name ]\n"
-            + "# a comment\n"
-            + "; another comment\n"
-            + "\n"
-            + "key=value\n"
-            + "Key=other\n"
-            + "dup=one\n"
-            + "dup=two\n"
-            + "dup=one\n"
-            + "eq=a=b=c\n"
-            + "   spaced key  =   spaced value   \n"
-            + "cont=line1 \\\n"
-            + "   line2\n"
-            + "empty=\n"
-            + "no equals here\n"
-            + "greek=" + LOGOS + "\n"
-            + "fin=" + AAKKOSET + "\n";
-
-    private static byte[] bytes(String s) {
-        return s.getBytes(StandardCharsets.UTF_8);
+    private fun bytes(s: String): ByteArray {
+        return s.toByteArray(StandardCharsets.UTF_8)
     }
 
-    private static IniSection loaded() throws IOException {
-        IniSection section = new IniSection();
-        section.load(bytes(CONF), UTF8);
-        return section;
+    private fun loaded(): IniSection {
+        val section = IniSection()
+        section.load(bytes(CONF), UTF8)
+        return section
     }
 
-    private static List<String> list(Collection<String> values) {
-        return new ArrayList<String>(values);
+    private fun list(values: Collection<String>?): List<String> {
+        return ArrayList(values!!)
     }
 
     @Test
-    public void testSectionParse() throws IOException {
-        IniSection s = loaded();
+    fun testSectionParse() {
+        val s = loaded()
         // The name is the text between the brackets, not trimmed
-        Assert.assertEquals(" Name ", s.getName());
-        Assert.assertEquals("value", s.get("key"));
+        assertEquals(" Name ", s.name)
+        assertEquals("value", s.get("key"))
         // Keys are case sensitive
-        Assert.assertEquals("other", s.get("Key"));
-        Assert.assertFalse(s.containsKey("KEY"));
+        assertEquals("other", s.get("Key"))
+        assertFalse(s.containsKey("KEY"))
         // Only the first '=' splits
-        Assert.assertEquals("a=b=c", s.get("eq"));
+        assertEquals("a=b=c", s.get("eq"))
         // Whitespace around key and value is dropped
-        Assert.assertEquals("spaced value", s.get("spaced key"));
+        assertEquals("spaced value", s.get("spaced key"))
         // A trailing backslash continues the value on the next line; both parts trimmed, joined by newline
-        Assert.assertEquals("line1\nline2", s.get("cont"));
-        Assert.assertEquals("", s.get("empty"));
-        Assert.assertTrue(s.containsKey("empty"));
-        Assert.assertEquals(LOGOS, s.get("greek"));
-        Assert.assertEquals(AAKKOSET, s.get("fin"));
+        assertEquals("line1\nline2", s.get("cont"))
+        assertEquals("", s.get("empty"))
+        assertTrue(s.containsKey("empty"))
+        assertEquals(LOGOS, s.get("greek"))
+        assertEquals(AAKKOSET, s.get("fin"))
         // Comment, blank and '='-less lines make no keys
-        Assert.assertFalse(s.containsKey("no equals here"));
-        Assert.assertEquals(new HashSet<String>(Arrays.asList("key", "Key", "dup", "eq", "spaced key", "cont", "empty", "greek", "fin")),
-                new HashSet<String>(s.getKeys()));
-        Assert.assertEquals(9, s.size());
-        Assert.assertFalse(s.isEmpty());
+        assertFalse(s.containsKey("no equals here"))
+        assertEquals(HashSet(Arrays.asList("key", "Key", "dup", "eq", "spaced key", "cont", "empty", "greek", "fin")),
+                HashSet(s.keys))
+        assertEquals(9, s.size())
+        assertFalse(s.isEmpty)
     }
 
     @Test
-    public void testSectionDuplicateKeysKeepDistinctValuesInOrder() throws IOException {
-        IniSection s = loaded();
-        Assert.assertEquals(2, s.size("dup"));
-        Assert.assertEquals(Arrays.asList("one", "two"), list(s.getValues("dup")));
-        Assert.assertEquals("one", s.get("dup", 0));
-        Assert.assertEquals("two", s.get("dup", 1));
-        Assert.assertEquals("one", s.get("dup"));
-        Assert.assertEquals("one", s.get("dup", "default"));
-        Assert.assertEquals(0, s.size("missing"));
-        Assert.assertEquals(1, s.size("key"));
+    fun testSectionDuplicateKeysKeepDistinctValuesInOrder() {
+        val s = loaded()
+        assertEquals(2, s.size("dup"))
+        assertEquals(Arrays.asList("one", "two"), list(s.getValues("dup")))
+        assertEquals("one", s.get("dup", 0))
+        assertEquals("two", s.get("dup", 1))
+        assertEquals("one", s.get("dup"))
+        assertEquals("one", s.get("dup", "default"))
+        assertEquals(0, s.size("missing"))
+        assertEquals(1, s.size("key"))
     }
 
     @Test
-    public void testSectionReportIsOnceAndNamesTheIssues() throws IOException {
-        IniSection s = loaded();
+    fun testSectionReportIsOnceAndNamesTheIssues() {
+        val s = loaded()
         // The repeated value "one" is not added again and the line without '=' is skipped, in file order
-        Assert.assertEquals("Duplicate value: dup = one\nSkipping: Expected to see '=' in: no equals here\n", s.report());
-        Assert.assertEquals("", s.report());
+        assertEquals("Duplicate value: dup = one\nSkipping: Expected to see '=' in: no equals here\n", s.report())
+        assertEquals("", s.report())
     }
 
     @Test
-    public void testSectionLookupsOfMissingAndOutOfRange() throws IOException {
-        IniSection s = loaded();
-        Assert.assertNull(s.get("missing"));
-        Assert.assertNull(s.get("missing", 3));
-        Assert.assertEquals("default", s.get("missing", "default"));
-        Assert.assertNull(s.getValues("missing"));
-        try {
-            s.get("dup", 5);
-            Assert.fail("expected IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException expected) {
+    fun testSectionLookupsOfMissingAndOutOfRange() {
+        val s = loaded()
+        assertNull(s.get("missing"))
+        assertNull(s.get("missing", 3))
+        assertEquals("default", s.get("missing", "default"))
+        assertNull(s.getValues("missing"))
+        assertFailsWith<IndexOutOfBoundsException> {
             // ArrayList.get, despite the Javadoc naming ArrayIndexOutOfBoundsException
+            s.get("dup", 5)
         }
-        try {
-            s.getValues("dup").add("x");
-            Assert.fail("expected UnsupportedOperationException");
-        } catch (UnsupportedOperationException expected) {
+        assertFailsWith<UnsupportedOperationException> {
             // values are unmodifiable
+            (s.getValues("dup") as MutableCollection<String>).add("x")
         }
-        try {
-            s.getKeys().add("x");
-            Assert.fail("expected UnsupportedOperationException");
-        } catch (UnsupportedOperationException expected) {
+        assertFailsWith<UnsupportedOperationException> {
             // keys are unmodifiable
+            (s.keys as MutableCollection<String>).add("x")
         }
     }
 
     @Test
-    public void testSectionContains() throws IOException {
-        IniSection s = loaded();
-        Assert.assertTrue(s.containsKey("dup"));
-        Assert.assertFalse(s.containsKey("nope"));
-        Assert.assertTrue(s.containsValue("two"));
-        Assert.assertFalse(s.containsValue("three"));
-        Assert.assertTrue(s.containsValue("dup", "two"));
-        Assert.assertFalse(s.containsValue("dup", "three"));
-        Assert.assertFalse(s.containsValue("key", "two"));
-        Assert.assertFalse(s.containsValue("nope", "two"));
+    fun testSectionContains() {
+        val s = loaded()
+        assertTrue(s.containsKey("dup"))
+        assertFalse(s.containsKey("nope"))
+        assertTrue(s.containsValue("two"))
+        assertFalse(s.containsValue("three"))
+        assertTrue(s.containsValue("dup", "two"))
+        assertFalse(s.containsValue("dup", "three"))
+        assertFalse(s.containsValue("key", "two"))
+        assertFalse(s.containsValue("nope", "two"))
     }
 
     @Test
-    public void testSectionRemoveAndReplace() throws IOException {
-        IniSection s = loaded();
-        Assert.assertTrue(s.remove("dup", "one"));
-        Assert.assertEquals(Arrays.asList("two"), list(s.getValues("dup")));
-        Assert.assertFalse("already gone", s.remove("dup", "one"));
-        Assert.assertTrue(s.remove("dup", "two"));
-        Assert.assertFalse("the last value removes the key", s.containsKey("dup"));
-        Assert.assertFalse(s.remove("dup", "two"));
-        Assert.assertFalse(s.remove("missing", "x"));
+    fun testSectionRemoveAndReplace() {
+        val s = loaded()
+        assertTrue(s.remove("dup", "one"))
+        assertEquals(Arrays.asList("two"), list(s.getValues("dup")))
+        assertFalse(s.remove("dup", "one"), "already gone")
+        assertTrue(s.remove("dup", "two"))
+        assertFalse(s.containsKey("dup"), "the last value removes the key")
+        assertFalse(s.remove("dup", "two"))
+        assertFalse(s.remove("missing", "x"))
 
-        Assert.assertTrue(s.remove("eq"));
-        Assert.assertFalse(s.containsKey("eq"));
-        Assert.assertFalse(s.remove("eq"));
+        assertTrue(s.remove("eq"))
+        assertFalse(s.containsKey("eq"))
+        assertFalse(s.remove("eq"))
 
-        Assert.assertTrue(s.replace("key", "new"));
-        Assert.assertEquals(Arrays.asList("new"), list(s.getValues("key")));
-        Assert.assertTrue(s.replace("fresh", "v"));
-        Assert.assertEquals("v", s.get("fresh"));
+        assertTrue(s.replace("key", "new"))
+        assertEquals(Arrays.asList("new"), list(s.getValues("key")))
+        assertTrue(s.replace("fresh", "v"))
+        assertEquals("v", s.get("fresh"))
     }
 
     @Test
-    public void testSectionAddRejectsNullAndEmptyKeys() {
-        IniSection s = new IniSection("S");
-        Assert.assertFalse(s.add("", "v"));
-        Assert.assertFalse(s.add(null, "v"));
-        Assert.assertFalse(s.add("k", null));
-        Assert.assertFalse(s.replace(null, "v"));
-        Assert.assertFalse(s.replace("k", null));
-        Assert.assertTrue(s.isEmpty());
+    fun testSectionAddRejectsNullAndEmptyKeys() {
+        val s = IniSection("S")
+        assertFalse(s.add("", "v"))
+        assertFalse(s.add(null, "v"))
+        assertFalse(s.add("k", null))
+        assertFalse(s.replace(null, "v"))
+        assertFalse(s.replace("k", null))
+        assertTrue(s.isEmpty)
         // The rejections are only reported by load, so a fresh section has no report at all
-        Assert.assertNull(s.report());
+        assertNull(s.report())
     }
 
     @Test
-    public void testSectionAddReturnsTrueForDuplicateValue() {
-        IniSection s = new IniSection("S");
-        Assert.assertTrue(s.add("k", "v"));
-        Assert.assertTrue("a duplicate counts as present", s.add("k", "v"));
-        Assert.assertEquals(1, s.size("k"));
+    fun testSectionAddReturnsTrueForDuplicateValue() {
+        val s = IniSection("S")
+        assertTrue(s.add("k", "v"))
+        assertTrue(s.add("k", "v"), "a duplicate counts as present")
+        assertEquals(1, s.size("k"))
     }
 
     @Test
-    public void testSectionContinuationAtEndOfInput() throws IOException {
-        IniSection s = new IniSection();
+    fun testSectionContinuationAtEndOfInput() {
+        val s = IniSection()
         // After the continuation there is no further line: advance() returns null and getSplitPos(null) throws
-        try {
-            s.load(bytes("[S]\nk=v \\"), UTF8);
-            Assert.fail("expected NullPointerException");
-        } catch (NullPointerException expected) {
+        assertFailsWith<NullPointerException> {
             // quirk kept
+            s.load(bytes("[S]\nk=v \\"), UTF8)
         }
     }
 
     @Test
-    public void testSectionContinuationFollowedByKeyLineWarns() throws IOException {
-        IniSection s = new IniSection();
-        s.load(bytes("[S]\na=x \\\nb=y\n"), UTF8);
+    fun testSectionContinuationFollowedByKeyLineWarns() {
+        val s = IniSection()
+        s.load(bytes("[S]\na=x \\\nb=y\n"), UTF8)
         // The continuation swallows "b=y" into a's value but the possible mistake is reported
-        Assert.assertEquals("x\nb=y", s.get("a"));
-        Assert.assertFalse(s.containsKey("b"));
-        Assert.assertEquals("Possible trailing continuation on previous line. Found: b=y\n", s.report());
+        assertEquals("x\nb=y", s.get("a"))
+        assertFalse(s.containsKey("b"))
+        assertEquals("Possible trailing continuation on previous line. Found: b=y\n", s.report())
     }
 
     @Test
-    public void testSectionByteOrderMarkIsStripped() throws IOException {
-        IniSection s = new IniSection();
-        s.load(bytes("\uFEFF[Bom]\nk=v\n"), UTF8);
-        Assert.assertEquals("Bom", s.getName());
-        Assert.assertEquals("v", s.get("k"));
+    fun testSectionByteOrderMarkIsStripped() {
+        val s = IniSection()
+        s.load(bytes("﻿[Bom]\nk=v\n"), UTF8)
+        assertEquals("Bom", s.name)
+        assertEquals("v", s.get("k"))
     }
 
     @Test
-    public void testSectionLoadFilter() throws IOException {
-        IniSection s = new IniSection();
-        s.load(bytes("[S]\nkeep=1\ndrop=2\n"), UTF8, new Filter<String>() {
-            public boolean test(String key) {
-                return "keep".equals(key);
-            }
-        });
-        Assert.assertTrue(s.containsKey("keep"));
-        Assert.assertFalse(s.containsKey("drop"));
+    fun testSectionLoadFilter() {
+        val s = IniSection()
+        s.load(bytes("[S]\nkeep=1\ndrop=2\n"), UTF8, Filter<String> { key -> "keep" == key })
+        assertTrue(s.containsKey("keep"))
+        assertFalse(s.containsKey("drop"))
     }
 
     @Test
-    public void testSectionCopyConstructorQuirks() throws IOException {
-        IniSection copy = new IniSection(loaded());
-        Assert.assertEquals(" Name ", copy.getName());
-        Assert.assertEquals(Arrays.asList("one", "two"), list(copy.getValues("dup")));
-        Assert.assertEquals("line1\nline2", copy.get("cont"));
+    fun testSectionCopyConstructorQuirks() {
+        val copy = IniSection(loaded())
+        assertEquals(" Name ", copy.name)
+        assertEquals(Arrays.asList("one", "two"), list(copy.getValues("dup")))
+        assertEquals("line1\nline2", copy.get("cont"))
         // The copy constructor leaves warnings and report unset
-        Assert.assertNull(copy.report());
-        try {
-            copy.add("k", null);
-            Assert.fail("expected NullPointerException");
-        } catch (NullPointerException expected) {
+        assertNull(copy.report())
+        assertFailsWith<NullPointerException> {
             // warnings is null in a copy
+            copy.add("k", null)
         }
     }
 
     @Test
-    public void testSectionClear() throws IOException {
-        IniSection s = loaded();
-        s.clear();
-        Assert.assertTrue(s.isEmpty());
-        Assert.assertEquals("", s.report());
-        s.setName("Other");
-        Assert.assertEquals("Other", s.getName());
+    fun testSectionClear() {
+        val s = loaded()
+        s.clear()
+        assertTrue(s.isEmpty)
+        assertEquals("", s.report())
+        s.name = "Other"
+        assertEquals("Other", s.name)
     }
 
     @Test
-    public void testSectionSaveWriter() {
-        IniSection s = new IniSection("S");
-        s.add("k", "a");
-        s.add("k", "b");
-        s.add("m", "x\ny");
-        StringWriter out = new StringWriter();
-        s.save(out);
+    fun testSectionSaveWriter() {
+        val s = IniSection("S")
+        s.add("k", "a")
+        s.add("k", "b")
+        s.add("m", "x\ny")
+        val out = StringWriter()
+        s.save(out)
         // Keys come out in hash order; check the pieces that are order independent.
-        String text = out.toString();
-        Assert.assertTrue(text, text.startsWith("[S]" + NL));
+        val text = out.toString()
+        assertTrue(text.startsWith("[S]" + NL), text)
         // Values of one key keep insertion order, no blank line between entries, newline becomes " \" + tab
-        Assert.assertTrue(text, text.contains("k = a" + NL + "k = b" + NL));
-        Assert.assertTrue(text, text.contains("m = x \\\n\ty" + NL));
+        assertTrue(text.contains("k = a" + NL + "k = b" + NL), text)
+        assertTrue(text.contains("m = x \\\n\ty" + NL), text)
     }
 
     @Test
-    public void testSectionSaveNullName() {
-        StringWriter out = new StringWriter();
-        new IniSection().save(out);
-        Assert.assertEquals("[null]" + NL, out.toString());
+    fun testSectionSaveNullName() {
+        val out = StringWriter()
+        IniSection().save(out)
+        assertEquals("[null]" + NL, out.toString())
     }
 
     @Test
-    public void testSectionSaveAndReloadRoundTrip() throws IOException {
-        IniSection s = loaded();
-        File file = folder.newFile("round.conf");
-        IniSectionJvm.save(s, file, UTF8);
-        IniSection back = new IniSection();
-        IniSectionJvm.load(back, file, UTF8);
-        Assert.assertEquals(s.getName(), back.getName());
-        Assert.assertEquals(new HashSet<String>(s.getKeys()), new HashSet<String>(back.getKeys()));
-        for (String key : s.getKeys()) {
-            Assert.assertEquals(key, list(s.getValues(key)), list(back.getValues(key)));
+    fun testSectionSaveAndReloadRoundTrip() {
+        val s = loaded()
+        val file = folder.newFile("round.conf")
+        IniSectionJvm.save(s, file, UTF8)
+        val back = IniSection()
+        IniSectionJvm.load(back, file, UTF8)
+        assertEquals(s.name, back.name)
+        assertEquals(HashSet(s.keys), HashSet(back.keys))
+        for (key in s.keys) {
+            assertEquals(list(s.getValues(key)), list(back.getValues(key)), key)
         }
 
         // save() writes back to the file it was loaded from
-        back.replace("key", "changed");
-        back.save();
-        IniSection again = new IniSection();
-        IniSectionJvm.load(again, file, UTF8);
-        Assert.assertEquals("changed", again.get("key"));
+        back.replace("key", "changed")
+        back.save()
+        val again = IniSection()
+        IniSectionJvm.load(again, file, UTF8)
+        assertEquals("changed", again.get("key"))
     }
 
     // ---------------------------------------------------------------- Ini
 
-    private static Ini loadedIni(String text) throws IOException {
-        Ini ini = new Ini();
-        ini.load(bytes(text), UTF8);
-        return ini;
+    private fun loadedIni(text: String): Ini {
+        val ini = Ini()
+        ini.load(bytes(text), UTF8)
+        return ini
     }
 
-    private static final String TWO = "[A]\nk=1\nk=2\nother=o\n[B]\nk=3\n";
-
     @Test
-    public void testIniSections() throws IOException {
-        Ini ini = loadedIni(TWO);
-        Assert.assertEquals(2, ini.size());
-        Assert.assertEquals(Arrays.asList("A", "B"), ini.getSections());
-        Assert.assertEquals("A", ini.getSectionName());
-        Assert.assertEquals("A", ini.getSectionName(0));
-        Assert.assertEquals("B", ini.getSectionName(1));
-        Assert.assertEquals("2", ini.getValue("A", "k", 1));
-        Assert.assertEquals("1", ini.getValue("A", "k"));
-        Assert.assertEquals("3", ini.getValue("B", "k"));
-        Assert.assertEquals(2, ini.getValueSize("A", "k"));
+    fun testIniSections() {
+        val ini = loadedIni(TWO)
+        assertEquals(2, ini.size())
+        assertEquals(Arrays.asList("A", "B"), ini.sections)
+        assertEquals("A", ini.sectionName)
+        assertEquals("A", ini.getSectionName(0))
+        assertEquals("B", ini.getSectionName(1))
+        assertEquals("2", ini.getValue("A", "k", 1))
+        assertEquals("1", ini.getValue("A", "k"))
+        assertEquals("3", ini.getValue("B", "k"))
+        assertEquals(2, ini.getValueSize("A", "k"))
         // Section names are case insensitive
-        Assert.assertEquals("1", ini.getValue("a", "k", 0));
+        assertEquals("1", ini.getValue("a", "k", 0))
         // The first-section variants
-        Assert.assertEquals(2, ini.getValueSize("k"));
-        Assert.assertEquals("1", ini.getValue("k"));
-        Assert.assertEquals("2", ini.getValue("k", 1));
-        Assert.assertEquals(new HashSet<String>(Arrays.asList("k", "other")), new HashSet<String>(ini.getKeys()));
-        Assert.assertEquals(Arrays.asList("1", "2"), list(ini.getValues("k")));
-        Assert.assertSame(ini.getSection(), ini.getSection());
-        Assert.assertEquals("A", ini.getSection().getName());
+        assertEquals(2, ini.getValueSize("k"))
+        assertEquals("1", ini.getValue("k"))
+        assertEquals("2", ini.getValue("k", 1))
+        assertEquals(HashSet(Arrays.asList("k", "other")), HashSet(ini.keys))
+        assertEquals(Arrays.asList("1", "2"), list(ini.getValues("k")))
+        assertSame(ini.section, ini.section)
+        assertEquals("A", ini.section!!.name)
     }
 
     @Test
-    public void testIniMissingAndOutOfRange() throws IOException {
-        Ini ini = loadedIni(TWO);
-        Assert.assertNull(ini.getValue("Z", "k", 0));
-        Assert.assertNull(ini.getValue("Z", "k"));
-        Assert.assertEquals(0, ini.getValueSize("Z", "k"));
-        Assert.assertNull(ini.getValue("A", "nope"));
-        Assert.assertNull(ini.getValue("nope"));
-        try {
-            ini.getValue("A", "k", 9);
-            Assert.fail("expected IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException expected) {
+    fun testIniMissingAndOutOfRange() {
+        val ini = loadedIni(TWO)
+        assertNull(ini.getValue("Z", "k", 0))
+        assertNull(ini.getValue("Z", "k"))
+        assertEquals(0, ini.getValueSize("Z", "k"))
+        assertNull(ini.getValue("A", "nope"))
+        assertNull(ini.getValue("nope"))
+        assertFailsWith<IndexOutOfBoundsException> {
             // from the ArrayList of values
+            ini.getValue("A", "k", 9)
         }
-        try {
-            ini.getSectionName(5);
-            Assert.fail("expected IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException expected) {
+        assertFailsWith<IndexOutOfBoundsException> {
             // from the section list
+            ini.getSectionName(5)
         }
-        try {
-            ini.getSections().add("x");
-            Assert.fail("expected UnsupportedOperationException");
-        } catch (UnsupportedOperationException expected) {
+        assertFailsWith<UnsupportedOperationException> {
             // unmodifiable
+            (ini.sections as MutableList<String>).add("x")
         }
     }
 
     @Test
-    public void testIniParseDetails() throws IOException {
-        Ini ini = loadedIni("# c\n; c\n\nlead=1\n[ Name ]\n  spaced  =  v w  \neq=a=b\ncont=x \\\n  y\nempty=\nbad line\nKey=1\nkey=2\ngreek=" + LOGOS + "\n");
+    fun testIniParseDetails() {
+        val ini = loadedIni("# c\n; c\n\nlead=1\n[ Name ]\n  spaced  =  v w  \neq=a=b\ncont=x \\\n  y\nempty=\nbad line\nKey=1\nkey=2\ngreek=" + LOGOS + "\n")
         // A key before any header lives in the section named ""
-        Assert.assertEquals(Arrays.asList("", " Name "), ini.getSections());
-        Assert.assertEquals("1", ini.getValue("", "lead"));
-        Assert.assertEquals("v w", ini.getValue(" Name ", "spaced"));
-        Assert.assertEquals("a=b", ini.getValue(" Name ", "eq"));
-        Assert.assertEquals("x\ny", ini.getValue(" Name ", "cont"));
-        Assert.assertEquals("", ini.getValue(" Name ", "empty"));
-        Assert.assertNull(ini.getValue(" Name ", "bad line"));
-        Assert.assertEquals("1", ini.getValue(" Name ", "Key"));
-        Assert.assertEquals("2", ini.getValue(" Name ", "key"));
-        Assert.assertEquals(LOGOS, ini.getValue(" Name ", "greek"));
+        assertEquals(Arrays.asList("", " Name "), ini.sections)
+        assertEquals("1", ini.getValue("", "lead"))
+        assertEquals("v w", ini.getValue(" Name ", "spaced"))
+        assertEquals("a=b", ini.getValue(" Name ", "eq"))
+        assertEquals("x\ny", ini.getValue(" Name ", "cont"))
+        assertEquals("", ini.getValue(" Name ", "empty"))
+        assertNull(ini.getValue(" Name ", "bad line"))
+        assertEquals("1", ini.getValue(" Name ", "Key"))
+        assertEquals("2", ini.getValue(" Name ", "key"))
+        assertEquals(LOGOS, ini.getValue(" Name ", "greek"))
     }
 
     @Test
-    public void testIniContinuationAtEndKeepsTheNewline() throws IOException {
-        Ini ini = loadedIni("[S]\nk=v \\");
-        Assert.assertEquals("v\n", ini.getValue("S", "k"));
+    fun testIniContinuationAtEndKeepsTheNewline() {
+        val ini = loadedIni("[S]\nk=v \\")
+        assertEquals("v\n", ini.getValue("S", "k"))
     }
 
     @Test
-    public void testIniDoesNotStripByteOrderMark() throws IOException {
-        // Unlike IniSection, "\uFEFF[Bom]" is not a section line; it has no '=' so it is skipped
-        Ini ini = loadedIni("\uFEFF[Bom]\nk=v\n");
-        Assert.assertEquals(Arrays.asList(""), ini.getSections());
-        Assert.assertEquals("v", ini.getValue("", "k"));
+    fun testIniDoesNotStripByteOrderMark() {
+        // Unlike IniSection, "﻿[Bom]" is not a section line; it has no '=' so it is skipped
+        val ini = loadedIni("﻿[Bom]\nk=v\n")
+        assertEquals(Arrays.asList(""), ini.sections)
+        assertEquals("v", ini.getValue("", "k"))
     }
 
     @Test
-    public void testIniEmptyKeyStillCreatesTheSection() throws IOException {
-        Ini ini = loadedIni("[S]\n=v\n");
-        Assert.assertEquals(Arrays.asList("S"), ini.getSections());
-        Assert.assertNull(ini.getValue("S", ""));
-        Assert.assertEquals(0, ini.getSection().size());
+    fun testIniEmptyKeyStillCreatesTheSection() {
+        val ini = loadedIni("[S]\n=v\n")
+        assertEquals(Arrays.asList("S"), ini.sections)
+        assertNull(ini.getValue("S", ""))
+        assertEquals(0, ini.section!!.size())
     }
 
     @Test
-    public void testIniAddReplaceRemove() throws IOException {
-        Ini ini = loadedIni(TWO);
+    fun testIniAddReplaceRemove() {
+        val ini = loadedIni(TWO)
         // "a" finds section A case-insensitively, so no section is added
-        Assert.assertTrue(ini.add("a", "k", "9"));
-        Assert.assertEquals(Arrays.asList("A", "B"), ini.getSections());
-        Assert.assertEquals(3, ini.getValueSize("A", "k"));
-        Assert.assertTrue(ini.add("C", "n", "v"));
-        Assert.assertEquals(Arrays.asList("A", "B", "C"), ini.getSections());
-        Assert.assertFalse(ini.add("C", "", "v"));
-        Assert.assertTrue(ini.replace("A", "k", "only"));
-        Assert.assertEquals(1, ini.getValueSize("A", "k"));
-        Assert.assertEquals("only", ini.getValue("A", "k"));
+        assertTrue(ini.add("a", "k", "9"))
+        assertEquals(Arrays.asList("A", "B"), ini.sections)
+        assertEquals(3, ini.getValueSize("A", "k"))
+        assertTrue(ini.add("C", "n", "v"))
+        assertEquals(Arrays.asList("A", "B", "C"), ini.sections)
+        assertFalse(ini.add("C", "", "v"))
+        assertTrue(ini.replace("A", "k", "only"))
+        assertEquals(1, ini.getValueSize("A", "k"))
+        assertEquals("only", ini.getValue("A", "k"))
 
         // removing the last value of the last key removes the section
-        Assert.assertTrue(ini.remove("B", "k", "3"));
-        Assert.assertEquals(Arrays.asList("A", "C"), ini.getSections());
-        Assert.assertEquals(2, ini.size());
-        Assert.assertFalse(ini.remove("B", "k", "3"));
-        Assert.assertFalse(ini.remove("A", "k", "nope"));
-        Assert.assertEquals(2, ini.size());
+        assertTrue(ini.remove("B", "k", "3"))
+        assertEquals(Arrays.asList("A", "C"), ini.sections)
+        assertEquals(2, ini.size())
+        assertFalse(ini.remove("B", "k", "3"))
+        assertFalse(ini.remove("A", "k", "nope"))
+        assertEquals(2, ini.size())
     }
 
     @Test
-    public void testIniRemoveKeyRemovesSectionEvenWhenKeyIsMissing() throws IOException {
-        Ini ini = loadedIni(TWO);
+    fun testIniRemoveKeyRemovesSectionEvenWhenKeyIsMissing() {
+        val ini = loadedIni(TWO)
         // Quirk: the section is dropped whether or not the key existed
-        Assert.assertFalse(ini.remove("A", "nope"));
-        Assert.assertEquals(Arrays.asList("B"), ini.getSections());
-        Assert.assertTrue(ini.remove("B", "k"));
-        Assert.assertEquals(0, ini.size());
-        Assert.assertFalse(ini.remove("B", "k"));
+        assertFalse(ini.remove("A", "nope"))
+        assertEquals(Arrays.asList("B"), ini.sections)
+        assertTrue(ini.remove("B", "k"))
+        assertEquals(0, ini.size())
+        assertFalse(ini.remove("B", "k"))
     }
 
     @Test
-    public void testIniRemoveWithDifferentCaseLeavesAStaleListEntry() throws IOException {
-        Ini ini = loadedIni("[A]\nk=1\n");
+    fun testIniRemoveWithDifferentCaseLeavesAStaleListEntry() {
+        val ini = loadedIni("[A]\nk=1\n")
         // The case-insensitive map finds and drops the section, but the list removes by exact equals
-        Assert.assertTrue(ini.remove("a", "k", "1"));
-        Assert.assertEquals(0, ini.size());
-        Assert.assertEquals(Arrays.asList("A"), ini.getSections());
-        Assert.assertNull(ini.getSection());
+        assertTrue(ini.remove("a", "k", "1"))
+        assertEquals(0, ini.size())
+        assertEquals(Arrays.asList("A"), ini.sections)
+        assertNull(ini.section)
     }
 
     @Test
-    public void testIniFirstSectionHelpersOnEmptyIni() throws IOException {
-        Ini ini = new Ini();
-        Assert.assertEquals(0, ini.size());
-        Assert.assertNull(ini.getSectionName());
-        Assert.assertNull(ini.getSection());
-        Assert.assertNull(ini.getKeys());
-        Assert.assertNull(ini.getValues("k"));
-        Assert.assertNull(ini.getValue("k"));
-        Assert.assertEquals(0, ini.getValueSize("k"));
+    fun testIniFirstSectionHelpersOnEmptyIni() {
+        val ini = Ini()
+        assertEquals(0, ini.size())
+        assertNull(ini.sectionName)
+        assertNull(ini.section)
+        assertNull(ini.keys)
+        assertNull(ini.getValues("k"))
+        assertNull(ini.getValue("k"))
+        assertEquals(0, ini.getValueSize("k"))
         // These claim success without doing anything
-        Assert.assertTrue(ini.addValue("k", "v"));
-        Assert.assertTrue(ini.removeValue("k", "v"));
-        Assert.assertTrue(ini.removeValue("k"));
-        Assert.assertTrue(ini.replaceValue("k", "v"));
-        Assert.assertEquals(0, ini.size());
-        try {
-            ini.getSectionName(0);
-            Assert.fail("expected IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException expected) {
+        assertTrue(ini.addValue("k", "v"))
+        assertTrue(ini.removeValue("k", "v"))
+        assertTrue(ini.removeValue("k"))
+        assertTrue(ini.replaceValue("k", "v"))
+        assertEquals(0, ini.size())
+        assertFailsWith<IndexOutOfBoundsException> {
             // empty list
+            ini.getSectionName(0)
         }
     }
 
     @Test
-    public void testIniFirstSectionHelpers() throws IOException {
-        Ini ini = loadedIni(TWO);
-        Assert.assertTrue(ini.addValue("k", "x"));
-        Assert.assertEquals(Arrays.asList("1", "2", "x"), list(ini.getValues("k")));
-        Assert.assertTrue(ini.replaceValue("k", "y"));
-        Assert.assertEquals(Arrays.asList("y"), list(ini.getValues("k")));
-        Assert.assertTrue(ini.removeValue("k", "y"));
-        Assert.assertNull(ini.getValues("k"));
-        Assert.assertTrue(ini.removeValue("other"));
+    fun testIniFirstSectionHelpers() {
+        val ini = loadedIni(TWO)
+        assertTrue(ini.addValue("k", "x"))
+        assertEquals(Arrays.asList("1", "2", "x"), list(ini.getValues("k")))
+        assertTrue(ini.replaceValue("k", "y"))
+        assertEquals(Arrays.asList("y"), list(ini.getValues("k")))
+        assertTrue(ini.removeValue("k", "y"))
+        assertNull(ini.getValues("k"))
+        assertTrue(ini.removeValue("other"))
         // A has no keys left, but removeValue(key) dropped the section
-        Assert.assertEquals(Arrays.asList("B"), ini.getSections());
+        assertEquals(Arrays.asList("B"), ini.sections)
     }
 
     @Test
-    public void testIniClear() throws IOException {
-        Ini ini = loadedIni(TWO);
-        ini.clear();
-        Assert.assertEquals(0, ini.size());
-        Assert.assertTrue(ini.getSections().isEmpty());
+    fun testIniClear() {
+        val ini = loadedIni(TWO)
+        ini.clear()
+        assertEquals(0, ini.size())
+        assertTrue(ini.sections.isEmpty())
     }
 
     @Test
-    public void testIniSaveAndReloadRoundTrip() throws IOException {
-        Ini ini = loadedIni("[A]\nk=1\nk=2\ncont=l1 \\\n l2\ngreek=" + LOGOS + "\n[ B b ]\nk=" + AAKKOSET + "\nempty=\n");
-        File file = folder.newFile("round.ini");
-        ini.save(file, UTF8);
-        Ini back = new Ini();
-        back.load(file, UTF8);
-        Assert.assertEquals(ini.getSections(), back.getSections());
-        Assert.assertEquals("2", back.getValue("A", "k", 1));
-        Assert.assertEquals("l1\nl2", back.getValue("A", "cont"));
-        Assert.assertEquals(LOGOS, back.getValue("A", "greek"));
-        Assert.assertEquals(AAKKOSET, back.getValue(" B b ", "k"));
-        Assert.assertEquals("", back.getValue(" B b ", "empty"));
+    fun testIniSaveAndReloadRoundTrip() {
+        val ini = loadedIni("[A]\nk=1\nk=2\ncont=l1 \\\n l2\ngreek=" + LOGOS + "\n[ B b ]\nk=" + AAKKOSET + "\nempty=\n")
+        val file = folder.newFile("round.ini")
+        ini.save(file, UTF8)
+        val back = Ini()
+        back.load(file, UTF8)
+        assertEquals(ini.sections, back.sections)
+        assertEquals("2", back.getValue("A", "k", 1))
+        assertEquals("l1\nl2", back.getValue("A", "cont"))
+        assertEquals(LOGOS, back.getValue("A", "greek"))
+        assertEquals(AAKKOSET, back.getValue(" B b ", "k"))
+        assertEquals("", back.getValue(" B b ", "empty"))
 
         // load(InputStream)
-        Ini fromFile = new Ini();
-        fromFile.load(new java.io.ByteArrayInputStream(bytes(TWO)), UTF8);
-        Assert.assertEquals(Arrays.asList("A", "B"), fromFile.getSections());
+        val fromFile = Ini()
+        fromFile.load(java.io.ByteArrayInputStream(bytes(TWO)), UTF8)
+        assertEquals(Arrays.asList("A", "B"), fromFile.sections)
+    }
+
+    companion object {
+        private const val UTF8 = "UTF-8"
+        private val NL = System.getProperty("line.separator")
+
+        /** Greek lambda omicron gamma omicron sigma */
+        private const val LOGOS = "λόγος"
+        private const val AAKKOSET = "Ääkköset"
+
+        private val CONF = "﻿".substring(1) +
+            "[ Name ]\n" +
+            "# a comment\n" +
+            "; another comment\n" +
+            "\n" +
+            "key=value\n" +
+            "Key=other\n" +
+            "dup=one\n" +
+            "dup=two\n" +
+            "dup=one\n" +
+            "eq=a=b=c\n" +
+            "   spaced key  =   spaced value   \n" +
+            "cont=line1 \\\n" +
+            "   line2\n" +
+            "empty=\n" +
+            "no equals here\n" +
+            "greek=" + LOGOS + "\n" +
+            "fin=" + AAKKOSET + "\n"
+
+        private const val TWO = "[A]\nk=1\nk=2\nother=o\n[B]\nk=3\n"
     }
 }
