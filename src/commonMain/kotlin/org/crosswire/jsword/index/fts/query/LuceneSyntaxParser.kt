@@ -29,8 +29,9 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  * [QueryParseException] (the baseline's recursive parser overflows the stack, an untyped `StackOverflowError`);
  * `term~1` is a [QueryParseException] (the baseline throws a raw `IllegalArgumentException`).
  *
- * Escapes inside a [SearchNode.Wildcard] pattern are not unescaped (Lucene's `WildcardQuery` has no escape
- * mechanism either); a prefix (`fa*`) is unescaped and re-appended with `*`.
+ * Escapes: `QueryParser.Term()` removes them from the whole term before it builds a wildcard or fuzzy query (then
+ * lowercases), so `b\?ess*` is a [SearchNode.Prefix] with the literal `b?ess`, and `b\?es?` is the wildcard
+ * `b?es?` where the first `?` is a wildcard again (`WildcardQuery` itself has no escape mechanism).
  */
 object LuceneSyntaxParser {
     /** Deepest parenthesis nesting accepted. Bounds the recursion on every platform (Kotlin/Native threads have small stacks). */
@@ -246,13 +247,19 @@ object LuceneSyntaxParser {
             when {
                 tok.kind == Kind.STAR || tok.kind == Kind.WILDTERM -> {
                     requireField(field)
-                    val pattern = image.lowercase()
+                    // QueryParser.Term(): discardEscapeChar over the whole term, then getWildcardQuery lowercases.
+                    val pattern = unescape(image).lowercase()
                     return if (field == SearchFields.STRONG) SearchNode.StrongTerm(pattern, true) else SearchNode.Wildcard(pattern)
                 }
                 tok.kind == Kind.PREFIXTERM -> {
                     requireField(field)
-                    val pattern = unescape(image.substring(0, image.length - 1)).lowercase() + "*"
-                    return if (field == SearchFields.STRONG) SearchNode.StrongTerm(pattern, true) else SearchNode.Wildcard(pattern)
+                    // getPrefixQuery gets the unescaped term without the final `*`; PrefixQuery takes it literally,
+                    // so an escaped `\*` or `\?` in it is an ordinary character, not a wildcard.
+                    val prefix = unescape(image.substring(0, image.length - 1)).lowercase()
+                    return if (field == SearchFields.STRONG) {
+                        // Strong's tokens never contain `*` or `?`: such a literal prefix matches nothing.
+                        if (prefix.any { it == '*' || it == '?' }) SearchNode.Bool(emptyList()) else SearchNode.StrongTerm("$prefix*", true)
+                    } else SearchNode.Prefix(prefix)
                 }
                 slop != null -> {
                     requireField(field)
@@ -284,7 +291,8 @@ object LuceneSyntaxParser {
             if (field == SearchFields.STRONG) {
                 // One number is a term query in Lucene too. Several would be a phrase over the strong field's token
                 // positions, which the strongs table does not keep.
-                val numbers = StrongsTokens.fromLexical(text)
+                // Count the numbers as written: `G3588!a` is one number (the filter emits its two tokens for it).
+                val numbers = text.split(Regex("\\s+")).filter { it.isNotEmpty() && StrongsTokens.normalize(it) != null }
                 if (numbers.size > 1) throw UnsupportedSearchSyntaxException("strong:\"phrase\"")
                 return if (numbers.isEmpty()) null else SearchNode.StrongTerm(text, false)
             }

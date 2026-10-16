@@ -13,8 +13,11 @@ sealed interface SearchNode {
     /** A quoted phrase [text] with [slop] (`"a b"~3`, default 0). Analyzed as a whole, so token positions are kept. */
     data class Phrase(val text: String, val slop: Int) : SearchNode
 
-    /** A term with `*` / `?` (a trailing-only `*` is a prefix and still a [Wildcard]); lowercased, not analyzed. */
+    /** A term with `*` / `?` wildcards (escapes already removed); lowercased, not analyzed. */
     data class Wildcard(val pattern: String) : SearchNode
+
+    /** `term*`: Lucene `PrefixQuery`, the [prefix] is literal (lowercased, unescaped, not analyzed). */
+    data class Prefix(val prefix: String) : SearchNode
 
     /** `term~` / `term~0.8`; lowercased, not analyzed. [minSimilarity] is 0.5 when not given. */
     data class Fuzzy(val term: String, val minSimilarity: Float) : SearchNode
@@ -40,6 +43,7 @@ fun SearchNode.toLuceneString(): String = when (this) {
     is SearchNode.Term -> "content:$text"
     is SearchNode.Phrase -> "content:\"$text\"" + if (slop != 0) "~$slop" else ""
     is SearchNode.Wildcard -> "content:$pattern"
+    is SearchNode.Prefix -> "content:$prefix*"
     is SearchNode.Fuzzy -> "content:$term~$minSimilarity"
     is SearchNode.StrongTerm -> "strong:$raw"
     is SearchNode.Bool -> clauses.joinToString(" ") { c ->

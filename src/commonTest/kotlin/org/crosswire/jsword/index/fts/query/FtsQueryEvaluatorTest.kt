@@ -155,11 +155,28 @@ class FtsQueryEvaluatorTest {
     }
 
     @Test fun wildcardFuzzyAndProximityAreNotSilentlyWrong() {
-        for (q in listOf("god*", "g?d", "god~", "\"god light\"~2", "strong:H07*")) {
+        for (q in listOf("\"god light\"~2")) {
             assertFailsWith<UnsupportedSearchSyntaxException>(q) { run(q) }
         }
         assertEquals(setOf(6L), run("\"well known\"~0"), "slop 0 is a plain phrase")
         assertEquals(setOf(2L, 3L, 6L, 7L), run("\"light\"~5"), "one token: a term, slop is irrelevant")
+    }
+
+    @Test fun wildcardsPrefixesAndFuzzy() {
+        assertEquals(setOf(1L, 2L, 4L, 7L), run("god*"), "prefix")
+        assertEquals(setOf(1L, 2L, 4L, 7L), run("g?d"))
+        assertEquals(setOf(1L, 2L, 4L, 7L), run("g*d"))
+        assertEquals(setOf(2L, 3L, 6L, 7L), run("*ight"))
+        assertEquals(setOf(6L, 7L), run("w?ll*"))
+        assertEquals(setOf(6L, 7L), run("k?own"))
+        assertEquals(setOf(1L, 2L, 4L, 7L), run("GOD~"), "fuzzy, default 0.5: god is itself")
+        assertEquals(setOf(2L), run("ligth~0.5 AND said"), "ligth is close to light")
+        assertEquals(emptySet(), run("zzz*"))
+        assertEquals(emptySet(), run("g??d"))
+    }
+
+    @Test fun strongsWildcards() {
+        assertEquals(emptySet(), run("strong:h07*"), "the pattern is lowercased, the tokens are not: Lucene's behaviour")
     }
 
     @Test fun anEmptyQueryMatchesNothing() {

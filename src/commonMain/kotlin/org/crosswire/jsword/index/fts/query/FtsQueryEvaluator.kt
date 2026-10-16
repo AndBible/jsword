@@ -26,8 +26,11 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  *   A term of several whitespace-separated numbers intersects them (the strongs table has no positions, so the
  *   baseline's phrase over the `strong` field is approximated).
  *
- * Wildcards, fuzzy terms and `strong:` wildcards are Tasks 12/13: until they land, evaluating one throws
- * [UnsupportedSearchSyntaxException] rather than returning a wrong set.
+ * - [SearchNode.Wildcard], [SearchNode.Prefix], [SearchNode.Fuzzy] and wildcard [SearchNode.StrongTerm]: expanded
+ *   against the index vocabulary by [VocabularyExpansion] (Lucene's term-dictionary expansion) and the matches of
+ *   the terms are united, [MATCH_BATCH] terms per query.
+ *
+ * Sloppy phrases are Task 13: until then evaluating one throws [UnsupportedSearchSyntaxException].
  *
  * Every FTS5 expression is built defensively: each encoded token is quoted, nothing from the user reaches FTS5
  * syntax.
@@ -42,12 +45,51 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
         }
         is SearchNode.Bool -> evaluateBool(node)
         is SearchNode.StrongTerm -> {
-            if (node.wildcard) throw UnsupportedSearchSyntaxException("strong:${node.raw}")
+            if (node.wildcard) return store.strongsAny(VocabularyExpansion.wildcard(node.raw, store.strongsVocabulary()))
             val tokens = StrongsTokens.fromLexical(node.raw)
             if (tokens.isEmpty()) emptySet() else tokens.map { store.strongs(it) }.reduce { a, b -> a intersect b }
         }
-        is SearchNode.Wildcard -> throw UnsupportedSearchSyntaxException(node.pattern)
-        is SearchNode.Fuzzy -> throw UnsupportedSearchSyntaxException("${node.term}~")
+        is SearchNode.Wildcard -> wildcard(node.pattern)
+        is SearchNode.Prefix -> prefix(node.prefix)
+        is SearchNode.Fuzzy -> matchAny(VocabularyExpansion.fuzzy(node.term, node.minSimilarity, vocabulary.asSequence()))
+    }
+
+    /** The decoded index terms, read once per evaluator (wildcard and fuzzy terms scan all of them). */
+    private val vocabulary: List<String> by lazy { store.vocabulary().toList() }
+
+    private fun wildcard(pattern: String): Set<Long> {
+        // A pattern that is a literal followed by one final `*` is a prefix: let FTS5 scan the term range.
+        val star = pattern.indexOf('*')
+        if (star > 0 && star == pattern.length - 1 && pattern.none { it == '?' } && wellFormed(pattern)) return prefix(pattern.dropLast(1))
+        return matchAny(VocabularyExpansion.wildcard(pattern, vocabulary.asSequence()))
+    }
+
+    /**
+     * Terms starting with [prefix]. The FTS5 prefix query over the hex encoding gives the same terms as comparing
+     * decoded strings (UTF-8 hex prefix = whole-character prefix), unless [prefix] has a lone surrogate, which has
+     * no UTF-8 form: that and the empty prefix take the vocabulary path.
+     */
+    private fun prefix(prefix: String): Set<Long> {
+        if (prefix.isNotEmpty() && wellFormed(prefix)) return store.match("\"${SearchTokenCodec.encode(prefix)}\"*")
+        return matchAny(VocabularyExpansion.prefix(prefix, vocabulary.asSequence()))
+    }
+
+    private fun wellFormed(s: String): Boolean {
+        var i = 0
+        while (i < s.length) {
+            val c = s[i]
+            if (c.isHighSurrogate()) { if (i + 1 >= s.length || !s[i + 1].isLowSurrogate()) return false; i++ }
+            else if (c.isLowSurrogate()) return false
+            i++
+        }
+        return true
+    }
+
+    /** The union of the single-term matches of [terms], [MATCH_BATCH] terms per FTS5 expression (`OR`-joined). */
+    private fun matchAny(terms: List<String>): Set<Long> {
+        val out = LinkedHashSet<Long>()
+        for (chunk in terms.chunked(MATCH_BATCH)) out += store.match(chunk.joinToString(" OR ") { quote(it) })
+        return out
     }
 
     private fun evaluateBool(node: SearchNode.Bool): Set<Long> {
@@ -81,4 +123,9 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
     }
 
     private fun quote(token: String) = "\"${SearchTokenCodec.encode(token)}\""
+
+    private companion object {
+        /** Terms per FTS5 expression: far below the expression-depth and length limits of SQLite. */
+        const val MATCH_BATCH = 200
+    }
 }

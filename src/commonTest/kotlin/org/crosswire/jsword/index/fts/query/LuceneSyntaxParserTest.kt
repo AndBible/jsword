@@ -106,14 +106,14 @@ class LuceneSyntaxParserTest {
     }
 
     @Test fun wildcardsFuzzyAndProximityNodes() {
-        assertEquals(SearchNode.Wildcard("faith*"), LuceneSyntaxParser.parse("FAITH*"))
+        assertEquals(SearchNode.Prefix("faith"), LuceneSyntaxParser.parse("FAITH*"))
         assertEquals(SearchNode.Wildcard("*"), LuceneSyntaxParser.parse("*"))
         assertEquals(SearchNode.Wildcard("**"), LuceneSyntaxParser.parse("**"))
         assertEquals(SearchNode.Wildcard("?"), LuceneSyntaxParser.parse("?"))
         assertEquals(SearchNode.Wildcard("*neld"), LuceneSyntaxParser.parse("*Neld"))
         assertEquals(SearchNode.Wildcard("f*h"), LuceneSyntaxParser.parse("f*h"))
         assertEquals(SearchNode.Wildcard("fa?th"), LuceneSyntaxParser.parse("fa?th"))
-        assertEquals(SearchNode.Wildcard("ä*"), LuceneSyntaxParser.parse("Ä*"))
+        assertEquals(SearchNode.Prefix("ä"), LuceneSyntaxParser.parse("Ä*"))
         assertEquals(SearchNode.Fuzzy("faith", 0.5f), LuceneSyntaxParser.parse("faith~"))
         assertEquals(SearchNode.Fuzzy("faith", 0.8f), LuceneSyntaxParser.parse("Faith~0.8"))
         assertEquals(SearchNode.Phrase("faith hope", 3), LuceneSyntaxParser.parse("\"faith hope\"~3"))
@@ -132,11 +132,28 @@ class LuceneSyntaxParserTest {
         assertEquals(SearchNode.Bool(emptyList()), LuceneSyntaxParser.parse("-\\* \"1\"", analyzer)) // "1" has no letters
     }
 
+    /** `QueryParser.Term()` unescapes the whole term first (review of task 11, oracle-checked in the smoke test). */
+    @Test fun escapesAreRemovedBeforeWildcardPrefixAndFuzzyHandling() {
+        assertEquals(SearchNode.Prefix("b?ess"), LuceneSyntaxParser.parse("B\\?ess*"), "an escaped ? in a prefix is literal")
+        assertEquals(SearchNode.Prefix("a*b"), LuceneSyntaxParser.parse("a\\*b*"))
+        assertEquals(SearchNode.Wildcard("b?es?"), LuceneSyntaxParser.parse("B\\?es?"), "unescaped, the ? is a wildcard again")
+        assertEquals(SearchNode.Wildcard("café?"), LuceneSyntaxParser.parse("Caf\\u00e9?"))
+        assertEquals(SearchNode.Wildcard("a*b*x"), LuceneSyntaxParser.parse("a\\*b*x"))
+        assertEquals(SearchNode.Fuzzy("b?ess", 0.5f), LuceneSyntaxParser.parse("B\\?ess~"))
+        assertEquals(SearchNode.StrongTerm("h7*", true), LuceneSyntaxParser.parse("strong:H7*"))
+        assertEquals(SearchNode.Bool(emptyList()), LuceneSyntaxParser.parse("strong:h\\*7*"), "literal * never occurs in a Strong's token")
+    }
+
+    @Test fun quotedStrongWithPartCountsAsOneNumber() {
+        assertEquals(SearchNode.StrongTerm("G3588!a", false), LuceneSyntaxParser.parse("strong:\"G3588!a\""))
+        assertFailsWith<UnsupportedSearchSyntaxException> { LuceneSyntaxParser.parse("strong:\"h7225 g26\"") }
+    }
+
     @Test fun lexerTiesAndLongestMatch() {
         assertIs<SearchNode.Bool>(LuceneSyntaxParser.parse("a AND b"))
         assertEquals(SearchNode.Term("AND:x"), LuceneSyntaxParser.parse("AND\\:x"))
         // "AND*" is longer as a prefix term than the AND token.
-        assertEquals(SearchNode.Wildcard("and*"), LuceneSyntaxParser.parse("AND*"))
+        assertEquals(SearchNode.Prefix("and"), LuceneSyntaxParser.parse("AND*"))
         assertEquals(SearchNode.Term("a"), LuceneSyntaxParser.parse("a"))
         assertEquals("content:faith content:hope", lucene("faith　hope")) // ideographic space separates
     }

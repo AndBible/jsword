@@ -88,6 +88,19 @@ class FtsIndexStore private constructor(private val db: SQLiteConnection) : Auto
     /** Rowids of the entries containing Strong's [token]. */
     fun strongs(token: String): Set<Long> = longs("SELECT rowid FROM strongs WHERE token = ?", token)
 
+    /** Rowids of the entries containing any of the Strong's [tokens] (looked up in chunks, one statement each). */
+    fun strongsAny(tokens: Collection<String>): Set<Long> {
+        val out = LinkedHashSet<Long>()
+        for (chunk in tokens.chunked(500)) {
+            val sql = "SELECT rowid FROM strongs WHERE token IN (" + chunk.joinToString(",") { "?" } + ")"
+            db.prepare(sql).use { st ->
+                chunk.forEachIndexed { i, t -> st.bindText(i + 1, t) }
+                while (st.step()) out += st.getLong(0)
+            }
+        }
+        return out
+    }
+
     /** Eager: all rows are read inside the call (memory O(vocabulary)) and only then wrapped as a [Sequence]. */
     fun strongsVocabulary(): Sequence<String> = strings("SELECT DISTINCT token FROM strongs ORDER BY token").asSequence()
 

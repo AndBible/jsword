@@ -89,7 +89,7 @@ class FtsIndexManagerTest {
         index.searchModifier = DefaultSearchModifier().apply { isRanked = true }
         assertEquals("ranked", assertFailsWith<UnsupportedSearchSyntaxException> { index.find("god") }.syntax)
         index.searchModifier = null
-        assertFailsWith<UnsupportedSearchSyntaxException> { index.find("god*") }
+        assertFailsWith<UnsupportedSearchSyntaxException> { index.find("\"god light\"~2") }
         m.closeAllIndexes()
     }
 
