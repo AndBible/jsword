@@ -342,7 +342,10 @@ val searchParityTest by tasks.registering(Test::class) {
     enableAssertions = false
     // Whole-module probe outputs (commentary text of every key) are held as one string on each side.
     maxHeapSize = "4g"
-    filter { includeTestsMatching("org.crosswire.ksword.parity.search.*") }
+    filter {
+        includeTestsMatching("org.crosswire.ksword.parity.search.*")
+        excludeTestsMatching("*GenerateIosSearchFixtures*")
+    }
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
     systemProperty("ksword.projectDir", layout.projectDirectory.asFile.absolutePath)
@@ -354,6 +357,66 @@ val searchParityTest by tasks.registering(Test::class) {
         listOf("-Dksword.oracle.classpath=${oracleClasspath.asPath}")
     })
 }
+
+// K6 task 14B: regenerates src/commonTest/k6-fixtures/*.tsv (committed; the source of truth for PdFixtureSearchTest) from the
+// corpus and the baseline oracle. Run by hand when the fixture set must change; see GenerateIosSearchFixtures.
+val generateK6IosFixtures by tasks.registering(Test::class) {
+    group = "verification"
+    description = "Regenerates the committed K6 iOS search fixtures (needs .local/k6-corpus and the baseline oracle)."
+    dependsOn(compileOracleProbe, tasks.named("jvmTestClasses"))
+    testClassesDirs = jvmTestCompilation.output.classesDirs
+    classpath = files(jvmTestCompilation.output.allOutputs, jvmTestCompilation.runtimeDependencyFiles)
+    useJUnit()
+    enableAssertions = false
+    maxHeapSize = "4g"
+    filter { includeTestsMatching("*GenerateIosSearchFixtures*") }
+    outputs.upToDateWhen { false }
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
+    systemProperty("ksword.projectDir", layout.projectDirectory.asFile.absolutePath)
+    systemProperty("ksword.reportsDir", layout.buildDirectory.dir("reports/ksword").get().asFile.absolutePath)
+    systemProperty("ksword.k6.corpus", rootProject.file(".local/k6-corpus").absolutePath)
+    systemProperty("ksword.k6.fixturesOut", layout.projectDirectory.dir("src/commonTest/k6-fixtures").asFile.absolutePath)
+    val oracleClasspath = files(baselineJar, compileOracleProbe.map { it.destinationDirectory }) + oracleThirdParty
+    inputs.files(oracleClasspath)
+    jvmArgumentProviders.add(CommandLineArgumentProvider {
+        listOf("-Dksword.oracle.classpath=${oracleClasspath.asPath}")
+    })
+}
+
+// The committed fixtures embedded as Kotlin source for commonTest: iOS tests cannot read files at runtime. The TSVs stay the
+// source of truth; this generated K6Fixtures (build/, not committed) carries each file's bytes as Base64 chunks.
+val generatedK6FixturesDir = layout.buildDirectory.dir("generated/ksword/commonTest/k6")
+val generateK6FixtureSource by tasks.registering {
+    val root = layout.projectDirectory.dir("src/commonTest/k6-fixtures")
+    inputs.files(fileTree(root)).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedK6FixturesDir)
+    doLast {
+        val files = root.asFile.listFiles { f -> f.extension == "tsv" }.orEmpty().sortedBy { it.name }
+        // An empty set is allowed (the very first generateK6IosFixtures run needs the test sources to compile);
+        // PdFixtureSearchTest fails on an empty set.
+        val out = generatedK6FixturesDir.get().file("org/crosswire/jsword/index/fts/K6Fixtures.kt").asFile
+        out.parentFile.mkdirs()
+        out.bufferedWriter().use { w ->
+            w.appendLine("// GENERATED from src/commonTest/k6-fixtures/*.tsv. Do not edit.")
+            w.appendLine("package org.crosswire.jsword.index.fts")
+            w.appendLine("import kotlin.io.encoding.Base64")
+            w.appendLine("import kotlin.io.encoding.ExperimentalEncodingApi")
+            w.appendLine("@OptIn(ExperimentalEncodingApi::class)")
+            w.appendLine("internal object K6Fixtures {")
+            w.appendLine("    /** Module initials to the fixture file text. */")
+            w.appendLine("    fun files(): Map<String, String> = mapOf(")
+            for (f in files) {
+                w.appendLine("        \"${f.nameWithoutExtension}\" to Base64.decode(arrayOf<String>(")
+                JBase64.getEncoder().encodeToString(f.readBytes()).chunked(60_000).forEach { w.appendLine("            \"$it\",") }
+                w.appendLine("        ).joinToString(\"\")).decodeToString(),")
+            }
+            w.appendLine("    )")
+            w.appendLine("}")
+        }
+    }
+}
+kotlin.sourceSets.named("commonTest") { kotlin.srcDir(generateK6FixtureSource) }
 
 // iOS simulator tests: stream stdout/stderr so a test process that dies mid-test (SIGSEGV) still leaves its last
 // output in the CI log; the HTML report has nothing for a crashed process.
