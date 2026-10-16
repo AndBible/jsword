@@ -53,6 +53,10 @@ class FtsIndexManager internal constructor(
     private val serialLock = SynchronizedObject()
     private val bookLocks = HashMap<String, SynchronizedObject>()
     private val building = HashSet<String>()
+
+    /** Test seams: run in [scheduleIndexCreation] once the book is registered, and in [deleteIndex] after it cancelled the job. */
+    internal var scheduleHook: ((Book) -> Unit)? = null
+    internal var deleteHook: ((Book) -> Unit)? = null
     private var policy: IndexPolicy = IndexPolicyAdapter()
 
     init { deleteCreatingLeftovers() }
@@ -91,23 +95,34 @@ class FtsIndexManager internal constructor(
             meta.bookVersion != version
     }
 
+    /**
+     * Builds the index of [book] (status `SCHEDULED`, `CREATING`, then `DONE`, or `UNDONE` on failure or cancellation).
+     * A request for a book that is already scheduled or building is dropped and returns immediately: the running build
+     * serves both, so callers must observe the outcome through an [org.crosswire.jsword.index.IndexStatusListener].
+     * The book leaves the "building" set, and its final status is set, inside the build lock, so a [deleteIndex] that
+     * waited for the build can be followed at once by a new request.
+     */
     override fun scheduleIndexCreation(book: Book?) {
         requireNotNull(book) { "null book" }
-        // A second request for a book that is already scheduled or building is dropped: the running build serves both.
-        if (!synchronized(lock) { building.add(book.initials) }) return
-        book.indexStatus = IndexStatus.SCHEDULED
-        var finalStatus = IndexStatus.UNDONE
-        val final = finalPath(book)
-        val creating = creatingPath(final)
-        val jobName = JSMsg.gettext("Creating index. Processing {0}", book.initials)
-        val cancelled = kotlinx.atomicfu.atomic(false)
-        val job = JobManager.createJob(Progress.CREATE_INDEX.replace("%s", book.initials), jobName) { cancelled.value = true }
-        job.beginJob(jobName)
-        val currentPolicy = indexPolicy!!
+        var registered = false
+        var job: Progress? = null
         try {
+            if (!synchronized(lock) { building.add(book.initials) }) return
+            registered = true
+            scheduleHook?.invoke(book)
+            book.indexStatus = IndexStatus.SCHEDULED
+            val final = finalPath(book)
+            val creating = creatingPath(final)
+            val jobName = JSMsg.gettext("Creating index. Processing {0}", book.initials)
+            val cancelled = kotlinx.atomicfu.atomic(false)
+            val newJob = JobManager.createJob(Progress.CREATE_INDEX.replace("%s", book.initials), jobName) { cancelled.value = true }
+            job = newJob
+            newJob.beginJob(jobName)
+            val currentPolicy = indexPolicy!!
             // Serial policy: one build at a time overall; otherwise one per book (as Lucene's mutex choice).
             val mutex = if (currentPolicy.isSerial()) serialLock else bookLock(book)
             synchronized(mutex) {
+                var finalStatus = IndexStatus.UNDONE
                 try {
                     fs.createDirectories(final.parent!!)
                     deleteDb(creating)
@@ -115,9 +130,9 @@ class FtsIndexManager internal constructor(
                     closeOpen(book)
                     book.indexStatus = IndexStatus.CREATING
                     val errors = FtsIndexBuilder(book, currentPolicy, fragmentOf)
-                        .build(creating, job) { cancelled.value || job.isFinished }
-                    job.isCancelable = false
-                    if (cancelled.value || job.isFinished) throw IndexBuildCancelled()
+                        .build(creating, newJob) { cancelled.value || newJob.isFinished }
+                    newJob.isCancelable = false
+                    if (cancelled.value || newJob.isFinished) throw IndexBuildCancelled()
                     fs.atomicMove(creating, final)
                     // Evict a handle opened on the replaced file while the build ran; getIndex reopens the new one.
                     closeOpen(book)
@@ -128,18 +143,26 @@ class FtsIndexManager internal constructor(
                         Reporter.informUser(this, JSMsg.gettext("The following verses have errors and could not be indexed\n{0}",
                             errors.joinToString("") { "$it\n" }))
                     }
+                } catch (e: IndexBuildCancelled) {
+                    // cancelled by the user: UNDONE, nothing to report
+                } catch (e: Exception) {
+                    Reporter.informUser(this, e)
                 } finally {
                     deleteDb(creating)
+                    book.indexStatus = finalStatus
+                    newJob.done()
+                    synchronized(lock) { building.remove(book.initials) }
+                    registered = false
                 }
             }
-        } catch (e: IndexBuildCancelled) {
-            // cancelled by the user: UNDONE, nothing to report
         } catch (e: Exception) {
             Reporter.informUser(this, e)
         } finally {
-            book.indexStatus = finalStatus
-            job.done()
-            synchronized(lock) { building.remove(book.initials) }
+            if (registered) { // failed before the build lock was reached
+                book.indexStatus = IndexStatus.UNDONE
+                job?.done()
+                synchronized(lock) { building.remove(book.initials) }
+            }
         }
     }
 
@@ -154,6 +177,7 @@ class FtsIndexManager internal constructor(
         // A build in progress is cancelled and waited for (same mutex as the build), so it ends UNDONE quietly instead
         // of failing at the rename after its files were deleted.
         JobManager.findJob(Progress.CREATE_INDEX.replace("%s", book.initials))?.cancel()
+        deleteHook?.invoke(book)
         val mutex = if (indexPolicy!!.isSerial()) serialLock else bookLock(book)
         synchronized(mutex) {
             closeOpen(book)

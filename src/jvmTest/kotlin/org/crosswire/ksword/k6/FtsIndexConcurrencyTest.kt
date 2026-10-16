@@ -62,13 +62,8 @@ class FtsIndexConcurrencyTest {
         if (gate != null && gate.calls.incrementAndGet() == 1) {
             gate.started.countDown()
             assertTrue(gate.release.await(20, TimeUnit.SECONDS), "gate not released")
-        } else gate?.calls?.incrementAndGet()
+        }
         BookData(b, k).getOsisFragment(false)
-    }
-
-    private fun awaitJobFinished(b: Book) {
-        val end = System.currentTimeMillis() + 10_000
-        while (System.currentTimeMillis() < end && JobManager.findJob("CREATE_INDEX-${b.initials}")?.isFinished != true) Thread.sleep(5)
     }
 
     @Test fun twoSchedulesForOneBookBuildOnce() {
@@ -96,8 +91,10 @@ class FtsIndexConcurrencyTest {
         val m = manager(gate)
         val builder = thread { m.scheduleIndexCreation(b) }
         assertTrue(gate.started.await(20, TimeUnit.SECONDS))
+        val cancelled = CountDownLatch(1)
+        m.deleteHook = { cancelled.countDown() }
         val deleter = thread { m.deleteIndex(b) }
-        awaitJobFinished(b) // deleteIndex has cancelled the job and now waits for the build
+        assertTrue(cancelled.await(20, TimeUnit.SECONDS)) // deleteIndex has cancelled the job and now waits for the build
         gate.release.countDown()
         builder.join(30_000); deleter.join(30_000)
         assertFalse(builder.isAlive || deleter.isAlive)
@@ -139,5 +136,37 @@ class FtsIndexConcurrencyTest {
         assertTrue(old !== fresh, "stale cached index served after the rebuild")
         assertEquals(3, fresh.find("beginning").getCardinality())
         m.closeAllIndexes()
+    }
+
+    /** The BookIndexer sequence: deleteIndex during a build, then at once a new request, which must not be dropped. */
+    @Test fun scheduleRightAfterDeleteDuringABuildRuns() {
+        val b = book()
+        val gate = Gate()
+        val m = manager(gate)
+        val builder = thread { m.scheduleIndexCreation(b) }
+        assertTrue(gate.started.await(20, TimeUnit.SECONDS))
+        val cancelled = CountDownLatch(1)
+        m.deleteHook = { cancelled.countDown() }
+        val deleter = thread { m.deleteIndex(b); m.scheduleIndexCreation(b) }
+        assertTrue(cancelled.await(20, TimeUnit.SECONDS))
+        gate.release.countDown()
+        builder.join(30_000); deleter.join(30_000)
+        assertFalse(builder.isAlive || deleter.isAlive)
+        assertEquals(IndexStatus.DONE, b.indexStatus)
+        assertTrue(m.isIndexed(b))
+        assertEquals(0, reports.get())
+    }
+
+    /** A failure before the build lock must not leave the book registered as building forever. */
+    @Test fun failureBeforeTheBuildDoesNotBlockLaterSchedules() {
+        val b = book()
+        val m = manager(null)
+        m.scheduleHook = { throw IllegalStateException("job creation failed") }
+        m.scheduleIndexCreation(b)
+        assertEquals(IndexStatus.UNDONE, b.indexStatus)
+        assertEquals(1, reports.get())
+        m.scheduleHook = null
+        m.scheduleIndexCreation(b)
+        assertEquals(IndexStatus.DONE, b.indexStatus)
     }
 }
