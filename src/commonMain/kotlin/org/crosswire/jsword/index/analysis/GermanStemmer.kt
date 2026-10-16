@@ -9,7 +9,7 @@ package org.crosswire.jsword.index.analysis
  *   in [resubstitute] exactly as Lucene does, on the buffer as it has been changed by the earlier steps.
  * - The `Character.isLetter` check and the stemming steps work on UTF-16 units, as they do in Lucene.
  *
- * Not thread-safe: one instance is reused by one analyzer.
+ * Not thread-safe: an instance holds a working buffer, so each caller needs its own instance.
  */
 internal class GermanStemmer {
     private val sb = StringBuilder()
