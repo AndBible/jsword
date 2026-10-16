@@ -55,7 +55,7 @@ class FtsIndexManager internal constructor(
     private val bookLocks = HashMap<String, SynchronizedObject>()
 
     /** Books scheduled or building, each with the token of the request that owns the registration. */
-    private val building = HashMap<String, Any>()
+    private val building = HashMap<String, Registration>()
 
     /**
      * Held for a whole build under the serial policy, so only one book builds at a time. LOCK ORDER: [serialLock], then
@@ -120,7 +120,7 @@ class FtsIndexManager internal constructor(
         requireNotNull(book) { "null book" }
         var registered = false
         var job: Progress? = null
-        val token = Any()
+        val token = Registration()
         var key = ""
         try {
             key = indexKey(book)
@@ -134,6 +134,7 @@ class FtsIndexManager internal constructor(
             val cancelled = kotlinx.atomicfu.atomic(false)
             val newJob = JobManager.createJob(Progress.CREATE_INDEX.replace("%s", book.initials), jobName) { cancelled.value = true }
             job = newJob
+            token.job.value = newJob
             newJob.beginJob(jobName)
             val currentPolicy = indexPolicy!!
             // Serial policy: one build at a time overall, then the book's own lock inside it; otherwise one per book.
@@ -205,7 +206,9 @@ class FtsIndexManager internal constructor(
         if (!hasDriver(book)) { book.indexStatus = IndexStatus.UNDONE; return } // no index location, nothing to delete
         val key = indexKey(book)
         val queued = synchronized(lock) { building[key] }
-        JobManager.findJob(Progress.CREATE_INDEX.replace("%s", book.initials))?.cancel()
+        // Cancel the job of the registered request itself: JobManager.findJob returns the FIRST job of that name, which can
+        // be a stale one (a dropped queued request's job that has not finished yet).
+        (queued?.job?.value ?: JobManager.findJob(Progress.CREATE_INDEX.replace("%s", book.initials)))?.cancel()
         deleteHook?.invoke(book)
         synchronized(bookLock(key)) {
             // A request that is only queued behind another book's build (it does not hold the book lock) is dropped; one
@@ -255,7 +258,7 @@ class FtsIndexManager internal constructor(
             if (!hasDriver(book)) continue
             val dir = try { legacyPath(book) } catch (e: IllegalArgumentException) { continue }
             if (!fs.exists(dir) || fs.metadata(dir).isDirectory.not()) continue
-            val children = fs.list(dir)
+            val children = safeChildren(dir)
             if (children.isEmpty()) continue
             for (c in children) fs.deleteRecursively(c, mustExist = false)
             emptied++
@@ -273,9 +276,9 @@ class FtsIndexManager internal constructor(
         if (!fs.exists(searchDir)) return 0
         val keep = installed.filter { hasDriver(it) }.mapTo(HashSet()) { driverSegment(it) to safeSegment(it.initials) }
         val orphans = HashSet<Pair<String, String>>()
-        for (driver in fs.list(searchDir)) {
+        for (driver in safeChildren(searchDir)) {
             if (!fs.metadata(driver).isDirectory) continue
-            for (f in fs.list(driver)) {
+            for (f in safeChildren(driver)) {
                 val at = f.name.lastIndexOf(".sqlite")
                 if (at <= 0) continue // not one of ours
                 val id = f.name.substring(0, at)
@@ -294,11 +297,14 @@ class FtsIndexManager internal constructor(
      */
     fun deleteOrphanLegacyLuceneIndexes(installed: Collection<Book>): Int {
         if (!fs.exists(luceneDir)) return 0
-        val keep = installed.filter { hasDriver(it) }.mapTo(HashSet()) { driverSegment(it) to safeSegment(it.initials) }
+        // Lucene named its directories by the raw initials, so the raw name keeps an installed book's directory too.
+        val keep = installed.filter { hasDriver(it) }.flatMapTo(HashSet()) {
+            listOf(driverSegment(it) to safeSegment(it.initials), driverSegment(it) to it.initials)
+        }
         var deleted = 0
-        for (driver in fs.list(luceneDir)) {
+        for (driver in safeChildren(luceneDir)) {
             if (fs.metadata(driver).isDirectory.not()) continue
-            for (index in fs.list(driver)) {
+            for (index in safeChildren(driver)) {
                 if ((driver.name to index.name) in keep) continue
                 fs.deleteRecursively(index, mustExist = false)
                 deleted++
@@ -309,6 +315,17 @@ class FtsIndexManager internal constructor(
     }
 
     private val fs get() = FileSystem.SYSTEM
+
+    /**
+     * The entries of [dir] that really are direct children of it. okio builds each entry as `dir / name` and parses `\`
+     * (and `/`) in the name as a separator, so a directory entry literally named `..\..` comes back as `dir/../..`, a path
+     * OUTSIDE [dir]. Such entries (and `.`/`..`) are skipped and logged, never touched, so no sweep can delete through them.
+     */
+    private fun safeChildren(dir: Path): List<Path> = fs.list(dir).filter { c ->
+        val ok = c.parent == dir && c.name != "." && c.name != ".." && c.name.isNotEmpty()
+        if (!ok) log.warn("Skipping the entry {} of {}: not a plain child", c, dir)
+        ok
+    }
 
     private fun hasDriver(book: Book) = book.bookMetaData.driverName != null
 
@@ -360,12 +377,21 @@ class FtsIndexManager internal constructor(
     private fun deleteCreatingLeftovers() {
         try {
             if (!fs.exists(searchDir)) return
-            for (f in fs.listRecursively(searchDir)) {
-                if (f.name.contains(".creating")) fs.delete(f)
+            fun walk(dir: Path) {
+                for (f in safeChildren(dir)) {
+                    if (f.name.contains(".creating")) fs.delete(f)
+                    else if (fs.metadata(f).isDirectory) walk(f)
+                }
             }
+            walk(searchDir)
         } catch (e: IOException) {
             // best effort: a leftover is also deleted by the next build of that book
         }
+    }
+
+    /** A scheduled or building request: identity token of the registration, plus its progress job once created. */
+    private class Registration {
+        val job = kotlinx.atomicfu.atomic<Progress?>(null)
     }
 
     internal companion object {
@@ -376,14 +402,16 @@ class FtsIndexManager internal constructor(
          * climb out of the directory it is appended to. Ordinary names (letters, digits, `_`, `-`, `.` not at the
          * start, non-ASCII, ...) come out byte-for-byte unchanged, so existing index file names do not change.
          * Percent-encoded as `%XX`: `/`, `\`, control characters (NUL included), DEL, a LEADING `.`, a drive-letter colon (`C:x`, which okio reads as a root), and a `%` that
-         * would otherwise look like an escape (so the mapping stays injective). An empty name becomes `%`.
+         * is followed by two hex digits (it would look like an escape) or is the whole name. Other `%` (`100%`) stay as they are.
+         * The mapping is injective: a `%` followed by two hex digits in the result is always an escape, and the empty name
+         * (the only one that yields a bare `%`) becomes `%`.
          */
         fun safeSegment(name: String): String {
             if (name.isEmpty()) return "%"
             val sb = StringBuilder()
             for ((i, c) in name.withIndex()) {
                 val escape = c == '/' || c == '\\' || c.code < 0x20 || c.code == 0x7f || (c == '.' && i == 0) || (c == ':' && i == 1 && name[0].isAsciiLetter()) ||
-                    (c == '%' && i + 2 < name.length && name[i + 1].isHexDigit() && name[i + 2].isHexDigit())
+                    (c == '%' && (name.length == 1 || (i + 2 < name.length && name[i + 1].isHexDigit() && name[i + 2].isHexDigit())))
                 if (escape) sb.append('%').append(c.code.toString(16).uppercase().padStart(2, '0')) else sb.append(c)
             }
             return sb.toString()

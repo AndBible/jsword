@@ -237,6 +237,16 @@ class FtsIndexManagerTest {
         assertTrue(FtsIndexManager.safeSegment("%2F") != FtsIndexManager.safeSegment("/"))
     }
 
+    @Test fun safeSegmentIsInjectiveOverTrickyNames() {
+        val names = listOf("", "%", "%%", "%25", "%2F", "%2f", "/", "a/b", "a%2Fb", "%00", "\u0000", "%00%", "\u0000%", "100%", "100%25",
+            "..", "%2E.", "%2E", ".", ".x", "%2Ex", "C:x", "C%3Ax", "C:\\x", "C%3A%5Cx", "%5C", "\\", "KJV", "ChiUns", "%e", "%ee", "%eg")
+        val out = names.associateWith { FtsIndexManager.safeSegment(it) }
+        val byOutput = out.entries.groupBy({ it.value }, { it.key })
+        for ((o, ins) in byOutput) assertEquals(1, ins.size, "collision: $ins -> '$o'")
+        assertEquals("100%", out.getValue("100%")) // an ordinary '%' stays
+        assertEquals("%", out.getValue(""))
+    }
+
     @Test fun hostileInitialsNeverEscapeTheIndexDirectories() {
         val b = book("K4RawText")
         val m = manager()

@@ -189,15 +189,33 @@ class FtsIndexConcurrencyTest {
         assertEquals(0, reports.get())
     }
 
+    /** The number of fragment calls one complete build of [b] makes. */
+    private fun callsOfOneBuild(b: Book): Int {
+        val g = Gate().also { it.release.countDown() }
+        manager(g).scheduleIndexCreation(b)
+        val calls = g.calls.get()
+        manager(null).deleteIndex(b)
+        return calls
+    }
+
     /**
      * A build of A that is only QUEUED behind B's build (serial policy) is dropped quietly when A is deleted, and a
-     * request right after the delete is not lost.
+     * request right after the delete is not lost: A is built exactly once (by the later request).
      */
     @Test fun deleteOfAQueuedBookDropsItAndALaterScheduleRuns() {
         val a = book("K4RawText")
         val b = book("K4RawCom")
+        val oneBuildOfA = callsOfOneBuild(a)
         val gate = Gate()
-        val m = serial(manager(gate))
+        val aCalls = AtomicInteger()
+        val m = serial(FtsIndexManager(search, dir.resolve("lucene").toOkioPath()) { bk, k ->
+            if (bk.initials == a.initials) aCalls.incrementAndGet()
+            if (bk.initials == b.initials && gate.calls.incrementAndGet() == 1) {
+                gate.started.countDown()
+                assertTrue(gate.release.await(20, TimeUnit.SECONDS), "gate not released")
+            }
+            BookData(bk, k).getOsisFragment(false)
+        }.also { managers += it })
         val builderB = thread { m.scheduleIndexCreation(b) }
         assertTrue(gate.started.await(20, TimeUnit.SECONDS))
         val queuedA = thread { m.scheduleIndexCreation(a) } // waits for the serial lock
@@ -211,8 +229,34 @@ class FtsIndexConcurrencyTest {
         assertEquals(IndexStatus.DONE, b.indexStatus)
         assertEquals(IndexStatus.DONE, a.indexStatus)
         assertTrue(m.isIndexed(a) && m.isIndexed(b))
+        assertEquals(oneBuildOfA, aCalls.get(), "A must be built exactly once, by the later request")
         assertTrue(files().none { it.name.contains(".creating") })
         assertEquals(0, reports.get())
+    }
+
+    /** deleteIndex cancels the running build's own job, not a stale job of the same name that JobManager lists first. */
+    @Test fun deleteCancelsTheRunningBuildNotAStaleJobWithTheSameName() {
+        val b = book()
+        val oneBuild = callsOfOneBuild(b)
+        val stale = JobManager.createJob("CREATE_INDEX-${b.initials}", "stale") { }
+        try {
+            val gate = Gate()
+            val m = manager(gate)
+            val builder = thread { m.scheduleIndexCreation(b) }
+            assertTrue(gate.started.await(20, TimeUnit.SECONDS))
+            val cancelled = CountDownLatch(1)
+            m.deleteHook = { cancelled.countDown() }
+            val deleter = thread { m.deleteIndex(b) }
+            assertTrue(cancelled.await(20, TimeUnit.SECONDS))
+            gate.release.countDown()
+            builder.join(60_000); deleter.join(60_000)
+            assertFalse(builder.isAlive || deleter.isAlive)
+            assertTrue(gate.calls.get() < oneBuild, "the build ran to the end: ${gate.calls.get()} of $oneBuild fragment calls")
+            assertEquals(IndexStatus.UNDONE, b.indexStatus)
+            assertFalse(m.isIndexed(b))
+        } finally {
+            stale.done()
+        }
     }
 
     /** A failure before the build lock must not leave the book registered as building forever. */
