@@ -48,3 +48,15 @@ following the Swift port in and-bible-ios. `src/embeddedResources/search/mmseg4j
 byte-for-byte copies of the `data/` entries of `com.chenlb.mmseg4j:mmseg4j-dic:1.8.6` (SHA-256 values in
 `search/PROVENANCE.md`, checked by `AnalyzerTablesTest`). The Apache License 2.0 is reproduced in
 `search/LICENSE.apache-2.0.txt`.
+
+## OpenJDK 17 Thai word break data and algorithm (GPLv2 with the Classpath Exception) - iOS binaries only
+
+`src/iosEmbeddedResources/search/openjdk17/` holds `WordBreakIteratorData_th` and `thai_dict` (SHA-256
+`49931ec22a95d0f9f18fda1ab80e68e3f0105b433e87a0be9312066f3e16b57f` and
+`c5129c3875aecbdf860005efb4a720d94eddbd19e5ea63bbc1f0d378a9482e7a`), the break rules and the Thai dictionary of Temurin
+17.0.19's `java.text.BreakIterator`, copied byte-exact from and-bible-ios. `commonMain/.../index/analysis/thai/ThaiBreakPort.kt`
+is a port of the forward-iteration path of OpenJDK's `RuleBasedBreakIterator`, `DictionaryBasedBreakIterator` and
+`BreakDictionary`. The data is embedded only in the iOS source set (`IosKswordResources`, task
+`generateKswordIosResources`); it is never part of the JVM or Android artifact (`ThaiLicenceBoundaryTest`). The
+GPLv2 text, the Oracle additional licence notice and the Thai dictionary (Royal Institute / NECTEC) licence sit beside the
+data files (`LICENSE.*`, `ADDITIONAL_LICENSE_INFO.openjdk.txt`).

@@ -1,1 +1,3 @@
 src/embeddedResources/search/mmseg4j/*.dic -text
+src/iosEmbeddedResources/search/openjdk17/WordBreakIteratorData_th -text
+src/iosEmbeddedResources/search/openjdk17/thai_dict -text

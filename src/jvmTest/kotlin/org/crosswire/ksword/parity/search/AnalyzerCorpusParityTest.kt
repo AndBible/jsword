@@ -15,6 +15,7 @@ import org.crosswire.jsword.index.analysis.MmsegAnalyzer
 import org.crosswire.jsword.index.analysis.PersianAnalyzer
 import org.crosswire.jsword.index.analysis.SimpleAnalyzer
 import org.crosswire.jsword.index.analysis.SnowballAnalyzer
+import org.crosswire.jsword.index.analysis.ThaiAnalyzer
 import org.crosswire.jsword.index.analysis.TextAnalyzer
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.Verse
@@ -51,6 +52,8 @@ class AnalyzerCorpusParityTest {
         "cs" -> CzechAnalyzer()
         // Baseline Mmseg4jChineseLuceneAnalyzer (mmseg4j ComplexAnalyzer) for both Chinese and Japanese.
         "zh", "ja" -> MmsegAnalyzer()
+        // Baseline ThaiLuceneAnalyzer (ThaiWordFilter over java.text.BreakIterator for Thai).
+        "th" -> ThaiAnalyzer()
         else -> null
     }
 
@@ -163,4 +166,6 @@ class AnalyzerCorpusParityTest {
     @Test fun everyKeyMatchesBaseline_ChiUn() = check("ChiUn")
 
     @Test fun everyKeyMatchesBaseline_JapKougo() = check("JapKougo")
+
+    @Test fun everyKeyMatchesBaseline_ThaiKJV() = check("ThaiKJV")
 }
