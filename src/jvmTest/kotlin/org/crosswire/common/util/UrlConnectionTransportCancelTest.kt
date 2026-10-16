@@ -132,18 +132,23 @@ class UrlConnectionTransportCancelTest {
                     body.status()
                     body.prepareRead()
                     val buf = ByteArray(16)
-                    assertEquals(2, body.read(buf))
+                    var got = 0
+                    while (got < 2) { // the 2 bytes may arrive in separate reads
+                        val n = body.read(buf)
+                        assertTrue(n > 0, "the server sends 2 bytes before it stalls")
+                        got += n
+                    }
                     val reader = launch {
                         try { body.read(buf) } catch (e: Throwable) { failure = e; throw e }
                     }
                     delay(500) // settle: the reader is now blocked inside the socket read, holding the JDK stream lock
                     val cancelledAt = System.nanoTime()
                     withTimeout(3_000) { reader.cancelAndJoin() }
-                    elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cancelledAt)
                     body.close() // must not wait for the blocked read either
+                    elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cancelledAt)
                 } finally { release.countDown() }
             }
-            assertTrue(elapsedMs < 1_000, "the cancelled caller waited $elapsedMs ms")
+            assertTrue(elapsedMs < 1_000, "cancel plus close took $elapsedMs ms")
             assertTrue(failure is CancellationException, "got $failure")
         } finally {
             release.countDown()

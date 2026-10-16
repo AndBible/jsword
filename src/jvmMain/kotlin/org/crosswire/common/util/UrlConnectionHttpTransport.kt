@@ -3,6 +3,7 @@ package org.crosswire.common.util
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -28,8 +29,10 @@ private val transportScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
  * read, and `Thread.interrupt()` does not wake a blocking socket read. So `disconnect()` returns only when the pending
  * read ends (data, EOF or the transport timeout) and then closes the socket.
  *
- * NOT promised: after a cancel the pool thread of the pending read and the socket stay occupied until that read ends
- * or times out, which is bounded by `timeoutMs`; the pending read may still write into the caller's buffer, so a
+ * NOT promised: after a cancel during a blocked read TWO IO threads (the pending read and the detached disconnect) and
+ * the socket stay occupied until that read ends or times out, which is bounded by `timeoutMs`; the detached job also
+ * disconnects a second time after the read ended, so a cancel during the TCP connect (no socket to close yet) does not
+ * leave the late-connecting socket to the garbage collector; the pending read may still write into the caller's buffer, so a
  * cancelled caller must not reuse it. `close()` of a body whose caller was cancelled does not touch the connection
  * (the detached job owns it), so it never blocks on the same lock.
  */
@@ -48,12 +51,24 @@ class UrlConnectionHttpTransport internal constructor(
         private val started = AtomicBoolean(false)
         val isStarted: Boolean get() = started.get()
 
-        fun start() {
+        /**
+         * Disconnects, waits for the cancelled [work] to end and disconnects again: a cancel that lands while the
+         * work is still in the TCP connect finds no socket to close (`HttpURLConnection.http` is still null), the work
+         * then finishes connecting, and only the second disconnect releases that socket. Errors of both disconnects
+         * are swallowed; the job is detached, nobody waits for it.
+         */
+        fun start(work: Job) {
             if (started.compareAndSet(false, true)) {
                 transportScope.launch {
-                    try { connection.disconnect() } catch (_: Exception) { /* nothing left to report */ }
+                    quietly { connection.disconnect() }
+                    work.join() // returns normally when the work was cancelled or failed
+                    quietly { connection.disconnect() }
                 }
             }
+        }
+
+        private inline fun quietly(action: () -> Unit) {
+            try { action() } catch (_: Throwable) { /* nothing left to report; an Error must not reach the thread's handler */ }
         }
     }
 
@@ -100,7 +115,7 @@ class UrlConnectionHttpTransport internal constructor(
         try {
             return work.await()
         } catch (cancelled: CancellationException) {
-            detach.start()
+            detach.start(work)
             work.cancel()
             throw cancelled
         } catch (error: InterruptedIOException) {
