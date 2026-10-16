@@ -31,59 +31,60 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.crosswire.jsword.index.analysis.snowball
 
+private val a_0: Array<Among> = arrayOf(
+    Among("", -1, 6),
+    Among("\u00E1", 0, 1),
+    Among("\u00E4", 0, 1),
+    Among("\u00E9", 0, 2),
+    Among("\u00EB", 0, 2),
+    Among("\u00ED", 0, 3),
+    Among("\u00EF", 0, 3),
+    Among("\u00F3", 0, 4),
+    Among("\u00F6", 0, 4),
+    Among("\u00FA", 0, 5),
+    Among("\u00FC", 0, 5)
+)
+private val a_1: Array<Among> = arrayOf(
+    Among("", -1, 3),
+    Among("I", 0, 2),
+    Among("Y", 0, 1)
+)
+private val a_2: Array<Among> = arrayOf(
+    Among("dd", -1, -1),
+    Among("kk", -1, -1),
+    Among("tt", -1, -1)
+)
+private val a_3: Array<Among> = arrayOf(
+    Among("ene", -1, 2),
+    Among("se", -1, 3),
+    Among("en", -1, 2),
+    Among("heden", 2, 1),
+    Among("s", -1, 3)
+)
+private val a_4: Array<Among> = arrayOf(
+    Among("end", -1, 1),
+    Among("ig", -1, 2),
+    Among("ing", -1, 1),
+    Among("lijk", -1, 3),
+    Among("baar", -1, 4),
+    Among("bar", -1, 5)
+)
+private val a_5: Array<Among> = arrayOf(
+    Among("aa", -1, -1),
+    Among("ee", -1, -1),
+    Among("oo", -1, -1),
+    Among("uu", -1, -1)
+)
+private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
+private val g_v_I = intArrayOf(1, 0, 0, 17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
+private val g_v_j = intArrayOf(17, 67, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
+
 /**
  * Lucene 3.6.2 `org.tartarus.snowball.ext.DutchStemmer` (Snowball-generated), converted to Kotlin mechanically
  * by `jsword/scripts/snowball-j2k.py`. Behaviour is that of the Java original; compare with the baseline via
  * the vocabulary parity test.
  */
 internal class DutchStemmer : SnowballStemmer() {
-    private val a_0: Array<Among> = arrayOf(
-        Among("", -1, 6),
-        Among("\u00E1", 0, 1),
-        Among("\u00E4", 0, 1),
-        Among("\u00E9", 0, 2),
-        Among("\u00EB", 0, 2),
-        Among("\u00ED", 0, 3),
-        Among("\u00EF", 0, 3),
-        Among("\u00F3", 0, 4),
-        Among("\u00F6", 0, 4),
-        Among("\u00FA", 0, 5),
-        Among("\u00FC", 0, 5)
-    )
-    private val a_1: Array<Among> = arrayOf(
-        Among("", -1, 3),
-        Among("I", 0, 2),
-        Among("Y", 0, 1)
-    )
-    private val a_2: Array<Among> = arrayOf(
-        Among("dd", -1, -1),
-        Among("kk", -1, -1),
-        Among("tt", -1, -1)
-    )
-    private val a_3: Array<Among> = arrayOf(
-        Among("ene", -1, 2),
-        Among("se", -1, 3),
-        Among("en", -1, 2),
-        Among("heden", 2, 1),
-        Among("s", -1, 3)
-    )
-    private val a_4: Array<Among> = arrayOf(
-        Among("end", -1, 1),
-        Among("ig", -1, 2),
-        Among("ing", -1, 1),
-        Among("lijk", -1, 3),
-        Among("baar", -1, 4),
-        Among("bar", -1, 5)
-    )
-    private val a_5: Array<Among> = arrayOf(
-        Among("aa", -1, -1),
-        Among("ee", -1, -1),
-        Among("oo", -1, -1),
-        Among("uu", -1, -1)
-    )
-    private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
-    private val g_v_I = intArrayOf(1, 0, 0, 17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
-    private val g_v_j = intArrayOf(17, 67, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
     private var I_p2 = 0
     private var I_p1 = 0
     private var B_e_found = false

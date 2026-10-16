@@ -15,6 +15,7 @@ class ThaiAnalyzer : TextAnalyzer {
     override fun analyze(text: String): List<AnalyzedToken> {
         var position = -1
         val out = ArrayList<AnalyzedToken>()
+        val splitter = ThaiWordBreaker.session()
         for (token in tokenizer.tokenize(text)) {
             val t = token.text
             if (t.isEmpty() || t[0].code !in THAI_BLOCK) {
@@ -22,7 +23,7 @@ class ThaiAnalyzer : TextAnalyzer {
                 out.add(AnalyzedToken(lower(t), position))
                 continue
             }
-            for (range in ThaiWordBreaker.words(t)) {
+            for (range in splitter.words(t)) {
                 position += token.positionIncrement
                 out.add(AnalyzedToken(lower(t.substring(range.first, range.last + 1)), position))
             }

@@ -31,62 +31,63 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.crosswire.jsword.index.analysis.snowball
 
+private val a_0: Array<Among> = arrayOf(
+    Among("a", -1, 1),
+    Among("e", -1, 1),
+    Among("ede", 1, 1),
+    Among("ande", 1, 1),
+    Among("ende", 1, 1),
+    Among("ane", 1, 1),
+    Among("ene", 1, 1),
+    Among("hetene", 6, 1),
+    Among("erte", 1, 3),
+    Among("en", -1, 1),
+    Among("heten", 9, 1),
+    Among("ar", -1, 1),
+    Among("er", -1, 1),
+    Among("heter", 12, 1),
+    Among("s", -1, 2),
+    Among("as", 14, 1),
+    Among("es", 14, 1),
+    Among("edes", 16, 1),
+    Among("endes", 16, 1),
+    Among("enes", 16, 1),
+    Among("hetenes", 19, 1),
+    Among("ens", 14, 1),
+    Among("hetens", 21, 1),
+    Among("ers", 14, 1),
+    Among("ets", 14, 1),
+    Among("et", -1, 1),
+    Among("het", 25, 1),
+    Among("ert", -1, 3),
+    Among("ast", -1, 1)
+)
+private val a_1: Array<Among> = arrayOf(
+    Among("dt", -1, -1),
+    Among("vt", -1, -1)
+)
+private val a_2: Array<Among> = arrayOf(
+    Among("leg", -1, 1),
+    Among("eleg", 0, 1),
+    Among("ig", -1, 1),
+    Among("eig", 2, 1),
+    Among("lig", 2, 1),
+    Among("elig", 4, 1),
+    Among("els", -1, 1),
+    Among("lov", -1, 1),
+    Among("elov", 7, 1),
+    Among("slov", 7, 1),
+    Among("hetslov", 9, 1)
+)
+private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 128)
+private val g_s_ending = intArrayOf(119, 125, 149, 1)
+
 /**
  * Lucene 3.6.2 `org.tartarus.snowball.ext.NorwegianStemmer` (Snowball-generated), converted to Kotlin mechanically
  * by `jsword/scripts/snowball-j2k.py`. Behaviour is that of the Java original; compare with the baseline via
  * the vocabulary parity test.
  */
 internal class NorwegianStemmer : SnowballStemmer() {
-    private val a_0: Array<Among> = arrayOf(
-        Among("a", -1, 1),
-        Among("e", -1, 1),
-        Among("ede", 1, 1),
-        Among("ande", 1, 1),
-        Among("ende", 1, 1),
-        Among("ane", 1, 1),
-        Among("ene", 1, 1),
-        Among("hetene", 6, 1),
-        Among("erte", 1, 3),
-        Among("en", -1, 1),
-        Among("heten", 9, 1),
-        Among("ar", -1, 1),
-        Among("er", -1, 1),
-        Among("heter", 12, 1),
-        Among("s", -1, 2),
-        Among("as", 14, 1),
-        Among("es", 14, 1),
-        Among("edes", 16, 1),
-        Among("endes", 16, 1),
-        Among("enes", 16, 1),
-        Among("hetenes", 19, 1),
-        Among("ens", 14, 1),
-        Among("hetens", 21, 1),
-        Among("ers", 14, 1),
-        Among("ets", 14, 1),
-        Among("et", -1, 1),
-        Among("het", 25, 1),
-        Among("ert", -1, 3),
-        Among("ast", -1, 1)
-    )
-    private val a_1: Array<Among> = arrayOf(
-        Among("dt", -1, -1),
-        Among("vt", -1, -1)
-    )
-    private val a_2: Array<Among> = arrayOf(
-        Among("leg", -1, 1),
-        Among("eleg", 0, 1),
-        Among("ig", -1, 1),
-        Among("eig", 2, 1),
-        Among("lig", 2, 1),
-        Among("elig", 4, 1),
-        Among("els", -1, 1),
-        Among("lov", -1, 1),
-        Among("elov", 7, 1),
-        Among("slov", 7, 1),
-        Among("hetslov", 9, 1)
-    )
-    private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 128)
-    private val g_s_ending = intArrayOf(119, 125, 149, 1)
     private var I_x = 0
     private var I_p1 = 0
     private fun copy_from(other: NorwegianStemmer) {

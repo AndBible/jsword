@@ -31,176 +31,177 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.crosswire.jsword.index.analysis.snowball
 
+private val a_0: Array<Among> = arrayOf(
+    Among("col", -1, -1),
+    Among("par", -1, -1),
+    Among("tap", -1, -1)
+)
+private val a_1: Array<Among> = arrayOf(
+    Among("", -1, 4),
+    Among("I", 0, 1),
+    Among("U", 0, 2),
+    Among("Y", 0, 3)
+)
+private val a_2: Array<Among> = arrayOf(
+    Among("iqU", -1, 3),
+    Among("abl", -1, 3),
+    Among("I\u00E8r", -1, 4),
+    Among("i\u00E8r", -1, 4),
+    Among("eus", -1, 2),
+    Among("iv", -1, 1)
+)
+private val a_3: Array<Among> = arrayOf(
+    Among("ic", -1, 2),
+    Among("abil", -1, 1),
+    Among("iv", -1, 3)
+)
+private val a_4: Array<Among> = arrayOf(
+    Among("iqUe", -1, 1),
+    Among("atrice", -1, 2),
+    Among("ance", -1, 1),
+    Among("ence", -1, 5),
+    Among("logie", -1, 3),
+    Among("able", -1, 1),
+    Among("isme", -1, 1),
+    Among("euse", -1, 11),
+    Among("iste", -1, 1),
+    Among("ive", -1, 8),
+    Among("if", -1, 8),
+    Among("usion", -1, 4),
+    Among("ation", -1, 2),
+    Among("ution", -1, 4),
+    Among("ateur", -1, 2),
+    Among("iqUes", -1, 1),
+    Among("atrices", -1, 2),
+    Among("ances", -1, 1),
+    Among("ences", -1, 5),
+    Among("logies", -1, 3),
+    Among("ables", -1, 1),
+    Among("ismes", -1, 1),
+    Among("euses", -1, 11),
+    Among("istes", -1, 1),
+    Among("ives", -1, 8),
+    Among("ifs", -1, 8),
+    Among("usions", -1, 4),
+    Among("ations", -1, 2),
+    Among("utions", -1, 4),
+    Among("ateurs", -1, 2),
+    Among("ments", -1, 15),
+    Among("ements", 30, 6),
+    Among("issements", 31, 12),
+    Among("it\u00E9s", -1, 7),
+    Among("ment", -1, 15),
+    Among("ement", 34, 6),
+    Among("issement", 35, 12),
+    Among("amment", 34, 13),
+    Among("emment", 34, 14),
+    Among("aux", -1, 10),
+    Among("eaux", 39, 9),
+    Among("eux", -1, 1),
+    Among("it\u00E9", -1, 7)
+)
+private val a_5: Array<Among> = arrayOf(
+    Among("ira", -1, 1),
+    Among("ie", -1, 1),
+    Among("isse", -1, 1),
+    Among("issante", -1, 1),
+    Among("i", -1, 1),
+    Among("irai", 4, 1),
+    Among("ir", -1, 1),
+    Among("iras", -1, 1),
+    Among("ies", -1, 1),
+    Among("\u00EEmes", -1, 1),
+    Among("isses", -1, 1),
+    Among("issantes", -1, 1),
+    Among("\u00EEtes", -1, 1),
+    Among("is", -1, 1),
+    Among("irais", 13, 1),
+    Among("issais", 13, 1),
+    Among("irions", -1, 1),
+    Among("issions", -1, 1),
+    Among("irons", -1, 1),
+    Among("issons", -1, 1),
+    Among("issants", -1, 1),
+    Among("it", -1, 1),
+    Among("irait", 21, 1),
+    Among("issait", 21, 1),
+    Among("issant", -1, 1),
+    Among("iraIent", -1, 1),
+    Among("issaIent", -1, 1),
+    Among("irent", -1, 1),
+    Among("issent", -1, 1),
+    Among("iront", -1, 1),
+    Among("\u00EEt", -1, 1),
+    Among("iriez", -1, 1),
+    Among("issiez", -1, 1),
+    Among("irez", -1, 1),
+    Among("issez", -1, 1)
+)
+private val a_6: Array<Among> = arrayOf(
+    Among("a", -1, 3),
+    Among("era", 0, 2),
+    Among("asse", -1, 3),
+    Among("ante", -1, 3),
+    Among("\u00E9e", -1, 2),
+    Among("ai", -1, 3),
+    Among("erai", 5, 2),
+    Among("er", -1, 2),
+    Among("as", -1, 3),
+    Among("eras", 8, 2),
+    Among("\u00E2mes", -1, 3),
+    Among("asses", -1, 3),
+    Among("antes", -1, 3),
+    Among("\u00E2tes", -1, 3),
+    Among("\u00E9es", -1, 2),
+    Among("ais", -1, 3),
+    Among("erais", 15, 2),
+    Among("ions", -1, 1),
+    Among("erions", 17, 2),
+    Among("assions", 17, 3),
+    Among("erons", -1, 2),
+    Among("ants", -1, 3),
+    Among("\u00E9s", -1, 2),
+    Among("ait", -1, 3),
+    Among("erait", 23, 2),
+    Among("ant", -1, 3),
+    Among("aIent", -1, 3),
+    Among("eraIent", 26, 2),
+    Among("\u00E8rent", -1, 2),
+    Among("assent", -1, 3),
+    Among("eront", -1, 2),
+    Among("\u00E2t", -1, 3),
+    Among("ez", -1, 2),
+    Among("iez", 32, 2),
+    Among("eriez", 33, 2),
+    Among("assiez", 33, 3),
+    Among("erez", 32, 2),
+    Among("\u00E9", -1, 2)
+)
+private val a_7: Array<Among> = arrayOf(
+    Among("e", -1, 3),
+    Among("I\u00E8re", 0, 2),
+    Among("i\u00E8re", 0, 2),
+    Among("ion", -1, 1),
+    Among("Ier", -1, 2),
+    Among("ier", -1, 2),
+    Among("\u00EB", -1, 4)
+)
+private val a_8: Array<Among> = arrayOf(
+    Among("ell", -1, -1),
+    Among("eill", -1, -1),
+    Among("enn", -1, -1),
+    Among("onn", -1, -1),
+    Among("ett", -1, -1)
+)
+private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 130, 103, 8, 5)
+private val g_keep_with_s = intArrayOf(1, 65, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
+
 /**
  * Lucene 3.6.2 `org.tartarus.snowball.ext.FrenchStemmer` (Snowball-generated), converted to Kotlin mechanically
  * by `jsword/scripts/snowball-j2k.py`. Behaviour is that of the Java original; compare with the baseline via
  * the vocabulary parity test.
  */
 internal class FrenchStemmer : SnowballStemmer() {
-    private val a_0: Array<Among> = arrayOf(
-        Among("col", -1, -1),
-        Among("par", -1, -1),
-        Among("tap", -1, -1)
-    )
-    private val a_1: Array<Among> = arrayOf(
-        Among("", -1, 4),
-        Among("I", 0, 1),
-        Among("U", 0, 2),
-        Among("Y", 0, 3)
-    )
-    private val a_2: Array<Among> = arrayOf(
-        Among("iqU", -1, 3),
-        Among("abl", -1, 3),
-        Among("I\u00E8r", -1, 4),
-        Among("i\u00E8r", -1, 4),
-        Among("eus", -1, 2),
-        Among("iv", -1, 1)
-    )
-    private val a_3: Array<Among> = arrayOf(
-        Among("ic", -1, 2),
-        Among("abil", -1, 1),
-        Among("iv", -1, 3)
-    )
-    private val a_4: Array<Among> = arrayOf(
-        Among("iqUe", -1, 1),
-        Among("atrice", -1, 2),
-        Among("ance", -1, 1),
-        Among("ence", -1, 5),
-        Among("logie", -1, 3),
-        Among("able", -1, 1),
-        Among("isme", -1, 1),
-        Among("euse", -1, 11),
-        Among("iste", -1, 1),
-        Among("ive", -1, 8),
-        Among("if", -1, 8),
-        Among("usion", -1, 4),
-        Among("ation", -1, 2),
-        Among("ution", -1, 4),
-        Among("ateur", -1, 2),
-        Among("iqUes", -1, 1),
-        Among("atrices", -1, 2),
-        Among("ances", -1, 1),
-        Among("ences", -1, 5),
-        Among("logies", -1, 3),
-        Among("ables", -1, 1),
-        Among("ismes", -1, 1),
-        Among("euses", -1, 11),
-        Among("istes", -1, 1),
-        Among("ives", -1, 8),
-        Among("ifs", -1, 8),
-        Among("usions", -1, 4),
-        Among("ations", -1, 2),
-        Among("utions", -1, 4),
-        Among("ateurs", -1, 2),
-        Among("ments", -1, 15),
-        Among("ements", 30, 6),
-        Among("issements", 31, 12),
-        Among("it\u00E9s", -1, 7),
-        Among("ment", -1, 15),
-        Among("ement", 34, 6),
-        Among("issement", 35, 12),
-        Among("amment", 34, 13),
-        Among("emment", 34, 14),
-        Among("aux", -1, 10),
-        Among("eaux", 39, 9),
-        Among("eux", -1, 1),
-        Among("it\u00E9", -1, 7)
-    )
-    private val a_5: Array<Among> = arrayOf(
-        Among("ira", -1, 1),
-        Among("ie", -1, 1),
-        Among("isse", -1, 1),
-        Among("issante", -1, 1),
-        Among("i", -1, 1),
-        Among("irai", 4, 1),
-        Among("ir", -1, 1),
-        Among("iras", -1, 1),
-        Among("ies", -1, 1),
-        Among("\u00EEmes", -1, 1),
-        Among("isses", -1, 1),
-        Among("issantes", -1, 1),
-        Among("\u00EEtes", -1, 1),
-        Among("is", -1, 1),
-        Among("irais", 13, 1),
-        Among("issais", 13, 1),
-        Among("irions", -1, 1),
-        Among("issions", -1, 1),
-        Among("irons", -1, 1),
-        Among("issons", -1, 1),
-        Among("issants", -1, 1),
-        Among("it", -1, 1),
-        Among("irait", 21, 1),
-        Among("issait", 21, 1),
-        Among("issant", -1, 1),
-        Among("iraIent", -1, 1),
-        Among("issaIent", -1, 1),
-        Among("irent", -1, 1),
-        Among("issent", -1, 1),
-        Among("iront", -1, 1),
-        Among("\u00EEt", -1, 1),
-        Among("iriez", -1, 1),
-        Among("issiez", -1, 1),
-        Among("irez", -1, 1),
-        Among("issez", -1, 1)
-    )
-    private val a_6: Array<Among> = arrayOf(
-        Among("a", -1, 3),
-        Among("era", 0, 2),
-        Among("asse", -1, 3),
-        Among("ante", -1, 3),
-        Among("\u00E9e", -1, 2),
-        Among("ai", -1, 3),
-        Among("erai", 5, 2),
-        Among("er", -1, 2),
-        Among("as", -1, 3),
-        Among("eras", 8, 2),
-        Among("\u00E2mes", -1, 3),
-        Among("asses", -1, 3),
-        Among("antes", -1, 3),
-        Among("\u00E2tes", -1, 3),
-        Among("\u00E9es", -1, 2),
-        Among("ais", -1, 3),
-        Among("erais", 15, 2),
-        Among("ions", -1, 1),
-        Among("erions", 17, 2),
-        Among("assions", 17, 3),
-        Among("erons", -1, 2),
-        Among("ants", -1, 3),
-        Among("\u00E9s", -1, 2),
-        Among("ait", -1, 3),
-        Among("erait", 23, 2),
-        Among("ant", -1, 3),
-        Among("aIent", -1, 3),
-        Among("eraIent", 26, 2),
-        Among("\u00E8rent", -1, 2),
-        Among("assent", -1, 3),
-        Among("eront", -1, 2),
-        Among("\u00E2t", -1, 3),
-        Among("ez", -1, 2),
-        Among("iez", 32, 2),
-        Among("eriez", 33, 2),
-        Among("assiez", 33, 3),
-        Among("erez", 32, 2),
-        Among("\u00E9", -1, 2)
-    )
-    private val a_7: Array<Among> = arrayOf(
-        Among("e", -1, 3),
-        Among("I\u00E8re", 0, 2),
-        Among("i\u00E8re", 0, 2),
-        Among("ion", -1, 1),
-        Among("Ier", -1, 2),
-        Among("ier", -1, 2),
-        Among("\u00EB", -1, 4)
-    )
-    private val a_8: Array<Among> = arrayOf(
-        Among("ell", -1, -1),
-        Among("eill", -1, -1),
-        Among("enn", -1, -1),
-        Among("onn", -1, -1),
-        Among("ett", -1, -1)
-    )
-    private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 130, 103, 8, 5)
-    private val g_keep_with_s = intArrayOf(1, 65, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128)
     private var I_p2 = 0
     private var I_p1 = 0
     private var I_pV = 0

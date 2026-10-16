@@ -11,6 +11,8 @@ internal actual object ThaiWordBreaker {
         )
     }
 
+    actual fun session(): ThaiWordSplitter = ThaiWordSplitter { words(it) }
+
     actual fun words(text: String): List<IntRange> {
         val b = port.boundaries(text)
         val out = ArrayList<IntRange>()

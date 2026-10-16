@@ -31,61 +31,62 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.crosswire.jsword.index.analysis.snowball
 
+private val a_0: Array<Among> = arrayOf(
+    Among("hed", -1, 1),
+    Among("ethed", 0, 1),
+    Among("ered", -1, 1),
+    Among("e", -1, 1),
+    Among("erede", 3, 1),
+    Among("ende", 3, 1),
+    Among("erende", 5, 1),
+    Among("ene", 3, 1),
+    Among("erne", 3, 1),
+    Among("ere", 3, 1),
+    Among("en", -1, 1),
+    Among("heden", 10, 1),
+    Among("eren", 10, 1),
+    Among("er", -1, 1),
+    Among("heder", 13, 1),
+    Among("erer", 13, 1),
+    Among("s", -1, 2),
+    Among("heds", 16, 1),
+    Among("es", 16, 1),
+    Among("endes", 18, 1),
+    Among("erendes", 19, 1),
+    Among("enes", 18, 1),
+    Among("ernes", 18, 1),
+    Among("eres", 18, 1),
+    Among("ens", 16, 1),
+    Among("hedens", 24, 1),
+    Among("erens", 24, 1),
+    Among("ers", 16, 1),
+    Among("ets", 16, 1),
+    Among("erets", 28, 1),
+    Among("et", -1, 1),
+    Among("eret", 30, 1)
+)
+private val a_1: Array<Among> = arrayOf(
+    Among("gd", -1, -1),
+    Among("dt", -1, -1),
+    Among("gt", -1, -1),
+    Among("kt", -1, -1)
+)
+private val a_2: Array<Among> = arrayOf(
+    Among("ig", -1, 1),
+    Among("lig", 0, 1),
+    Among("elig", 1, 1),
+    Among("els", -1, 1),
+    Among("l\u00F8st", -1, 2)
+)
+private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 128)
+private val g_s_ending = intArrayOf(239, 254, 42, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16)
+
 /**
  * Lucene 3.6.2 `org.tartarus.snowball.ext.DanishStemmer` (Snowball-generated), converted to Kotlin mechanically
  * by `jsword/scripts/snowball-j2k.py`. Behaviour is that of the Java original; compare with the baseline via
  * the vocabulary parity test.
  */
 internal class DanishStemmer : SnowballStemmer() {
-    private val a_0: Array<Among> = arrayOf(
-        Among("hed", -1, 1),
-        Among("ethed", 0, 1),
-        Among("ered", -1, 1),
-        Among("e", -1, 1),
-        Among("erede", 3, 1),
-        Among("ende", 3, 1),
-        Among("erende", 5, 1),
-        Among("ene", 3, 1),
-        Among("erne", 3, 1),
-        Among("ere", 3, 1),
-        Among("en", -1, 1),
-        Among("heden", 10, 1),
-        Among("eren", 10, 1),
-        Among("er", -1, 1),
-        Among("heder", 13, 1),
-        Among("erer", 13, 1),
-        Among("s", -1, 2),
-        Among("heds", 16, 1),
-        Among("es", 16, 1),
-        Among("endes", 18, 1),
-        Among("erendes", 19, 1),
-        Among("enes", 18, 1),
-        Among("ernes", 18, 1),
-        Among("eres", 18, 1),
-        Among("ens", 16, 1),
-        Among("hedens", 24, 1),
-        Among("erens", 24, 1),
-        Among("ers", 16, 1),
-        Among("ets", 16, 1),
-        Among("erets", 28, 1),
-        Among("et", -1, 1),
-        Among("eret", 30, 1)
-    )
-    private val a_1: Array<Among> = arrayOf(
-        Among("gd", -1, -1),
-        Among("dt", -1, -1),
-        Among("gt", -1, -1),
-        Among("kt", -1, -1)
-    )
-    private val a_2: Array<Among> = arrayOf(
-        Among("ig", -1, 1),
-        Among("lig", 0, 1),
-        Among("elig", 1, 1),
-        Among("els", -1, 1),
-        Among("l\u00F8st", -1, 2)
-    )
-    private val g_v = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 128)
-    private val g_s_ending = intArrayOf(239, 254, 42, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16)
     private var I_x = 0
     private var I_p1 = 0
     private var S_ch = StringBuilder()

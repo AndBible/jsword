@@ -31,162 +31,163 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.crosswire.jsword.index.analysis.snowball
 
+private val a_0: Array<Among> = arrayOf(
+    Among("\u0432", -1, 1),
+    Among("\u0438\u0432", 0, 2),
+    Among("\u044B\u0432", 0, 2),
+    Among("\u0432\u0448\u0438", -1, 1),
+    Among("\u0438\u0432\u0448\u0438", 3, 2),
+    Among("\u044B\u0432\u0448\u0438", 3, 2),
+    Among("\u0432\u0448\u0438\u0441\u044C", -1, 1),
+    Among("\u0438\u0432\u0448\u0438\u0441\u044C", 6, 2),
+    Among("\u044B\u0432\u0448\u0438\u0441\u044C", 6, 2)
+)
+private val a_1: Array<Among> = arrayOf(
+    Among("\u0435\u0435", -1, 1),
+    Among("\u0438\u0435", -1, 1),
+    Among("\u043E\u0435", -1, 1),
+    Among("\u044B\u0435", -1, 1),
+    Among("\u0438\u043C\u0438", -1, 1),
+    Among("\u044B\u043C\u0438", -1, 1),
+    Among("\u0435\u0439", -1, 1),
+    Among("\u0438\u0439", -1, 1),
+    Among("\u043E\u0439", -1, 1),
+    Among("\u044B\u0439", -1, 1),
+    Among("\u0435\u043C", -1, 1),
+    Among("\u0438\u043C", -1, 1),
+    Among("\u043E\u043C", -1, 1),
+    Among("\u044B\u043C", -1, 1),
+    Among("\u0435\u0433\u043E", -1, 1),
+    Among("\u043E\u0433\u043E", -1, 1),
+    Among("\u0435\u043C\u0443", -1, 1),
+    Among("\u043E\u043C\u0443", -1, 1),
+    Among("\u0438\u0445", -1, 1),
+    Among("\u044B\u0445", -1, 1),
+    Among("\u0435\u044E", -1, 1),
+    Among("\u043E\u044E", -1, 1),
+    Among("\u0443\u044E", -1, 1),
+    Among("\u044E\u044E", -1, 1),
+    Among("\u0430\u044F", -1, 1),
+    Among("\u044F\u044F", -1, 1)
+)
+private val a_2: Array<Among> = arrayOf(
+    Among("\u0435\u043C", -1, 1),
+    Among("\u043D\u043D", -1, 1),
+    Among("\u0432\u0448", -1, 1),
+    Among("\u0438\u0432\u0448", 2, 2),
+    Among("\u044B\u0432\u0448", 2, 2),
+    Among("\u0449", -1, 1),
+    Among("\u044E\u0449", 5, 1),
+    Among("\u0443\u044E\u0449", 6, 2)
+)
+private val a_3: Array<Among> = arrayOf(
+    Among("\u0441\u044C", -1, 1),
+    Among("\u0441\u044F", -1, 1)
+)
+private val a_4: Array<Among> = arrayOf(
+    Among("\u043B\u0430", -1, 1),
+    Among("\u0438\u043B\u0430", 0, 2),
+    Among("\u044B\u043B\u0430", 0, 2),
+    Among("\u043D\u0430", -1, 1),
+    Among("\u0435\u043D\u0430", 3, 2),
+    Among("\u0435\u0442\u0435", -1, 1),
+    Among("\u0438\u0442\u0435", -1, 2),
+    Among("\u0439\u0442\u0435", -1, 1),
+    Among("\u0435\u0439\u0442\u0435", 7, 2),
+    Among("\u0443\u0439\u0442\u0435", 7, 2),
+    Among("\u043B\u0438", -1, 1),
+    Among("\u0438\u043B\u0438", 10, 2),
+    Among("\u044B\u043B\u0438", 10, 2),
+    Among("\u0439", -1, 1),
+    Among("\u0435\u0439", 13, 2),
+    Among("\u0443\u0439", 13, 2),
+    Among("\u043B", -1, 1),
+    Among("\u0438\u043B", 16, 2),
+    Among("\u044B\u043B", 16, 2),
+    Among("\u0435\u043C", -1, 1),
+    Among("\u0438\u043C", -1, 2),
+    Among("\u044B\u043C", -1, 2),
+    Among("\u043D", -1, 1),
+    Among("\u0435\u043D", 22, 2),
+    Among("\u043B\u043E", -1, 1),
+    Among("\u0438\u043B\u043E", 24, 2),
+    Among("\u044B\u043B\u043E", 24, 2),
+    Among("\u043D\u043E", -1, 1),
+    Among("\u0435\u043D\u043E", 27, 2),
+    Among("\u043D\u043D\u043E", 27, 1),
+    Among("\u0435\u0442", -1, 1),
+    Among("\u0443\u0435\u0442", 30, 2),
+    Among("\u0438\u0442", -1, 2),
+    Among("\u044B\u0442", -1, 2),
+    Among("\u044E\u0442", -1, 1),
+    Among("\u0443\u044E\u0442", 34, 2),
+    Among("\u044F\u0442", -1, 2),
+    Among("\u043D\u044B", -1, 1),
+    Among("\u0435\u043D\u044B", 37, 2),
+    Among("\u0442\u044C", -1, 1),
+    Among("\u0438\u0442\u044C", 39, 2),
+    Among("\u044B\u0442\u044C", 39, 2),
+    Among("\u0435\u0448\u044C", -1, 1),
+    Among("\u0438\u0448\u044C", -1, 2),
+    Among("\u044E", -1, 2),
+    Among("\u0443\u044E", 44, 2)
+)
+private val a_5: Array<Among> = arrayOf(
+    Among("\u0430", -1, 1),
+    Among("\u0435\u0432", -1, 1),
+    Among("\u043E\u0432", -1, 1),
+    Among("\u0435", -1, 1),
+    Among("\u0438\u0435", 3, 1),
+    Among("\u044C\u0435", 3, 1),
+    Among("\u0438", -1, 1),
+    Among("\u0435\u0438", 6, 1),
+    Among("\u0438\u0438", 6, 1),
+    Among("\u0430\u043C\u0438", 6, 1),
+    Among("\u044F\u043C\u0438", 6, 1),
+    Among("\u0438\u044F\u043C\u0438", 10, 1),
+    Among("\u0439", -1, 1),
+    Among("\u0435\u0439", 12, 1),
+    Among("\u0438\u0435\u0439", 13, 1),
+    Among("\u0438\u0439", 12, 1),
+    Among("\u043E\u0439", 12, 1),
+    Among("\u0430\u043C", -1, 1),
+    Among("\u0435\u043C", -1, 1),
+    Among("\u0438\u0435\u043C", 18, 1),
+    Among("\u043E\u043C", -1, 1),
+    Among("\u044F\u043C", -1, 1),
+    Among("\u0438\u044F\u043C", 21, 1),
+    Among("\u043E", -1, 1),
+    Among("\u0443", -1, 1),
+    Among("\u0430\u0445", -1, 1),
+    Among("\u044F\u0445", -1, 1),
+    Among("\u0438\u044F\u0445", 26, 1),
+    Among("\u044B", -1, 1),
+    Among("\u044C", -1, 1),
+    Among("\u044E", -1, 1),
+    Among("\u0438\u044E", 30, 1),
+    Among("\u044C\u044E", 30, 1),
+    Among("\u044F", -1, 1),
+    Among("\u0438\u044F", 33, 1),
+    Among("\u044C\u044F", 33, 1)
+)
+private val a_6: Array<Among> = arrayOf(
+    Among("\u043E\u0441\u0442", -1, 1),
+    Among("\u043E\u0441\u0442\u044C", -1, 1)
+)
+private val a_7: Array<Among> = arrayOf(
+    Among("\u0435\u0439\u0448\u0435", -1, 1),
+    Among("\u043D", -1, 2),
+    Among("\u0435\u0439\u0448", -1, 1),
+    Among("\u044C", -1, 3)
+)
+private val g_v = intArrayOf(33, 65, 8, 232)
+
 /**
  * Lucene 3.6.2 `org.tartarus.snowball.ext.RussianStemmer` (Snowball-generated), converted to Kotlin mechanically
  * by `jsword/scripts/snowball-j2k.py`. Behaviour is that of the Java original; compare with the baseline via
  * the vocabulary parity test.
  */
 internal class RussianStemmer : SnowballStemmer() {
-    private val a_0: Array<Among> = arrayOf(
-        Among("\u0432", -1, 1),
-        Among("\u0438\u0432", 0, 2),
-        Among("\u044B\u0432", 0, 2),
-        Among("\u0432\u0448\u0438", -1, 1),
-        Among("\u0438\u0432\u0448\u0438", 3, 2),
-        Among("\u044B\u0432\u0448\u0438", 3, 2),
-        Among("\u0432\u0448\u0438\u0441\u044C", -1, 1),
-        Among("\u0438\u0432\u0448\u0438\u0441\u044C", 6, 2),
-        Among("\u044B\u0432\u0448\u0438\u0441\u044C", 6, 2)
-    )
-    private val a_1: Array<Among> = arrayOf(
-        Among("\u0435\u0435", -1, 1),
-        Among("\u0438\u0435", -1, 1),
-        Among("\u043E\u0435", -1, 1),
-        Among("\u044B\u0435", -1, 1),
-        Among("\u0438\u043C\u0438", -1, 1),
-        Among("\u044B\u043C\u0438", -1, 1),
-        Among("\u0435\u0439", -1, 1),
-        Among("\u0438\u0439", -1, 1),
-        Among("\u043E\u0439", -1, 1),
-        Among("\u044B\u0439", -1, 1),
-        Among("\u0435\u043C", -1, 1),
-        Among("\u0438\u043C", -1, 1),
-        Among("\u043E\u043C", -1, 1),
-        Among("\u044B\u043C", -1, 1),
-        Among("\u0435\u0433\u043E", -1, 1),
-        Among("\u043E\u0433\u043E", -1, 1),
-        Among("\u0435\u043C\u0443", -1, 1),
-        Among("\u043E\u043C\u0443", -1, 1),
-        Among("\u0438\u0445", -1, 1),
-        Among("\u044B\u0445", -1, 1),
-        Among("\u0435\u044E", -1, 1),
-        Among("\u043E\u044E", -1, 1),
-        Among("\u0443\u044E", -1, 1),
-        Among("\u044E\u044E", -1, 1),
-        Among("\u0430\u044F", -1, 1),
-        Among("\u044F\u044F", -1, 1)
-    )
-    private val a_2: Array<Among> = arrayOf(
-        Among("\u0435\u043C", -1, 1),
-        Among("\u043D\u043D", -1, 1),
-        Among("\u0432\u0448", -1, 1),
-        Among("\u0438\u0432\u0448", 2, 2),
-        Among("\u044B\u0432\u0448", 2, 2),
-        Among("\u0449", -1, 1),
-        Among("\u044E\u0449", 5, 1),
-        Among("\u0443\u044E\u0449", 6, 2)
-    )
-    private val a_3: Array<Among> = arrayOf(
-        Among("\u0441\u044C", -1, 1),
-        Among("\u0441\u044F", -1, 1)
-    )
-    private val a_4: Array<Among> = arrayOf(
-        Among("\u043B\u0430", -1, 1),
-        Among("\u0438\u043B\u0430", 0, 2),
-        Among("\u044B\u043B\u0430", 0, 2),
-        Among("\u043D\u0430", -1, 1),
-        Among("\u0435\u043D\u0430", 3, 2),
-        Among("\u0435\u0442\u0435", -1, 1),
-        Among("\u0438\u0442\u0435", -1, 2),
-        Among("\u0439\u0442\u0435", -1, 1),
-        Among("\u0435\u0439\u0442\u0435", 7, 2),
-        Among("\u0443\u0439\u0442\u0435", 7, 2),
-        Among("\u043B\u0438", -1, 1),
-        Among("\u0438\u043B\u0438", 10, 2),
-        Among("\u044B\u043B\u0438", 10, 2),
-        Among("\u0439", -1, 1),
-        Among("\u0435\u0439", 13, 2),
-        Among("\u0443\u0439", 13, 2),
-        Among("\u043B", -1, 1),
-        Among("\u0438\u043B", 16, 2),
-        Among("\u044B\u043B", 16, 2),
-        Among("\u0435\u043C", -1, 1),
-        Among("\u0438\u043C", -1, 2),
-        Among("\u044B\u043C", -1, 2),
-        Among("\u043D", -1, 1),
-        Among("\u0435\u043D", 22, 2),
-        Among("\u043B\u043E", -1, 1),
-        Among("\u0438\u043B\u043E", 24, 2),
-        Among("\u044B\u043B\u043E", 24, 2),
-        Among("\u043D\u043E", -1, 1),
-        Among("\u0435\u043D\u043E", 27, 2),
-        Among("\u043D\u043D\u043E", 27, 1),
-        Among("\u0435\u0442", -1, 1),
-        Among("\u0443\u0435\u0442", 30, 2),
-        Among("\u0438\u0442", -1, 2),
-        Among("\u044B\u0442", -1, 2),
-        Among("\u044E\u0442", -1, 1),
-        Among("\u0443\u044E\u0442", 34, 2),
-        Among("\u044F\u0442", -1, 2),
-        Among("\u043D\u044B", -1, 1),
-        Among("\u0435\u043D\u044B", 37, 2),
-        Among("\u0442\u044C", -1, 1),
-        Among("\u0438\u0442\u044C", 39, 2),
-        Among("\u044B\u0442\u044C", 39, 2),
-        Among("\u0435\u0448\u044C", -1, 1),
-        Among("\u0438\u0448\u044C", -1, 2),
-        Among("\u044E", -1, 2),
-        Among("\u0443\u044E", 44, 2)
-    )
-    private val a_5: Array<Among> = arrayOf(
-        Among("\u0430", -1, 1),
-        Among("\u0435\u0432", -1, 1),
-        Among("\u043E\u0432", -1, 1),
-        Among("\u0435", -1, 1),
-        Among("\u0438\u0435", 3, 1),
-        Among("\u044C\u0435", 3, 1),
-        Among("\u0438", -1, 1),
-        Among("\u0435\u0438", 6, 1),
-        Among("\u0438\u0438", 6, 1),
-        Among("\u0430\u043C\u0438", 6, 1),
-        Among("\u044F\u043C\u0438", 6, 1),
-        Among("\u0438\u044F\u043C\u0438", 10, 1),
-        Among("\u0439", -1, 1),
-        Among("\u0435\u0439", 12, 1),
-        Among("\u0438\u0435\u0439", 13, 1),
-        Among("\u0438\u0439", 12, 1),
-        Among("\u043E\u0439", 12, 1),
-        Among("\u0430\u043C", -1, 1),
-        Among("\u0435\u043C", -1, 1),
-        Among("\u0438\u0435\u043C", 18, 1),
-        Among("\u043E\u043C", -1, 1),
-        Among("\u044F\u043C", -1, 1),
-        Among("\u0438\u044F\u043C", 21, 1),
-        Among("\u043E", -1, 1),
-        Among("\u0443", -1, 1),
-        Among("\u0430\u0445", -1, 1),
-        Among("\u044F\u0445", -1, 1),
-        Among("\u0438\u044F\u0445", 26, 1),
-        Among("\u044B", -1, 1),
-        Among("\u044C", -1, 1),
-        Among("\u044E", -1, 1),
-        Among("\u0438\u044E", 30, 1),
-        Among("\u044C\u044E", 30, 1),
-        Among("\u044F", -1, 1),
-        Among("\u0438\u044F", 33, 1),
-        Among("\u044C\u044F", 33, 1)
-    )
-    private val a_6: Array<Among> = arrayOf(
-        Among("\u043E\u0441\u0442", -1, 1),
-        Among("\u043E\u0441\u0442\u044C", -1, 1)
-    )
-    private val a_7: Array<Among> = arrayOf(
-        Among("\u0435\u0439\u0448\u0435", -1, 1),
-        Among("\u043D", -1, 2),
-        Among("\u0435\u0439\u0448", -1, 1),
-        Among("\u044C", -1, 3)
-    )
-    private val g_v = intArrayOf(33, 65, 8, 232)
     private var I_p2 = 0
     private var I_pV = 0
     private fun copy_from(other: RussianStemmer) {

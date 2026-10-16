@@ -31,6 +31,119 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package org.crosswire.jsword.index.analysis.snowball
 
+private val a_0: Array<Among> = arrayOf(
+    Among("pa", -1, 1),
+    Among("sti", -1, 2),
+    Among("kaan", -1, 1),
+    Among("han", -1, 1),
+    Among("kin", -1, 1),
+    Among("h\u00E4n", -1, 1),
+    Among("k\u00E4\u00E4n", -1, 1),
+    Among("ko", -1, 1),
+    Among("p\u00E4", -1, 1),
+    Among("k\u00F6", -1, 1)
+)
+private val a_1: Array<Among> = arrayOf(
+    Among("lla", -1, -1),
+    Among("na", -1, -1),
+    Among("ssa", -1, -1),
+    Among("ta", -1, -1),
+    Among("lta", 3, -1),
+    Among("sta", 3, -1)
+)
+private val a_2: Array<Among> = arrayOf(
+    Among("ll\u00E4", -1, -1),
+    Among("n\u00E4", -1, -1),
+    Among("ss\u00E4", -1, -1),
+    Among("t\u00E4", -1, -1),
+    Among("lt\u00E4", 3, -1),
+    Among("st\u00E4", 3, -1)
+)
+private val a_3: Array<Among> = arrayOf(
+    Among("lle", -1, -1),
+    Among("ine", -1, -1)
+)
+private val a_4: Array<Among> = arrayOf(
+    Among("nsa", -1, 3),
+    Among("mme", -1, 3),
+    Among("nne", -1, 3),
+    Among("ni", -1, 2),
+    Among("si", -1, 1),
+    Among("an", -1, 4),
+    Among("en", -1, 6),
+    Among("\u00E4n", -1, 5),
+    Among("ns\u00E4", -1, 3)
+)
+private val a_5: Array<Among> = arrayOf(
+    Among("aa", -1, -1),
+    Among("ee", -1, -1),
+    Among("ii", -1, -1),
+    Among("oo", -1, -1),
+    Among("uu", -1, -1),
+    Among("\u00E4\u00E4", -1, -1),
+    Among("\u00F6\u00F6", -1, -1)
+)
+private val a_6: Array<Among> = arrayOf(
+    Among("a", -1, 8),
+    Among("lla", 0, -1),
+    Among("na", 0, -1),
+    Among("ssa", 0, -1),
+    Among("ta", 0, -1),
+    Among("lta", 4, -1),
+    Among("sta", 4, -1),
+    Among("tta", 4, 9),
+    Among("lle", -1, -1),
+    Among("ine", -1, -1),
+    Among("ksi", -1, -1),
+    Among("n", -1, 7),
+    Among("han", 11, 1),
+    Among("den", 11, -1) { false /* r_VI: inaccessible in Lucene 3.6.2 */ },
+    Among("seen", 11, -1) { false /* r_LONG: inaccessible in Lucene 3.6.2 */ },
+    Among("hen", 11, 2),
+    Among("tten", 11, -1) { false /* r_VI: inaccessible in Lucene 3.6.2 */ },
+    Among("hin", 11, 3),
+    Among("siin", 11, -1) { false /* r_VI: inaccessible in Lucene 3.6.2 */ },
+    Among("hon", 11, 4),
+    Among("h\u00E4n", 11, 5),
+    Among("h\u00F6n", 11, 6),
+    Among("\u00E4", -1, 8),
+    Among("ll\u00E4", 22, -1),
+    Among("n\u00E4", 22, -1),
+    Among("ss\u00E4", 22, -1),
+    Among("t\u00E4", 22, -1),
+    Among("lt\u00E4", 26, -1),
+    Among("st\u00E4", 26, -1),
+    Among("tt\u00E4", 26, 9)
+)
+private val a_7: Array<Among> = arrayOf(
+    Among("eja", -1, -1),
+    Among("mma", -1, 1),
+    Among("imma", 1, -1),
+    Among("mpa", -1, 1),
+    Among("impa", 3, -1),
+    Among("mmi", -1, 1),
+    Among("immi", 5, -1),
+    Among("mpi", -1, 1),
+    Among("impi", 7, -1),
+    Among("ej\u00E4", -1, -1),
+    Among("mm\u00E4", -1, 1),
+    Among("imm\u00E4", 10, -1),
+    Among("mp\u00E4", -1, 1),
+    Among("imp\u00E4", 12, -1)
+)
+private val a_8: Array<Among> = arrayOf(
+    Among("i", -1, -1),
+    Among("j", -1, -1)
+)
+private val a_9: Array<Among> = arrayOf(
+    Among("mma", -1, 1),
+    Among("imma", 0, -1)
+)
+private val g_AEI = intArrayOf(17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8)
+private val g_V1 = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 32)
+private val g_V2 = intArrayOf(17, 65, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 32)
+private val g_particle_end = intArrayOf(17, 97, 24, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 32)
+
 /**
  * Lucene 3.6.2 `org.tartarus.snowball.ext.FinnishStemmer` (Snowball-generated), converted to Kotlin mechanically
  * by `jsword/scripts/snowball-j2k.py`. Behaviour is that of the Java original; compare with the baseline via
@@ -41,118 +154,6 @@ package org.crosswire.jsword.index.analysis.snowball
  * `IllegalAccessException` is read as "condition false". The conditions are `{ false }` here for that reason.
  */
 internal class FinnishStemmer : SnowballStemmer() {
-    private val a_0: Array<Among> = arrayOf(
-        Among("pa", -1, 1),
-        Among("sti", -1, 2),
-        Among("kaan", -1, 1),
-        Among("han", -1, 1),
-        Among("kin", -1, 1),
-        Among("h\u00E4n", -1, 1),
-        Among("k\u00E4\u00E4n", -1, 1),
-        Among("ko", -1, 1),
-        Among("p\u00E4", -1, 1),
-        Among("k\u00F6", -1, 1)
-    )
-    private val a_1: Array<Among> = arrayOf(
-        Among("lla", -1, -1),
-        Among("na", -1, -1),
-        Among("ssa", -1, -1),
-        Among("ta", -1, -1),
-        Among("lta", 3, -1),
-        Among("sta", 3, -1)
-    )
-    private val a_2: Array<Among> = arrayOf(
-        Among("ll\u00E4", -1, -1),
-        Among("n\u00E4", -1, -1),
-        Among("ss\u00E4", -1, -1),
-        Among("t\u00E4", -1, -1),
-        Among("lt\u00E4", 3, -1),
-        Among("st\u00E4", 3, -1)
-    )
-    private val a_3: Array<Among> = arrayOf(
-        Among("lle", -1, -1),
-        Among("ine", -1, -1)
-    )
-    private val a_4: Array<Among> = arrayOf(
-        Among("nsa", -1, 3),
-        Among("mme", -1, 3),
-        Among("nne", -1, 3),
-        Among("ni", -1, 2),
-        Among("si", -1, 1),
-        Among("an", -1, 4),
-        Among("en", -1, 6),
-        Among("\u00E4n", -1, 5),
-        Among("ns\u00E4", -1, 3)
-    )
-    private val a_5: Array<Among> = arrayOf(
-        Among("aa", -1, -1),
-        Among("ee", -1, -1),
-        Among("ii", -1, -1),
-        Among("oo", -1, -1),
-        Among("uu", -1, -1),
-        Among("\u00E4\u00E4", -1, -1),
-        Among("\u00F6\u00F6", -1, -1)
-    )
-    private val a_6: Array<Among> = arrayOf(
-        Among("a", -1, 8),
-        Among("lla", 0, -1),
-        Among("na", 0, -1),
-        Among("ssa", 0, -1),
-        Among("ta", 0, -1),
-        Among("lta", 4, -1),
-        Among("sta", 4, -1),
-        Among("tta", 4, 9),
-        Among("lle", -1, -1),
-        Among("ine", -1, -1),
-        Among("ksi", -1, -1),
-        Among("n", -1, 7),
-        Among("han", 11, 1),
-        Among("den", 11, -1) { false /* r_VI: inaccessible in Lucene 3.6.2 */ },
-        Among("seen", 11, -1) { false /* r_LONG: inaccessible in Lucene 3.6.2 */ },
-        Among("hen", 11, 2),
-        Among("tten", 11, -1) { false /* r_VI: inaccessible in Lucene 3.6.2 */ },
-        Among("hin", 11, 3),
-        Among("siin", 11, -1) { false /* r_VI: inaccessible in Lucene 3.6.2 */ },
-        Among("hon", 11, 4),
-        Among("h\u00E4n", 11, 5),
-        Among("h\u00F6n", 11, 6),
-        Among("\u00E4", -1, 8),
-        Among("ll\u00E4", 22, -1),
-        Among("n\u00E4", 22, -1),
-        Among("ss\u00E4", 22, -1),
-        Among("t\u00E4", 22, -1),
-        Among("lt\u00E4", 26, -1),
-        Among("st\u00E4", 26, -1),
-        Among("tt\u00E4", 26, 9)
-    )
-    private val a_7: Array<Among> = arrayOf(
-        Among("eja", -1, -1),
-        Among("mma", -1, 1),
-        Among("imma", 1, -1),
-        Among("mpa", -1, 1),
-        Among("impa", 3, -1),
-        Among("mmi", -1, 1),
-        Among("immi", 5, -1),
-        Among("mpi", -1, 1),
-        Among("impi", 7, -1),
-        Among("ej\u00E4", -1, -1),
-        Among("mm\u00E4", -1, 1),
-        Among("imm\u00E4", 10, -1),
-        Among("mp\u00E4", -1, 1),
-        Among("imp\u00E4", 12, -1)
-    )
-    private val a_8: Array<Among> = arrayOf(
-        Among("i", -1, -1),
-        Among("j", -1, -1)
-    )
-    private val a_9: Array<Among> = arrayOf(
-        Among("mma", -1, 1),
-        Among("imma", 0, -1)
-    )
-    private val g_AEI = intArrayOf(17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8)
-    private val g_V1 = intArrayOf(17, 65, 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 32)
-    private val g_V2 = intArrayOf(17, 65, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 32)
-    private val g_particle_end = intArrayOf(17, 97, 24, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 32)
     private var B_ending_removed = false
     private var S_x = StringBuilder()
     private var I_p2 = 0

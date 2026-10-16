@@ -24,6 +24,9 @@ def convert(name, java, header):
            " */",
            f"internal class {name}Stemmer : SnowballStemmer() {{"]
     N_HEAD = len(out)
+    # The among tables and character-group arrays are immutable, so they are emitted at file level (built once per
+    # process) instead of as per-instance fields; a stemmer is created per analyze() call and would rebuild them each time.
+    tables = []
     conditional = set()
     stack = []  # 'blk' or ['sw', case_open]
     in_among = False
@@ -43,12 +46,12 @@ def convert(name, java, header):
         # --- among tables
         m = re.match(r"private (?:static final )?Among (\w+)\[\] = \{$", s)
         if m:
-            out.append(f"private val {m.group(1)}: Array<Among> = arrayOf(")
+            tables.append(f"private val {m.group(1)}: Array<Among> = arrayOf(")
             in_among = True
             continue
         if in_among:
             if s == "};":
-                out.append(")")
+                tables.append(")")
                 in_among = False
                 continue
             m = re.match(r'new Among \( ("(?:\\.|[^"\\])*"), (-?\d+), (-?\d+), "(\w*)", this\)(,?)$', s)
@@ -62,12 +65,12 @@ def convert(name, java, header):
             lam = f" {{ false /* {meth}: inaccessible in Lucene 3.6.2 */ }}" if meth else ""
             if meth:
                 conditional.add(meth)
-            out.append(f"Among({lit}, {sub}, {res}){lam}{comma}")
+            tables.append(f"    Among({lit}, {sub}, {res}){lam}{comma}")
             continue
         # --- fields
         m = re.match(r"private static final char (\w+)\[\] = \{([\d, ]*)\};$", s)
         if m:
-            out.append(f"private val {m.group(1)} = intArrayOf({m.group(2).strip()})")
+            tables.append(f"private val {m.group(1)} = intArrayOf({m.group(2).strip()})")
             continue
         m = re.match(r"private int (\w+);$", s)
         if m:
@@ -164,7 +167,9 @@ def convert(name, java, header):
         if l.endswith("{") or l.endswith("(") or l.endswith("{"):
             depth += 1
     assert depth == 1, (name, depth)
-    return "\n".join(out[:N_HEAD] + res + ["}", ""])
+    head = out[:N_HEAD]
+    doc = head.index("/**")
+    return "\n".join(head[:doc] + tables + [""] + head[doc:] + res + ["}", ""])
 
 
 def main():
