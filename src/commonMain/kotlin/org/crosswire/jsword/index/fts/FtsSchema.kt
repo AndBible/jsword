@@ -1,9 +1,20 @@
 package org.crosswire.jsword.index.fts
 
-/** Bumped on any incompatible change of [FtsSchema]; an index file with another value is rebuilt. */
+/**
+ * Bumped on any incompatible change of [FtsSchema]; an index file with another value is rebuilt.
+ *
+ * It must also be bumped on ANY change of analyzer output (token text or positions): [FtsIndexMetadata.analyzerId]
+ * names the analyzer chain but does not version its code, so an analyzer change without a bump leaves existing indexes
+ * silently stale (indexed with the old tokens, queried with the new ones). Guard: `PdFixtureSearchTest` pins the
+ * analyzer's token output for the public-domain fixtures and fails when that output changes; when it does, bump this
+ * value in the same commit.
+ */
 const val FTS_SCHEMA_VERSION = 1
 
-/** Identity of an index file, stored in table `meta`; used to decide whether it is still valid. */
+/**
+ * Identity of an index file, stored in table `meta`; used to decide whether it is still valid. [analyzerId] names the
+ * analyzer chain only, it does not version analyzer code: see [FTS_SCHEMA_VERSION].
+ */
 data class FtsIndexMetadata(
     val schemaVersion: Int,
     val analyzerId: String,

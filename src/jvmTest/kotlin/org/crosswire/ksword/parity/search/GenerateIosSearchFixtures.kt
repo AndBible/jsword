@@ -39,7 +39,7 @@ class K6FixtureLicenseTest {
             K6FixtureLicense.requirePublicDomain(root, "KJV")
             fail("KJV must be refused")
         } catch (e: IllegalStateException) {
-            assert("KJV" in e.message!!) { e.message!! }
+            kotlin.test.assertTrue("KJV" in e.message!!, e.message!!)
         }
         assertEquals("Public Domain", K6FixtureLicense.requirePublicDomain(root, "ChiUns")["DistributionLicense"])
     }

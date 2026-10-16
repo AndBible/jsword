@@ -72,3 +72,21 @@ Data: `src/iosEmbeddedResources/search/openjdk17/` holds `WordBreakIteratorData_
 set (`IosKswordResources`, task `generateKswordIosResources`); it is never part of the JVM or Android artifact
 (`ThaiLicenceBoundaryTest`). The GPLv2 text, the Oracle additional licence notice and the Thai dictionary (Royal
 Institute / NECTEC) licence sit beside the data files (`LICENSE.*`, `ADDITIONAL_LICENSE_INFO.openjdk.txt`).
+
+## Lucene 3.6.2 query code ports (Apache License 2.0)
+
+The K6 search query layer in `commonMain/.../index/fts/query/` is a hand port of Apache Lucene 3.6.2 `lucene-core`
+(Apache License 2.0, see `search/LICENSE.apache-2.0.txt`); each file carries a provenance header:
+
+- `LuceneSyntaxParser.kt`: the grammar and actions of `org.apache.lucene.queryParser.QueryParser` (`QueryParser.jj`),
+  including `discardEscapeChar`.
+- `SloppyPhraseMatcher.kt`: `org.apache.lucene.search.SloppyPhraseScorer`, `PhrasePositions`, `PhraseQueue` and the
+  array heap of `org.apache.lucene.util.PriorityQueue`.
+- `VocabularyExpansion.kt`: `FuzzyTermEnum.similarity`, `WildcardTermEnum.wildcardEquals` and the term selection of
+  `TopTermsScoringBooleanQueryRewrite`.
+
+## androidx.sqlite:sqlite-bundled (Apache License 2.0) and SQLite (public domain)
+
+`build.gradle.kts` adds the dependency `androidx.sqlite:sqlite-bundled:2.7.1` (Apache License 2.0, AndroidX) for the
+FTS5 search index (`FtsIndexStore`). It bundles the SQLite library (public domain, with FTS5 enabled), which is
+linked into the artifact.

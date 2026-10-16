@@ -1,3 +1,10 @@
+/*
+ * Provenance: hand port of `org.apache.lucene.search.FuzzyTermEnum.similarity`, `WildcardTermEnum.wildcardEquals` and the
+ * selection of `TopTermsScoringBooleanQueryRewrite` from Apache Lucene 3.6.2 (`lucene-core`).
+ * Lucene 3.6.2 (Apache License 2.0, see src/embeddedResources/search/LICENSE.apache-2.0.txt); listed in
+ * jsword/NOTICE-third-party.md.
+ */
+
 package org.crosswire.jsword.index.fts.query
 
 /**

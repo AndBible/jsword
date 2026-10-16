@@ -32,6 +32,11 @@ class FtsIndexManagerTest {
     private val searchDir = root / "search"
     private val luceneDir = root / "lucene"
 
+    /** Every manager, listener and book status a test touched: undone in [restore] (the books are shared singletons). */
+    private val managers = ArrayList<FtsIndexManager>()
+    private val listeners = ArrayList<Pair<Book, IndexStatusListener>>()
+    private val statusBefore = HashMap<Book, IndexStatus?>()
+
     @BeforeTest fun install() {
         savedAugmentPath = SwordBookPath.getAugmentPath()
         SwordBookPath.setAugmentPath(arrayOf(fixtureRoot() / "space dir" / "ä"))
@@ -39,22 +44,27 @@ class FtsIndexManagerTest {
     }
 
     @AfterTest fun restore() {
+        managers.forEach { it.closeAllIndexes() }
+        listeners.forEach { (b, l) -> b.removeIndexStatusListener(l) }
+        statusBefore.forEach { (b, st) -> st?.let { b.indexStatus = it } }
         SwordBookPath.setAugmentPath(savedAugmentPath)
         fs.deleteRecursively(root, mustExist = false)
     }
 
-    private fun book(initials: String): Book = assertNotNull(Books.installed().getBook(initials), initials)
+    private fun book(initials: String): Book = assertNotNull(Books.installed().getBook(initials), initials).also { statusBefore.getOrPut(it) { it.indexStatus } }
 
     private fun manager(fragmentOf: (Book, org.crosswire.jsword.passage.Key) -> fi.sykero.kdom.Element =
-        { b, k -> BookData(b, k).getOsisFragment(false) }) = FtsIndexManager(searchDir, luceneDir, fragmentOf)
+        { b, k -> BookData(b, k).getOsisFragment(false) }) = FtsIndexManager(searchDir, luceneDir, fragmentOf).also { managers += it }
 
     private fun finalFile(b: Book) = searchDir / b.bookMetaData.driverName!! / "${b.initials}.sqlite"
 
     private fun statuses(b: Book): MutableList<IndexStatus?> {
         val seen = ArrayList<IndexStatus?>()
-        b.addIndexStatusListener(object : IndexStatusListener {
+        val l = object : IndexStatusListener {
             override fun statusChanged(ev: IndexStatusEvent?) { seen += ev?.indexStatus }
-        })
+        }
+        b.addIndexStatusListener(l)
+        listeners += b to l
         return seen
     }
 

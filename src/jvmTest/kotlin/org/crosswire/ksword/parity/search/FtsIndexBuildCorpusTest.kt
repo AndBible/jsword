@@ -17,14 +17,22 @@ import kotlin.test.assertTrue
 class FtsIndexBuildCorpusTest {
     private val dir = Files.createTempDirectory("fts-corpus").toFile()
 
-    @AfterTest fun cleanup() { dir.deleteRecursively() }
+    private val managers = ArrayList<FtsIndexManager>()
+    private val statusBefore = HashMap<Book, IndexStatus>()
+
+    /** Indexes are closed before their files are deleted, and the shared books get their status back. */
+    @AfterTest fun cleanup() {
+        managers.forEach { it.closeAllIndexes() }
+        statusBefore.forEach { (b, st) -> b.indexStatus = st }
+        dir.deleteRecursively()
+    }
 
     private fun manager() = FtsIndexManager(dir.resolve("search").toOkioPath(), dir.resolve("lucene").toOkioPath(),
-        { b, k -> org.crosswire.jsword.book.BookData(b, k).getOsisFragment(false) })
+        { b, k -> org.crosswire.jsword.book.BookData(b, k).getOsisFragment(false) }).also { managers += it }
 
     private fun book(initials: String): Book {
         SwordBookPathJvm.setAugmentPath(arrayOf(K6Corpus.root))
-        return requireNotNull(Books.installed().getBook(initials)) { "no such book $initials" }
+        return requireNotNull(Books.installed().getBook(initials)) { "no such book $initials" }.also { statusBefore.getOrPut(it) { it.indexStatus } }
     }
 
     @Test fun kjvBuildsAndFindsAPlainTerm() {

@@ -30,15 +30,28 @@ user first (spec 6.3).
   Strong's field). Baseline: accepts. Here: `UnsupportedSearchSyntaxException`. Reason: the Strong's field is an
   exact-number field in the new index; a phrase over several numbers and a fuzzy Strong's number have no UI or docs
   path (the "find all" link of a Strong's number sends `strong:<number>`). Approved: Task 12/14 review; follows spec K6-3; no ordinary UI search affected.
-- RULE fuzzy-similarity-at-least-1: `term~1`, `term~2`, `term~1.5` (similarity of 1 or more). Baseline: Lucene's
-  `FuzzyQuery` throws a raw `IllegalArgumentException` (minimumSimilarity >= 1). Here: the usual typed
+- RULE fuzzy-similarity-at-least-1: `term~1` and `term~1.0` (a similarity of exactly 1). Baseline: Lucene's `FuzzyQuery`
+  throws a raw `IllegalArgumentException` (minimumSimilarity >= 1) from the parser. Here: the usual typed
   `BookException` ("Search failed.", cause `QueryParseException`). Reason: both fail, the baseline with an untyped
   exception that escapes JSword's `BookException` contract; review focus 5 requires a typed failure. The user
-  sees the same "search failed" either way. Approved: Task 11/14 review; no ordinary UI search affected.
+  sees the same "search failed" either way. `term~2` and `term~1.5` (similarity above 1) are not a difference: the
+  baseline already rejects them with a `ParseException`, and the port mirrors that (`LuceneSyntaxParser`, fuzzy
+  similarity check). Approved: Task 11/14 review; no ordinary UI search affected.
 - RULE nesting-over-200: parenthesis nesting deeper than 200 levels. Baseline: works down to about 2,000 levels
   and overflows its stack at about 3,000. Here: a typed `BookException` (cause `QueryParseException`) above 200
   levels, so a pasted pathological query cannot overflow the stack on any platform (the iOS stack is smaller). Approved: Task 11/14 review; no ordinary UI search affected.
   Reason: robustness; no real query nests beyond a handful of levels.
+
+### Approximations (no difference observed)
+
+- An unquoted `strong:` term that analyzes to several tokens is evaluated by intersecting the result sets of its
+  tokens (`FtsQueryEvaluator`), an approximation of the baseline's phrase-like handling. No difference was observed on
+  the matrix.
+
+### Reproduced baseline quirks (not differences)
+
+- `strong:H72*`, `strong:G*` and `strong:h*` return 0 verses in the baseline and in K6: the wildcard pattern is
+  lowercased by the parser while the indexed Strong's tokens are uppercase. Kept for parity.
 
 ### Known differences outside the query matrix (documented, not exercised by it)
 
@@ -51,6 +64,13 @@ user first (spec 6.3).
   ICU data on Android, JDK data on the JVM, as the baseline did), iOS ships the ported OpenJDK 17 dictionary data
   (`ThaiBreakPort`). The JVM build equals the baseline on the corpus (`ThaiPortVsJdkTest`, the ThaiKJV matrix);
   Android versus iOS may break rare words differently. Platform note (spec: Thai, builder call), not a code defect.
+
+### Outside the matrix
+
+- Turkish and Azerbaijani device locales: the baseline lowercases wildcard and prefix terms with
+  `String.toLowerCase()` in the default locale, so a dotless-i mismatch makes `ISA*` match nothing on tr/az devices.
+  K6 lowercases locale-invariantly and finds results (an improvement). The matrix runs in en_US and cannot see it.
+  Approved by controller ruling.
 
 ### Cases
 

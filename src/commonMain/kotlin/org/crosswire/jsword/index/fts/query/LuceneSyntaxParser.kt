@@ -1,3 +1,10 @@
+/*
+ * Provenance: hand port of `org.apache.lucene.queryParser.QueryParser` (grammar and actions of `QueryParser.jj`,
+ * `QueryParser.discardEscapeChar`) from Apache Lucene 3.6.2 (`lucene-core`).
+ * Lucene 3.6.2 (Apache License 2.0, see src/embeddedResources/search/LICENSE.apache-2.0.txt); listed in
+ * jsword/NOTICE-third-party.md.
+ */
+
 package org.crosswire.jsword.index.fts.query
 
 import org.crosswire.jsword.index.analysis.StrongsTokens
@@ -26,7 +33,8 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  * A syntax error earlier in the query wins over a later unsupported construct.
  *
  * Differences from the baseline, all failures: nesting deeper than [MAX_DEPTH] parentheses is a
- * [QueryParseException] (the baseline's recursive parser overflows the stack, an untyped `StackOverflowError`);
+ * [QueryParseException] (the baseline's recursive parser works to about 2,000 levels and overflows the stack, an untyped
+ * `StackOverflowError`, around 3,000);
  * `term~1` is a [QueryParseException] (the baseline throws a raw `IllegalArgumentException`).
  *
  * Escapes: `QueryParser.Term()` removes them from the whole term before it builds a wildcard or fuzzy query (then

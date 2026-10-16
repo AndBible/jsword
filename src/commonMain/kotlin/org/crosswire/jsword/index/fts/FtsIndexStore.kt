@@ -3,6 +3,7 @@ package org.crosswire.jsword.index.fts
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.driver.bundled.SQLITE_OPEN_READONLY
 import androidx.sqlite.execSQL
 import okio.FileSystem
 import okio.Path
@@ -13,7 +14,7 @@ import org.crosswire.jsword.index.analysis.AnalyzedToken
  *
  * Build: [create], [beginBuild], [addEntry]*, [writeMetadata], [commitBuild] (one transaction). Query: [match],
  * [strongs], [vocabulary], [tokensOf], ... The FTS5 expressions passed to [match] are over encoded tokens
- * ([SearchTokenCodec.encode]); the query compiler (later task) builds them.
+ * ([SearchTokenCodec.encode]); the query evaluator ([org.crosswire.jsword.index.fts.query.FtsQueryEvaluator]) builds them.
  *
  * Positions: [addEntry] takes analyzer tokens with absolute positions and stores a gap token for every missing
  * position, so FTS5 phrase and NEAR distances equal analyzer position distances (a phrase "a b" does not match
@@ -167,10 +168,16 @@ class FtsIndexStore private constructor(private val db: SQLiteConnection) : Auto
             return FtsIndexStore(db)
         }
 
-        /** The store at [path], or null when the file is missing, not an index, or its metadata is absent or has another schema version. */
-        fun open(path: Path): FtsIndexStore? {
+        /**
+         * The store at [path], or null when the file is missing, not an index, or its metadata is absent or has another
+         * schema version. With [readOnly] the file is opened `SQLITE_OPEN_READONLY` (metadata-only checks must not be
+         * able to write or create anything); the build methods then fail.
+         */
+        fun open(path: Path, readOnly: Boolean = false): FtsIndexStore? {
             if (!FileSystem.SYSTEM.exists(path)) return null
-            val db = try { BundledSQLiteDriver().open(path.toString()) } catch (e: Exception) { return null }
+            val db = try {
+                if (readOnly) BundledSQLiteDriver().open(path.toString(), SQLITE_OPEN_READONLY) else BundledSQLiteDriver().open(path.toString())
+            } catch (e: Exception) { return null }
             val ok = try { readMetadata(db)?.schemaVersion == FTS_SCHEMA_VERSION } catch (e: Exception) { false }
             if (!ok) { db.close(); return null }
             return FtsIndexStore(db)

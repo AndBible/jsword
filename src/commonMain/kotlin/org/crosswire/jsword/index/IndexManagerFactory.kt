@@ -47,6 +47,13 @@ private constructor() {
             return instance ?: throw SearchUnsupportedException()
         }
 
+        /** Test seam: runs [block] with [manager] as the singleton and restores the previous one afterwards. */
+        internal fun <T> withIndexManagerForTest(manager: IndexManager, block: () -> T): T {
+            val saved = instance
+            instance = manager
+            try { return block() } finally { instance = saved }
+        }
+
         /**
          * The singleton
          */

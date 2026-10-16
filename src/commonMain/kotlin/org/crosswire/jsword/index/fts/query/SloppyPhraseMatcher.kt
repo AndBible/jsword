@@ -1,3 +1,10 @@
+/*
+ * Provenance: hand port of `org.apache.lucene.search.SloppyPhraseScorer`, `PhrasePositions`, `PhraseQueue` and the
+ * array heap of `org.apache.lucene.util.PriorityQueue` from Apache Lucene 3.6.2 (`lucene-core`).
+ * Lucene 3.6.2 (Apache License 2.0, see src/embeddedResources/search/LICENSE.apache-2.0.txt); listed in
+ * jsword/NOTICE-third-party.md.
+ */
+
 package org.crosswire.jsword.index.fts.query
 
 import org.crosswire.jsword.index.analysis.AnalyzedToken
@@ -18,8 +25,9 @@ import org.crosswire.jsword.index.analysis.AnalyzedToken
  * match the formula allows), but no difference was observed on 4,000 seeded random cases (`SloppyPhraseMatcherTest`)
  * nor against the baseline oracle; the port reproduces the scorer, and the formula is used only as an upper bound.
  *
- * Positions are the analyzer's stream positions ([AnalyzedToken.position]), never list indexes: Greek, Hebrew and Thai
- * streams have position gaps (removed stop words) and Lucene's phrase offsets include them. Query tokens that share a
+ * Positions are the analyzer's stream positions ([AnalyzedToken.position]), never list indexes: streams can have position
+ * gaps (the ClassicTokenizer drops over-long tokens, Greek/Hebrew/Thai among them, and Thai pieces can skip positions;
+ * stop words are not removed) and Lucene's phrase offsets include them. Query tokens that share a
  * position (Lucene would build a `MultiPhraseQuery`) are not supported ([hasSamePosition]).
  */
 object SloppyPhraseMatcher {

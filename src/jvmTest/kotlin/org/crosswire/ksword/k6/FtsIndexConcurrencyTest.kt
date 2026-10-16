@@ -42,13 +42,18 @@ class FtsIndexConcurrencyTest {
         Reporter.addReporterListener(listener)
     }
 
+    private val managers = ArrayList<FtsIndexManager>()
+    private val statusBefore = HashMap<Book, IndexStatus>()
+
     @AfterTest fun tearDown() {
+        managers.forEach { it.closeAllIndexes() }
+        statusBefore.forEach { (b, st) -> b.indexStatus = st }
         Reporter.removeReporterListener(listener)
         SwordBookPath.setAugmentPath(saved)
         dir.deleteRecursively()
     }
 
-    private fun book(): Book = assertNotNull(Books.installed().getBook("K4RawText"))
+    private fun book(): Book = assertNotNull(Books.installed().getBook("K4RawText")).also { statusBefore.getOrPut(it) { it.indexStatus } }
 
     private val search get() = dir.resolve("search").toOkioPath()
 
@@ -64,7 +69,7 @@ class FtsIndexConcurrencyTest {
             assertTrue(gate.release.await(20, TimeUnit.SECONDS), "gate not released")
         }
         BookData(b, k).getOsisFragment(false)
-    }
+    }.also { managers += it }
 
     @Test fun twoSchedulesForOneBookBuildOnce() {
         val b = book()

@@ -80,7 +80,7 @@ class SearchCorpusParityTest {
             if (syn == "^" || syn == "[a TO b]" || syn == "{a TO b}" || (syn.endsWith(":") && !syn.startsWith("strong:"))) return "K6-3-unsupported-syntax"
             if (syn == "strong:term~" || syn == "strong:\"phrase\"") return "strong-phrase-or-fuzzy"
         }
-        // term~1 (and larger): Lucene's FuzzyQuery throws a raw IllegalArgumentException, here a typed BookException.
+        // term~1 / term~1.0 (above 1 is a ParseException in both, no difference): Lucene's FuzzyQuery throws a raw IllegalArgumentException, here a typed BookException.
         if (base.failure == "IllegalArgumentException" && mine.failure == "BookException<-QueryParseException" && FUZZY_INT.containsMatchIn(query)) {
             return "fuzzy-similarity-at-least-1"
         }
@@ -319,6 +319,6 @@ class SearchCorpusParityTest {
 
     private companion object {
         val RULES = listOf("K6-3-unsupported-syntax", "strong-phrase-or-fuzzy", "fuzzy-similarity-at-least-1", "nesting-over-200")
-        val FUZZY_INT = Regex("~[1-9][0-9]*(\\.[0-9]+)?(\\s|\\)|$)")
+        val FUZZY_INT = Regex("~1(\\.0+)?(\\s|\\)|$)")
     }
 }

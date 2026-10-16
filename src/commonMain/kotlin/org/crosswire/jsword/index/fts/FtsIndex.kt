@@ -6,6 +6,7 @@ import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.index.AbstractIndex
+import org.crosswire.jsword.index.Index
 import org.crosswire.jsword.index.analysis.BookAnalyzers
 import org.crosswire.jsword.index.fts.query.FtsQueryEvaluator
 import org.crosswire.jsword.index.fts.query.LuceneSyntaxParser
@@ -22,9 +23,16 @@ import org.crosswire.jsword.versification.system.Versifications
  *
  * Queries are parsed by [LuceneSyntaxParser] and evaluated by [FtsQueryEvaluator] (K6 task 11).
  */
-class FtsIndex(private val book: Book, private val store: FtsIndexStore) : AbstractIndex() {
+class FtsIndex(internal val book: Book, private val store: FtsIndexStore) : AbstractIndex() {
     private val lock = SynchronizedObject()
     private var closed = false
+
+    /**
+     * Set by [FtsIndexManager] before it closes this index because a rebuild or [FtsIndexManager.closeAllIndexes]
+     * replaced it: a [find] that reaches the closed index (a caller holding it or the book's cached searcher while the
+     * swap happened) is answered by the current index instead of failing. Null after a delete: the find fails.
+     */
+    internal var successor: (() -> Index)? = null
 
     /**
      * Finds the entries containing [search], analyzed with the book's analyzer.
@@ -37,8 +45,8 @@ class FtsIndex(private val book: Book, private val store: FtsIndexStore) : Abstr
      *
      * [search] is Lucene 3.6.2 classic query syntax (see [LuceneSyntaxParser]). Invalid syntax fails with a
      * "Search failed." [BookException] whose cause is a [org.crosswire.jsword.index.fts.query.QueryParseException] (the baseline's `ParseException`);
-     * syntax outside the K6 query language, a ranked [searchModifier] (`"ranked"`), and wildcard/fuzzy/proximity
-     * until tasks 12/13 throw [UnsupportedSearchSyntaxException].
+     * syntax outside the K6 query language (see [UnsupportedSearchSyntaxException]) and a ranked [searchModifier]
+     * (`"ranked"`) throw [UnsupportedSearchSyntaxException].
      */
     @Throws(BookException::class)
     override fun find(search: String?): Key {
@@ -54,8 +62,12 @@ class FtsIndex(private val book: Book, private val store: FtsIndexStore) : Abstr
             throw BookException(JSMsg.gettext("Search failed."), e)
         }
 
+        var forward: (() -> Index)? = null
         val refs = synchronized(lock) {
-            if (closed) throw BookException(JSMsg.gettext("Search failed."))
+            if (closed) {
+                forward = successor ?: throw BookException(JSMsg.gettext("Search failed."))
+                return@synchronized emptyList()
+            }
             try {
                 FtsQueryEvaluator(store, analyzer).evaluate(node).sorted().map { store.osisRef(it) }
             } catch (e: UnsupportedSearchSyntaxException) {
@@ -64,6 +76,8 @@ class FtsIndex(private val book: Book, private val store: FtsIndexStore) : Abstr
                 throw BookException(JSMsg.gettext("Search failed."), e)
             }
         }
+
+        forward?.let { next -> return next().also { it.searchModifier = searchModifier }.find(search) }
 
         val v11n = Versifications.instance().getVersification(book.bookMetaData.getProperty("Versification"))
         val passage = results as? AbstractPassage

@@ -86,7 +86,7 @@ class FtsIndexManager internal constructor(
     override fun needsReindexing(book: Book?): Boolean {
         if (book == null || !isIndexed(book)) return true
         val meta = try {
-            FtsIndexStore.open(finalPath(book))?.use { it.metadata() }
+            FtsIndexStore.open(finalPath(book), readOnly = true)?.use { it.metadata() }
         } catch (e: Exception) { null } ?: return true
         val version = book.bookMetaData.getProperty(org.crosswire.jsword.book.sword.SwordBookMetaData.KEY_VERSION)
         return meta.schemaVersion != FTS_SCHEMA_VERSION ||
@@ -126,16 +126,20 @@ class FtsIndexManager internal constructor(
                 try {
                     fs.createDirectories(final.parent!!)
                     deleteDb(creating)
-                    // Drop a stale open handle: the final file is about to be replaced.
-                    closeOpen(book)
+                    // The open index (if any) keeps serving searches from the old file until the rename below.
                     book.indexStatus = IndexStatus.CREATING
                     val errors = FtsIndexBuilder(book, currentPolicy, fragmentOf)
                         .build(creating, newJob) { cancelled.value || newJob.isFinished }
                     newJob.isCancelable = false
                     if (cancelled.value || newJob.isFinished) throw IndexBuildCancelled()
-                    fs.atomicMove(creating, final)
-                    // Evict a handle opened on the replaced file while the build ran; getIndex reopens the new one.
-                    closeOpen(book)
+                    // The rename and the eviction of the cached handle are one step under [lock], so getIndex never
+                    // opens the new file and has it evicted, nor serves the old one after the rename. A search that
+                    // still holds the evicted index is forwarded to the new one (see [FtsIndex.successor]).
+                    val replaced = synchronized(lock) {
+                        fs.atomicMove(creating, final)
+                        open.remove(book.initials)
+                    }
+                    retire(book, replaced, reopen = true)
                     finalStatus = IndexStatus.DONE
                     if (errors.isNotEmpty()) {
                         // TRANSLATOR: It is likely that one or more verses could not be indexed due to errors in those verses.
@@ -180,7 +184,7 @@ class FtsIndexManager internal constructor(
         deleteHook?.invoke(book)
         val mutex = if (indexPolicy!!.isSerial()) serialLock else bookLock(book)
         synchronized(mutex) {
-            closeOpen(book)
+            retire(book, synchronized(lock) { open.remove(book.initials) }, reopen = false)
             val final = finalPath(book)
             try {
                 deleteDb(creatingPath(final))
@@ -190,13 +194,12 @@ class FtsIndexManager internal constructor(
                 throw BookException(JSMsg.gettext("Failed to delete search index."), e)
             }
             book.indexStatus = IndexStatus.UNDONE
-            book.resetSearcher()
         }
     }
 
     override fun closeAllIndexes() {
         val all = synchronized(lock) { open.values.toList().also { open.clear() } }
-        all.forEach { it.close() }
+        all.forEach { retire(it.book, it, reopen = true) }
     }
 
     /** True when the legacy Lucene index directory `lucene/<driverName>/<initials>/` of [book] exists. */
@@ -242,9 +245,17 @@ class FtsIndexManager internal constructor(
     private fun bookLock(book: Book): SynchronizedObject =
         synchronized(lock) { bookLocks.getOrPut(book.initials) { SynchronizedObject() } }
 
-    private fun closeOpen(book: Book) {
-        val index = synchronized(lock) { open.remove(book.initials) }
-        index?.close()
+    /**
+     * Closes [index], just evicted from [open], and drops the book's cached searcher, which holds it. With [reopen] a
+     * search that still reaches the closed index is answered by [getIndex] (the new file after a rebuild, a reopened
+     * one after [closeAllIndexes]); after a delete there is nothing to reopen and it fails.
+     */
+    private fun retire(book: Book, index: FtsIndex?, reopen: Boolean) {
+        if (index != null) {
+            if (reopen) index.successor = { getIndex(book) }
+            index.close()
+        }
+        book.resetSearcher()
     }
 
     /** Deletes a SQLite file and the journal/WAL files next to it. */
