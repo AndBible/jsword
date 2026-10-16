@@ -143,6 +143,21 @@ class FtsIndexManagerTest {
         assertTrue(creatingFiles().isEmpty())
     }
 
+    @Test fun cancelledRebuildKeepsTheLegacyDirectory() {
+        val b = book("K4RawText")
+        val legacy = luceneDir / b.bookMetaData.driverName!! / b.initials
+        fs.createDirectories(legacy)
+        var calls = 0
+        val m = manager { book, key ->
+            if (++calls == 2) assertNotNull(JobManager.findJob("CREATE_INDEX-${book.initials}")).cancel()
+            BookData(book, key).getOsisFragment(false)
+        }
+        m.scheduleIndexCreation(b)
+        assertEquals(IndexStatus.UNDONE, b.indexStatus)
+        assertTrue(m.hasLegacyLuceneIndex(b))
+        assertTrue(fs.exists(legacy))
+    }
+
     @Test fun deleteIndexRemovesTheFile() {
         val b = book("K4RawText")
         val m = manager()
