@@ -117,6 +117,8 @@ object SwordArchive {
         fun u32(offset: Int): Long { need(offset,4); return (0..3).fold(0L) { value,i -> value or ((bytes[offset+i].toLong() and 255) shl (8*i)) } }
         fun bounded(value: Long): Int { if (value < 0 || value > Int.MAX_VALUE) throw IOException("Large ZIP unsupported"); return value.toInt() }
         fun u64(offset: Int): Int { if (u32(offset+4) != 0L) throw IOException("Large ZIP unsupported"); return bounded(u32(offset)) }
+        // Even an empty ZIP has an EOCD signature; an empty file is not a parsed empty catalog.
+        need(0, 4)
         var cursor = 0
         while (cursor < bytes.size) {
             need(cursor,4)
