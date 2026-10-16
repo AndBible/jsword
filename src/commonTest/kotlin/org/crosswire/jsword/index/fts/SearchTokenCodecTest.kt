@@ -28,8 +28,23 @@ class SearchTokenCodecTest {
         assertNull(SearchTokenCodec.decode("xff"))
     }
 
-    @Test fun loneSurrogateEncodesAsQuestionMark() {
-        assertEquals("x613f62", SearchTokenCodec.encode("a\uD800b"))
-        assertEquals(SearchTokenCodec.encode("a?b"), SearchTokenCodec.encode("a\uD800b"))
+    @Test fun loneSurrogatesBecomeReplacementCharOnEveryPlatform() {
+        val fffd = SearchTokenCodec.encode("\uFFFD")
+        assertEquals("xefbfbd", fffd)
+        assertEquals("x61efbfbd62", SearchTokenCodec.encode("a\uD800b"))
+        assertEquals("x61efbfbd62", SearchTokenCodec.encode("a\uDC00b"))
+        assertEquals("xefbfbd", SearchTokenCodec.encode("\uD800")) // trailing lone high
+        assertEquals("xefbfbdefbfbd", SearchTokenCodec.encode("\uDC00\uD800")) // low then high: both lone
+        assertEquals("xefbfbdf09d849e", SearchTokenCodec.encode("\uD800\uD834\uDD1E")) // lone high, then a valid pair
+    }
+
+    @Test fun validSurrogatePairStaysIntact() {
+        assertEquals("xf09d849e", SearchTokenCodec.encode("\uD834\uDD1E"))
+        assertEquals("\uD834\uDD1E", SearchTokenCodec.decode("xf09d849e"))
+    }
+
+    @Test fun decodeRejectsMalformedUtf8EvenWhenReplacementIsValid() {
+        assertNull(SearchTokenCodec.decode("xc328"))
+        assertEquals("\uFFFD", SearchTokenCodec.decode("xefbfbd"))
     }
 }
