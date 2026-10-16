@@ -86,6 +86,8 @@ class SearchCorpusParityTest {
         }
         // the baseline succeeds up to about 2,000 levels (hits != null); a baseline failure is not this rule
         if (base.hits != null && query.count { it == '(' } > 200 && mine.failure == "BookException<-QueryParseException") return "nesting-over-200"
+        // strong:H72* / strong:G* / strong:h*: the baseline lowercases the pattern against uppercase tokens and finds nothing; here it matches.
+        if (base.hits?.isEmpty() == true && !mine.hits.isNullOrEmpty() && STRONG_WILDCARD.containsMatchIn(query)) return "strongs-wildcard-case"
         return null
     }
 
@@ -288,6 +290,15 @@ class SearchCorpusParityTest {
         }
     }
 
+    @Test fun strongsWildcardRuleNeedsAnEmptyBaselineAndHits() {
+        val none = Outcome(emptyList(), null)
+        val hits = Outcome(listOf("Gen.1.1"), null)
+        assertEquals("strongs-wildcard-case", approvedRule("strong:H72*", none, hits))
+        assertEquals(null, approvedRule("strong:H7225", none, hits), "not a wildcard")
+        assertEquals(null, approvedRule("strong:H72*", hits, hits), "baseline had hits")
+        assertEquals(null, approvedRule("strong:H72*", none, none), "no difference to approve")
+    }
+
     /** A rule never approves a mismatch where the baseline failed (`heading:x )`: Lucene's parse error, K6's Unsupported), and approves the accepted case. */
     @Test fun rulesDoNotApproveMismatchesWhereTheBaselineFailed() {
         val ok = Outcome(listOf("Gen.1.1"), null)
@@ -318,7 +329,8 @@ class SearchCorpusParityTest {
     }
 
     private companion object {
-        val RULES = listOf("K6-3-unsupported-syntax", "strong-phrase-or-fuzzy", "fuzzy-similarity-at-least-1", "nesting-over-200")
+        val RULES = listOf("K6-3-unsupported-syntax", "strong-phrase-or-fuzzy", "fuzzy-similarity-at-least-1", "nesting-over-200", "strongs-wildcard-case")
+        val STRONG_WILDCARD = Regex("(?i)strong:[^\\s()]*\\*")
         val FUZZY_INT = Regex("~1(\\.0+)?(\\s|\\)|$)")
     }
 }

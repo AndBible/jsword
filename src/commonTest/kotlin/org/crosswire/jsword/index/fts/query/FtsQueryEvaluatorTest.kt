@@ -14,6 +14,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class FtsQueryEvaluatorTest {
     private val files = mutableListOf<Path>()
@@ -179,7 +180,13 @@ class FtsQueryEvaluatorTest {
     }
 
     @Test fun strongsWildcards() {
-        assertEquals(emptySet(), run("strong:h07*"), "the pattern is lowercased, the tokens are not: Lucene's behaviour")
+        assertEquals(setOf(1L, 2L), run("strong:h04*"))
+    }
+
+    @Test fun strongsWildcardIsCaseInsensitive() {
+        assertEquals(setOf(1L), run("strong:H72*"))
+        assertEquals(setOf(1L), run("strong:h72*"))
+        assertTrue(1L in run("strong:h*"))
     }
 
     @Test fun anEmptyQueryMatchesNothing() {

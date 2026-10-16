@@ -319,15 +319,16 @@ internal object LuceneSyntaxParser {
             when {
                 tok.kind == Kind.STAR || tok.kind == Kind.WILDTERM -> {
                     requireField(field)
-                    // QueryParser.Term(): discardEscapeChar over the whole term, then getWildcardQuery lowercases.
-                    val pattern = unescape(image).lowercase()
+                    // QueryParser.Term(): discardEscapeChar over the whole term, then getWildcardQuery lowercases; Strong's tokens are
+                    // indexed uppercase, so for that field the pattern is uppercased instead (case-insensitive, like strong:h7225).
+                    val pattern = unescape(image).let { if (field == SearchFields.STRONG) it.uppercase() else it.lowercase() }
                     return if (field == SearchFields.STRONG) SearchNode.StrongTerm(pattern, true) else SearchNode.Wildcard(pattern)
                 }
                 tok.kind == Kind.PREFIXTERM -> {
                     requireField(field)
                     // getPrefixQuery gets the unescaped term without the final `*`; PrefixQuery takes it literally,
                     // so an escaped `\*` or `\?` in it is an ordinary character, not a wildcard.
-                    val prefix = unescape(image.substring(0, image.length - 1)).lowercase()
+                    val prefix = unescape(image.substring(0, image.length - 1)).let { if (field == SearchFields.STRONG) it.uppercase() else it.lowercase() }
                     return if (field == SearchFields.STRONG) {
                         // Strong's tokens never contain `*` or `?`: such a literal prefix matches nothing.
                         if (prefix.any { it == '*' || it == '?' }) SearchNode.Bool(emptyList()) else SearchNode.StrongTerm("$prefix*", true)

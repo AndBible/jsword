@@ -41,6 +41,10 @@ user first (spec 6.3).
   and overflows its stack at about 3,000. Here: a typed `BookException` (cause `QueryParseException`) above 200
   levels, so a pasted pathological query cannot overflow the stack on any platform (the iOS stack is smaller). Approved: Task 11/14 review; no ordinary UI search affected.
   Reason: robustness; no real query nests beyond a handful of levels.
+- RULE strongs-wildcard-case: `strong:H72*`, `strong:G*`, `strong:h*` (a wildcard or prefix on the Strong's field).
+  Baseline: the parser lowercases the pattern while the indexed Strong's tokens are uppercase, so it returns 0
+  verses. Here: the pattern is uppercased and matches the tokens case-insensitively. Reason: the baseline result is
+  an evident defect, not a behavior to keep. Approved: user, 2026-10-17 ("cheap, so do it").
 
 ### Approximations (no difference observed)
 
@@ -50,8 +54,6 @@ user first (spec 6.3).
 
 ### Reproduced baseline quirks (not differences)
 
-- `strong:H72*`, `strong:G*` and `strong:h*` return 0 verses in the baseline and in K6: the wildcard pattern is
-  lowercased by the parser while the indexed Strong's tokens are uppercase. Kept for parity.
 
 ### Known differences outside the query matrix (documented, not exercised by it)
 

@@ -114,7 +114,7 @@ class LuceneSyntaxParserTest {
     @Test fun fieldsEscapesAndTermForms() {
         assertEquals("strong:h7225", lucene("strong:h7225"))
         assertEquals("content:faith", lucene("content:faith"))
-        assertEquals(SearchNode.StrongTerm("h72*", true), LuceneSyntaxParser.parse("strong:H72*"))
+        assertEquals(SearchNode.StrongTerm("H72*", true), LuceneSyntaxParser.parse("strong:H72*"))
         assertEquals(SearchNode.StrongTerm("H07225", false), LuceneSyntaxParser.parse("strong:H07225"))
         assertEquals(SearchNode.Term("fa ith"), LuceneSyntaxParser.parse("fa\\ ith"))
         assertEquals(SearchNode.Term("a(b"), LuceneSyntaxParser.parse("a\\(b"))
@@ -162,7 +162,7 @@ class LuceneSyntaxParserTest {
         assertEquals(SearchNode.Wildcard("café?"), LuceneSyntaxParser.parse("Caf\\u00e9?"))
         assertEquals(SearchNode.Wildcard("a*b*x"), LuceneSyntaxParser.parse("a\\*b*x"))
         assertEquals(SearchNode.Fuzzy("b?ess", 0.5f), LuceneSyntaxParser.parse("B\\?ess~"))
-        assertEquals(SearchNode.StrongTerm("h7*", true), LuceneSyntaxParser.parse("strong:H7*"))
+        assertEquals(SearchNode.StrongTerm("H7*", true), LuceneSyntaxParser.parse("strong:H7*"))
         assertEquals(SearchNode.Bool(emptyList()), LuceneSyntaxParser.parse("strong:h\\*7*"), "literal * never occurs in a Strong's token")
     }
 
