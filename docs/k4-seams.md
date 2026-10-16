@@ -740,7 +740,6 @@ not concurrent/removal/defaults/general-map behavior. Its timestamp uses
 Native HTTP, resource ownership, or filesystem runtime semantics was run on macOS.
 JVM non-file `URLConnection` output and HTTP behavior are unchanged.
 
-
 ## K5b M2 deviations (spec section 4.2)
 
 Behavioural or shape differences the book facade move accepted. The test that pins each one is named where there is one.
@@ -774,7 +773,7 @@ Behavioural or shape differences the book facade move accepted. The test that pi
 ## K5b M4 deviations
 
 - **Suspend port and installer API.** `HttpTransport`, `HttpBody`, the `WebResource` and `NetUtil` download members and the network members of `Installer` are `suspend` (rule section 29). `:app` callers follow; `BlockingHttpTransport` is replaced by `SuspendHttpTransport`.
-- **`getBooks()` no longer downloads** a missing catalog; it returns an empty list. `DownloadManager` reloads when the list is empty or the cache file is missing. Pinned by `InstallerNoNetworkGetBooksTest` and `DownloadManagerCatalogTest.missingCacheIsReloadedEvenWhenTheStoredTimestampIsCurrent`.
+- **`getBooks()` no longer downloads** a missing catalog; it returns an empty list. `DownloadManager` reloads when the list is empty (a missing cache gives an empty list). Pinned by `InstallerNoNetworkGetBooksTest` and `DownloadManagerCatalogTest.missingCacheIsReloadedEvenWhenTheStoredTimestampIsCurrent`.
 - **Cancellation.** A user cancel through the Progress API raises `DownloadCancelledException` and leaves the caller active; a caller cancellation stays `CancellationException` (the spec text said `TransportCancelledException`; only timeouts and cancellations from underneath map to it). Pinned by the four `InstallerCommonReadyTest` cancel tests named above and `InstallCancelTest` in `:app`.
 - **Tasks 16 and 17** were executed as one series, because the suspend port cannot compile without the suspend installer API.
 - **`DownloadQueue`, `DownloadManager.getDownloadableBooks` and `GenericFileDownloader.lastModified`** no longer swallow the caller's own `CancellationException`.
