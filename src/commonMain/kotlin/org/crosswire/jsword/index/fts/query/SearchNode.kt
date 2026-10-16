@@ -22,7 +22,7 @@ internal sealed interface SearchNode {
     /** `term~` / `term~0.8`; lowercased, not analyzed. [minSimilarity] is 0.5 when not given. */
     data class Fuzzy(val term: String, val minSimilarity: Float) : SearchNode
 
-    /** A `strong:` term. [raw] is the number as written (or the lowercased pattern when [wildcard] is true). */
+    /** A `strong:` term. [raw] is the number as written (or the uppercased pattern when [wildcard] is true). */
     data class StrongTerm(val raw: String, val wildcard: Boolean) : SearchNode
 
     /** A Lucene `BooleanQuery`. An empty list is Lucene's empty BooleanQuery: it matches nothing. */

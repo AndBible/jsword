@@ -22,9 +22,10 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  * - [SearchNode.Bool]: `BooleanQuery`: the intersection of the MUST clauses, else the union of the SHOULD clauses
  *   (SHOULD clauses are optional next to a MUST), minus the MUST_NOT clauses; no MUST and no SHOULD (a purely
  *   negative query) matches nothing.
- * - [SearchNode.StrongTerm] with a wildcard (`strong:h7*`) is matched, lowercased as Lucene's `getWildcardQuery` does,
- *   against the uppercase padded tokens of the strongs table, so it intentionally matches nothing whenever the
- *   pattern contains a letter (the baseline quirk, reproduced for parity; verified on KJV by the corpus matrix).
+ * - [SearchNode.StrongTerm] with a wildcard (`strong:h7*`) is matched against the uppercase padded tokens of the
+ *   strongs table. The parser uppercases the pattern for the Strong's field (the baseline lowercased it and so found
+ *   nothing; that is an approved difference, rule `strongs-wildcard-case`). A lowercase part suffix such as
+ *   `G3588a` is the known remaining gap: uppercasing turns it into `G3588A`, which does not match the lowercase suffix.
  * - [SearchNode.StrongTerm] without wildcard: `store.strongs` of the padded number (`h7225` is `H07225`).
  *   A term of several whitespace-separated numbers intersects them (the strongs table has no positions, so the
  *   baseline's phrase over the `strong` field is approximated).
