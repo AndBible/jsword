@@ -3,7 +3,8 @@ package org.crosswire.jsword.index.analysis
 /**
  * Word segmentation of Thai text as `java.text.BreakIterator.getWordInstance(Locale("th"))` does it in the baseline
  * `ThaiWordFilter`. On the JVM it is that very `BreakIterator`; on iOS it is a pure-Kotlin port that reads the OpenJDK 17
- * data files (the data is GPLv2+CPE and ships only in iOS binaries).
+ * data files (the port's code and the data are GPLv2+CPE and ship only in iOS binaries: the port is compiled only by
+ * `iosMain` and `jvmTest`, see `build.gradle.kts` `src/openjdkThai`).
  */
 internal expect object ThaiWordBreaker {
     /**

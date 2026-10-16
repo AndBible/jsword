@@ -136,10 +136,18 @@ val generateKswordIosResources = registerResourceGenerator(
     skip = { it.substringAfterLast('/').let { n -> n.startsWith("LICENSE") || n.startsWith("ADDITIONAL_LICENSE") } },
 )
 kotlin.sourceSets.named("commonMain") { kotlin.srcDir(generateKswordResources) }
+// The OpenJDK-derived Thai break-iterator PORT (code, GPLv2+CPE) lives in src/openjdkThai and is compiled ONLY into iosMain
+// (so it ships in iOS binaries only, like the data) and jvmTest (ThaiPortVsJdkTest compares it with the JDK). It is in no
+// main source set of the JVM/Android artifact; ThaiLicenceBoundaryTest checks the jar by class name.
+val openjdkThaiSources = layout.projectDirectory.dir("src/openjdkThai/kotlin")
 // The default hierarchy creates iosMain after this script is evaluated; only the iOS source set sees the Thai data.
 kotlin.sourceSets.configureEach {
-    if (name == "iosMain") kotlin.srcDir(generateKswordIosResources)
+    if (name == "iosMain") {
+        kotlin.srcDir(generateKswordIosResources)
+        kotlin.srcDir(openjdkThaiSources)
+    }
 }
+kotlin.sourceSets.named("jvmTest") { kotlin.srcDir(openjdkThaiSources) }
 
 // The embedded files are deliberately NOT on the main classpath (nor in the jar). The JDK-oracle differential
 // tests (ResourceBundle.getBundle, getResource, ...) still need them there as their reference, so only jvmTest

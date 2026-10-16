@@ -63,11 +63,12 @@ byte-for-byte copies of the `data/` entries of `com.chenlb.mmseg4j:mmseg4j-dic:1
 
 ## OpenJDK 17 Thai word break code and data (GPLv2 with the Classpath Exception)
 
-Code: `commonMain/.../index/analysis/thai/ThaiBreakPort.kt` is a port of the forward-iteration path of OpenJDK 17's
-`sun.text.RuleBasedBreakIterator`, `DictionaryBasedBreakIterator` and `BreakDictionary` (GPLv2 with the Classpath
-Exception; the file carries an origin header). It lives in `commonMain`, so it is compiled into the JVM and Android
-artifacts too, although nothing calls it there (the JVM uses `java.text.BreakIterator`). Whether that placement is
-acceptable under the licence is an open decision for the project owner.
+Code: `src/openjdkThai/kotlin/.../index/analysis/thai/ThaiBreakPort.kt` is a port of the forward-iteration path of
+OpenJDK 17's `sun.text.RuleBasedBreakIterator`, `DictionaryBasedBreakIterator` and `BreakDictionary` (GPLv2 with the
+Classpath Exception; the file carries an origin header). That source directory is compiled ONLY into the iOS source
+set (`iosMain`) and into `jvmTest` (`ThaiPortVsJdkTest` compares the port with the JDK); it is in no main source set
+of the JVM or Android artifact, whose Thai word breaking is `java.text.BreakIterator`. `ThaiLicenceBoundaryTest`
+checks by name that neither the port nor the data is in the JVM jar or the jvmMain output.
 
 Data: `src/iosEmbeddedResources/search/openjdk17/` holds `WordBreakIteratorData_th` and `thai_dict` (SHA-256
 `49931ec22a95d0f9f18fda1ab80e68e3f0105b433e87a0be9312066f3e16b57f` and

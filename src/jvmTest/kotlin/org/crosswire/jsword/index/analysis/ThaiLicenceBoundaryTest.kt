@@ -8,8 +8,9 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * Licence constraint of K6 Task 7: the OpenJDK Thai data (GPLv2+CPE) is embedded in iOS binaries only. The JVM
- * artifact must contain neither the generated `IosKswordResources` nor the raw data files.
+ * Licence constraint of K6 Task 7: the OpenJDK-derived Thai code (the break-iterator port) and data (GPLv2+CPE) are in
+ * iOS binaries only. The JVM artifact must contain neither the port, nor the generated `IosKswordResources`, nor the
+ * raw data files. (The port is compiled into the jvmTest classes for the parity test, so those are not checked.)
  */
 class ThaiLicenceBoundaryTest {
     @Test fun iosKswordResourcesIsNotOnTheJvmClasspath() {
@@ -33,7 +34,7 @@ class ThaiLicenceBoundaryTest {
         for (dir in classesDirs + resourcesDir) {
             if (!dir.exists()) continue
             val bad = dir.walkTopDown().filter { it.isFile }.map { it.name }.filter {
-                it == "WordBreakIteratorData_th" || it == "thai_dict" || it.startsWith("IosKswordResources")
+                it == "WordBreakIteratorData_th" || it == "thai_dict" || it.startsWith("IosKswordResources") || it.startsWith("ThaiBreakPort")
             }.toList()
             assertEquals(emptyList<String>(), bad, "OpenJDK Thai data or IosKswordResources in $dir")
         }
@@ -44,7 +45,8 @@ class ThaiLicenceBoundaryTest {
         assertTrue(jar.isFile, "$jar (the jvmJar task must have run)")
         ZipFile(jar).use { zip ->
             val bad = zip.entries().asSequence().map { it.name }.filter {
-                it.endsWith("WordBreakIteratorData_th") || it.endsWith("thai_dict") || it.contains("IosKswordResources")
+                it.endsWith("WordBreakIteratorData_th") || it.endsWith("thai_dict") || it.contains("IosKswordResources") ||
+                    it.contains("ThaiBreakPort") || it.contains("index/analysis/thai/")
             }.toList()
             assertEquals(emptyList<String>(), bad)
         }
