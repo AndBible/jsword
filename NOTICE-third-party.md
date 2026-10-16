@@ -14,6 +14,17 @@
 Lucene is licensed under the Apache License, Version 2.0, reproduced in `search/LICENSE.apache-2.0.txt`.
 Provenance, generation details and SHA-256 values are in `search/PROVENANCE.md`.
 
+## Lucene 3.6.2 analyzer ports (Apache License 2.0)
+
+These commonMain files are hand ports of Lucene 3.6.2 classes (`lucene-analyzers`, Apache License 2.0, see
+`search/LICENSE.apache-2.0.txt`), reproducing their behaviour under `Version.LUCENE_29` and the baseline JSword chains:
+
+- `GermanStemmer.kt`: from `org.apache.lucene.analysis.de.GermanStemmer` (with `GermanStemFilter`).
+- `ArabicLetterTokenizer.kt`, `ArabicNormalizer.kt`, `ArabicStemmer.kt` (also `StemmerUtil.delete`): from
+  `org.apache.lucene.analysis.ar` and `org.apache.lucene.analysis.util.StemmerUtil`.
+- `PersianAnalyzer.kt` (`PersianNormalizer`, from `org.apache.lucene.analysis.fa`), with the Arabic chain of
+  `ArabicAnalyzer.kt`.
+
 ## Snowball stemmers (BSD 3-clause)
 
 `src/commonMain/kotlin/org/crosswire/jsword/index/analysis/snowball/` is a Kotlin port of the Snowball stemmers as
