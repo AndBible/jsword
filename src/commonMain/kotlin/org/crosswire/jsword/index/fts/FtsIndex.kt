@@ -7,6 +7,8 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.index.AbstractIndex
 import org.crosswire.jsword.index.analysis.BookAnalyzers
+import org.crosswire.jsword.index.fts.query.FtsQueryEvaluator
+import org.crosswire.jsword.index.fts.query.LuceneSyntaxParser
 import org.crosswire.jsword.passage.AbstractPassage
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.NoSuchKeyException
@@ -18,7 +20,7 @@ import org.crosswire.jsword.versification.system.Versifications
  * A searchable view of one book's FTS5 index file. The connection is used by one caller at a time (calls are
  * serialized), and [close] is idempotent; a [find] after [close] fails with the baseline "Search failed." error.
  *
- * Task 11 supplies the query evaluator; until then [find] handles a single plain term only (see [find]).
+ * Queries are parsed by [LuceneSyntaxParser] and evaluated by [FtsQueryEvaluator] (K6 task 11).
  */
 class FtsIndex(private val book: Book, private val store: FtsIndexStore) : AbstractIndex() {
     private val lock = SynchronizedObject()
@@ -33,27 +35,31 @@ class FtsIndex(private val book: Book, private val store: FtsIndexStore) : Abstr
      * [NoSuchVerseException], exactly as the baseline `VerseCollector` does (those books stay unsearchable, K6 review
      * focus 3). A null [search] returns an empty key list.
      *
-     * Only one plain term is supported here: one that analyzes to a single token is matched as that token, several
-     * tokens (a term the analyzer splits) as a phrase, none as an empty result. Any query syntax or whitespace throws
-     * [UnsupportedSearchSyntaxException]; so does a ranked [searchModifier] (`"ranked"`).
+     * [search] is Lucene 3.6.2 classic query syntax (see [LuceneSyntaxParser]). Invalid syntax fails with a
+     * "Search failed." [BookException] whose cause is a [org.crosswire.jsword.index.fts.query.QueryParseException] (the baseline's `ParseException`);
+     * syntax outside the K6 query language, a ranked [searchModifier] (`"ranked"`), and wildcard/fuzzy/proximity
+     * until tasks 12/13 throw [UnsupportedSearchSyntaxException].
      */
     @Throws(BookException::class)
     override fun find(search: String?): Key {
         val results = book.createEmptyKeyList()
         if (search == null) return results
         if (searchModifier?.isRanked == true) throw UnsupportedSearchSyntaxException("ranked")
-        val bad = search.firstOrNull { it.isWhitespace() || it in SYNTAX }
-        if (bad != null) throw UnsupportedSearchSyntaxException(bad.toString())
-
-        val tokens = BookAnalyzers.forBook(book).analyze(search)
-        if (tokens.isEmpty()) return results
-        val expression = if (tokens.size == 1) SearchTokenCodec.encode(tokens[0].text)
-        else tokens.joinToString(" ", "\"", "\"") { SearchTokenCodec.encode(it.text) }
+        val analyzer = BookAnalyzers.forBook(book)
+        val node = try {
+            LuceneSyntaxParser.parse(search, analyzer)
+        } catch (e: UnsupportedSearchSyntaxException) {
+            throw e
+        } catch (e: Exception) { // QueryParseException, or an analyzer failure: never an untyped crash
+            throw BookException(JSMsg.gettext("Search failed."), e)
+        }
 
         val refs = synchronized(lock) {
             if (closed) throw BookException(JSMsg.gettext("Search failed."))
             try {
-                store.match(expression).sorted().map { store.osisRef(it) }
+                FtsQueryEvaluator(store, analyzer).evaluate(node).sorted().map { store.osisRef(it) }
+            } catch (e: UnsupportedSearchSyntaxException) {
+                throw e
             } catch (e: Exception) {
                 throw BookException(JSMsg.gettext("Search failed."), e)
             }
@@ -88,10 +94,5 @@ class FtsIndex(private val book: Book, private val store: FtsIndexStore) : Abstr
             closed = true
             store.close()
         }
-    }
-
-    private companion object {
-        /** Characters of the Lucene query language this stage does not evaluate. */
-        const val SYNTAX = "\"*?~:^()[]{}+-!&|\\/"
     }
 }
