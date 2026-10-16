@@ -9,6 +9,7 @@ import org.crosswire.jsword.index.analysis.AnalyzedToken
 import org.crosswire.jsword.index.analysis.GreekAnalyzer
 import org.crosswire.jsword.index.analysis.HebrewAnalyzer
 import org.crosswire.jsword.index.analysis.SimpleAnalyzer
+import org.crosswire.jsword.index.analysis.SnowballAnalyzer
 import org.crosswire.jsword.index.analysis.TextAnalyzer
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.Verse
@@ -34,6 +35,10 @@ class AnalyzerCorpusParityTest {
         // The baseline AnalyzerFactory maps both modern and ancient Greek to GreekLuceneAnalyzer.
         "el", "grc" -> GreekAnalyzer()
         "he" -> HebrewAnalyzer()
+        // ConfigurableSnowballAnalyzer: the baseline AnalyzerFactory maps these languages to it (stemming on, stop words off).
+        "fi" -> SnowballAnalyzer("Finnish")
+        "fr" -> SnowballAnalyzer("French")
+        "ru" -> SnowballAnalyzer("Russian")
         else -> null
     }
 
@@ -126,4 +131,10 @@ class AnalyzerCorpusParityTest {
     @Test fun everyKeyMatchesBaseline_Byz() = check("Byz")
 
     @Test fun everyKeyMatchesBaseline_HebModern() = check("HebModern")
+
+    @Test fun everyKeyMatchesBaseline_FinPR() = check("FinPR")
+
+    @Test fun everyKeyMatchesBaseline_FreCrampon() = check("FreCrampon")
+
+    @Test fun everyKeyMatchesBaseline_RusSynodal() = check("RusSynodal")
 }
