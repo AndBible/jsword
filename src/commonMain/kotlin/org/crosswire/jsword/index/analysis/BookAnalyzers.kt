@@ -13,7 +13,7 @@ import org.crosswire.jsword.book.Book
  * between [TextAnalyzer.analyze] calls: the tokenizers and the mmseg dictionary hold only immutable tables, and the
  * stemmers are created per call. Each instance is created on first use (the mmseg dictionary is large).
  */
-object BookAnalyzers {
+internal object BookAnalyzers {
     /** Language code to analyzer id, mirroring `AnalyzerFactory.properties` (Default is `simple`). */
     private val ids: Map<String, String> = mapOf(
         "ar" to "ar",

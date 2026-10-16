@@ -38,7 +38,7 @@ package org.crosswire.jsword.index.analysis.snowball
  * private, so `Method.invoke` throws `IllegalAccessException`, which `find_among` treats as "condition false"); the
  * generated stemmers reproduce that with `{ false }`, which is what the baseline index was built with.
  */
-class Among(
+internal class Among(
     s: String,
     /** Index of the longest matching proper prefix-suffix entry, or -1. */
     val substring_i: Int,

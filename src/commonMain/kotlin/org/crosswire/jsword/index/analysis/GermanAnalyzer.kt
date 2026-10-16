@@ -6,7 +6,7 @@ package org.crosswire.jsword.index.analysis
  *
  * Thread-safe: each call creates its own [GermanStemmer], so one analyzer can be shared by concurrent callers.
  */
-class GermanAnalyzer : TextAnalyzer {
+internal class GermanAnalyzer : TextAnalyzer {
     override fun analyze(text: String): List<AnalyzedToken> {
         val stemmer = GermanStemmer()
         return LowerCaseLetterTokenizer.tokenize(text).map { AnalyzedToken(stemmer.stem(it.text), it.position) }

@@ -5,7 +5,7 @@ package org.crosswire.jsword.index.analysis
  * then Lucene's `LowerCaseFilter`, [ArabicNormalizer] and [ArabicStemmer]. Tokens that the normalizer empties are kept
  * as empty terms, as Lucene keeps them. Positions are those of the tokenizer (consecutive).
  */
-class ArabicAnalyzer : TextAnalyzer {
+internal class ArabicAnalyzer : TextAnalyzer {
     override fun analyze(text: String): List<AnalyzedToken> =
         ArabicLetterTokenizer.tokenize(text).map { AnalyzedToken(arabicTerm(it.text, stem = true), it.position) }
 }

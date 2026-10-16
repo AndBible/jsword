@@ -10,7 +10,7 @@ import org.crosswire.common.util.KswordResources
  * oracle (Lucene 3.6.2 on Temurin 17) observed, so results do not depend on the platform's Unicode version.
  * A missing or malformed resource throws [IllegalStateException]: there is deliberately no fallback table.
  */
-object AnalyzerTables {
+internal object AnalyzerTables {
     private class Tables(
         val letterLow: CharArray,
         val letterHigh: CharArray,

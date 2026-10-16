@@ -43,7 +43,7 @@ class AnalyzerCorpusParityTest {
     }
 
     /** The tokens of [key] as the current analyzer yields them. */
-    fun currentTokensFor(book: Book, key: Key): List<AnalyzedToken> {
+    internal fun currentTokensFor(book: Book, key: Key): List<AnalyzedToken> {
         return BookAnalyzers.forBook(book).analyze(OSISUtil.getCanonicalText(BookData(book, key).getOsisFragment(false)))
     }
 

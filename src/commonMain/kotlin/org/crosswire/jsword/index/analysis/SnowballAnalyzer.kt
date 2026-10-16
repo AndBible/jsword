@@ -8,7 +8,7 @@ import org.crosswire.jsword.index.analysis.snowball.snowballStemmer
  * No ASCII folding happens, unlike [SimpleAnalyzer]. Thread-safe, see [analyze]. Positions are those of the tokenizer
  * (consecutive).
  */
-class SnowballAnalyzer(private val stemmerName: String) : TextAnalyzer {
+internal class SnowballAnalyzer(private val stemmerName: String) : TextAnalyzer {
     init {
         requireNotNull(snowballStemmer(stemmerName)) { "No Snowball stemmer named $stemmerName" }
     }

@@ -62,7 +62,7 @@ user first (spec 6.3).
   collect a non-verse key; review focus 3).
 - Thai word breaking: Android and the desktop JVM keep the platform word breaker (`java.text.BreakIterator` for `th`:
   ICU data on Android, JDK data on the JVM, as the baseline did), iOS ships the ported OpenJDK 17 dictionary data
-  (`ThaiBreakPort`). The JVM build equals the baseline on the corpus (`ThaiPortVsJdkTest`, the ThaiKJV matrix);
+  (`ThaiBreakPort`, compiled into iOS binaries only). The JVM build equals the baseline on the corpus (`ThaiPortVsJdkTest`, the ThaiKJV matrix);
   Android versus iOS may break rare words differently. Platform note (spec: Thai, builder call), not a code defect.
 
 ### Outside the matrix

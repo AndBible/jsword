@@ -5,7 +5,7 @@ package org.crosswire.jsword.index.analysis
  * `ArabicNormalizationFilter`, then `PersianNormalizationFilter`. There is no stemmer, even with stemming on, because
  * the baseline Persian analyzer has none. Tokens emptied by the normalizers are kept. Positions are consecutive.
  */
-class PersianAnalyzer : TextAnalyzer {
+internal class PersianAnalyzer : TextAnalyzer {
     override fun analyze(text: String): List<AnalyzedToken> =
         ArabicLetterTokenizer.tokenize(text).map { AnalyzedToken(persianTerm(it.text), it.position) }
 

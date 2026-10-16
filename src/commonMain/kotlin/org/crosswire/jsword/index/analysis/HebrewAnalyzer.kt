@@ -4,7 +4,7 @@ package org.crosswire.jsword.index.analysis
  * Baseline `HebrewLuceneAnalyzer` under `Version.LUCENE_29`: [ClassicTokenizer], then JSword's `HebrewPointingFilter`
  * (`unPoint(word, false)`). No lowercasing and no stop words.
  */
-class HebrewAnalyzer : TextAnalyzer {
+internal class HebrewAnalyzer : TextAnalyzer {
     private val tokenizer = ClassicTokenizer()
 
     override fun analyze(text: String): List<AnalyzedToken> {

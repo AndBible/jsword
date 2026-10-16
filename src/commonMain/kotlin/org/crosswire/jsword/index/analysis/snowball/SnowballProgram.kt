@@ -39,7 +39,7 @@ package org.crosswire.jsword.index.analysis.snowball
  *
  * Not thread-safe: every program keeps the word it is working on in its fields.
  */
-abstract class SnowballProgram internal constructor() {
+internal abstract class SnowballProgram internal constructor() {
     private var current: CharArray = CharArray(8)
 
     protected var cursor: Int = 0

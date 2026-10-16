@@ -11,7 +11,7 @@ import org.crosswire.jsword.book.study.StrongsNumber
  * The baseline filter drops an invalid token and keeps a valid one as its padded number (`H430` becomes `H0430`).
  * A token with a `!` part (`G3588!a`) yields two tokens: the number (`G3588`) and the full form (`G3588a`).
  */
-object StrongsTokens {
+internal object StrongsTokens {
     /** The tokens of the lemmas in [osis], in document order: [OSISUtil.getStrongsNumbers], then [fromLexical]. */
     fun fromOsis(osis: Element): List<String> = fromLexical(OSISUtil.getStrongsNumbers(osis))
 

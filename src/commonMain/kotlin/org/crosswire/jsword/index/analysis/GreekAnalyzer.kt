@@ -4,7 +4,7 @@ package org.crosswire.jsword.index.analysis
  * Baseline `GreekLuceneAnalyzer` under `Version.LUCENE_29`: [ClassicTokenizer], then Lucene's `GreekLowerCaseFilter`
  * in 2.9 mode. The baseline's stop word filter is off by default (`doStopWords = false`), so none is applied.
  */
-class GreekAnalyzer : TextAnalyzer {
+internal class GreekAnalyzer : TextAnalyzer {
     private val tokenizer = ClassicTokenizer()
 
     override fun analyze(text: String): List<AnalyzedToken> {

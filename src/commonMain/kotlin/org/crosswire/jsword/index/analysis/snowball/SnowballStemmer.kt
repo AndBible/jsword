@@ -34,7 +34,7 @@ package org.crosswire.jsword.index.analysis.snowball
  * A Snowball stemmer as the Lucene 3.6.2 `SnowballFilter` drives it: set the word, run the program, read the result.
  * Input is expected lowercased (the analyzer's tokenizer does that). Instances keep per-word state: not thread-safe.
  */
-abstract class SnowballStemmer internal constructor() : SnowballProgram() {
+internal abstract class SnowballStemmer internal constructor() : SnowballProgram() {
     /** The Snowball stem of [word]. */
     fun stem(word: String): String {
         setCurrent(word)

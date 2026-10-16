@@ -5,11 +5,21 @@ package org.crosswire.jsword.index.fts
  *
  * It must also be bumped on ANY change of analyzer output (token text or positions): [FtsIndexMetadata.analyzerId]
  * names the analyzer chain but does not version its code, so an analyzer change without a bump leaves existing indexes
- * silently stale (indexed with the old tokens, queried with the new ones). Guard: `PdFixtureSearchTest` pins the
- * analyzer's token output for the public-domain fixtures and fails when that output changes; when it does, bump this
- * value in the same commit.
+ * silently stale (indexed with the old tokens, queried with the new ones). Guards: `AnalyzerFingerprintTest` pins
+ * [ANALYZER_OUTPUT_FINGERPRINT], a hash over the output of every analyzer id for a small multi-language sample, and
+ * `PdFixtureSearchTest` pins the token output for the public-domain fixtures of zh, cs, fr, de, el, ja and ru. They
+ * are guards, not proof: an output change outside their samples is not caught, so bump the version whenever an
+ * analyzer changes. When a guard fails because the change is intended, bump this value (and update the pinned
+ * fingerprint) in the same commit.
  */
 internal const val FTS_SCHEMA_VERSION = 1
+
+/**
+ * Pinned hash (FNV-1a 64, hex) of the analyzer output for the fixed sample of `AnalyzerFingerprintTest`. When that test
+ * fails the analyzer output changed: if intended, bump [FTS_SCHEMA_VERSION] (existing indexes must be rebuilt) and
+ * paste the new fingerprint here.
+ */
+internal const val ANALYZER_OUTPUT_FINGERPRINT = "5d2ee7f05311dae9"
 
 /**
  * Identity of an index file, stored in table `meta`; used to decide whether it is still valid. [analyzerId] names the

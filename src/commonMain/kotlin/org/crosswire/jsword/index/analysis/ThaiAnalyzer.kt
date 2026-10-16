@@ -13,7 +13,7 @@ package org.crosswire.jsword.index.analysis
  * Deviation in order, with the same result: this class breaks first and then lowercases each piece, whereas Lucene
  * lowercases the token first. The corpus parity test is green with this order.
  */
-class ThaiAnalyzer : TextAnalyzer {
+internal class ThaiAnalyzer : TextAnalyzer {
     private val tokenizer = ClassicTokenizer()
 
     override fun analyze(text: String): List<AnalyzedToken> {

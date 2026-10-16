@@ -8,7 +8,7 @@ package org.crosswire.jsword.index.analysis
  * @property end exclusive UTF-16 end offset (after a removed trailing dot, when there was one).
  * @property positionIncrement 1 plus the number of overlong tokens skipped right before this one.
  */
-data class ClassicToken(val text: String, val type: String, val start: Int, val end: Int, val positionIncrement: Int = 1)
+internal data class ClassicToken(val text: String, val type: String, val start: Int, val end: Int, val positionIncrement: Int = 1)
 
 /**
  * Lucene 3.6.2 `StandardTokenizer(Version.LUCENE_29)`, which is `ClassicTokenizer` over the JFlex-generated
@@ -21,7 +21,7 @@ data class ClassicToken(val text: String, val type: String, val start: Int, val 
  *   its trailing dot removed.
  * - Characters the scanner does not accept as part of a token (spaces, punctuation, combining marks) are skipped.
  */
-class ClassicTokenizer {
+internal class ClassicTokenizer {
     /** Splits [text] into scanner tokens in source order. */
     fun tokenize(text: String): List<ClassicToken> {
         val t = scanner

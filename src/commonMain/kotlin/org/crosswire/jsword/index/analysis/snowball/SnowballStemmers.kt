@@ -7,7 +7,7 @@ package org.crosswire.jsword.index.analysis.snowball
  *
  * Each call returns a fresh instance; a stemmer is not thread-safe.
  */
-fun snowballStemmer(name: String): SnowballStemmer? = when (name) {
+internal fun snowballStemmer(name: String): SnowballStemmer? = when (name) {
     "Danish" -> DanishStemmer()
     "Dutch" -> DutchStemmer()
     "Finnish" -> FinnishStemmer()

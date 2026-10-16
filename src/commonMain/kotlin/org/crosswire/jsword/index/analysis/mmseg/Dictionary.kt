@@ -11,7 +11,7 @@ import org.crosswire.jsword.index.analysis.AnalyzerTables
  * The trie is stored flat (parallel arrays, nodes in breadth-first order) to keep the 150,000 words compact on
  * mobile. After construction nothing is mutated, so one instance is safely shared by every analyzer and thread.
  */
-class Dictionary private constructor(
+internal class Dictionary private constructor(
     /** `childStart[n] until childStart[n + 1]` is the slice of [childChars]/[childNodes] holding node n's children. */
     private val childStart: IntArray,
     private val childChars: CharArray,
