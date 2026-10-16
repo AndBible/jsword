@@ -15,6 +15,9 @@ class AnalyzerTablesTest {
         "search/lucene-ascii-folding.tsv" to "5a7b168a1ecb2240d459c1047aa1bdfa318f79d4989f0a14967f23efaaac48cc",
         "search/lucene-character-categories.tsv" to "136920d4d3aed398a573338b1afd92925ab471d2d4383ecf5c0ba1f29810d247",
         "search/lucene-classic-tokenizer-2.9.bin" to "6c1a9c85cae3d24644247aef57bf79353b43dbb131fb9ea30366d479940d9bd7",
+        "search/mmseg4j/chars.dic" to "ef3353113808b01437fd10bcbc7e889715c650be6be7afec003e11ed55f24e9c",
+        "search/mmseg4j/words.dic" to "91c438f781771d6ac744ab1f205bc4650ee79593636d05bb96aa8d3c93f3022e",
+        "search/mmseg4j/units.dic" to "ed9abe99d933f5753827c822ef0218aecdd1187416526c1ba1cc46186142840f",
     )
 
     @Test

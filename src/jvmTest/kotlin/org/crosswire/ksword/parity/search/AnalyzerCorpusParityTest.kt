@@ -11,6 +11,7 @@ import org.crosswire.jsword.index.analysis.CzechAnalyzer
 import org.crosswire.jsword.index.analysis.GermanAnalyzer
 import org.crosswire.jsword.index.analysis.GreekAnalyzer
 import org.crosswire.jsword.index.analysis.HebrewAnalyzer
+import org.crosswire.jsword.index.analysis.MmsegAnalyzer
 import org.crosswire.jsword.index.analysis.PersianAnalyzer
 import org.crosswire.jsword.index.analysis.SimpleAnalyzer
 import org.crosswire.jsword.index.analysis.SnowballAnalyzer
@@ -48,6 +49,8 @@ class AnalyzerCorpusParityTest {
         "ar" -> ArabicAnalyzer()
         "fa" -> PersianAnalyzer()
         "cs" -> CzechAnalyzer()
+        // Baseline Mmseg4jChineseLuceneAnalyzer (mmseg4j ComplexAnalyzer) for both Chinese and Japanese.
+        "zh", "ja" -> MmsegAnalyzer()
         else -> null
     }
 
@@ -154,4 +157,10 @@ class AnalyzerCorpusParityTest {
     @Test fun everyKeyMatchesBaseline_FarOPV() = check("FarOPV")
 
     @Test fun everyKeyMatchesBaseline_CzeBKR() = check("CzeBKR")
+
+    @Test fun everyKeyMatchesBaseline_ChiUns() = check("ChiUns")
+
+    @Test fun everyKeyMatchesBaseline_ChiUn() = check("ChiUn")
+
+    @Test fun everyKeyMatchesBaseline_JapKougo() = check("JapKougo")
 }

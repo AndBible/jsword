@@ -38,3 +38,13 @@ Lucene; Lucene itself is Apache License 2.0). The stemmer classes were converted
 
 All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted
 under the 3-clause BSD conditions reproduced in the header of every file in that directory.
+
+## mmseg4j 1.8.6 (Apache License 2.0)
+
+`src/commonMain/kotlin/org/crosswire/jsword/index/analysis/mmseg/` and `MmsegAnalyzer.kt` are a Kotlin port of
+mmseg4j 1.8.6 (`com.chenlb.mmseg4j`: `MMSeg`, `ComplexSeg`, `Chunk`, `Rule`s, `Dictionary`; source project
+<https://github.com/chenlb/mmseg4j-from-googlecode>, licence declared by the 1.8.6 parent POM: Apache License 2.0),
+following the Swift port in and-bible-ios. `src/embeddedResources/search/mmseg4j/{chars,words,units}.dic` are
+byte-for-byte copies of the `data/` entries of `com.chenlb.mmseg4j:mmseg4j-dic:1.8.6` (SHA-256 values in
+`search/PROVENANCE.md`, checked by `AnalyzerTablesTest`). The Apache License 2.0 is reproduced in
+`search/LICENSE.apache-2.0.txt`.
