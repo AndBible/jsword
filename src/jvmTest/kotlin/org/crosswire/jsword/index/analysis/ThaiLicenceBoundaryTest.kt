@@ -25,10 +25,13 @@ class ThaiLicenceBoundaryTest {
     }
 
     @Test fun jvmMainOutputsHoldNoOpenJdkThaiData() {
-        val dirs = listOf(File(System.getProperty("ksword.mainResourcesDir") ?: error("ksword.mainResourcesDir not set"))) +
-            (System.getProperty("ksword.mainClassesDirs") ?: error("ksword.mainClassesDirs not set")).split(File.pathSeparator).map(::File)
-        for (dir in dirs) {
-            assertTrue(dir.isDirectory, "$dir (compile the jvm main output first)")
+        // jvmMain has no resources or Java sources since K6, so those dirs may not exist: nothing there is nothing leaked.
+        val resourcesDir = File(System.getProperty("ksword.mainResourcesDir") ?: error("ksword.mainResourcesDir not set"))
+        val classesDirs = (System.getProperty("ksword.mainClassesDirs") ?: error("ksword.mainClassesDirs not set")).split(File.pathSeparator).map(::File)
+        // The Kotlin classes dir must exist; the Java one (and the resources dir) is gone once jvmMain has no Java sources.
+        assertTrue(classesDirs.first().isDirectory, "${classesDirs.first()} (compile the jvm main output first)")
+        for (dir in classesDirs + resourcesDir) {
+            if (!dir.exists()) continue
             val bad = dir.walkTopDown().filter { it.isFile }.map { it.name }.filter {
                 it == "WordBreakIteratorData_th" || it == "thai_dict" || it.startsWith("IosKswordResources")
             }.toList()
