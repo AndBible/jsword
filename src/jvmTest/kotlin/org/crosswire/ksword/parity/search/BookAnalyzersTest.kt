@@ -1,8 +1,11 @@
 package org.crosswire.ksword.parity.search
 
 import org.crosswire.common.util.Language
+import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.book.sword.SwordBookPathJvm
 import org.crosswire.jsword.index.analysis.AnalyzedToken
 import org.crosswire.jsword.index.analysis.BookAnalyzers
+import kotlin.test.assertSame
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -89,5 +92,16 @@ class BookAnalyzersTest {
         assertEquals(true, BookAnalyzers.forLanguage("zh") === BookAnalyzers.forLanguage("ja"))
         assertEquals(true, BookAnalyzers.forLanguage("el") === BookAnalyzers.forLanguage("grc"))
         assertEquals(true, BookAnalyzers.forLanguage("fr") === BookAnalyzers.forLanguage("fr"))
+    }
+
+    /** forBook over installed corpus books: the analyzer is the one of the book's language (Lang of the module). */
+    @Test fun forBookSelectsTheAnalyzerOfTheInstalledBookLanguage() {
+        SwordBookPathJvm.setAugmentPath(arrayOf(K6Corpus.root))
+        val expected = mapOf("KJV" to "simple", "GerBoLut" to "de", "ChiUn" to "mmseg", "WLC" to "simple", "RusSynodal" to "snowball-Russian")
+        for ((initials, id) in expected) {
+            val book = requireNotNull(Books.installed().getBook(initials)) { "no such book $initials" }
+            assertEquals(id, BookAnalyzers.analyzerId(book.language.code), "analyzer id for $initials")
+            assertSame(BookAnalyzers.forLanguage(book.language.code), BookAnalyzers.forBook(book), "forBook for $initials")
+        }
     }
 }
