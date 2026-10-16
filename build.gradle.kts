@@ -305,6 +305,8 @@ val searchParityTest by tasks.registering(Test::class) {
     useJUnit()
     // The baseline's Lucene 3.6.2 analyzers trip Lucene's own -ea check ("must be final"); production runs without -ea.
     enableAssertions = false
+    // Whole-module probe outputs (commentary text of every key) are held as one string on each side.
+    maxHeapSize = "4g"
     filter { includeTestsMatching("org.crosswire.ksword.parity.search.*") }
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")

@@ -1,0 +1,118 @@
+package org.crosswire.ksword.parity.search
+
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookData
+import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.book.sword.SwordBookPathJvm
+import org.crosswire.jsword.index.analysis.AnalyzedToken
+import org.crosswire.jsword.index.analysis.SimpleAnalyzer
+import org.crosswire.jsword.index.analysis.TextAnalyzer
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.Verse
+import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.test.fail
+
+/**
+ * K6 analyzer parity over the real corpus: for every verse key of a module, the current [TextAnalyzer] must produce the
+ * token stream the baseline (Lucene 3.6.2) analyzer produces, and the canonical text both sides analyze must be equal,
+ * so a filter difference (K5) is never blamed on an analyzer. Each module that has a current analyzer gets a test; later
+ * K6 tasks add theirs to [analyzerFor] (Task 8 replaces it with `BookAnalyzers.forBook`).
+ */
+class AnalyzerCorpusParityTest {
+    /** Every n-th key per module is checked. 1 = all keys. */
+    private val keyStride = 1
+
+    /** Local stand-in for `BookAnalyzers.forBook` until Task 8: the analyzer of a book language, or null if none yet. */
+    private fun analyzerFor(lang: String): TextAnalyzer? = when (lang) {
+        // The baseline AnalyzerFactory has no "en" entry, so English falls back to the simple analyzer.
+        "en" -> SimpleAnalyzer()
+        else -> null
+    }
+
+    private fun currentBook(initials: String): Book {
+        SwordBookPathJvm.setAugmentPath(arrayOf(K6Corpus.root))
+        return requireNotNull(Books.installed().getBook(initials)) { "no such book $initials in ${K6Corpus.root}" }
+    }
+
+    private fun isVerseZero(key: Key) = key is Verse && key.verse == 0
+
+    /** The canonical text of every checked key, as the current code computes it: verse 0 skipped, then every stride-th. */
+    private fun currentTexts(book: Book): List<Pair<String, String>> {
+        val out = ArrayList<Pair<String, String>>()
+        var n = 0
+        for (key in book.getGlobalKeyList()) {
+            if (isVerseZero(key)) continue
+            if (n++ % keyStride != 0) continue
+            out += key.getOsisRef() to OSISUtil.getCanonicalText(BookData(book, key).getOsisFragment(false))
+        }
+        return out
+    }
+
+    /** The tokens of [key] as the current analyzer yields them. */
+    fun currentTokensFor(book: Book, key: Key): List<AnalyzedToken> {
+        val analyzer = requireNotNull(analyzerFor(book.language.code)) { "no analyzer yet for ${book.initials}" }
+        return analyzer.analyze(OSISUtil.getCanonicalText(BookData(book, key).getOsisFragment(false)))
+    }
+
+    private fun escape(text: String) =
+        text.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+
+    /** Renders tokens like the probe's analyzeBook: terms separated by space, `@n` when the position increment is not 1. */
+    internal fun render(tokens: List<AnalyzedToken>): String {
+        val sb = StringBuilder()
+        var previous = -1
+        for ((i, t) in tokens.withIndex()) {
+            if (i > 0) sb.append(' ')
+            sb.append(t.text)
+            val increment = t.position - previous
+            if (increment != 1) sb.append('@').append(increment)
+            previous = t.position
+        }
+        return sb.toString()
+    }
+
+    private fun lines(s: String) = s.lines().filter { it.isNotEmpty() }
+
+    private fun assertSame(what: String, oracle: List<String>, current: List<String>) {
+        val oracleByKey = oracle.associate { it.substringBefore('\t') to it.substringAfter('\t', "") }
+        val currentByKey = current.associate { it.substringBefore('\t') to it.substringAfter('\t', "") }
+        val report = StringBuilder()
+        var shown = 0
+        var different = 0
+        for (key in (oracleByKey.keys + currentByKey.keys)) {
+            val a = oracleByKey[key]
+            val b = currentByKey[key]
+            if (a == b) continue
+            different++
+            if (shown < 20) {
+                shown++
+                report.append("  $key\n    oracle : $a\n    current: $b\n")
+            }
+        }
+        if (different > 0) fail("$what: $different differing keys (oracle ${oracle.size}, current ${current.size}); first $shown:\n$report")
+    }
+
+    private fun check(initials: String) {
+        val root = K6Corpus.root
+        val book = currentBook(initials)
+        val analyzer = requireNotNull(analyzerFor(book.language.code)) { "no analyzer yet for $initials" }
+
+        val oracleTexts = OracleSearch.call("canonicalText", root.path, initials, keyStride.toString())
+        assertTrue(!oracleTexts.startsWith("!"), oracleTexts.take(300))
+        val texts = currentTexts(book)
+        assertTrue(texts.size > 1000, "suspiciously few keys in $initials: ${texts.size}")
+        assertSame("canonical text of $initials", lines(oracleTexts), texts.map { it.first + "\t" + escape(it.second) })
+
+        val oracleTokens = OracleSearch.call("analyzeBook", root.path, initials, keyStride.toString())
+        assertTrue(!oracleTokens.startsWith("!"), oracleTokens.take(300))
+        val current = texts.map { (ref, text) -> ref + "\t" + render(analyzer.analyze(text)) }
+        assertSame("tokens of $initials", oracleTokens.lines().filter { it.isNotEmpty() }, current)
+    }
+
+    @Test fun everyKeyMatchesBaseline_KJV() = check("KJV")
+
+    @Test fun everyKeyMatchesBaseline_MHC() = check("MHC")
+}

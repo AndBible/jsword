@@ -30,7 +30,7 @@ import org.crosswire.jsword.passage.Verse;
  * third-party jars); never part of the current code. Uses only baseline API. Failures are returned as
  * "!" + exception class + ": " + message.
  *
- * Ops: analyze, analyzeBook, buildIndex, find, stem, version (see k6 plan, Task 0).
+ * Ops: analyze, analyzeBook, canonicalText, buildIndex, find, stem, version (see k6 plan, Task 0).
  */
 public final class SearchProbe implements BiFunction<String, List<String>, String> {
     private static final String LUCENE_VERSION = "3.6.2";
@@ -52,6 +52,7 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
             switch (op) {
                 case "analyze": return analyze(args.get(0), args.get(1));
                 case "analyzeBook": return analyzeBook(args.get(0), args.get(1), Integer.parseInt(args.get(2)));
+                case "canonicalText": return canonicalText(args.get(0), args.get(1), Integer.parseInt(args.get(2)));
                 case "buildIndex": return buildIndex(args.get(0), args.get(1), args.get(2));
                 case "find": return find(args.get(0), args.get(1), args.get(2), args.get(3));
                 case "stem": return stem(args.get(0), args.subList(1, args.size()));
@@ -158,6 +159,22 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
             ts.end();
             ts.close();
             out.append(line).append('\n');
+        }
+        return out.toString();
+    }
+
+    /** One line per key (verse 0 skipped, every stride-th): osisRef, a tab, the canonical text with \\, tab, LF, CR escaped. */
+    private static String canonicalText(String corpusRoot, String initials, int stride) throws Exception {
+        Book book = openBook(corpusRoot, initials);
+        StringBuilder out = new StringBuilder();
+        int n = 0;
+        for (Key key : book.getGlobalKeyList()) {
+            if (isVerseZero(key)) continue;
+            if (n++ % stride != 0) continue;
+            String text = OSISUtil.getCanonicalText(new BookData(book, key).getOsisFragment());
+            out.append(key.getOsisRef()).append('\t')
+                .append(text.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r"))
+                .append('\n');
         }
         return out.toString();
     }
