@@ -33,4 +33,18 @@ class ThaiAnalyzerTest {
         analyzer.analyze(b.input)
         assertEquals(first, analyzer.analyze(a.input))
     }
+
+    /** Increments as the baseline oracle printed them (`analyze th "x <300 a> พระเจ้าทรงสร้างโลก y"`): x 1, pieces 2 each, y 1. */
+    @Test fun overlongTokenGapIsRepeatedForEveryPieceOfTheNextThaiToken() {
+        val long = "a".repeat(300)
+        val tokens = analyzer.analyze("x $long พระเจ้าทรงสร้างโลก y")
+        assertEquals(listOf("x", "พระเจ้า", "ทรง", "สร้าง", "โลก", "y"), tokens.map { it.text })
+        assertEquals(listOf(0, 2, 4, 6, 8, 9), tokens.map { it.position })
+    }
+
+    @Test fun overlongTokenLeadingTheTextShiftsEveryPiece() {
+        // Oracle `analyze th "<300 a> พระเจ้าทรงสร้างโลก"`: increments 2, 2, 2, 2.
+        val tokens = analyzer.analyze("${"a".repeat(300)} พระเจ้าทรงสร้างโลก")
+        assertEquals(listOf(1, 3, 5, 7), tokens.map { it.position })
+    }
 }

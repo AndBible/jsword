@@ -6,8 +6,12 @@ package org.crosswire.jsword.index.analysis
  * filter is off by default. Every term is lowercased with Java `Character.toLowerCase` (the oracle yields `abc` for
  * `ABC` and for the Latin tail of a Thai-led token such as `กขABC`). The analyzer holds no state between calls (it is shared between threads).
  *
- * Reproduced on purpose: each piece of a split token keeps the position increment of the original token
- * (`ThaiWordFilter` restores the captured state for every piece), so pieces do not advance the position by themselves.
+ * Reproduced on purpose: every piece of a split token advances the position by the increment of the original token
+ * (`ThaiWordFilter` restores the captured state, increment included, for every piece), so after an overlong dropped
+ * token (increment 2) each piece of the next Thai token gets increment 2.
+ *
+ * Deviation in order, with the same result: this class breaks first and then lowercases each piece, whereas Lucene
+ * lowercases the token first. The corpus parity test is green with this order.
  */
 class ThaiAnalyzer : TextAnalyzer {
     private val tokenizer = ClassicTokenizer()

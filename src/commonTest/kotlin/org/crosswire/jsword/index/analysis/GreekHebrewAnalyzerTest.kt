@@ -49,4 +49,12 @@ class GreekHebrewAnalyzerTest {
     fun apostropheWordStaysOneToken() {
         assertEquals(listOf("o'neil's"), GreekAnalyzer().analyze("O'Neil's").map { it.text })
     }
+
+    /** Baseline oracle `analyze he "אב <300 aleph> גד"` printed increments 1 and 2: the dropped token leaves a gap. */
+    @Test
+    fun droppedOverlongTokenLeavesPositionGap() {
+        val tokens = HebrewAnalyzer().analyze("אב ${"א".repeat(300)} גד")
+        assertEquals(listOf("אב", "גד"), tokens.map { it.text })
+        assertEquals(listOf(0, 2), tokens.map { it.position })
+    }
 }
