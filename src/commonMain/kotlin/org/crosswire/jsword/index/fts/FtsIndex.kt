@@ -23,7 +23,7 @@ import org.crosswire.jsword.versification.system.Versifications
  *
  * Queries are parsed by [LuceneSyntaxParser] and evaluated by [FtsQueryEvaluator] (K6 task 11).
  */
-class FtsIndex(internal val book: Book, private val store: FtsIndexStore) : AbstractIndex() {
+class FtsIndex internal constructor(internal val book: Book, private val store: FtsIndexStore) : AbstractIndex() {
     private val lock = SynchronizedObject()
     private var closed = false
 

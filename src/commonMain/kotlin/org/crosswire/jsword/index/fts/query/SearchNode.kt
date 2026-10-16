@@ -6,7 +6,7 @@ package org.crosswire.jsword.index.fts.query
  * The tree keeps the query text as written (unescaped, and lowercased for the expanded forms): a [Term] or [Phrase]
  * is analyzed later, by the book's analyzer, in [FtsQueryEvaluator]. See [LuceneSyntaxParser] for the grammar.
  */
-sealed interface SearchNode {
+internal sealed interface SearchNode {
     /** One unquoted word. The analyzer may turn it into zero, one or several tokens (several: a phrase). */
     data class Term(val text: String) : SearchNode
 
@@ -30,16 +30,16 @@ sealed interface SearchNode {
 }
 
 /** One clause of a [SearchNode.Bool]. */
-data class Clause(val node: SearchNode, val occur: Occur)
+internal data class Clause(val node: SearchNode, val occur: Occur)
 
 /** Lucene `BooleanClause.Occur`. */
-enum class Occur { MUST, SHOULD, MUST_NOT }
+internal enum class Occur { MUST, SHOULD, MUST_NOT }
 
 /**
  * The form Lucene's `Query.toString()` gives for the tree (field `content` shown as a prefix; this tree's unanalyzed
  * term text, so it equals Lucene's output when analysis leaves the text unchanged). For debugging and tests.
  */
-fun SearchNode.toLuceneString(): String = when (this) {
+internal fun SearchNode.toLuceneString(): String = when (this) {
     is SearchNode.Term -> "content:$text"
     is SearchNode.Phrase -> "content:\"$text\"" + if (slop != 0) "~$slop" else ""
     is SearchNode.Wildcard -> "content:$pattern"

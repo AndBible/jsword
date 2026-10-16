@@ -44,7 +44,7 @@ private constructor() {
          */
         @JvmStatic
         fun getIndexManager(): IndexManager {
-            return instance ?: throw SearchUnsupportedException()
+            return instance ?: error("No default IndexManager is registered")
         }
 
         /** Test seam: runs [block] with [manager] as the singleton and restores the previous one afterwards. */
@@ -69,7 +69,7 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginRegistry.default(IndexManager::class)?.create() ?: throw SearchUnsupportedException()
+                instance = PluginRegistry.default(IndexManager::class)?.create() ?: error("No default IndexManager is registered")
             } catch (e: Exception) {
                 log.error("createIndexManager failed", e)
             }

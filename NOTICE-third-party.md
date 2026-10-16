@@ -1,5 +1,9 @@
 # Third-party notices for KSword search
 
+Apache Lucene and mmseg4j are no longer dependencies of the shipped artifact (K6: search runs on SQLite FTS5).
+The sections below describe the derived data tables and the hand ports that remain; the frozen baseline used by
+the parity tests keeps Lucene 3.6.2 and mmseg4j on the test-only `oracleThirdParty` classpath.
+
 ## Apache Lucene 3.6.2 derived tables (Apache License 2.0)
 
 `src/embeddedResources/search/` holds data tables generated from Apache Lucene 3.6.2 (`lucene-core` and

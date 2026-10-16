@@ -16,7 +16,7 @@ package org.crosswire.jsword.index.fts.query
  * (`QueryParser` with `lowercaseExpandedTerms`), reproduced on purpose: a wildcard such as `believ*` matches stems,
  * `believing*` matches nothing in a stemmed index.
  */
-object VocabularyExpansion {
+internal object VocabularyExpansion {
     /** `BooleanQuery.getMaxClauseCount()`, the size of `TopTermsScoringBooleanQueryRewrite` for a `FuzzyQuery`. */
     const val FUZZY_MAX_TERMS = 1024
 

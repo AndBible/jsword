@@ -9,7 +9,6 @@ import okio.Path
 import org.crosswire.common.progress.JobManager
 import org.crosswire.common.progress.Progress
 import org.crosswire.common.util.CWProject
-import org.crosswire.common.util.KUri
 import org.crosswire.common.util.Reporter
 import org.crosswire.jsword.JSMsg
 import org.crosswire.jsword.book.Book
@@ -168,11 +167,6 @@ class FtsIndexManager internal constructor(
                 synchronized(lock) { building.remove(book.initials) }
             }
         }
-    }
-
-    /** Index download is gone with the Lucene indexes; Task 15 removes this from [IndexManager]. */
-    override fun installDownloadedIndex(book: Book?, tempDest: KUri?) {
-        throw UnsupportedOperationException("downloaded search indexes are not supported")
     }
 
     @Throws(BookException::class)

@@ -41,7 +41,7 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  * lowercases), so `b\?ess*` is a [SearchNode.Prefix] with the literal `b?ess`, and `b\?es?` is the wildcard
  * `b?es?` where the first `?` is a wildcard again (`WildcardQuery` itself has no escape mechanism).
  */
-object LuceneSyntaxParser {
+internal object LuceneSyntaxParser {
     /** Deepest parenthesis nesting accepted. Bounds the recursion on every platform (Kotlin/Native threads have small stacks). */
     const val MAX_DEPTH = 200
 

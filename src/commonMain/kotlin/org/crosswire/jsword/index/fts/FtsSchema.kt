@@ -9,13 +9,13 @@ package org.crosswire.jsword.index.fts
  * analyzer's token output for the public-domain fixtures and fails when that output changes; when it does, bump this
  * value in the same commit.
  */
-const val FTS_SCHEMA_VERSION = 1
+internal const val FTS_SCHEMA_VERSION = 1
 
 /**
  * Identity of an index file, stored in table `meta`; used to decide whether it is still valid. [analyzerId] names the
  * analyzer chain only, it does not version analyzer code: see [FTS_SCHEMA_VERSION].
  */
-data class FtsIndexMetadata(
+internal data class FtsIndexMetadata(
     val schemaVersion: Int,
     val analyzerId: String,
     val codec: String,

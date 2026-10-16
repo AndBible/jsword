@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class PluginRegistryPinTest {
-    // Snapshot of the .plugin class mappings as of jsword c460c2eb (the files are deleted in this task).
+    // The .plugin class mappings of jsword c460c2eb, with the search entries pointing at the K6 FTS5 classes.
     private val expected: Map<String, List<Pair<String, String>>> = mapOf(
         "org.crosswire.jsword.book.BookDriver" to listOf("sword" to "org.crosswire.jsword.book.sword.SwordBookDriver"),
         "org.crosswire.jsword.book.filter.SourceFilter" to listOf(
@@ -17,10 +17,10 @@ class PluginRegistryPinTest {
         "org.crosswire.jsword.book.install.InstallerFactory" to listOf(
             "sword-http" to "org.crosswire.jsword.book.install.sword.HttpSwordInstallerFactory",
             "sword-https" to "org.crosswire.jsword.book.install.sword.HttpsSwordInstallerFactory"),
-        "org.crosswire.jsword.index.IndexManager" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneIndexManager"),
-        "org.crosswire.jsword.index.search.Searcher" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneSearcher"),
-        "org.crosswire.jsword.index.query.QueryBuilder" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneQueryBuilder"),
-        "org.crosswire.jsword.index.query.QueryDecorator" to listOf("default" to "org.crosswire.jsword.index.lucene.LuceneQueryDecorator"),
+        "org.crosswire.jsword.index.IndexManager" to listOf("default" to "org.crosswire.jsword.index.fts.FtsIndexManager"),
+        "org.crosswire.jsword.index.search.Searcher" to listOf("default" to "org.crosswire.jsword.index.search.DefaultSearcher"),
+        "org.crosswire.jsword.index.query.QueryBuilder" to listOf("default" to "org.crosswire.jsword.index.query.DefaultQueryBuilder"),
+        "org.crosswire.jsword.index.query.QueryDecorator" to listOf("default" to "org.crosswire.jsword.index.query.DefaultQueryDecorator"),
     )
 
     @Test fun registryMatchesThePluginFiles() {

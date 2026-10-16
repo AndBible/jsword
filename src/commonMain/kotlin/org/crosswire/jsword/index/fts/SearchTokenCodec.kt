@@ -11,7 +11,7 @@ package org.crosswire.jsword.index.fts
  * result is identical on every platform (the platform encoders differ: JVM gives '?', Kotlin/Native U+FFFD).
  * That is not reversible, but index and query sides both call [encode], so they stay consistent.
  */
-object SearchTokenCodec {
+internal object SearchTokenCodec {
     const val ID = "utf8-hex-v1"
 
     private const val HEX = "0123456789abcdef"

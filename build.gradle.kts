@@ -36,9 +36,6 @@ kotlin {
         jvmMain.dependencies {
             implementation("org.apache.commons:commons-compress:1.12")
             implementation("org.tukaani:xz:1.9")
-            implementation("com.chenlb.mmseg4j:mmseg4j-analysis:1.8.6")
-            implementation("com.chenlb.mmseg4j:mmseg4j-dic:1.8.6")
-            implementation("org.apache.lucene:lucene-analyzers:3.6.2")
             implementation("org.slf4j:slf4j-api:1.7.6")
         }
         commonTest.dependencies {

@@ -25,8 +25,6 @@ package org.crosswire.jsword.index
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 
-import org.crosswire.common.util.KUri
-
 /**
  * Manages the life-cycle of an Index.
  * 
@@ -75,19 +73,6 @@ interface IndexManager {
      * @param book The book that should be indexed
      */
     fun scheduleIndexCreation(book: Book?)
-
-    /**
-     * We have downloaded a search index to a zip file. It should be installed
-     * from here.
-     * 
-     * @param book
-     *            The book that we downloaded an index for
-     * @param tempDest
-     *            The URI of a zip file to install
-     * @throws BookException 
-     */
-    @Throws(BookException::class)
-    fun installDownloadedIndex(book: Book?, tempDest: KUri?)
 
     /**
      * Tidy up after yourself and remove all the files that make up any indexes

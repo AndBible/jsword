@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.crosswire.common.util.KUri
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 
@@ -33,7 +32,6 @@ class BookIndexerTest {
             if (failOn == "create") throw IllegalStateException("boom")
             indexed = true; fire(IndexStatus.DONE)
         }
-        override fun installDownloadedIndex(book: Book?, tempDest: KUri?) = Unit
         override fun deleteIndex(book: Book?) {
             calls.add("delete")
             if (failOn == "delete") throw BookException("boom")

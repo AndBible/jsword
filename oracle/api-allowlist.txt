@@ -778,12 +778,45 @@ org.crosswire.jsword.book.readings.ReadingsBookDriver - <class> # K5b delete
 org.crosswire.jsword.book.readings.ReadingsKey - <class> # K5b delete
 org.crosswire.jsword.book.study.StrongsMapSet - <class> # K5b delete
 org.crosswire.jsword.bridge.BookInstaller - <class> # K5b delete
+org.crosswire.jsword.index.IndexManager - M public abstract installDownloadedIndex(org.crosswire.jsword.book.Book,java.net.URI): void throws [org.crosswire.jsword.book.BookException] # K6: Lucene replaced by FTS5: downloaded search indexes are gone (FtsIndexManager builds its index locally)
 org.crosswire.jsword.index.IndexStatusEvent - C class public extends java.util.EventObject implements [] # K5b common (§26): EventObject supertype replaced by a plain class with getSource() and the same null-source rejection
 org.crosswire.jsword.index.IndexStatusEvent + C class public extends java.lang.Object implements [] # K5b common (§26): EventObject supertype replaced by a plain class with getSource() and the same null-source rejection
 org.crosswire.jsword.index.IndexStatusEvent + M public getSource(): java.lang.Object throws [] # K5b common (§26): getSource() was inherited from EventObject, now declared
 org.crosswire.jsword.index.IndexStatusEvent - F private-or-package static final serialVersionUID: long = 3834876879554819894 # K5b common (§23): Serializable dropped with the EventObject supertype; no JVM caller serializes the event
 org.crosswire.jsword.index.IndexStatusListener - C interface public extends null implements [java.util.EventListener] # K5b common (§26): EventListener marker dropped
 org.crosswire.jsword.index.IndexStatusListener + C interface public extends null implements [] # K5b common (§26): EventListener marker dropped
+org.crosswire.jsword.index.lucene.IndexMetadata - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.InstalledIndex - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.LuceneIndex - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.LuceneIndexManager - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.LuceneQueryBuilder - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.LuceneQueryDecorator - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.LuceneSearcher - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.VerseCollector - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.AbstractBookAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.AbstractBookTokenFilter - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.AnalyzerFactory - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.ArabicLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.ChineseLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.ConfigurableSnowballAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.CzechLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.EnglishLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.GermanLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.GreekLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.HebrewLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.HebrewPointingFilter - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.KeyAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.KeyFilter - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.LuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.Mmseg4jChineseLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.MorphologyAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.PersianLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.SimpleLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.StrongsNumberAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.StrongsNumberFilter - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.ThaiLuceneAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.XRefAnalyzer - <class> # K6: Lucene replaced by FTS5
+org.crosswire.jsword.index.lucene.analysis.XRefFilter - <class> # K6: Lucene replaced by FTS5
 org.crosswire.jsword.index.search.SearcherFactory - M public static createSearcher(org.crosswire.jsword.book.Book): org.crosswire.jsword.index.search.Searcher throws [java.lang.InstantiationException] # K5b common (§24): java.lang.InstantiationException replaced by BookException
 org.crosswire.jsword.index.search.SearcherFactory + M public static createSearcher(org.crosswire.jsword.book.Book): org.crosswire.jsword.index.search.Searcher throws [org.crosswire.jsword.book.BookException] # K5b common (§24): java.lang.InstantiationException replaced by BookException
 org.crosswire.jsword.index.BookIndexer - M public static main(java.lang.String[]): void throws [] # K5b delete: desktop CLI entry point without callers

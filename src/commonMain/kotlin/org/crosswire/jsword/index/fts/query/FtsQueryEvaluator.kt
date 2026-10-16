@@ -40,7 +40,7 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  * Every FTS5 expression is built defensively: each encoded token is quoted, nothing from the user reaches FTS5
  * syntax.
  */
-class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: TextAnalyzer) {
+internal class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: TextAnalyzer) {
     fun evaluate(node: SearchNode): Set<Long> = when (node) {
         is SearchNode.Term -> phraseOrTerm(analyzer.analyze(node.text))
         is SearchNode.Phrase -> {

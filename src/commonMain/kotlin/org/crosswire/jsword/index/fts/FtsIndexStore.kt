@@ -22,7 +22,7 @@ import org.crosswire.jsword.index.analysis.AnalyzedToken
  * stream position (gaps are simply absent from the list), not the list index. [vocabulary] never contains the gap.
  * The empty term is stored as `x` like any other term.
  */
-class FtsIndexStore private constructor(private val db: SQLiteConnection) : AutoCloseable {
+internal class FtsIndexStore private constructor(private val db: SQLiteConnection) : AutoCloseable {
     private var insertFts: SQLiteStatement? = null
     private var insertEntry: SQLiteStatement? = null
     private var insertStrongs: SQLiteStatement? = null

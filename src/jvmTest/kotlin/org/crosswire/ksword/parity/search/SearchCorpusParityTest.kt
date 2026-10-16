@@ -15,7 +15,7 @@ import org.crosswire.jsword.index.fts.FTS_SCHEMA_VERSION
 import org.crosswire.jsword.index.fts.FtsIndexBuilder
 import org.crosswire.jsword.index.fts.FtsIndexManager
 import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
-import org.crosswire.jsword.index.lucene.LuceneSearcher
+import org.crosswire.jsword.index.search.DefaultSearcher
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -25,8 +25,8 @@ import kotlin.test.fail
 /**
  * K6 task 14: the complete per-module search parity matrix. For every corpus module both indexes are built once
  * (baseline Lucene 3.6.2 through the oracle, FTS5 through [FtsIndexManager]) under `build/k6-indexes/`, then every
- * query of [QUERY_SETS] runs through the JSword search layer on both sides (`LuceneSearcher`: `QueryBuilder` for
- * `+[range]` and `~N` blur, then `Index.find` of the baseline `LuceneIndex` / of the `FtsIndex`), which is what
+ * query of [QUERY_SETS] runs through the JSword search layer on both sides (`DefaultSearcher`: `QueryBuilder` for
+ * `+[range]` and `~N` blur, then `Index.find` of the baseline `LuceneIndex` through the oracle / of the `FtsIndex`), which is what
  * `Book.find` does for an indexed book. Required per query: the same sorted osisRef list, or the same failure kind.
  *
  * A difference is reported but passes when it is approved in `jsword/parity/approved-differences.md`, either by
@@ -55,7 +55,7 @@ class SearchCorpusParityTest {
         return Outcome(null, kind(cls, cause))
     }
 
-    private fun currentOutcome(searcher: LuceneSearcher, query: String): Outcome = try {
+    private fun currentOutcome(searcher: DefaultSearcher, query: String): Outcome = try {
         val key = searcher.search(query)
         Outcome(key.map { it.getOsisRef() }.sorted(), null)
     } catch (e: Throwable) {
@@ -204,7 +204,7 @@ class SearchCorpusParityTest {
         val floorSet = EXPECTED_HITS.getValue(initials)
         var floorHits = 0
         try {
-            val searcher = LuceneSearcher().also { it.init(manager.getIndex(b)) }
+            val searcher = DefaultSearcher().also { it.init(manager.getIndex(b)) }
             for (spec in queries) {
                 val q = spec.query
                 val base = baselineOutcome(root.path, initials, baseDir, q)

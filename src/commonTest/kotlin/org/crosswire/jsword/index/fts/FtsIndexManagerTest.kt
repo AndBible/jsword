@@ -267,8 +267,4 @@ class FtsIndexManagerTest {
         assertTrue(m.isIndexed(b))
         FtsIndexStore.open(finalFile(b))!!.use { assertTrue(it.allRowIds().size >= 3, "${it.allRowIds()}") }
     }
-
-    @Test fun installDownloadedIndexIsUnsupported() {
-        assertFailsWith<UnsupportedOperationException> { manager().installDownloadedIndex(book("K4RawText"), null) }
-    }
 }

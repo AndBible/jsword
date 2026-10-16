@@ -30,7 +30,7 @@ import org.crosswire.jsword.index.analysis.AnalyzedToken
  * stop words are not removed) and Lucene's phrase offsets include them. Query tokens that share a
  * position (Lucene would build a `MultiPhraseQuery`) are not supported ([hasSamePosition]).
  */
-object SloppyPhraseMatcher {
+internal object SloppyPhraseMatcher {
     /** True when two tokens of [phrase] share a position (a `MultiPhraseQuery` in Lucene; not ported). */
     fun hasSamePosition(phrase: List<AnalyzedToken>): Boolean = phrase.map { it.position }.toSet().size != phrase.size
 

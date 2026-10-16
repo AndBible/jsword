@@ -72,7 +72,7 @@ interface IndexPolicy {
     /**
      * The maximum size of the RAM Buffer in megabytes that
      * the underlying indexer may use during index creation.
-     * Adapter default: 16.
+     * Adapter default: 16. Ignored by the FTS5 index (kept for the apps that override it).
      * 
      * @return the size of the RAM Buffer.
      */
@@ -82,7 +82,7 @@ interface IndexPolicy {
     /**
      * Indicates whether one Book can be indexed at a time.
      * When false, there is no upper bound on the number of
-     * Books at any one time. Adapter default: false.
+     * Books at any one time. Adapter default: false. Honoured by the FTS5 index manager (one build at a time overall).
      * 
      * @return whether there can only be one Book indexed at a time.
      */

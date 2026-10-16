@@ -13,9 +13,7 @@ import kotlin.test.assertTrue
 import okio.FileSystem
 import org.crosswire.jsword.book.sword.SwordBookPath
 import org.crosswire.jsword.index.IndexManagerFactory
-import org.crosswire.jsword.index.SearchUnsupportedException
 import org.crosswire.ksword.fixtures.fixtureRoot
-import org.crosswire.ksword.fixtures.isJvm
 
 /**
  * Executes the common book facade (Books, SwordBookDriver, SwordBook, SwordDictionary, SwordGenBook,
@@ -91,25 +89,22 @@ class FacadeFixtureTest {
     }
 
     /**
-     * iOS has no search before K6: Book.find must refuse with SearchUnsupportedException (never an NPE from a
-     * missing registry default). On the JVM, find would run Lucene, so it is not called there.
+     * A book without an index refuses a search with a BookException on every platform (never an NPE from a missing
+     * registry default). The default manager is the FTS5 one; the fixture books have no index file under the
+     * project dir.
      */
-    @Test fun findOnIosIsRefusedWithSearchUnsupportedException() {
-        if (isJvm) return
+    @Test fun findOnAnUnindexedBookIsRefusedWithABookException() {
         val book = assertNotNull(Books.installed().getBook("K4RawText"))
-        assertFailsWith<SearchUnsupportedException> { book.find("god") }
+        try {
+            assertFailsWith<BookException> { book.find("god") }
+        } finally {
+            book.resetSearcher()
+        }
     }
 
-    /**
-     * Calls IndexManager.deleteIndex on the default IndexManager for a fixture book that has no index.
-     * iOS: the default is UnsupportedIndexManager, so the call is a no-op and must not throw. JVM: Lucene's
-     * deleteIndex refuses a book without an index directory, so only the precondition (the book is not indexed)
-     * is checked there and deleteIndex is not called. No fixture file is deleted either way.
-     */
-    @Test fun deleteIndexOnDefaultIndexManagerIsHarmless() {
+    /** The default IndexManager reports the fixture book (which has no index) as not indexed. */
+    @Test fun fixtureBooksAreNotIndexedByTheDefaultIndexManager() {
         val book = assertNotNull(Books.installed().getBook("K4RawText"))
-        val indexManager = IndexManagerFactory.getIndexManager()
-        assertFalse(indexManager.isIndexed(book), "fixture books have no index")
-        if (!isJvm) indexManager.deleteIndex(book)
+        assertFalse(IndexManagerFactory.getIndexManager().isIndexed(book), "fixture books have no index")
     }
 }

@@ -25,7 +25,6 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.JSOtherMsg
 import org.crosswire.jsword.index.IndexManagerFactory
-import org.crosswire.jsword.index.SearchUnsupportedException
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -57,12 +56,10 @@ private constructor() {
                 val imanager = IndexManagerFactory.getIndexManager()
                 val index = imanager.getIndex(book)
 
-                val parser = PluginRegistry.default(Searcher::class)?.create() ?: throw SearchUnsupportedException()
+                val parser = PluginRegistry.default(Searcher::class)?.create() ?: error("No default Searcher is registered")
                 parser.init(index)
 
                 return parser
-            } catch (e: SearchUnsupportedException) {
-                throw e
             } catch (e: IOException) {
                 log.error("createSearcher failed", e)
                 throw BookException(JSOtherMsg.lookupText("Failed to initialize the search index"), e)

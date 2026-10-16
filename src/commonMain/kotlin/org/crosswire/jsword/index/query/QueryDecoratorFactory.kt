@@ -23,7 +23,6 @@ import kotlin.jvm.JvmStatic
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import org.crosswire.jsword.index.SearchUnsupportedException
 
 
 /**
@@ -45,7 +44,7 @@ private constructor() {
          */
         @JvmStatic
         fun getSearchSyntax(): QueryDecorator {
-            return instance ?: throw SearchUnsupportedException()
+            return instance ?: error("No default QueryDecorator is registered")
         }
 
         /**
@@ -63,7 +62,7 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginRegistry.default(QueryDecorator::class)?.create() ?: throw SearchUnsupportedException()
+                instance = PluginRegistry.default(QueryDecorator::class)?.create() ?: error("No default QueryDecorator is registered")
             } catch (e: Exception) {
                 log.error("create QueryDecorator failed", e)
             }

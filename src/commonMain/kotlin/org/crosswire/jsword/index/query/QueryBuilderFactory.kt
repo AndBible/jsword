@@ -23,7 +23,6 @@ import kotlin.jvm.JvmStatic
 import org.crosswire.common.util.PluginRegistry
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
-import org.crosswire.jsword.index.SearchUnsupportedException
 
 
 /**
@@ -45,7 +44,7 @@ private constructor() {
          */
         @JvmStatic
         fun getQueryBuilder(): QueryBuilder {
-            return instance ?: throw SearchUnsupportedException()
+            return instance ?: error("No default QueryBuilder is registered")
         }
 
         /**
@@ -63,7 +62,7 @@ private constructor() {
          */
         init {
             try {
-                instance = PluginRegistry.default(QueryBuilder::class)?.create() ?: throw SearchUnsupportedException()
+                instance = PluginRegistry.default(QueryBuilder::class)?.create() ?: error("No default QueryBuilder is registered")
             } catch (e: Exception) {
                 log.error("create QueryBuilder failed", e)
             }

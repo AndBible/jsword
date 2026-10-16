@@ -1,6 +1,14 @@
 package org.crosswire.common.util
 
 import kotlin.reflect.KClass
+import org.crosswire.jsword.index.IndexManager
+import org.crosswire.jsword.index.fts.FtsIndexManager
+import org.crosswire.jsword.index.query.DefaultQueryBuilder
+import org.crosswire.jsword.index.query.DefaultQueryDecorator
+import org.crosswire.jsword.index.query.QueryBuilder
+import org.crosswire.jsword.index.query.QueryDecorator
+import org.crosswire.jsword.index.search.DefaultSearcher
+import org.crosswire.jsword.index.search.Searcher
 
 /** One implementation registered under [name] for a plugin type. */
 class PluginEntry<T : Any>(val name: String, val implClass: KClass<out T>, val create: () -> T)
@@ -30,6 +38,14 @@ object PluginRegistry {
     fun <T : Any> default(type: KClass<T>): PluginEntry<T>? = entry(type, DEFAULT)
 
     const val DEFAULT = "default"
+}
+
+/** The search plugins (K6): SQLite FTS5 on every platform. Called by each platform's [registerPlatformPlugins]. */
+internal fun registerSearchPlugins(builder: PluginRegistryBuilder) {
+    builder.register(IndexManager::class, PluginRegistry.DEFAULT, FtsIndexManager::class) { FtsIndexManager() }
+    builder.register(Searcher::class, PluginRegistry.DEFAULT, DefaultSearcher::class) { DefaultSearcher() }
+    builder.register(QueryBuilder::class, PluginRegistry.DEFAULT, DefaultQueryBuilder::class) { DefaultQueryBuilder() }
+    builder.register(QueryDecorator::class, PluginRegistry.DEFAULT, DefaultQueryDecorator::class) { DefaultQueryDecorator() }
 }
 
 internal expect fun registerPlatformPlugins(builder: PluginRegistryBuilder)
