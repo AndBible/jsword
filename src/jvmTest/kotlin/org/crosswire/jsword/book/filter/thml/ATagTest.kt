@@ -17,18 +17,15 @@
  * © CrossWire Bible Society, 2014 - 2016
  *
  */
-package org.crosswire.jsword.book.filter.thml;
+package org.crosswire.jsword.book.filter.thml
 
-import java.util.List;
-
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.Books;
-import org.crosswire.jsword.passage.NoSuchKeyException;
-import fi.sykero.kdom.Content;
-import fi.sykero.kdom.Element;
-import fi.sykero.kdom.output.XMLOutputter;
-import org.junit.Assert;
-import org.junit.Test;
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.output.XMLOutputter
+import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.passage.NoSuchKeyException
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 /**
  * JUnit Test
@@ -36,17 +33,21 @@ import org.junit.Test;
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class ATagTest {
+class ATagTest {
 
     @Test
-    public void testReference() {
+    fun testReference() {
         try {
-            THMLFilter thmlFilter = new THMLFilter();
-            Book dummyBook = Books.installed().getBook("KJV");
-            List<Content> out = thmlFilter.toOSIS(dummyBook, dummyBook.getKey("Gen.1.1"), "<a href=\"sword://StrongsRealGreek/01909\">1909</a>");
-            Assert.assertEquals("THML reference not handled correctly", "<reference osisRef=\"sword://StrongsRealGreek/01909\">1909</reference>", new XMLOutputter().outputString((Element) out.get(0)));
-        } catch (NoSuchKeyException e) {
-            Assert.fail();
+            val thmlFilter = THMLFilter()
+            val dummyBook = Books.installed().getBook("KJV")
+            val out = thmlFilter.toOSIS(dummyBook, dummyBook!!.getKey("Gen.1.1"), "<a href=\"sword://StrongsRealGreek/01909\">1909</a>")
+            assertEquals(
+                "<reference osisRef=\"sword://StrongsRealGreek/01909\">1909</reference>",
+                XMLOutputter().outputString(out[0] as Element),
+                "THML reference not handled correctly",
+            )
+        } catch (e: NoSuchKeyException) {
+            fail()
         }
     }
 

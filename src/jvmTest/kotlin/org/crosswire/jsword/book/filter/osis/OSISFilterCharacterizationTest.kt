@@ -17,23 +17,22 @@
  * \u00A9 CrossWire Bible Society, 2026
  *
  */
-package org.crosswire.jsword.book.filter.osis;
+package org.crosswire.jsword.book.filter.osis
 
-import java.lang.reflect.Proxy;
-import java.util.List;
-
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.Books;
-import fi.sykero.kdom.Content;
-import fi.sykero.kdom.output.Format;
-import fi.sykero.kdom.output.XMLOutputter;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import java.lang.reflect.Proxy
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.output.Format
+import fi.sykero.kdom.output.XMLOutputter
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.Books
+import org.junit.Assume
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotSame
 
 /**
- * Characterization of {@link OSISFilter}: pins the behaviour of the Java class
+ * Characterization of [OSISFilter]: pins the behaviour of the Java class
  * before it is converted to Kotlin. Expected values were derived by reading the
  * Java (and XMLUtil.cleanAllEntities / recloseTags / cleanAllTags), not by observing it.
  * The fragment is wrapped in a root element, parsed with SAX, and on failure retried
@@ -42,131 +41,128 @@ import org.junit.Test;
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class OSISFilterCharacterizationTest {
-    private Book book;
+class OSISFilterCharacterizationTest {
+    private var book: Book? = null
 
-    @Before
-    public void setUp() throws Exception {
-        book = Books.installed().getBook("KJV");
-        Assume.assumeNotNull(book);
+    @BeforeTest
+    fun setUp() {
+        book = Books.installed().getBook("KJV")
+        Assume.assumeNotNull(book)
     }
 
-    private List<Content> filter(Book b, String input) throws Exception {
-        return new OSISFilter().toOSIS(b, b.getKey("Gen 1:1"), input);
+    private fun filter(b: Book, input: String): List<Content> {
+        return OSISFilter().toOSIS(b, b.getKey("Gen 1:1"), input)
     }
 
-    private String osis(Book b, String input) throws Exception {
-        XMLOutputter out = new XMLOutputter(Format.getRawFormat());
-        return out.outputString(filter(b, input));
+    private fun osis(b: Book, input: String): String {
+        val out = XMLOutputter(Format.getRawFormat())
+        return out.outputString(filter(b, input))
     }
 
-    private String osis(String input) throws Exception {
-        return osis(book, input);
+    private fun osis(input: String): String {
+        return osis(book!!, input)
     }
 
     @Test
-    public void testWellFormedFragmentsPassThrough() throws Exception {
-        String w = "<w lemma=\"strong:H7225\">In the beginning</w>";
-        Assert.assertEquals(w, osis(w));
-        String note = "<note type=\"study\">A note</note>";
-        Assert.assertEquals(note, osis(note));
-        String hi = "<hi type=\"italic\">a <hi type=\"bold\">b</hi></hi>";
-        Assert.assertEquals(hi, osis(hi));
-        String title = "<title type=\"main\" canonical=\"true\">T</title>";
-        Assert.assertEquals(title, osis(title));
+    fun testWellFormedFragmentsPassThrough() {
+        val w = "<w lemma=\"strong:H7225\">In the beginning</w>"
+        assertEquals(w, osis(w))
+        val note = "<note type=\"study\">A note</note>"
+        assertEquals(note, osis(note))
+        val hi = "<hi type=\"italic\">a <hi type=\"bold\">b</hi></hi>"
+        assertEquals(hi, osis(hi))
+        val title = "<title type=\"main\" canonical=\"true\">T</title>"
+        assertEquals(title, osis(title))
         // The wrapping root is not part of the result: a list of the children.
-        Assert.assertEquals(2, filter(book, "<a/>x").size());
+        assertEquals(2, filter(book!!, "<a/>x").size)
     }
 
     @Test
-    public void testPlainTextAndEmpty() throws Exception {
-        Assert.assertEquals("just text", osis("just text"));
-        Assert.assertEquals(0, filter(book, "").size());
+    fun testPlainTextAndEmpty() {
+        assertEquals("just text", osis("just text"))
+        assertEquals(0, filter(book!!, "").size)
     }
 
     @Test
-    public void testPredefinedEntitiesAreDecodedAndReEncoded() throws Exception {
-        Assert.assertEquals("a &amp; b", osis("a &amp; b"));
-        Assert.assertEquals("1 &lt; 2", osis("1 &lt; 2"));
+    fun testPredefinedEntitiesAreDecodedAndReEncoded() {
+        assertEquals("a &amp; b", osis("a &amp; b"))
+        assertEquals("1 &lt; 2", osis("1 &lt; 2"))
     }
 
     @Test
-    public void testNonAscii() throws Exception {
-        String text = "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7";
-        Assert.assertEquals("<w>" + text + "</w>", osis("<w>" + text + "</w>"));
+    fun testNonAscii() {
+        val text = "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7"
+        assertEquals("<w>" + text + "</w>", osis("<w>" + text + "</w>"))
     }
 
     @Test
-    public void testStrayAmpersandIsRepairedByCleanAllEntities() throws Exception {
+    fun testStrayAmpersandIsRepairedByCleanAllEntities() {
         // "a & b" is not well formed; cleanAllEntities turns the bare & into &amp; and the retry succeeds.
-        Assert.assertEquals("a &amp; b", osis("a & b"));
+        assertEquals("a &amp; b", osis("a & b"))
     }
 
     @Test
-    public void testUndefinedEntityIsReplaced() throws Exception {
+    fun testUndefinedEntityIsReplaced() {
         // &foo; is unknown: handleEntity replaces it by a space.
-        Assert.assertEquals("a   b", osis("a &foo; b"));
+        assertEquals("a   b", osis("a &foo; b"))
         // &eacute; is a known HTML entity that XML lacks: replaced by its character.
-        Assert.assertEquals("caf\u00E9", osis("caf&eacute;"));
+        assertEquals("caf\u00E9", osis("caf&eacute;"))
     }
 
     @Test
-    public void testUnclosedTagIsRepairedByRecloseTags() throws Exception {
-        Assert.assertEquals("<w>unclosed</w>", osis("<w>unclosed"));
+    fun testUnclosedTagIsRepairedByRecloseTags() {
+        assertEquals("<w>unclosed</w>", osis("<w>unclosed"))
         // Closing tags at the end that do not match are stripped, then the open tag is re-closed.
-        Assert.assertEquals("<w>a</w>", osis("<w>a</x>"));
+        assertEquals("<w>a</w>", osis("<w>a</x>"))
     }
 
     @Test
-    public void testEntityRepairThenRecloseBothApply() throws Exception {
-        Assert.assertEquals("<w>a &amp; b</w>", osis("<w>a & b"));
+    fun testEntityRepairThenRecloseBothApply() {
+        assertEquals("<w>a &amp; b</w>", osis("<w>a & b"))
     }
 
     @Test
-    public void testUnrepairableFragmentFallsBackToCleanAllTags() throws Exception {
+    fun testUnrepairableFragmentFallsBackToCleanAllTags() {
         // recloseTags gives up on a close tag with no open tag; cleanAllTags then replaces
         // "</w>" by a single space and the result parses.
-        Assert.assertEquals(" text", osis("</w>text"));
+        assertEquals(" text", osis("</w>text"))
         // An attribute without closing quote.
         // (recloseTags first appends </w>; then cleanAllTags replaces both tags by a space each.)
-        Assert.assertEquals(" tail ", osis("<w lemma=\"x>tail"));
+        assertEquals(" tail ", osis("<w lemma=\"x>tail"))
     }
 
     @Test
-    public void testUnparsableEvenWithoutTagsYieldsEmptyResult() throws Exception {
+    fun testUnparsableEvenWithoutTagsYieldsEmptyResult() {
         // A control character is illegal in XML, no repair helps: an empty p is created and its (no) content returned.
-        List<Content> result = filter(book, "a\u0001b");
-        Assert.assertEquals(0, result.size());
+        val result = filter(book!!, "a\u0001b")
+        assertEquals(0, result.size)
     }
 
     @Test
-    public void testMapMBookPrefixesMissingOpeningTags() throws Exception {
-        Book mapM = (Book) Proxy.newProxyInstance(Book.class.getClassLoader(), new Class<?>[] {Book.class},
-                (proxy, method, args) -> {
-                    if (method.getName().equals("getInitials")) {
-                        return "MapM";
-                    }
-                    if (method.getName().equals("getKey")) {
-                        return book.getKey((String) args[0]);
-                    }
-                    throw new UnsupportedOperationException(method.getName());
-                });
+    fun testMapMBookPrefixesMissingOpeningTags() {
+        val mapM = Proxy.newProxyInstance(Book::class.java.classLoader, arrayOf<Class<*>>(Book::class.java)) { _, method, args ->
+            when (method.name) {
+                "getInitials" -> "MapM"
+                "getKey" -> book!!.getKey(args!![0] as String)
+                else -> throw UnsupportedOperationException(method.name)
+            }
+        } as Book
         // The first loop iteration (cell) adds <cell>, row adds <row>, table adds <table> in that order,
         // so the outermost is the table.
-        Assert.assertEquals("<cell>x</cell>", osis(mapM, "x</cell>"));
-        Assert.assertEquals("<table><row>a</row>b</table>", osis(mapM, "a</row>b</table>"));
+        assertEquals("<cell>x</cell>", osis(mapM, "x</cell>"))
+        assertEquals("<table><row>a</row>b</table>", osis(mapM, "a</row>b</table>"))
         // A start tag before the end tag is left alone.
-        Assert.assertEquals("<cell>x</cell>", osis(mapM, "<cell>x</cell>"));
+        assertEquals("<cell>x</cell>", osis(mapM, "<cell>x</cell>"))
         // Other books do not get the prefix: same input goes down the recloseTags path.
         // (recloseTags strips the trailing close tag, leaving "x", which parses.)
-        Assert.assertEquals("x", osis("x</cell>"));
+        assertEquals("x", osis("x</cell>"))
     }
 
     @Test
-    public void testCloneIsIndependentCopy() throws Exception {
-        OSISFilter filter = new OSISFilter();
-        OSISFilter clone = filter.clone();
-        Assert.assertNotSame(filter, clone);
-        Assert.assertEquals(OSISFilter.class, clone.getClass());
+    fun testCloneIsIndependentCopy() {
+        val filter = OSISFilter()
+        val clone = filter.clone()
+        assertNotSame(filter, clone)
+        assertEquals(OSISFilter::class.java, clone.javaClass)
     }
 }

@@ -17,267 +17,277 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
-import org.crosswire.jsword.book.basic.AbstractPassageBook;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.VerseRangeFactory;
-import org.crosswire.jsword.versification.BibleBook;
-import org.crosswire.jsword.versification.system.Versifications;
-import fi.sykero.kdom.Element;
-import fi.sykero.kdom.output.Format;
-import fi.sykero.kdom.output.XMLOutputter;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import fi.sykero.kdom.output.Format
+import fi.sykero.kdom.output.XMLOutputter
+import org.crosswire.jsword.book.basic.AbstractPassageBook
+import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.VerseRangeFactory
+import org.crosswire.jsword.versification.BibleBook
+import org.crosswire.jsword.versification.system.Versifications
+import org.junit.Assume
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class BooksTest {
-    protected Key[] gen11;
-    protected BookMetaData[] bmds;
-    protected Book[] bibles;
+class BooksTest {
+    protected lateinit var gen11: Array<Key>
+    protected lateinit var bmds: Array<BookMetaData>
+    protected lateinit var bibles: Array<Book>
 
-    //protected Class[] ignorebibles = {};
+    //protected val ignorebibles: Array<Class<*>> = arrayOf()
 
-    @Before
-    public void setUp() throws Exception {
-        List<Book> lbmds = Books.installed().getBooks(BookFilters.getOnlyBibles());
-        int numBibles = lbmds.size();
-        bibles = new Book[numBibles];
-        bmds = new BookMetaData[numBibles];
-        gen11 = new Key[numBibles];
+    @BeforeTest
+    fun setUp() {
+        val lbmds = Books.installed().getBooks(BookFilters.getOnlyBibles())
+        val numBibles = lbmds.size
+        bibles = Array(numBibles) { lbmds[it] }
+        bmds = Array(numBibles) { bibles[it].bookMetaData }
+        gen11 = Array(numBibles) { bibles[it].getKey("Gen 1:1") }
+    }
 
-        int i = 0;
-        for (Book book : lbmds) {
-            bibles[i] = book;
-            bmds[i] = book.getBookMetaData();
-            gen11[i] = book.getKey("Gen 1:1");
-            i++;
+    @Test
+    fun testGetBible() {
+        for (i in bibles.indices) {
+            val bible = bibles[i]
+            assertTrue(bible != null)
         }
     }
 
     @Test
-    public void testGetBible() {
-        for (int i = 0; i < bibles.length; i++) {
-            Book bible = bibles[i];
-            Assert.assertTrue(bible != null);
+    fun testGetBibleMetaData() {
+        for (i in bibles.indices) {
+            val bible = bibles[i]
+            val bmd = bible.bookMetaData
+            assertEquals(bmds[i], bmd)
         }
     }
 
     @Test
-    public void testGetBibleMetaData() {
-        for (int i = 0; i < bibles.length; i++) {
-            Book bible = bibles[i];
-            BookMetaData bmd = bible.getBookMetaData();
-            Assert.assertEquals(bmds[i], bmd);
+    fun testMetaData() {
+        for (i in bmds.indices) {
+            val bmd = bmds[i]
+
+            assertTrue(bmd.initials != null)
+            assertTrue(bmd.initials.length > 0)
+            assertTrue(bmd.name != null)
+            assertTrue(bmd.name.length > 0)
         }
     }
 
     @Test
-    public void testMetaData() {
-        for (int i = 0; i < bmds.length; i++) {
-            BookMetaData bmd = bmds[i];
-
-            Assert.assertTrue(bmd.getInitials() != null);
-            Assert.assertTrue(bmd.getInitials().length() > 0);
-            Assert.assertTrue(bmd.getName() != null);
-            Assert.assertTrue(bmd.getName().length() > 0);
+    fun testGetBookMetaData() {
+        for (i in bibles.indices) {
+            val bible = bibles[i]
+            val bmd = bible.bookMetaData
+            assertEquals(bmds[i], bmd)
         }
     }
 
     @Test
-    public void testGetBookMetaData() {
-        for (int i = 0; i < bibles.length; i++) {
-            Book bible = bibles[i];
-            BookMetaData bmd = bible.getBookMetaData();
-            Assert.assertEquals(bmds[i], bmd);
+    fun testGetDataKey() {
+        for (i in bibles.indices) {
+            val bible = bibles[i]
+            val key = bible.getKey("Gen 1:1")
+            val data = BookData(bible, key)
+            assertNotNull(data)
         }
     }
 
     @Test
-    public void testGetDataKey() throws Exception {
-        for (int i = 0; i < bibles.length; i++) {
-            Book bible = bibles[i];
-            Key key = bible.getKey("Gen 1:1");
-            BookData data = new BookData(bible, key);
-            Assert.assertNotNull(data);
-        }
-    }
-
-    @Test
-    public void testGetDataPassage() throws Exception {
-        for (int i = 0; i < bibles.length; i++) {
-            Book bible = bibles[i];
-            BookData data = new BookData(bible, gen11[i]);
-            Assert.assertNotNull(data.getOsisFragment());
+    fun testGetDataPassage() {
+        for (i in bibles.indices) {
+            val bible = bibles[i]
+            val data = BookData(bible, gen11[i])
+            assertNotNull(data.osisFragment)
         }
     }
 
     /** Bibles like TurNTB contain merged (linked) verses which are duplicated when chapters are displayed- see JS-224.
      * This tests the deduplication code in AbstractPassageBook.
-     *
-     * @throws Exception
      */
     @Test
-    public void testBookList() throws Exception {
+    fun testBookList() {
         //part of the pre-requisites
-        AbstractPassageBook kjv = (AbstractPassageBook) Books.installed().getBook("KJV");
-        Assume.assumeTrue("KJV is installed", kjv != null);
-        Assert.assertTrue(kjv.getBibleBooks().contains(BibleBook.ACTS));
+        val kjv = Books.installed().getBook("KJV") as AbstractPassageBook?
+        Assume.assumeTrue("KJV is installed", kjv != null)
+        assertTrue(kjv!!.bibleBooks.contains(BibleBook.ACTS))
     }
 
 
     /**
      * Bibles like TurNTB contain merged (linked) verses which are duplicated when chapters are displayed- see JS-224.
      * This tests the deduplication code in AbstractPassageBook.
-     *
-     * @throws Exception
      */
     @Test
-    public void testLinkedVersesNotDuplicated() throws Exception {
-        Book turNTB = Books.installed().getBook("TurNTB");
+    fun testLinkedVersesNotDuplicated() {
+        val turNTB = Books.installed().getBook("TurNTB")
 
-        Assume.assumeTrue("TurNTB is installed", turNTB != null);
+        Assume.assumeTrue("TurNTB is installed", turNTB != null)
 
         // Eph 2:4,5 are merged/linked in TurNTB
-        Key eph245 = VerseRangeFactory.fromString(Versifications.instance().getVersification("KJV"), "Eph 2:4-5");
-        BookData bookData = new BookData(turNTB, eph245);
-        final Element osisFragment = bookData.getOsisFragment();
+        val eph245 = VerseRangeFactory.fromString(Versifications.instance().getVersification("KJV"), "Eph 2:4-5")
+        val bookData = BookData(turNTB, eph245)
+        val osisFragment = bookData.osisFragment
 
-        final XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
-        String xml = xmlOutputter.outputString(osisFragment);
+        val xmlOutputter = XMLOutputter(Format.getPrettyFormat())
+        val xml = xmlOutputter.outputString(osisFragment)
 
-        Assert.assertTrue("Probable duplicate text", xml.length() < 300);
+        assertTrue(xml.length < 300, "Probable duplicate text")
     }
 
     /**
      * Books like Josephus have hierarchical chapters.  Only the current chapter should be returned, not child chapters.
-     *
-     * @throws Exception
      */
     @Test
-    public void testHierarchicalBook() throws Exception {
-        Book josephus = Books.installed().getBook("Josephus");
-        String section1Text = "THOSE who undertake to write histories";
+    fun testHierarchicalBook() {
+        val josephus = Books.installed().getBook("Josephus")
+        val section1Text = "THOSE who undertake to write histories"
         if (josephus != null) {
             // navigate down to the Preface
-            Key theAntiquitiesOfTheJewsKey = josephus.getGlobalKeyList().get(1);
-            Key prefaceKey = theAntiquitiesOfTheJewsKey.get(0);
-            String prefaceText = josephus.getRawText(prefaceKey);
-            Assert.assertFalse("Child keys returned in raw text", prefaceText.contains(section1Text));
+            val theAntiquitiesOfTheJewsKey = josephus.getGlobalKeyList().get(1)
+            val prefaceKey = theAntiquitiesOfTheJewsKey!!.get(0)
+            val prefaceText = josephus.getRawText(prefaceKey)
+            assertFalse(prefaceText.contains(section1Text), "Child keys returned in raw text")
 
             // Now attempt to parse a key but get the problem is that all child text is returned too
-            BookData bookData = new BookData(josephus, prefaceKey);
-            final Element osisFragment = bookData.getOsisFragment();
+            val bookData = BookData(josephus, prefaceKey)
+            val osisFragment = bookData.osisFragment
 
-            final XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat());
-            String prefaceXml = xmlOutputter.outputString(osisFragment);
-            Assert.assertFalse("Child keys returned in xml", prefaceXml.contains(section1Text));
+            val xmlOutputter = XMLOutputter(Format.getPrettyFormat())
+            val prefaceXml = xmlOutputter.outputString(osisFragment)
+            assertFalse(prefaceXml.contains(section1Text), "Child keys returned in xml")
         }
     }
 
     /*
-     * FIXME: These are only valid if all bibles are English public void
-     * testGetFind() throws Exception { // This only checks that find() does
+     * FIXME: These are only valid if all bibles are English fun
+     * testGetFind() { // This only checks that find() does
      * something vaguely sensible // I assume that find() just calls
-     * findPassage(), where the real tests are for (int i = 0; i <
-     * bibles.length; i++) { Book bible = bibles[i]; Key key = bible.find(new
-     * Search("aaron", false)); Assert.assertNotNull("bible=" +
-     * bible.getFullName(), key); } }
-     * 
-     * FIXME: These are only valid if all bibles are English public void
-     * testFindPassage() throws Exception { for (int i = 0; i < bibles.length;
-     * i++) { Book ver = bibles[i];
-     * 
-     * Key key = ver.find(new Search("aaron", false));
-     * Assert.assertTrue(key != null); } }
-     * 
-     * FIXME: These are only valid if all bibles are English public void
-     * testFindPassage2() throws Exception { for (int i = 0; i < bibles.length;
-     * i++) { // Check that this is a type that we expect to return real Bible
-     * data Book ver = bibles[i]; boolean skip = false; for (int j = 0; j <
-     * ignorebibles.length; j++) { // if (ver instanceof fullbibles[j]) if
-     * (ignorebibles[j].isAssignableFrom(ver.getClass())) skip = true; } if
-     * (skip) continue; log.debug("thorough testing bible: {}", ver.getFullName());
-     * 
-     * Key key = ver.find(new Search("aaron", false)); Passage ref
-     * = KeyUtil.getPassage(key); Assert.assertTrue(ref.countVerses() > 10); key =
-     * ver.find(new Search("jerusalem", false)); ref =
-     * KeyUtil.getPassage(key); Assert.assertTrue(ref.countVerses() > 10); key =
-     * ver.find(new Search("god", false)); ref =
-     * KeyUtil.getPassage(key); Assert.assertTrue(ref.countVerses() > 10); key =
-     * ver.find(new Search("GOD", false)); ref =
-     * KeyUtil.getPassage(key); Assert.assertTrue(ref.countVerses() > 10); key =
-     * ver.find(new Search("brother's", false)); ref =
-     * KeyUtil.getPassage(key); Assert.assertTrue(ref.countVerses() > 2); key =
-     * ver.find(new Search("BROTHER'S", false)); ref =
-     * KeyUtil.getPassage(key); Assert.assertTrue(ref.countVerses() > 2);
-     * 
-     * key = ver.find(new Search("maher-shalal-hash-baz", false));
-     * ref = KeyUtil.getPassage(key); if (ref.isEmpty()) { key = ver.find(new
-     * Search("mahershalalhashbaz", false)); ref =
-     * KeyUtil.getPassage(key); } if (ref.isEmpty()) { key = ver.find(new
-     * Search("maher*", false)); ref = KeyUtil.getPassage(key); }
-     * Assert.assertEquals(ref.countVerses(), 2); Assert.assertEquals(ref.getVerseAt(0), new
-     * Verse("Isa 8:1")); Assert.assertEquals(ref.getVerseAt(1), new
-     * Verse("Isa 8:3"));
-     * 
-     * key = ver.find(new Search("MAHER-SHALAL-HASH-BAZ", false));
-     * ref = KeyUtil.getPassage(key); if (ref.isEmpty()) { key = ver.find(new
-     * Search("MAHERSHALALHASHBAZ", false)); ref =
-     * KeyUtil.getPassage(key); } Assert.assertEquals(ref.countVerses(), 2);
-     * Assert.assertEquals(ref.getVerseAt(0), new Verse("Isa 8:1"));
-     * Assert.assertEquals(ref.getVerseAt(1), new Verse("Isa 8:3")); } }
+     * findPassage(), where the real tests are for (i in
+     * bibles.indices) { val bible = bibles[i]; val key = bible.find(Search("aaron", false))
+     * assertNotNull(key, "bible=" + bible.getFullName()) } }
+     *
+     * FIXME: These are only valid if all bibles are English fun
+     * testFindPassage() { for (i in bibles.indices) {
+     *     val ver = bibles[i]
+     *
+     *     val key = ver.find(Search("aaron", false))
+     *     assertTrue(key != null) } }
+     *
+     * FIXME: These are only valid if all bibles are English fun
+     * testFindPassage2() { for (i in bibles.indices) {
+     *     // Check that this is a type that we expect to return real Bible
+     *     // data
+     *     val ver = bibles[i]
+     *     var skip = false
+     *     for (j in ignorebibles.indices) {
+     *         // if (ver instanceof fullbibles[j])
+     *         if (ignorebibles[j].isAssignableFrom(ver.javaClass)) skip = true
+     *     }
+     *     if (skip) continue
+     *     log.debug("thorough testing bible: {}", ver.getFullName())
+     *
+     *     var key = ver.find(Search("aaron", false))
+     *     var ref = KeyUtil.getPassage(key)
+     *     assertTrue(ref.countVerses() > 10)
+     *     key = ver.find(Search("jerusalem", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     assertTrue(ref.countVerses() > 10)
+     *     key = ver.find(Search("god", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     assertTrue(ref.countVerses() > 10)
+     *     key = ver.find(Search("GOD", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     assertTrue(ref.countVerses() > 10)
+     *     key = ver.find(Search("brother's", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     assertTrue(ref.countVerses() > 2)
+     *     key = ver.find(Search("BROTHER'S", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     assertTrue(ref.countVerses() > 2)
+     *
+     *     key = ver.find(Search("maher-shalal-hash-baz", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     if (ref.isEmpty()) {
+     *         key = ver.find(Search("mahershalalhashbaz", false))
+     *         ref = KeyUtil.getPassage(key)
+     *     }
+     *     if (ref.isEmpty()) {
+     *         key = ver.find(Search("maher*", false))
+     *         ref = KeyUtil.getPassage(key)
+     *     }
+     *     assertEquals(2, ref.countVerses())
+     *     assertEquals(Verse("Isa 8:1"), ref.getVerseAt(0))
+     *     assertEquals(Verse("Isa 8:3"), ref.getVerseAt(1))
+     *
+     *     key = ver.find(Search("MAHER-SHALAL-HASH-BAZ", false))
+     *     ref = KeyUtil.getPassage(key)
+     *     if (ref.isEmpty()) {
+     *         key = ver.find(Search("MAHERSHALALHASHBAZ", false))
+     *         ref = KeyUtil.getPassage(key)
+     *     }
+     *     assertEquals(2, ref.countVerses())
+     *     assertEquals(Verse("Isa 8:1"), ref.getVerseAt(0))
+     *     assertEquals(Verse("Isa 8:3"), ref.getVerseAt(1))
+     * } }
      */
     /*
-     * public void testGetStartsWith() throws Exception { for (int i=0;
-     * i<bibles.length; i++) { Bible ver = bibles[i];
-     * 
-     * if (ver instanceof SearchableBible) { String[] sa =
-     * Sentance2Util.toStringArray(((SearchableBible)
-     * ver).getSearcher().getStartsWith("a")); Assert.assertTrue(sa != null); } } }
-     * 
-     * public void testGetStartsWith2() throws Exception { for (int i=0;
-     * i<bibles.length; i++) { // Check that this is a type that we expect to
-     * return real Bible data Bible origver = bibles[i]; boolean skip = false;
-     * for (int j=0; j<ignorebibles.length; j++) { // if (ver instanceof
-     * fullbibles[j]) if (origver.getClass().isAssignableFrom(ignorebibles[j]))
-     * skip = true; } if (skip) continue;
-     * log.debug("thorough testing bible: {}", origver.getBibleMetaData().getFullName());
-     * 
-     * if (origver instanceof SearchableBible) { SearchableBible ver =
-     * (SearchableBible) origver; String[] sa =
-     * Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("jos"));
-     * Assert.assertTrue(sa.length > 5); sa =
-     * Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("jerusale"));
-     * Assert.assertEquals(sa[0], "jerusalem"); sa =
-     * Sentance2Util.toStringArray(ver.getSearcher
-     * ().getStartsWith("maher-shalal")); if (sa.length == 0) { sa =
-     * Sentance2Util
-     * .toStringArray(ver.getSearcher().getStartsWith("mahershalal"));
-     * Assert.assertEquals(sa[0], "mahershalalhashbaz"); } else { Assert.assertEquals(sa[0],
-     * "maher-shalal-hash-baz"); } Assert.assertEquals(sa.length, 1); sa =
-     * Sentance2Util
-     * .toStringArray(ver.getSearcher().getStartsWith("MAHER-SHALAL")); if
-     * (sa.length == 0) { sa =
-     * Sentance2Util.toStringArray(ver.getSearcher().getStartsWith
-     * ("MAHERSHALAL")); Assert.assertEquals(sa[0], "mahershalalhashbaz"); } else {
-     * Assert.assertEquals(sa[0], "maher-shalal-hash-baz"); } Assert.assertEquals(sa.length,
-     * 1); sa =
-     * Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("XXX"));
-     * Assert.assertEquals(sa.length, 0); } } }
+     * fun testGetStartsWith() { for (i in bibles.indices) {
+     *     val ver = bibles[i]
+     *
+     *     if (ver is SearchableBible) {
+     *         val sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("a"))
+     *         assertTrue(sa != null)
+     *     }
+     * } }
+     *
+     * fun testGetStartsWith2() { for (i in bibles.indices) {
+     *     // Check that this is a type that we expect to return real Bible data
+     *     val origver = bibles[i]
+     *     var skip = false
+     *     for (j in ignorebibles.indices) {
+     *         // if (ver instanceof fullbibles[j])
+     *         if (origver.javaClass.isAssignableFrom(ignorebibles[j])) skip = true
+     *     }
+     *     if (skip) continue
+     *     log.debug("thorough testing bible: {}", origver.getBibleMetaData().getFullName())
+     *
+     *     if (origver is SearchableBible) {
+     *         val ver = origver as SearchableBible
+     *         var sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("jos"))
+     *         assertTrue(sa.size > 5)
+     *         sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("jerusale"))
+     *         assertEquals("jerusalem", sa[0])
+     *         sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("maher-shalal"))
+     *         if (sa.size == 0) {
+     *             sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("mahershalal"))
+     *             assertEquals("mahershalalhashbaz", sa[0])
+     *         } else {
+     *             assertEquals("maher-shalal-hash-baz", sa[0])
+     *         }
+     *         assertEquals(1, sa.size)
+     *         sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("MAHER-SHALAL"))
+     *         if (sa.size == 0) {
+     *             sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("MAHERSHALAL"))
+     *             assertEquals("mahershalalhashbaz", sa[0])
+     *         } else {
+     *             assertEquals("maher-shalal-hash-baz", sa[0])
+     *         }
+     *         assertEquals(1, sa.size)
+     *         sa = Sentance2Util.toStringArray(ver.getSearcher().getStartsWith("XXX"))
+     *         assertEquals(0, sa.size)
+     *     }
+     * } }
      */
 }

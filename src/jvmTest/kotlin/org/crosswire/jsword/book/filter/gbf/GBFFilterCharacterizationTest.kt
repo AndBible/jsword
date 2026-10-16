@@ -17,247 +17,240 @@
  * \u00A9 CrossWire Bible Society, 2026
  *
  */
-package org.crosswire.jsword.book.filter.gbf;
+package org.crosswire.jsword.book.filter.gbf
 
-import java.util.List;
-
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.Books;
-import fi.sykero.kdom.Content;
-import fi.sykero.kdom.output.Format;
-import fi.sykero.kdom.output.XMLOutputter;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import fi.sykero.kdom.Content
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.Text
+import fi.sykero.kdom.output.Format
+import fi.sykero.kdom.output.XMLOutputter
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.Books
+import org.junit.Assume
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotSame
 
 /**
- * Characterization of {@link GBFFilter}, {@link GBFTagBuilders} and {@link GBFTags}:
+ * Characterization of [GBFFilter], [GBFTagBuilders] and [GBFTags]:
  * pins the behaviour of the Java classes before they are converted to Kotlin.
  * Expected values were derived by reading the Java, not by observing it. Note that
  * a text tag escapes its text with XMLUtil.escape and the serializer escapes it
- * again, so an ampersand comes out as {@code &amp;amp;}: that is the (odd) behaviour.
+ * again, so an ampersand comes out as `&amp;amp;`: that is the (odd) behaviour.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class GBFFilterCharacterizationTest {
-    private Book book;
+class GBFFilterCharacterizationTest {
+    private var book: Book? = null
 
-    @Before
-    public void setUp() throws Exception {
-        book = Books.installed().getBook("KJV");
-        Assume.assumeNotNull(book);
+    @BeforeTest
+    fun setUp() {
+        book = Books.installed().getBook("KJV")
+        Assume.assumeNotNull(book)
     }
 
-    private List<Content> filter(String input) throws Exception {
-        return new GBFFilter().toOSIS(book, book.getKey("Gen 1:1"), input);
+    private fun filter(input: String): List<Content> {
+        return GBFFilter().toOSIS(book, book!!.getKey("Gen 1:1"), input)
     }
 
-    private String osis(String input) throws Exception {
-        XMLOutputter out = new XMLOutputter(Format.getRawFormat());
-        return out.outputString(filter(input));
+    private fun osis(input: String): String {
+        val out = XMLOutputter(Format.getRawFormat())
+        return out.outputString(filter(input))
     }
 
     @Test
-    public void testPlainTextAndTrim() throws Exception {
-        Assert.assertEquals("In the beginning", osis("In the beginning"));
+    fun testPlainTextAndTrim() {
+        assertEquals("In the beginning", osis("In the beginning"))
         // The input is trimmed (chars <= ' ') before it is tokenized.
-        Assert.assertEquals("x y", osis(" \t\n x y \r\n"));
+        assertEquals("x y", osis(" \t\n x y \r\n"))
     }
 
     @Test
-    public void testEmptyInputYieldsOneEmptyText() throws Exception {
+    fun testEmptyInputYieldsOneEmptyText() {
         // parseTags always ends with a text tag for what remains, here "".
-        List<Content> result = filter("");
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals("", osis(""));
+        val result = filter("")
+        assertEquals(1, result.size)
+        assertEquals("", osis(""))
     }
 
     @Test
-    public void testHighlightFamily() throws Exception {
-        Assert.assertEquals("<hi type=\"italic\">it</hi>", osis("<FI>it<Fi>"));
-        Assert.assertEquals("<hi type=\"bold\">b</hi>", osis("<FB>b<Fb>"));
-        Assert.assertEquals("<hi type=\"underline\">u</hi>", osis("<FU>u<Fu>"));
-        Assert.assertEquals("<q who=\"Jesus\">red</q>", osis("<FR>red<Fr>"));
-        Assert.assertEquals("<q>ot</q>", osis("<FO>ot<Fo>"));
-        Assert.assertEquals("<lg>poem</lg>", osis("<PP>poem<Pp>"));
-        Assert.assertEquals("<seg type=\"text-align: right;\">r</seg>", osis("<JR>r"));
+    fun testHighlightFamily() {
+        assertEquals("<hi type=\"italic\">it</hi>", osis("<FI>it<Fi>"))
+        assertEquals("<hi type=\"bold\">b</hi>", osis("<FB>b<Fb>"))
+        assertEquals("<hi type=\"underline\">u</hi>", osis("<FU>u<Fu>"))
+        assertEquals("<q who=\"Jesus\">red</q>", osis("<FR>red<Fr>"))
+        assertEquals("<q>ot</q>", osis("<FO>ot<Fo>"))
+        assertEquals("<lg>poem</lg>", osis("<PP>poem<Pp>"))
+        assertEquals("<seg type=\"text-align: right;\">r</seg>", osis("<JR>r"))
     }
 
     @Test
-    public void testTitleFamily() throws Exception {
-        Assert.assertEquals("<title>Head</title>", osis("<TS>Head<Ts>"));
-        Assert.assertEquals("<title>Title</title>", osis("<TH>Title<Th>"));
-        Assert.assertEquals("<title type=\"main\">Book</title>", osis("<TT>Book<Tt>"));
-        Assert.assertEquals("<title type=\"psalm\" subType=\"x-preverse\" canonical=\"true\">Ps</title>",
-                osis("<TB>Ps<Tb>"));
+    fun testTitleFamily() {
+        assertEquals("<title>Head</title>", osis("<TS>Head<Ts>"))
+        assertEquals("<title>Title</title>", osis("<TH>Title<Th>"))
+        assertEquals("<title type=\"main\">Book</title>", osis("<TT>Book<Tt>"))
+        assertEquals("<title type=\"psalm\" subType=\"x-preverse\" canonical=\"true\">Ps</title>",
+            osis("<TB>Ps<Tb>"))
     }
 
     @Test
-    public void testNestedTagsAndText() throws Exception {
-        Assert.assertEquals("a <hi type=\"bold\">b<hi type=\"italic\">c</hi>d</hi>e",
-                osis("a <FB>b<FI>c<Fi>d<Fb>e"));
+    fun testNestedTagsAndText() {
+        assertEquals("a <hi type=\"bold\">b<hi type=\"italic\">c</hi>d</hi>e",
+            osis("a <FB>b<FI>c<Fi>d<Fb>e"))
     }
 
     @Test
-    public void testParagraphAndLineBreak() throws Exception {
-        Assert.assertEquals("a<p />b", osis("a<CM>b"));
-        Assert.assertEquals("a<lb />b", osis("a<CL>b"));
+    fun testParagraphAndLineBreak() {
+        assertEquals("a<p />b", osis("a<CM>b"))
+        assertEquals("a<lb />b", osis("a<CL>b"))
     }
 
     @Test
-    public void testFootnote() throws Exception {
-        Assert.assertEquals("a<note type=\"x-StudyNote\">a note</note>b", osis("a<RF>a note<Rf>b"));
+    fun testFootnote() {
+        assertEquals("a<note type=\"x-StudyNote\">a note</note>b", osis("a<RF>a note<Rf>b"))
         // An empty footnote is removed again when it is closed.
-        Assert.assertEquals("xy", osis("x<RF><Rf>y"));
+        assertEquals("xy", osis("x<RF><Rf>y"))
         // RB opens a note that is never closed by a matching end tag.
-        Assert.assertEquals("<note type=\"x-StudyNote\">x</note>", osis("<RB>x"));
+        assertEquals("<note type=\"x-StudyNote\">x</note>", osis("<RB>x"))
     }
 
     @Test
-    public void testStrongsWord() throws Exception {
-        Assert.assertEquals("<w lemma=\"strong:H7225\">beginning</w>", osis("beginning<WH7225>"));
+    fun testStrongsWord() {
+        assertEquals("<w lemma=\"strong:H7225\">beginning</w>", osis("beginning<WH7225>"))
         // A second number is appended to the lemma of the preceding element.
-        Assert.assertEquals("<w lemma=\"strong:G3056 strong:G1234\">word</w>", osis("word<WG3056><WG1234>"));
+        assertEquals("<w lemma=\"strong:G3056 strong:G1234\">word</w>", osis("word<WG3056><WG1234>"))
         // Text after a Strong's tag goes to the div, not into the w.
-        Assert.assertEquals("<w lemma=\"strong:G1\">a</w>b", osis("a<WG1>b"));
+        assertEquals("<w lemma=\"strong:G1\">a</w>b", osis("a<WG1>b"))
         // Without preceding content an empty w is appended to the root.
-        Assert.assertEquals("<w lemma=\"strong:G3056\" />", osis("<WG3056>"));
+        assertEquals("<w lemma=\"strong:G3056\" />", osis("<WG3056>"))
     }
 
     @Test
-    public void testStrongsMorph() throws Exception {
-        Assert.assertEquals("<w morph=\"x-StrongsMorph:TN-NSM\">word</w>", osis("word<WTN-NSM>"));
-        Assert.assertEquals("<w lemma=\"strong:G1\" morph=\"x-StrongsMorph:TNSM\">word</w>", osis("word<WG1><WTNSM>"));
+    fun testStrongsMorph() {
+        assertEquals("<w morph=\"x-StrongsMorph:TN-NSM\">word</w>", osis("word<WTN-NSM>"))
+        assertEquals("<w lemma=\"strong:G1\" morph=\"x-StrongsMorph:TNSM\">word</w>", osis("word<WG1><WTNSM>"))
         // Without content there is nothing to attach it to.
-        Assert.assertEquals("", osis("<WTNSM>"));
+        assertEquals("", osis("<WTNSM>"))
     }
 
     @Test
-    public void testVerseBoundaryStrongsTagsAreIgnored() throws Exception {
+    fun testVerseBoundaryStrongsTagsAreIgnored() {
         // WT?[GH] ?[0-9]+[-:][0-9abc-]+ marks a verse boundary in another versification.
-        Assert.assertEquals("ab", osis("a<WG1:2>b"));
-        Assert.assertEquals("ab", osis("a<WH7225-1>b"));
+        assertEquals("ab", osis("a<WG1:2>b"))
+        assertEquals("ab", osis("a<WH7225-1>b"))
     }
 
     @Test
-    public void testIgnoredAndUnknownTags() throws Exception {
-        Assert.assertEquals("ab", osis("a<JC>b"));
-        Assert.assertEquals("ab", osis("a<BI>b"));
+    fun testIgnoredAndUnknownTags() {
+        assertEquals("ab", osis("a<JC>b"))
+        assertEquals("ab", osis("a<BI>b"))
         // Unknown 2-letter tag, and unknown tag with data: not in BUILDERS.
-        Assert.assertEquals("ab", osis("a<ZZ>b"));
-        Assert.assertEquals("ab", osis("a<Zebra>b"));
+        assertEquals("ab", osis("a<ZZ>b"))
+        assertEquals("ab", osis("a<Zebra>b"))
     }
 
     @Test
-    public void testCrossReference() throws Exception {
-        Assert.assertEquals("<reference osisRef=\"Gen.1.1\">see</reference>", osis("<RXGen.1.1>see<Rx>"));
+    fun testCrossReference() {
+        assertEquals("<reference osisRef=\"Gen.1.1\">see</reference>", osis("<RXGen.1.1>see<Rx>"))
         // An unparsable reference is reported and the reference has no osisRef.
-        Assert.assertEquals("<reference>see</reference>", osis("<RXzzzz qq>see<Rx>"));
+        assertEquals("<reference>see</reference>", osis("<RXzzzz qq>see<Rx>"))
     }
 
     @Test
-    public void testEscapeTags() throws Exception {
+    fun testEscapeTags() {
         // CG/CT create text tags "&gt;" / "&lt;" which are escaped twice.
-        Assert.assertEquals("a&amp;amp;gt;b", osis("a<CG>b"));
-        Assert.assertEquals("a&amp;amp;lt;b", osis("a<CT>b"));
+        assertEquals("a&amp;amp;gt;b", osis("a<CG>b"))
+        assertEquals("a&amp;amp;lt;b", osis("a<CT>b"))
     }
 
     @Test
-    public void testEntitiesAreEscapedTwice() throws Exception {
-        Assert.assertEquals("Tom &amp;amp;amp; Jerry", osis("Tom &amp; Jerry"));
-        Assert.assertEquals("&amp;amp;lt;", osis("&lt;"));
-        Assert.assertEquals("say &amp;quot;hi&amp;quot;", osis("say \"hi\""));
+    fun testEntitiesAreEscapedTwice() {
+        assertEquals("Tom &amp;amp;amp; Jerry", osis("Tom &amp; Jerry"))
+        assertEquals("&amp;amp;lt;", osis("&lt;"))
+        assertEquals("say &amp;quot;hi&amp;quot;", osis("say \"hi\""))
     }
 
     @Test
-    public void testNonGbfAngleBrackets() throws Exception {
+    fun testNonGbfAngleBrackets() {
         // A < not followed by an upper case letter is plain text up to the next >.
-        Assert.assertEquals("&amp;lt;b&amp;gt;x", osis("<b>x"));
+        assertEquals("&amp;lt;b&amp;gt;x", osis("<b>x"))
         // GerLut1545 uses << ... >> for quotes.
-        Assert.assertEquals("&amp;lt;&amp;lt;hello&amp;gt;&amp;gt;", osis("<<hello>>"));
+        assertEquals("&amp;lt;&amp;lt;hello&amp;gt;&amp;gt;", osis("<<hello>>"))
     }
 
     @Test
-    public void testStrayGreaterThan() throws Exception {
-        Assert.assertEquals("a&amp;gt;", osis("a>"));
-        Assert.assertEquals("a&amp;gt;b", osis("a>b"));
-        Assert.assertEquals("a&amp;gt;b<hi type=\"italic\">c</hi>", osis("a>b<FI>c"));
+    fun testStrayGreaterThan() {
+        assertEquals("a&amp;gt;", osis("a>"))
+        assertEquals("a&amp;gt;b", osis("a>b"))
+        assertEquals("a&amp;gt;b<hi type=\"italic\">c</hi>", osis("a>b<FI>c"))
     }
 
     @Test
-    public void testUnterminatedTag() throws Exception {
+    fun testUnterminatedTag() {
         // < without a following > : text up to and including the < , then the rest.
-        Assert.assertEquals("abc&amp;lt;FI", osis("abc<FI"));
-        Assert.assertEquals("a&amp;lt;b", osis("a<b"));
+        assertEquals("abc&amp;lt;FI", osis("abc<FI"))
+        assertEquals("a&amp;lt;b", osis("a<b"))
     }
 
     @Test
-    public void testUnterminatedOpenTagIsClosedImplicitly() throws Exception {
-        Assert.assertEquals("<hi type=\"italic\">abc</hi>", osis("<FI>abc"));
+    fun testUnterminatedOpenTagIsClosedImplicitly() {
+        assertEquals("<hi type=\"italic\">abc</hi>", osis("<FI>abc"))
     }
 
     @Test
-    public void testLessThanAtEndThrows() throws Exception {
+    fun testLessThanAtEndThrows() {
         // Bug kept as is: "ltpos < remains.length() + 1" lets charAt(ltpos + 1) run past the end.
-        try {
-            osis("a<");
-            Assert.fail("expected StringIndexOutOfBoundsException");
-        } catch (StringIndexOutOfBoundsException expected) {
-            // expected
+        assertFailsWith<StringIndexOutOfBoundsException> {
+            osis("a<")
         }
     }
 
     @Test
-    public void testEndTagWithoutStartLosesFollowingText() throws Exception {
+    fun testEndTagWithoutStartLosesFollowingText() {
         // The surplus end tag pops the root div; later text goes to a detached stack entry.
-        Assert.assertEquals("a", osis("a<Fi>b"));
+        assertEquals("a", osis("a<Fi>b"))
         // A second surplus end tag finds the stack empty and is ignored.
-        Assert.assertEquals("a", osis("a<Fi><Fi>b"));
+        assertEquals("a", osis("a<Fi><Fi>b"))
     }
 
     @Test
-    public void testStackAccessOnEmptyStackThrows() throws Exception {
+    fun testStackAccessOnEmptyStackThrows() {
         // Footnote end on an empty root: pops the div, then looks at the (empty) stack top.
-        try {
-            osis("<Rf>");
-            Assert.fail("expected IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException expected) {
-            // expected
+        assertFailsWith<IndexOutOfBoundsException> {
+            osis("<Rf>")
         }
         // Strong's tag after the root was popped.
-        try {
-            osis("a<Fi><WG1>");
-            Assert.fail("expected IndexOutOfBoundsException");
-        } catch (IndexOutOfBoundsException expected) {
-            // expected
+        assertFailsWith<IndexOutOfBoundsException> {
+            osis("a<Fi><WG1>")
         }
     }
 
     @Test
-    public void testNonAscii() throws Exception {
-        String text = "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7";
-        Assert.assertEquals(text, osis(text));
-        Assert.assertEquals("<hi type=\"italic\">" + text + "</hi>", osis("<FI>" + text + "<Fi>"));
+    fun testNonAscii() {
+        val text = "\u00E9\u20AC \u0391\u03B3\u03AC\u03C0\u03B7"
+        assertEquals(text, osis(text))
+        assertEquals("<hi type=\"italic\">" + text + "</hi>", osis("<FI>" + text + "<Fi>"))
     }
 
     @Test
-    public void testSeparatorsAreSplitFromWordsBeforeATag() throws Exception {
+    fun testSeparatorsAreSplitFromWordsBeforeATag() {
         // "?! x" before a tag: separators "?! " and the word "x" become two text nodes;
         // then hi, then the empty trailing text.
-        List<Content> result = filter("?! x<FI>y<Fi>");
-        Assert.assertEquals(4, result.size());
-        Assert.assertEquals("?! ", ((fi.sykero.kdom.Text) result.get(0)).getText());
-        Assert.assertEquals("x", ((fi.sykero.kdom.Text) result.get(1)).getText());
-        Assert.assertEquals("hi", ((fi.sykero.kdom.Element) result.get(2)).getName());
-        Assert.assertEquals("?! x<hi type=\"italic\">y</hi>", osis("?! x<FI>y<Fi>"));
+        val result = filter("?! x<FI>y<Fi>")
+        assertEquals(4, result.size)
+        assertEquals("?! ", (result[0] as Text).text)
+        assertEquals("x", (result[1] as Text).text)
+        assertEquals("hi", (result[2] as Element).name)
+        assertEquals("?! x<hi type=\"italic\">y</hi>", osis("?! x<FI>y<Fi>"))
     }
 
     @Test
-    public void testCloneIsIndependentCopy() throws Exception {
-        GBFFilter filter = new GBFFilter();
-        GBFFilter clone = filter.clone();
-        Assert.assertNotSame(filter, clone);
-        Assert.assertEquals(GBFFilter.class, clone.getClass());
+    fun testCloneIsIndependentCopy() {
+        val filter = GBFFilter()
+        val clone = filter.clone()
+        assertNotSame(filter, clone)
+        assertEquals(GBFFilter::class.java, clone.javaClass)
     }
 }

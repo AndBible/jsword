@@ -17,55 +17,55 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.io.ByteArrayOutputStream;
-
-import fi.sykero.kdom.Element;
-import fi.sykero.kdom.output.XMLOutputter;
-import org.junit.Assert;
-import org.junit.Test;
+import fi.sykero.kdom.Element
+import fi.sykero.kdom.output.XMLOutputter
+import fi.sykero.kdom.output.output
+import java.io.ByteArrayOutputStream
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class OsisTest {
+class OsisTest {
     @Test
-    public void testManual() throws Exception {
-        Element seg = OSISUtil.factory().createSeg();
-        seg.addContent("In the beginning God created the heaven and the earth.");
+    fun testManual() {
+        val seg: Element = OSISUtil.factory().createSeg()
+        seg.addContent("In the beginning God created the heaven and the earth.")
 
-        Element verse = OSISUtil.factory().createVerse();
-        verse.setAttribute(OSISUtil.OSIS_ATTR_OSISID, "Gen.1.1");
-        verse.addContent(seg);
+        val verse: Element = OSISUtil.factory().createVerse()
+        verse.setAttribute(OSISUtil.OSIS_ATTR_OSISID, "Gen.1.1")
+        verse.addContent(seg)
 
-        Element div = OSISUtil.factory().createDiv();
-        div.setAttribute("type", "chapter");
-        div.setAttribute("osisID", "Gen.1.1");
-        div.addContent(verse);
+        val div: Element = OSISUtil.factory().createDiv()
+        div.setAttribute("type", "chapter")
+        div.setAttribute("osisID", "Gen.1.1")
+        div.addContent(verse)
 
-        Element work = OSISUtil.factory().createWork();
+        val work: Element = OSISUtil.factory().createWork()
 
-        Element header = OSISUtil.factory().createHeader();
-        header.addContent(work);
+        val header: Element = OSISUtil.factory().createHeader()
+        header.addContent(work)
 
-        Element osistext = OSISUtil.factory().createOsisText();
-        osistext.setAttribute(OSISUtil.ATTRIBUTE_OSISTEXT_OSISIDWORK, "Bible.KJV");
-        osistext.addContent(header);
-        osistext.addContent(div);
+        val osistext: Element = OSISUtil.factory().createOsisText()
+        osistext.setAttribute(OSISUtil.ATTRIBUTE_OSISTEXT_OSISIDWORK, "Bible.KJV")
+        osistext.addContent(header)
+        osistext.addContent(div)
 
-        Element blank = OSISUtil.factory().createOsis();
-        blank.addContent(osistext);
+        val blank: Element = OSISUtil.factory().createOsis()
+        blank.addContent(osistext)
 
         // create a Marshaller and marshal to System.out
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        fi.sykero.kdom.output.XMLOutputterJvmKt.output(outputter, blank, out);
-        Assert.assertTrue(out.toString().trim().length() > 0);
+        val out = ByteArrayOutputStream()
+        outputter.output(blank, out)
+        assertTrue(out.toString().trim { it <= ' ' }.length > 0)
     }
 
-    private XMLOutputter outputter = new XMLOutputter();
+    private val outputter = XMLOutputter()
 }

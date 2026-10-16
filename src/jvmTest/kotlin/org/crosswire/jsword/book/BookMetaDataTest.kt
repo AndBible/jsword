@@ -17,81 +17,71 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.crosswire.jsword.book.sword.SwordBookMetaData;
-import org.junit.Assert;
-import org.junit.Test;
+import org.crosswire.jsword.book.basic.DefaultBookMetaData
+import org.crosswire.jsword.book.sword.SwordBookMetaData
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class BookMetaDataTest {
+class BookMetaDataTest {
     @Test
-    public void testDifferentInitialsNotEqual() throws IOException, BookException {
-        String kjvMetaData = "[KJV]\nDataPath=./modules/texts/ztext/kjv/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n";
+    fun testDifferentInitialsNotEqual() {
+        val kjvMetaData = "[KJV]\nDataPath=./modules/texts/ztext/kjv/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n"
         // the only difference is the initials
-        String kjvaMetaData = "[KJVA]\nDataPath=./modules/texts/ztext/kjva/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n";
-            BookMetaData bmKJV = new SwordBookMetaData(kjvMetaData.getBytes(), "KJV");
-            BookMetaData bmKJV2 = new SwordBookMetaData(kjvMetaData.getBytes(), "KJV");
-            BookMetaData bmKJVA = new SwordBookMetaData(kjvaMetaData.getBytes(), "KJVA");
-            Assert.assertTrue("Same metadata should equal", bmKJV.equals(bmKJV2));
-            Assert.assertFalse("Different initials should not equal", bmKJV.equals(bmKJVA));
+        val kjvaMetaData = "[KJVA]\nDataPath=./modules/texts/ztext/kjva/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n"
+        val bmKJV: BookMetaData = SwordBookMetaData(kjvMetaData.toByteArray(), "KJV")
+        val bmKJV2: BookMetaData = SwordBookMetaData(kjvMetaData.toByteArray(), "KJV")
+        val bmKJVA: BookMetaData = SwordBookMetaData(kjvaMetaData.toByteArray(), "KJVA")
+        assertTrue(bmKJV == bmKJV2, "Same metadata should equal")
+        assertFalse(bmKJV == bmKJVA, "Different initials should not equal")
     }
 
     @Test
-    public void testSortOrderIsByInitials() throws IOException, BookException {
-        String kjvMetaData = "[KJV]\nDataPath=./modules/texts/ztext/kjv/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n";
+    fun testSortOrderIsByInitials() {
+        val kjvMetaData = "[KJV]\nDataPath=./modules/texts/ztext/kjv/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=King James Version (1769) with Strongs Numbers and Morphology\nLCSH=Bible. English.\n"
         // Desc starts with 'The...' but initials are 'Common' so comes first if sorted by initials
-        String commonMetaData = "[Common]\nDataPath=./modules/texts/ztext/common/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=The Common Edition: New Testament\nLCSH=Bible. English.\n";
+        val commonMetaData = "[Common]\nDataPath=./modules/texts/ztext/common/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=The Common Edition: New Testament\nLCSH=Bible. English.\n"
         // Ensure sort is case insensitive
-        String aaaMetaData = "[AAA]\nDataPath=./modules/texts/ztext/common/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=aaa aaa aaa\nLCSH=Bible. English.\n";
-            // create some book meta data
-            BookMetaData bmKJV = new SwordBookMetaData(kjvMetaData.getBytes(), "KJV");
-            BookMetaData bmCommon = new SwordBookMetaData(commonMetaData.getBytes(), "Common");
-            BookMetaData bmaaa = new SwordBookMetaData(aaaMetaData.getBytes(), "AAA");
+        val aaaMetaData = "[AAA]\nDataPath=./modules/texts/ztext/common/\nModDrv=zText\nEncoding=UTF-8\nBlockType=BOOK\nCompressType=ZIP\nSourceType=OSIS\nLang=en\nVersion=2.3\nDescription=aaa aaa aaa\nLCSH=Bible. English.\n"
+        // create some book meta data
+        val bmKJV: BookMetaData = SwordBookMetaData(kjvMetaData.toByteArray(), "KJV")
+        val bmCommon: BookMetaData = SwordBookMetaData(commonMetaData.toByteArray(), "Common")
+        val bmaaa: BookMetaData = SwordBookMetaData(aaaMetaData.toByteArray(), "AAA")
 
-            // sort them
-            List<BookMetaData> mdList = new ArrayList<BookMetaData>();
-            mdList.add(bmaaa);
-            mdList.add(bmKJV);
-            mdList.add(bmCommon);
-            Collections.sort(mdList);
+        // sort them
+        val mdList = mutableListOf(bmaaa, bmKJV, bmCommon)
+        mdList.sort()
 
-            // ensure the book order is as expected
-            Assert.assertEquals("AAA should be first in sorted book list", bmaaa, mdList.get(0));
-            Assert.assertEquals("Common should be second in sorted book list", bmCommon, mdList.get(1));
-            Assert.assertEquals("KJV should be last in sorted book list", bmKJV, mdList.get(2));
-
+        // ensure the book order is as expected
+        assertEquals(bmaaa, mdList[0], "AAA should be first in sorted book list")
+        assertEquals(bmCommon, mdList[1], "Common should be second in sorted book list")
+        assertEquals(bmKJV, mdList[2], "KJV should be last in sorted book list")
     }
+
     @Test
-    public void testEqualityRequiresSameConcreteClass() throws IOException, BookException {
-        org.crosswire.jsword.book.basic.DefaultBookMetaData base = new org.crosswire.jsword.book.basic.DefaultBookMetaData(null, "Demo", BookCategory.BIBLE);
-        base.setInitials("Demo");
-        BookMetaData derived = new DerivedMetadata();
-        BookMetaData derived2 = new DerivedMetadata();
-        assertEquals(derived, derived2);
-        assertFalse(base.equals(derived));
-        assertFalse(derived.equals(base));
+    fun testEqualityRequiresSameConcreteClass() {
+        val base = DefaultBookMetaData(null, "Demo", BookCategory.BIBLE)
+        base.setInitials("Demo")
+        val derived: BookMetaData = DerivedMetadata()
+        val derived2: BookMetaData = DerivedMetadata()
+        assertEquals(derived, derived2)
+        assertFalse(base == derived)
+        assertFalse(derived == base)
     }
 
-    private static class DerivedMetadata extends org.crosswire.jsword.book.basic.DefaultBookMetaData {
-        DerivedMetadata() {
-            super(null, "Demo", BookCategory.BIBLE);
-            setInitials("Demo");
+    private class DerivedMetadata : DefaultBookMetaData(null, "Demo", BookCategory.BIBLE) {
+        init {
+            setInitials("Demo")
         }
     }
 }

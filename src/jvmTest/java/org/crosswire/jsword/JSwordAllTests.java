@@ -31,9 +31,9 @@ import org.junit.runners.Suite.SuiteClasses;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-    org.crosswire.jsword.prerequisites.AllTests.class,
+    org.crosswire.jsword.prerequisites.BookPreRequisitesTest.class,
     org.crosswire.jsword.book.AllTests.class,
-    org.crosswire.jsword.book.filter.thml.AllTests.class,
+    org.crosswire.jsword.book.filter.thml.ATagTest.class,
     org.crosswire.jsword.book.sword.AllTests.class,
     // Common passage tests are also discovered directly; keep the root suite's coverage.
     org.crosswire.jsword.passage.AccuracyTypeTest.class,

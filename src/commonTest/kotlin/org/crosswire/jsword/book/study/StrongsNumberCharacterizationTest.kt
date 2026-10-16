@@ -17,15 +17,16 @@
  * \u00A9 CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.study;
+package org.crosswire.jsword.book.study
 
-import java.util.Arrays;
-
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 /**
- * Characterization of {@link StrongsNumber}: pins the
+ * Characterization of [StrongsNumber]: pins the
  * behaviour of the Java classes before they are converted to Kotlin. Expected
  * values were derived by reading the Java. The odd results (a number built from
  * a char and a short is never valid, a string that does not parse still "is a
@@ -33,144 +34,144 @@ import org.junit.Test;
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class StrongsNumberCharacterizationTest {
+class StrongsNumberCharacterizationTest {
     @Test
-    public void testGreekNumber() {
-        StrongsNumber n = new StrongsNumber("G3056");
-        Assert.assertTrue(n.isValid());
-        Assert.assertEquals("G3056", n.getStrongsNumber());
-        Assert.assertEquals("G3056", n.getFullStrongsNumber());
-        Assert.assertEquals("G3056", n.toString());
-        Assert.assertTrue(n.isGreek());
-        Assert.assertFalse(n.isHebrew());
-        Assert.assertFalse(n.isPart());
+    fun testGreekNumber() {
+        val n = StrongsNumber("G3056")
+        assertTrue(n.isValid())
+        assertEquals("G3056", n.getStrongsNumber())
+        assertEquals("G3056", n.fullStrongsNumber)
+        assertEquals("G3056", n.toString())
+        assertTrue(n.isGreek)
+        assertFalse(n.isHebrew)
+        assertFalse(n.isPart)
     }
 
     @Test
-    public void testHebrewNumberIsZeroPadded() {
-        StrongsNumber n = new StrongsNumber("H7225");
-        Assert.assertTrue(n.isValid());
-        Assert.assertEquals("H7225", n.getStrongsNumber());
-        Assert.assertTrue(n.isHebrew());
-        Assert.assertFalse(n.isGreek());
+    fun testHebrewNumberIsZeroPadded() {
+        val n = StrongsNumber("H7225")
+        assertTrue(n.isValid())
+        assertEquals("H7225", n.getStrongsNumber())
+        assertTrue(n.isHebrew)
+        assertFalse(n.isGreek)
 
-        StrongsNumber small = new StrongsNumber("h1");
-        Assert.assertTrue(small.isValid());
-        Assert.assertEquals("H0001", small.getStrongsNumber());
+        val small = StrongsNumber("h1")
+        assertTrue(small.isValid())
+        assertEquals("H0001", small.getStrongsNumber())
     }
 
     @Test
-    public void testLowerCaseAndLeadingZeros() {
-        Assert.assertEquals("G3056", new StrongsNumber("g3056").getStrongsNumber());
-        Assert.assertTrue(new StrongsNumber("g3056").isGreek());
-        Assert.assertEquals("G3056", new StrongsNumber("G03056").getStrongsNumber());
-        Assert.assertEquals("G3056", new StrongsNumber("G0000003056").getStrongsNumber());
+    fun testLowerCaseAndLeadingZeros() {
+        assertEquals("G3056", StrongsNumber("g3056").getStrongsNumber())
+        assertTrue(StrongsNumber("g3056").isGreek)
+        assertEquals("G3056", StrongsNumber("G03056").getStrongsNumber())
+        assertEquals("G3056", StrongsNumber("G0000003056").getStrongsNumber())
     }
 
     @Test
-    public void testPartIsKeptSeparately() {
-        StrongsNumber n = new StrongsNumber("G3056!a");
-        Assert.assertTrue(n.isValid());
-        Assert.assertTrue(n.isPart());
-        Assert.assertEquals("G3056", n.getStrongsNumber());
-        Assert.assertEquals("G3056a", n.getFullStrongsNumber());
+    fun testPartIsKeptSeparately() {
+        val n = StrongsNumber("G3056!a")
+        assertTrue(n.isValid())
+        assertTrue(n.isPart)
+        assertEquals("G3056", n.getStrongsNumber())
+        assertEquals("G3056a", n.fullStrongsNumber)
 
         // A part without the bang is accepted too, a bang with no letters is not a part.
-        Assert.assertEquals("G0012abc", new StrongsNumber("G12abc").getFullStrongsNumber());
-        StrongsNumber bang = new StrongsNumber("G12!");
-        Assert.assertTrue(bang.isValid());
-        Assert.assertFalse(bang.isPart());
-        Assert.assertEquals("G0012", bang.getFullStrongsNumber());
+        assertEquals("G0012abc", StrongsNumber("G12abc").fullStrongsNumber)
+        val bang = StrongsNumber("G12!")
+        assertTrue(bang.isValid())
+        assertFalse(bang.isPart)
+        assertEquals("G0012", bang.fullStrongsNumber)
         // Only a prefix has to match
-        Assert.assertEquals("G0012", new StrongsNumber("G12 and more").getStrongsNumber());
+        assertEquals("G0012", StrongsNumber("G12 and more").getStrongsNumber())
     }
 
     @Test
-    public void testInputsThatDoNotParse() {
-        for (String input : Arrays.asList("3056", "strong:G3056", "x", "", "Z12", " G12")) {
-            StrongsNumber n = new StrongsNumber(input);
-            Assert.assertFalse(input, n.isValid());
+    fun testInputsThatDoNotParse() {
+        for (input in listOf("3056", "strong:G3056", "x", "", "Z12", " G12")) {
+            val n = StrongsNumber(input)
+            assertFalse(n.isValid(), input)
             // The defaults of a failed parse
-            Assert.assertEquals(input, "U9999", n.getStrongsNumber());
-            Assert.assertFalse(input, n.isGreek());
-            Assert.assertFalse(input, n.isHebrew());
+            assertEquals("U9999", n.getStrongsNumber(), input)
+            assertFalse(n.isGreek, input)
+            assertFalse(n.isHebrew, input)
             // part is "" rather than null, so it counts as a part
-            Assert.assertTrue(input, n.isPart());
-            Assert.assertEquals(input, "U9999", n.getFullStrongsNumber());
+            assertTrue(n.isPart, input)
+            assertEquals("U9999", n.fullStrongsNumber, input)
         }
     }
 
     @Test
-    public void testLanguageWithoutDigitsOrWithOverflow() {
-        for (String input : Arrays.asList("G", "Gabc", "H", "G99999999999")) {
-            StrongsNumber n = new StrongsNumber(input);
-            Assert.assertFalse(input, n.isValid());
+    fun testLanguageWithoutDigitsOrWithOverflow() {
+        for (input in listOf("G", "Gabc", "H", "G99999999999")) {
+            val n = StrongsNumber(input)
+            assertFalse(n.isValid(), input)
             // NumberFormatException on the digits: the number is 0, the language is kept
-            Assert.assertEquals(input, input.charAt(0) + "0000", n.getStrongsNumber());
-            Assert.assertEquals(input, input.charAt(0) == 'G', n.isGreek());
+            assertEquals(input[0] + "0000", n.getStrongsNumber(), input)
+            assertEquals(input[0] == 'G', n.isGreek, input)
         }
     }
 
     @Test
-    public void testRanges() {
-        Assert.assertTrue(new StrongsNumber("H8674").isValid());
-        Assert.assertFalse(new StrongsNumber("H8675").isValid());
-        Assert.assertFalse(new StrongsNumber("H0").isValid());
-        Assert.assertTrue(new StrongsNumber("H1").isValid());
+    fun testRanges() {
+        assertTrue(StrongsNumber("H8674").isValid())
+        assertFalse(StrongsNumber("H8675").isValid())
+        assertFalse(StrongsNumber("H0").isValid())
+        assertTrue(StrongsNumber("H1").isValid())
 
-        Assert.assertTrue(new StrongsNumber("G1417").isValid());
-        Assert.assertFalse(new StrongsNumber("G1418").isValid());
-        Assert.assertTrue(new StrongsNumber("G1419").isValid());
-        Assert.assertFalse(new StrongsNumber("G2717").isValid());
-        Assert.assertTrue(new StrongsNumber("G3202").isValid());
-        Assert.assertFalse(new StrongsNumber("G3203").isValid());
-        Assert.assertFalse(new StrongsNumber("G3302").isValid());
-        Assert.assertTrue(new StrongsNumber("G3303").isValid());
-        Assert.assertTrue(new StrongsNumber("G5623").isValid());
-        Assert.assertFalse(new StrongsNumber("G5624").isValid());
-        Assert.assertFalse(new StrongsNumber("G5999").isValid());
-        Assert.assertTrue(new StrongsNumber("G6000").isValid());
-        Assert.assertTrue(new StrongsNumber("G9999").isValid());
-        Assert.assertFalse(new StrongsNumber("G10000").isValid());
+        assertTrue(StrongsNumber("G1417").isValid())
+        assertFalse(StrongsNumber("G1418").isValid())
+        assertTrue(StrongsNumber("G1419").isValid())
+        assertFalse(StrongsNumber("G2717").isValid())
+        assertTrue(StrongsNumber("G3202").isValid())
+        assertFalse(StrongsNumber("G3203").isValid())
+        assertFalse(StrongsNumber("G3302").isValid())
+        assertTrue(StrongsNumber("G3303").isValid())
+        assertTrue(StrongsNumber("G5623").isValid())
+        assertFalse(StrongsNumber("G5624").isValid())
+        assertFalse(StrongsNumber("G5999").isValid())
+        assertTrue(StrongsNumber("G6000").isValid())
+        assertTrue(StrongsNumber("G9999").isValid())
+        assertFalse(StrongsNumber("G10000").isValid())
         // An out of range number still formats
-        Assert.assertEquals("G1418", new StrongsNumber("G1418").getStrongsNumber());
-        Assert.assertEquals("G10000", new StrongsNumber("G10000").getStrongsNumber());
+        assertEquals("G1418", StrongsNumber("G1418").getStrongsNumber())
+        assertEquals("G10000", StrongsNumber("G10000").getStrongsNumber())
     }
 
     @Test
-    public void testCharShortConstructorIsNeverValid() {
+    fun testCharShortConstructorIsNeverValid() {
         // valid is still false when the constructor asks isValid(), so the result is always false
-        StrongsNumber n = new StrongsNumber('G', (short) 3056);
-        Assert.assertFalse(n.isValid());
-        Assert.assertEquals("G3056", n.getStrongsNumber());
-        Assert.assertTrue(n.isGreek());
-        Assert.assertFalse(n.isPart());
+        val n = StrongsNumber('G', 3056.toShort())
+        assertFalse(n.isValid())
+        assertEquals("G3056", n.getStrongsNumber())
+        assertTrue(n.isGreek)
+        assertFalse(n.isPart)
 
-        StrongsNumber withPart = new StrongsNumber('H', (short) 7, "b");
-        Assert.assertFalse(withPart.isValid());
-        Assert.assertTrue(withPart.isPart());
-        Assert.assertEquals("H0007", withPart.getStrongsNumber());
-        Assert.assertEquals("H0007b", withPart.getFullStrongsNumber());
-        Assert.assertTrue(withPart.isHebrew());
+        val withPart = StrongsNumber('H', 7.toShort(), "b")
+        assertFalse(withPart.isValid())
+        assertTrue(withPart.isPart)
+        assertEquals("H0007", withPart.getStrongsNumber())
+        assertEquals("H0007b", withPart.fullStrongsNumber)
+        assertTrue(withPart.isHebrew)
     }
 
     @Test
-    public void testEqualsAndHashCodeIgnorePartAndValidity() {
-        StrongsNumber a = new StrongsNumber("G3056");
-        StrongsNumber b = new StrongsNumber("g03056!x");
-        StrongsNumber c = new StrongsNumber('G', (short) 3056);
-        Assert.assertEquals(a, a);
-        Assert.assertEquals(a, b);
-        Assert.assertEquals(a, c);
-        Assert.assertEquals(a.hashCode(), b.hashCode());
+    fun testEqualsAndHashCodeIgnorePartAndValidity() {
+        val a = StrongsNumber("G3056")
+        val b = StrongsNumber("g03056!x")
+        val c = StrongsNumber('G', 3056.toShort())
+        assertEquals(a, a)
+        assertEquals(a, b)
+        assertEquals(a, c)
+        assertEquals(a.hashCode(), b.hashCode())
         // 31 * (31 + 'G') + 3056
-        Assert.assertEquals(31 * (31 + 'G') + 3056, a.hashCode());
+        assertEquals(31 * (31 + 'G'.code) + 3056, a.hashCode())
 
-        Assert.assertNotEquals(a, new StrongsNumber("H3056"));
-        Assert.assertNotEquals(a, new StrongsNumber("G3057"));
-        Assert.assertNotEquals(a, null);
-        Assert.assertNotEquals(a, "G3056");
+        assertNotEquals(a, StrongsNumber("H3056"))
+        assertNotEquals(a, StrongsNumber("G3057"))
+        assertNotEquals<Any?>(a, null)
+        assertNotEquals<Any?>(a, "G3056")
         // Two inputs that do not parse are equal (U9999)
-        Assert.assertEquals(new StrongsNumber("x"), new StrongsNumber(""));
+        assertEquals(StrongsNumber("x"), StrongsNumber(""))
     }
 }

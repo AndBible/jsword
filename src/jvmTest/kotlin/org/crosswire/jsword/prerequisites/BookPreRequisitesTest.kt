@@ -17,64 +17,63 @@
  * © CrossWire Bible Society, 2013 - 2016
  *
  */
-package org.crosswire.jsword.prerequisites;
+package org.crosswire.jsword.prerequisites
 
-import org.crosswire.jsword.book.Books;
-import org.crosswire.jsword.book.install.InstallException;
-import org.crosswire.jsword.SuspendCalls;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.install.Installer;
-import org.crosswire.jsword.book.install.InstallManager;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.junit.Assert.fail;
+import kotlinx.coroutines.runBlocking
+import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.book.install.InstallException
+import org.crosswire.jsword.book.install.InstallManager
+import org.crosswire.jsword.book.install.Installer
+import org.slf4j.LoggerFactory
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.fail
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class BookPreRequisitesTest {
-    @Before
-    public void setUp() throws Exception {
-        installedBooks = Books.installed();
+class BookPreRequisitesTest {
+    @BeforeTest
+    fun setUp() {
+        installedBooks = Books.installed()
     }
 
     @Test
-    public void testInstallBook() {
-        for (int ii = 0; ii < BOOKS.length; ii++) {
+    fun testInstallBook() {
+        for (ii in BOOKS.indices) {
             try {
                 if (installedBooks.getBook(BOOKS[ii]) == null) {
                     if (underTest == null) {
-                        underTest = new InstallManager().getInstaller("CrossWire");
+                        underTest = InstallManager().getInstaller("CrossWire")
                     }
-                    LOGGER.info("Installing [{}]... Please wait...", BOOKS[ii]);
-                    SuspendCalls.reload(underTest);
-                    Book book = underTest.getBook(BOOKS[ii]);
-                    SuspendCalls.install(underTest, book);
+                    val installer = underTest!!
+                    LOGGER.info("Installing [{}]... Please wait...", BOOKS[ii])
+                    runBlocking { installer.reloadBookList() }
+                    val book = installer.getBook(BOOKS[ii])
+                    runBlocking { installer.install(book!!) }
                 }
-            } catch (InstallException ex) {
-                ex.printStackTrace();
-                Assert.fail(ex.getMessage());
-            } catch (Exception ex) {
-                throw new AssertionError(ex);
+            } catch (ex: InstallException) {
+                ex.printStackTrace()
+                fail(ex.message)
+            } catch (ex: Exception) {
+                throw AssertionError(ex)
             }
         }
     }
 
-    private Installer underTest;
-    private Books installedBooks;
+    private var underTest: Installer? = null
+    private lateinit var installedBooks: Books
 
-    /**
-     * All books referenced in these unit tests that can be retrieved from the Crosswire repository.
-     * Currently missing : ESV2011, MHCC, ot1nt2
-     * Tests that reference a currently missing book are automatically skipped unless the book was installed externally.
-     */
-    private static final String[] BOOKS = new String[]{"KJV", "StrongsHebrew", "StrongsGreek", "Josephus", "Nave", "Geneva", "TurNTB"};
-    private static final Logger LOGGER = LoggerFactory.getLogger(BookPreRequisitesTest.class);
+    private companion object {
+        /**
+         * All books referenced in these unit tests that can be retrieved from the Crosswire repository.
+         * Currently missing : ESV2011, MHCC, ot1nt2
+         * Tests that reference a currently missing book are automatically skipped unless the book was installed externally.
+         */
+        private val BOOKS = arrayOf("KJV", "StrongsHebrew", "StrongsGreek", "Josephus", "Nave", "Geneva", "TurNTB")
+        private val LOGGER = LoggerFactory.getLogger(BookPreRequisitesTest::class.java)
+    }
 }
