@@ -29,7 +29,7 @@ class HttpsProbeTransportRoutingTest {
     }
 
     private fun recording(length: Int = 42, modified: Long = 1234L) = object : HttpTransport {
-        override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead { events += "head"; return HttpHead(200, null, 0, 0) }
+        override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead { events += "head $uri timeout=$timeoutMs"; return HttpHead(200, null, 0, modified) }
         override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody {
             events += "get $uri timeout=$timeoutMs"
             return fakeBody(length, modified)
@@ -52,7 +52,8 @@ class HttpsProbeTransportRoutingTest {
         WebResource.setTimeout(8765)
         val installer = object : HttpsSwordInstaller() { init { host = "example.org"; catalogDirectory = "/cat" } }
         assertEquals(777L, installer.indexLastUpdated())
-        assertEquals(listOf("get https://example.org/cat/mods.d.tar.gz timeout=8765", "modified", "close"), events)
+        // The catalog timestamp is a HEAD request (E2 DL-7): no body is opened.
+        assertEquals(listOf("head https://example.org/cat/mods.d.tar.gz timeout=8765"), events)
     }
 
     @Test fun metadataFailureClosesBodyAndPropagatesFromNetUtil() = withTransport(object : HttpTransport {
@@ -70,20 +71,13 @@ class HttpsProbeTransportRoutingTest {
         assertEquals(listOf("modified", "close"), events)
     }
 
-    @Test fun installerMetadataFailureClosesBodyAndReturnsZero() = withTransport(object : HttpTransport {
-        override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead = error("HEAD must not be used")
-        override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody {
-            override suspend fun status(): Int = error("status must not be read")
-            override suspend fun contentLength(): Int = error("length must not be read")
-            override suspend fun lastModified(): Long { events += "modified"; throw IllegalStateException("metadata") }
-            override suspend fun prepareRead() = error("body must not be prepared")
-            override suspend fun read(buf: ByteArray): Int = error("body must not be read")
-            override fun close() { events += "close" }
-        }
+    @Test fun installerHeadFailureReturnsZeroWithoutOpeningABody() = withTransport(object : HttpTransport {
+        override suspend fun head(uri: KUri, timeoutMs: Int): HttpHead { events += "head"; throw IllegalStateException("metadata") }
+        override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = error("GET must not be used")
     }) {
         val installer = object : HttpsSwordInstaller() { init { host = "example.org"; catalogDirectory = "/cat" } }
         assertEquals(0L, installer.indexLastUpdated())
-        assertEquals(listOf("modified", "close"), events)
+        assertEquals(listOf("head"), events)
     }
 
     @Test fun installerIndexLastUpdatedIsZeroOnTransportFailure() = withTransport(object : HttpTransport {

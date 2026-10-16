@@ -93,8 +93,7 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
         try {
             val uri = KUri(NetUtil.PROTOCOL_HTTPS, host, catalogDirectory + "/" + FILE_LIST_GZ, null)
             val transport = WebResource.transport ?: return 0L
-            val body = transport.get(uri, WebResource.getTimeout())
-            try { return body.lastModified() } finally { body.close() }
+            return transport.head(uri, WebResource.getTimeout()).lastModified
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

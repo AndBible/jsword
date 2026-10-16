@@ -11,6 +11,7 @@ import org.crosswire.ksword.fixtures.withTestDirectory
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.test.assertSame
 
 /** Portable transport ordering; the original JVM thread-lifetime test stays on the JVM. */
 class WebResourceTransportTest {
@@ -53,16 +54,18 @@ class WebResourceTransportTest {
     }
 
     @Test fun preparationFailureDoesNotTruncateOutputAndClosesBody() = fixture { directory, events, body ->
+        val failure = okio.IOException("input")
         WebResource.transport = object : HttpTransport {
             override suspend fun head(uri: KUri, timeoutMs: Int) = HttpHead(200, null, 4, 0)
             override suspend fun get(uri: KUri, timeoutMs: Int): HttpBody = object : HttpBody by body {
-                override suspend fun prepareRead() { events.add("prepare-failure"); throw okio.IOException("input") }
+                override suspend fun prepareRead() { events.add("prepare-failure"); throw failure }
             }
         }
         val dest = directory / "body"
         FileSystem.SYSTEM.write(dest) { writeUtf8("keep") }
         val error = assertFailsWith<DownloadException> { WebResource(KUri("https://fake/body")).copy(pathUri(dest)) }
         assertEquals(200, error.statusCode)
+        assertSame(failure, error.cause)
         assertEquals("keep", FileSystem.SYSTEM.read(dest) { readUtf8() })
         assertEquals(listOf("status", "prepare-failure", "close"), events)
     }
