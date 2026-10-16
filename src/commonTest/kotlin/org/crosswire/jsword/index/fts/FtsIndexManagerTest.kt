@@ -189,6 +189,20 @@ class FtsIndexManagerTest {
         assertFalse(m.hasLegacyLuceneIndex(b))
     }
 
+    @Test fun legacyDirectoryIsDeletedWhenTheNewIndexIsDone() {
+        val b = book("K4RawText")
+        val driver = b.bookMetaData.driverName!!
+        val m = manager()
+        val legacy = luceneDir / driver / b.initials
+        fs.createDirectories(legacy)
+        fs.write(legacy / "segments.gen") { writeUtf8("x") }
+        assertTrue(m.hasLegacyLuceneIndex(b))
+        m.scheduleIndexCreation(b)
+        assertEquals(IndexStatus.DONE, b.indexStatus)
+        assertFalse(m.hasLegacyLuceneIndex(b))
+        assertFalse(fs.exists(legacy))
+    }
+
     /**
      * Review focus 3: non-verse-keyed books keep the baseline behaviour. A dictionary is indexed, and find converts each
      * hit's osisRef with VerseFactory like Lucene's VerseCollector: whatever that parses is returned (the lenient parser

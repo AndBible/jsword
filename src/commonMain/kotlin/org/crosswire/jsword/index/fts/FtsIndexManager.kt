@@ -140,6 +140,8 @@ class FtsIndexManager internal constructor(
                     }
                     retire(book, replaced, reopen = true)
                     finalStatus = IndexStatus.DONE
+                    // The legacy Lucene directory is also the "engine changed" signal, so it goes only now.
+                    try { deleteLegacyLuceneIndex(book) } catch (e: Exception) { /* best effort: the orphan sweep never touches installed books, a retry happens at the next rebuild */ }
                     if (errors.isNotEmpty()) {
                         // TRANSLATOR: It is likely that one or more verses could not be indexed due to errors in those verses.
                         // This message gives a listing of them to the user.
