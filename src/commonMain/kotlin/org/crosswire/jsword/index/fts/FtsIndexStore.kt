@@ -41,6 +41,7 @@ class FtsIndexStore private constructor(private val db: SQLiteConnection) : Auto
      * Adds one entry. [tokens] need strictly increasing positions (all analyzers satisfy this); [strongs] are the
      * Strong's tokens of the entry (stored verbatim in table `strongs`, not in the FTS table).
      */
+    // A huge position jump writes one gap token per missing position (no cap; unrealistic for the analyzers).
     fun addEntry(rowId: Long, osisRef: String, tokens: List<AnalyzedToken>, strongs: List<String>) {
         check(building) { "beginBuild() not called" }
         val sb = StringBuilder()
@@ -87,9 +88,13 @@ class FtsIndexStore private constructor(private val db: SQLiteConnection) : Auto
     /** Rowids of the entries containing Strong's [token]. */
     fun strongs(token: String): Set<Long> = longs("SELECT rowid FROM strongs WHERE token = ?", token)
 
+    /** Eager: all rows are read inside the call (memory O(vocabulary)) and only then wrapped as a [Sequence]. */
     fun strongsVocabulary(): Sequence<String> = strings("SELECT DISTINCT token FROM strongs ORDER BY token").asSequence()
 
-    /** Every distinct decoded term (never the gap token), via `fts5vocab`. */
+    /**
+     * Every distinct decoded term (never the gap token), via `fts5vocab`. Eager like [strongsVocabulary]
+     * (memory O(vocabulary)); terms that fail to decode are silently dropped (mapNotNull).
+     */
     fun vocabulary(): Sequence<String> =
         strings("SELECT term FROM entry_vocab ORDER BY term").asSequence().filter { it != FtsSchema.GAP }.mapNotNull { SearchTokenCodec.decode(it) }
 
@@ -99,6 +104,7 @@ class FtsIndexStore private constructor(private val db: SQLiteConnection) : Auto
             st.bindLong(1, rowId)
             if (st.step()) st.getText(0) else return emptyList()
         }
+        if (stored.isEmpty()) return emptyList() // entry added with no tokens
         val out = ArrayList<AnalyzedToken>()
         stored.split(' ').forEachIndexed { pos, enc ->
             if (enc != FtsSchema.GAP) out += AnalyzedToken(SearchTokenCodec.decode(enc) ?: error("corrupt token '$enc'"), pos)

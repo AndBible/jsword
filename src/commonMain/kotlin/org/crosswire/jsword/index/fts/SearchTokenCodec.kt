@@ -8,6 +8,8 @@ package org.crosswire.jsword.index.fts
  * [FtsIndexStore]) because it does not start with `x`.
  */
 object SearchTokenCodec {
+    // Lone surrogates: encodeToByteArray() turns an unpaired surrogate into '?' (0x3F), so such a token encodes as
+    // if it contained '?'. Not reversible, but index and query sides call the same encode, so they stay consistent.
     const val ID = "utf8-hex-v1"
 
     private const val HEX = "0123456789abcdef"

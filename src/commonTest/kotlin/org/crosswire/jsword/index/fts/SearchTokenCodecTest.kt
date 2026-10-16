@@ -27,4 +27,9 @@ class SearchTokenCodecTest {
         assertNull(SearchTokenCodec.decode("xzz"))
         assertNull(SearchTokenCodec.decode("xff"))
     }
+
+    @Test fun loneSurrogateEncodesAsQuestionMark() {
+        assertEquals("x613f62", SearchTokenCodec.encode("a\uD800b"))
+        assertEquals(SearchTokenCodec.encode("a?b"), SearchTokenCodec.encode("a\uD800b"))
+    }
 }

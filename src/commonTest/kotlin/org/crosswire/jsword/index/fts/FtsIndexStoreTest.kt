@@ -120,4 +120,33 @@ class FtsIndexStoreTest {
             }
         }
     }
+
+    @Test fun entryWithNoTokens() {
+        val s = built {
+            addEntry(1, "Gen.1.1", emptyList(), emptyList())
+            addEntry(2, "Gen.1.2", toks("w"), emptyList())
+        }
+        s.use {
+            assertEquals(emptyList(), it.tokensOf(1))
+            assertEquals(setOf(2L), it.match(e("w")))
+            assertEquals(setOf(1L, 2L), it.allRowIds())
+            assertEquals("Gen.1.1", it.osisRef(1))
+        }
+    }
+
+    @Test fun failedBuildRollsBackOnClose() {
+        val p = tmp()
+        FtsIndexStore.create(p).use {
+            it.beginBuild()
+            it.addEntry(1, "a", toks("a"), emptyList())
+            assertFailsWith<IllegalArgumentException> {
+                it.addEntry(2, "b", listOf(AnalyzedToken("a", 1), AnalyzedToken("b", 1)), emptyList())
+            }
+        }
+        assertNull(FtsIndexStore.open(p)) // no metadata was committed
+        // the uncommitted row 1 is gone too: write metadata into the reopened raw file and look
+        val raw = androidx.sqlite.driver.bundled.BundledSQLiteDriver().open(p.toString())
+        raw.prepare("SELECT count(*) FROM entry").use { st -> st.step(); assertEquals(0L, st.getLong(0)) }
+        raw.close()
+    }
 }
