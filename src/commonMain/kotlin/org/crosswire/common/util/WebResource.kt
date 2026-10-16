@@ -221,7 +221,7 @@ open class WebResource {
             // TRANSLATOR: Common error condition: {0} is a placeholder for the
             // URL of what could not be found.
             if (statusCode != 0) {
-                throw DownloadException(uri, statusCode)
+                throw DownloadException(uri, statusCode, e)
             }
             throw LucidException(JSMsg.gettext("Unable to find: {0}", uri.toString()), e)
         } finally {
