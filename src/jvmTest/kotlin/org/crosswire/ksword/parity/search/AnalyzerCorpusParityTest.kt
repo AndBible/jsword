@@ -6,17 +6,7 @@ import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.OSISUtil
 import org.crosswire.jsword.book.sword.SwordBookPathJvm
 import org.crosswire.jsword.index.analysis.AnalyzedToken
-import org.crosswire.jsword.index.analysis.ArabicAnalyzer
-import org.crosswire.jsword.index.analysis.CzechAnalyzer
-import org.crosswire.jsword.index.analysis.GermanAnalyzer
-import org.crosswire.jsword.index.analysis.GreekAnalyzer
-import org.crosswire.jsword.index.analysis.HebrewAnalyzer
-import org.crosswire.jsword.index.analysis.MmsegAnalyzer
-import org.crosswire.jsword.index.analysis.PersianAnalyzer
-import org.crosswire.jsword.index.analysis.SimpleAnalyzer
-import org.crosswire.jsword.index.analysis.SnowballAnalyzer
-import org.crosswire.jsword.index.analysis.ThaiAnalyzer
-import org.crosswire.jsword.index.analysis.TextAnalyzer
+import org.crosswire.jsword.index.analysis.BookAnalyzers
 import org.crosswire.jsword.passage.Key
 import org.crosswire.jsword.passage.Verse
 import java.io.File
@@ -25,37 +15,13 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * K6 analyzer parity over the real corpus: for every verse key of a module, the current [TextAnalyzer] must produce the
- * token stream the baseline (Lucene 3.6.2) analyzer produces, and the canonical text both sides analyze must be equal,
- * so a filter difference (K5) is never blamed on an analyzer. Each module that has a current analyzer gets a test; later
- * K6 tasks add theirs to [analyzerFor] (Task 8 replaces it with `BookAnalyzers.forBook`).
+ * K6 analyzer parity over the real corpus: for every verse key of a module, the analyzer [BookAnalyzers.forBook] selects
+ * must produce the token stream the baseline (Lucene 3.6.2) analyzer produces, and the canonical text both sides analyze
+ * must be equal, so a filter difference (K5) is never blamed on an analyzer. Every corpus module has a test.
  */
 class AnalyzerCorpusParityTest {
     /** Every n-th key per module is checked. 1 = all keys. */
     private val keyStride = 1
-
-    /** Local stand-in for `BookAnalyzers.forBook` until Task 8: the analyzer of a book language, or null if none yet. */
-    private fun analyzerFor(lang: String): TextAnalyzer? = when (lang) {
-        // The baseline AnalyzerFactory has no "en" entry, so English falls back to the simple analyzer.
-        "en" -> SimpleAnalyzer()
-        // The baseline AnalyzerFactory maps both modern and ancient Greek to GreekLuceneAnalyzer.
-        "el", "grc" -> GreekAnalyzer()
-        "he" -> HebrewAnalyzer()
-        // ConfigurableSnowballAnalyzer: the baseline AnalyzerFactory maps these languages to it (stemming on, stop words off).
-        "fi" -> SnowballAnalyzer("Finnish")
-        "fr" -> SnowballAnalyzer("French")
-        "ru" -> SnowballAnalyzer("Russian")
-        // Baseline GermanLuceneAnalyzer, ArabicLuceneAnalyzer, PersianLuceneAnalyzer, CzechLuceneAnalyzer (stemming on, stop words off).
-        "de" -> GermanAnalyzer()
-        "ar" -> ArabicAnalyzer()
-        "fa" -> PersianAnalyzer()
-        "cs" -> CzechAnalyzer()
-        // Baseline Mmseg4jChineseLuceneAnalyzer (mmseg4j ComplexAnalyzer) for both Chinese and Japanese.
-        "zh", "ja" -> MmsegAnalyzer()
-        // Baseline ThaiLuceneAnalyzer (ThaiWordFilter over java.text.BreakIterator for Thai).
-        "th" -> ThaiAnalyzer()
-        else -> null
-    }
 
     private fun currentBook(initials: String): Book {
         SwordBookPathJvm.setAugmentPath(arrayOf(K6Corpus.root))
@@ -78,8 +44,7 @@ class AnalyzerCorpusParityTest {
 
     /** The tokens of [key] as the current analyzer yields them. */
     fun currentTokensFor(book: Book, key: Key): List<AnalyzedToken> {
-        val analyzer = requireNotNull(analyzerFor(book.language.code)) { "no analyzer yet for ${book.initials}" }
-        return analyzer.analyze(OSISUtil.getCanonicalText(BookData(book, key).getOsisFragment(false)))
+        return BookAnalyzers.forBook(book).analyze(OSISUtil.getCanonicalText(BookData(book, key).getOsisFragment(false)))
     }
 
     private fun escape(text: String) =
@@ -123,7 +88,7 @@ class AnalyzerCorpusParityTest {
     private fun check(initials: String) {
         val root = K6Corpus.root
         val book = currentBook(initials)
-        val analyzer = requireNotNull(analyzerFor(book.language.code)) { "no analyzer yet for $initials" }
+        val analyzer = BookAnalyzers.forBook(book)
 
         val oracleTexts = OracleSearch.call("canonicalText", root.path, initials, keyStride.toString())
         assertTrue(!oracleTexts.startsWith("!"), oracleTexts.take(300))
@@ -168,4 +133,6 @@ class AnalyzerCorpusParityTest {
     @Test fun everyKeyMatchesBaseline_JapKougo() = check("JapKougo")
 
     @Test fun everyKeyMatchesBaseline_ThaiKJV() = check("ThaiKJV")
+
+    @Test fun everyKeyMatchesBaseline_WLC() = check("WLC")
 }
