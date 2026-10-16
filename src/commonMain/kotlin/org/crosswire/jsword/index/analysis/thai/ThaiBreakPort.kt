@@ -1,3 +1,6 @@
+// Origin and licence: this file is a port of OpenJDK 17's sun.text.RuleBasedBreakIterator,
+// sun.text.DictionaryBasedBreakIterator and sun.text.BreakDictionary. OpenJDK is licensed under the GNU General Public
+// License, version 2, with the Classpath Exception. See NOTICE-third-party.md.
 package org.crosswire.jsword.index.analysis.thai
 
 /**
