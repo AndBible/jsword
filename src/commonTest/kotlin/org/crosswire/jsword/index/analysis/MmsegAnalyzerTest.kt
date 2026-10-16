@@ -52,4 +52,32 @@ class MmsegAnalyzerTest {
     @Test fun positionsAreConsecutive() {
         assertEquals(listOf(0, 1, 2, 3), MmsegAnalyzer().analyze("耶稣说ABC 123").map { it.position })
     }
+
+    @Test fun hashCommentLineOfUnitsDicIsNotAUnitCharacter() {
+        // oracle: "123#abc" -> 123 abc; "5年#" -> 5 年; "5年#abc" -> 5 年 abc (mmseg4j skips '#' lines and non-single-char lines)
+        assertEquals(listOf("123", "abc"), terms("123#abc"))
+        assertEquals(listOf("5", "年"), terms("5年#"))
+        assertEquals(listOf("5", "年", "abc"), terms("5年#abc"))
+        assertEquals(listOf("12", "個", "3", "回"), terms("12個 3回#"))
+    }
+
+    @Test fun nonBmpCharactersAreDroppedAsLoneSurrogates() {
+        // oracle: "\uD840\uDC00耶稣\uD840\uDC01" (U+20000 耶稣 U+20001) -> 耶稣
+        assertEquals(listOf("耶稣"), terms("\uD840\uDC00耶稣\uD840\uDC01"))
+    }
+
+    @Test fun dictionaryFileFiltersFollowMmseg4j() {
+        val d = org.crosswire.jsword.index.analysis.mmseg.Dictionary.parse(
+            "#comment 5\r\n甲 100\r\n乙\r\n丙 x\n", "#词词\r\n甲乙\r丙丁\n单\n", "#\r\n年\r\n分钟\r\n\r\n",
+        )
+        assertEquals(true, d.isUnit('年'))
+        assertEquals(false, d.isUnit('#'))
+        assertEquals(false, d.isUnit('分'))
+        assertEquals(460, d.degree('甲')) // ln(100) * 100 truncated
+        assertEquals(-1, d.degree('丙')) // unparsable frequency
+        assertEquals(listOf(0, 1), d.matchingTailLengths("甲乙".toCharArray(), 0).toList())
+        assertEquals(listOf(0, 1), d.matchingTailLengths("丙丁".toCharArray(), 0).toList()) // lone CR ends a line
+        assertEquals(listOf(0), d.matchingTailLengths("词词".toCharArray(), 0).toList()) // '#' line skipped
+        assertEquals(listOf(0), d.matchingTailLengths("单".toCharArray(), 0).toList())
+    }
 }

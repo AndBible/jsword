@@ -77,31 +77,62 @@ class Dictionary private constructor(
             parse(text("chars"), text("words"), text("units"))
         }
 
-        /** Builds a dictionary from the contents of `chars.dic`, `words.dic` and `units.dic`. */
+        /**
+         * Builds a dictionary from the contents of `chars.dic`, `words.dic` and `units.dic`, applying the filters of
+         * mmseg4j 1.8.6 `Dictionary.load`: lines are split like `BufferedReader.readLine` (`\n`, `\r\n`, `\r`) and every
+         * line starting with `#` is skipped. Then, per file (`Dictionary$2`, `WordsFileLoading`, `Dictionary$3`):
+         * chars: a non-empty line, split on single spaces (trailing empty fields dropped), of one field (character
+         * without frequency) or two (character and integer frequency; an unparsable frequency leaves the degree
+         * unknown); words: at least two UTF-16 units; units: exactly one unit.
+         */
         fun parse(chars: String, words: String, units: String): Dictionary {
             val degrees = HashMap<Char, Int>()
             for (line in lines(chars)) {
-                if (line.isEmpty() || line[0] == '#') continue
-                val fields = line.split(' ').filter { it.isNotEmpty() }
-                if (fields.size == 2) {
-                    val frequency = fields[1].toIntOrNull() ?: continue
-                    degrees[fields[0][0]] = (ln(frequency.toDouble()) * 100).toInt()
+                if (line.isEmpty()) continue
+                val fields = javaSplit(line)
+                if (fields.isEmpty() || fields[0].isEmpty()) continue
+                val head = fields[0][0]
+                when (fields.size) {
+                    1 -> degrees.remove(head)
+                    2 -> {
+                        val frequency = fields[1].toIntOrNull()
+                        if (frequency != null) degrees[head] = (ln(frequency.toDouble()) * 100).toInt() else degrees.remove(head)
+                    }
                 }
             }
             val wordList = ArrayList<String>()
-            for (line in lines(words)) {
-                if (line.startsWith("#") || line.length < 2) continue
-                wordList.add(line)
-            }
+            for (line in lines(words)) if (line.length >= 2) wordList.add(line)
             wordList.sort()
             val unitChars = HashSet<Char>()
-            for (line in lines(units)) if (line.isNotEmpty()) unitChars.add(line[0])
+            for (line in lines(units)) if (line.length == 1) unitChars.add(line[0])
             return build(wordList, degrees, unitChars)
         }
 
-        /** Lines split on `\n` with a trailing `\r` removed (the dictionaries are CRLF in part). */
-        private fun lines(text: String): List<String> =
-            text.split('\n').map { if (it.endsWith('\r')) it.substring(0, it.length - 1) else it }
+        /** `String.split(" ")`: trailing empty fields are removed. */
+        private fun javaSplit(line: String): List<String> {
+            val fields = line.split(' ').toMutableList()
+            while (fields.size > 1 && fields[fields.size - 1].isEmpty()) fields.removeAt(fields.size - 1)
+            return fields
+        }
+
+        /** The lines `BufferedReader.readLine` yields, without the lines starting with `#`. */
+        private fun lines(text: String): List<String> {
+            val out = ArrayList<String>()
+            var start = 0
+            var i = 0
+            while (i <= text.length) {
+                if (i == text.length || text[i] == '\n' || text[i] == '\r') {
+                    if (i > start || i < text.length) {
+                        val line = text.substring(start, i)
+                        if (!line.startsWith("#")) out.add(line)
+                    }
+                    if (i < text.length && text[i] == '\r' && i + 1 < text.length && text[i + 1] == '\n') i++
+                    start = i + 1
+                }
+                i++
+            }
+            return out
+        }
 
         private fun build(sorted: List<String>, degrees: Map<Char, Int>, units: Set<Char>): Dictionary {
             val words = ArrayList<String>(sorted.size)
