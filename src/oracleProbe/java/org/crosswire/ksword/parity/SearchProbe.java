@@ -58,13 +58,15 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
                 case "canonicalText": return canonicalText(args.get(0), args.get(1), Integer.parseInt(args.get(2)));
                 case "buildIndex": return buildIndex(args.get(0), args.get(1), args.get(2));
                 case "find": return find(args.get(0), args.get(1), args.get(2), args.get(3));
+                case "search": return search(args.get(0), args.get(1), args.get(2), args.get(3));
                 case "stem": return stem(args.get(0), args.subList(1, args.size()));
                 case "version": return version();
                 case "strongs": return strongs(args.get(0));
                 default: return "!IllegalArgumentException: unknown op " + op;
             }
         } catch (Throwable t) {
-            return "!" + t.getClass().getName() + ": " + t.getMessage();
+            return "!" + t.getClass().getName() + ": " + t.getMessage()
+                + (t.getCause() != null ? " <- " + t.getCause().getClass().getName() : "");
         }
     }
 
@@ -226,6 +228,27 @@ public final class SearchProbe implements BiFunction<String, List<String>, Strin
         // The two-argument constructor opens an existing index; the three-argument one always (re)builds.
         try (LuceneIndex index = new LuceneIndex(book, new File(indexDir).toURI())) {
             Key result = index.find(query);
+            List<String> refs = new ArrayList<>();
+            for (Key key : result) {
+                refs.add(key.getOsisRef());
+            }
+            Collections.sort(refs);
+            StringBuilder out = new StringBuilder();
+            for (String ref : refs) out.append(ref).append('\n');
+            return out.toString();
+        }
+    }
+
+    /**
+     * The whole `Book.find` path below the book: the JSword query layer (`LuceneSearcher` + `QueryBuilder`: passage
+     * ranges `+[Gen-Mal]`, blur, boolean split) over the Lucene index, like `book.find(request)` once the book is indexed.
+     */
+    private static String search(String corpusRoot, String initials, String indexDir, String query) throws Exception {
+        Book book = openBook(corpusRoot, initials);
+        try (LuceneIndex index = new LuceneIndex(book, new File(indexDir).toURI())) {
+            org.crosswire.jsword.index.lucene.LuceneSearcher searcher = new org.crosswire.jsword.index.lucene.LuceneSearcher();
+            searcher.init(index);
+            Key result = searcher.search(query);
             List<String> refs = new ArrayList<>();
             for (Key key : result) {
                 refs.add(key.getOsisRef());
