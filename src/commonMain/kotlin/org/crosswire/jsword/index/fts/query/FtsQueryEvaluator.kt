@@ -18,7 +18,7 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  *   (checked against the baseline oracle).
  * - [SearchNode.Phrase] with slop 0: the analyzed tokens as one FTS5 phrase. Positions are kept: a gap in the
  *   query's token positions is matched by the index's gap token, exactly like `PhraseQuery` positions. Sloppy
- *   phrases (slop above 0 and at least two tokens) are Task 13.
+ *   phrases (slop above 0 and at least two tokens) are evaluated as described further down.
  * - [SearchNode.Bool]: `BooleanQuery`: the intersection of the MUST clauses, else the union of the SHOULD clauses
  *   (SHOULD clauses are optional next to a MUST), minus the MUST_NOT clauses; no MUST and no SHOULD (a purely
  *   negative query) matches nothing.
@@ -26,6 +26,9 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  *   A term of several whitespace-separated numbers intersects them (the strongs table has no positions, so the
  *   baseline's phrase over the `strong` field is approximated).
  *
+ * - A wildcard [SearchNode.StrongTerm] (`strong:h7*`) is matched, lowercased as Lucene's `getWildcardQuery` does,
+ *   against the uppercase padded tokens of the strongs table, so it intentionally matches nothing whenever the
+ *   pattern contains a letter (the baseline quirk, reproduced for parity; verified on KJV by the corpus matrix).
  * - [SearchNode.Wildcard], [SearchNode.Prefix], [SearchNode.Fuzzy] and wildcard [SearchNode.StrongTerm]: expanded
  *   against the index vocabulary by [VocabularyExpansion] (Lucene's term-dictionary expansion) and the matches of
  *   the terms are united, [MATCH_BATCH] terms per query.
@@ -46,7 +49,7 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
         }
         is SearchNode.Bool -> evaluateBool(node)
         is SearchNode.StrongTerm -> {
-            if (node.wildcard) return store.strongsAny(VocabularyExpansion.wildcard(node.raw, store.strongsVocabulary()))
+            if (node.wildcard) return store.strongsAny(VocabularyExpansion.wildcard(node.raw, strongsVocabulary.asSequence()))
             val tokens = StrongsTokens.fromLexical(node.raw)
             if (tokens.isEmpty()) emptySet() else tokens.map { store.strongs(it) }.reduce { a, b -> a intersect b }
         }
@@ -57,6 +60,9 @@ class FtsQueryEvaluator(private val store: FtsIndexStore, private val analyzer: 
 
     /** The decoded index terms, read once per evaluator (wildcard and fuzzy terms scan all of them). */
     private val vocabulary: List<String> by lazy { store.vocabulary().toList() }
+
+    /** The distinct Strong's tokens, read once per evaluator (every `strong:` wildcard of a query scans them). */
+    private val strongsVocabulary: List<String> by lazy { store.strongsVocabulary().toList() }
 
     private fun wildcard(pattern: String): Set<Long> {
         // A pattern that is a literal followed by one final `*` is a prefix: let FTS5 scan the term range.

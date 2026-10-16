@@ -53,7 +53,8 @@ class SearchProximityOracleTest {
         try { body(m.getIndex(b)) } finally { m.closeAllIndexes() }
     }
 
-    private fun compare(initials: String, queries: List<String>) = withIndex(initials) { index ->
+    /** Share of the queries that must find verses, so an all-empty comparison cannot pass (shapes and verse-built phrases alike). */
+    private fun compare(initials: String, queries: List<String>, minNonEmptyShare: Double = 0.2) = withIndex(initials) { index ->
         val problems = ArrayList<String>()
         var nonEmpty = 0
         for (q in queries) {
@@ -64,6 +65,7 @@ class SearchProximityOracleTest {
         }
         println("K6 proximity $initials: ${queries.size} queries, $nonEmpty with matches, ${problems.size} divergences")
         if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
+        assertTrue(nonEmpty >= queries.size * minNonEmptyShare, "$initials: only $nonEmpty of ${queries.size} queries have matches (floor ${(minNonEmptyShare * 100).toInt()}%)")
     }
 
     @Test fun kjvShapes() = compare("KJV", KJV_SHAPES)
@@ -99,13 +101,13 @@ class SearchProximityOracleTest {
         return queries.toList()
     }
 
-    @Test fun randomizedKjv() = compare("KJV", randomQueries("KJV", 400, 1306))
+    @Test fun randomizedKjv() = compare("KJV", randomQueries("KJV", 400, 1306), 0.5)
 
-    @Test fun randomizedChiUns() = compare("ChiUns", randomQueries("ChiUns", 150, 1307, cjk = true))
+    @Test fun randomizedChiUns() = compare("ChiUns", randomQueries("ChiUns", 150, 1307, cjk = true), 0.4)
 
     @Test fun randomizedGreek() {
-        compare("GreVamvas", randomQueries("GreVamvas", 200, 1308))
-        compare("Byz", randomQueries("Byz", 150, 1309))
+        compare("GreVamvas", randomQueries("GreVamvas", 200, 1308), 0.5)
+        compare("Byz", randomQueries("Byz", 150, 1309), 0.5)
     }
 
     /**

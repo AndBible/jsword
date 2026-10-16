@@ -61,15 +61,20 @@ class SearchQueryOracleSmokeTest {
         m.scheduleIndexCreation(b)
         val index = m.getIndex(b)
         val problems = ArrayList<String>()
+        var nonEmpty = 0
         for (q in parity) {
             val expected = baseline(initials, q)
+            if (expected?.isNotEmpty() == true) nonEmpty++
             val actual = try { mine(index, q) } catch (e: UnsupportedSearchSyntaxException) { problems += "$initials '$q': unexpected ${e.message}"; continue }
             if (expected != actual) {
                 problems += "$initials '$q': baseline ${expected?.let { "${it.size} ${it.take(3)}" } ?: "FAIL"}, mine ${actual?.let { "${it.size} ${it.take(3)}" } ?: "FAIL"}"
             }
         }
         m.closeAllIndexes()
+        println("K6 query smoke $initials: ${parity.size} queries, $nonEmpty with matches, ${problems.size} divergences")
         if (problems.isNotEmpty()) fail(problems.joinToString("\n"))
+        // Many of these queries are deliberately empty/invalid, but a comparison where (almost) nothing matches proves nothing.
+        assertTrue(nonEmpty >= parity.size * MIN_NON_EMPTY_SHARE, "$initials: only $nonEmpty of ${parity.size} queries have matches")
     }
 
     @Test fun kjvParity() = run("KJV", PARITY_QUERIES)
@@ -158,6 +163,9 @@ class SearchQueryOracleSmokeTest {
     }
 
     companion object {
+        /** Floor of the share of queries with matches per run (the sets mix real words with deliberately empty or invalid input). */
+        const val MIN_NON_EMPTY_SHARE = 0.15
+
         val PARITY_QUERIES: List<String> = listOf(
             // terms, case, defaults
             "faith", "FAITH", "faith hope", "faith OR hope", "faith || hope", "jesus christ", "the", "a", "zzzz",

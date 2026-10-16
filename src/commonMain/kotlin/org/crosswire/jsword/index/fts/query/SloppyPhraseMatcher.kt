@@ -14,8 +14,9 @@ import org.crosswire.jsword.index.analysis.AnalyzedToken
  * The rule that falls out, with `o_i` the query position of phrase term `i` and `p_i` the document position chosen for
  * it: `max(p_i - o_i) - min(p_i - o_i) <= slop`, repeated terms of the phrase on distinct document positions. Two terms
  * in reverse order need a slop of the distance plus two (`"b a"~N` on `a b` needs N >= 2, on `a x b` N >= 3). The
- * scorer is not exactly that formula (its running `end` and the greedy repeat resolution can miss matches); the port
- * reproduces the scorer, and the formula is only the safe over-approximation used for candidate selection.
+ * scorer is not defined by that formula (its running `end` and the greedy repeat resolution might in principle miss a
+ * match the formula allows), but no difference was observed on 4,000 seeded random cases (`SloppyPhraseMatcherTest`)
+ * nor against the baseline oracle; the port reproduces the scorer, and the formula is used only as an upper bound.
  *
  * Positions are the analyzer's stream positions ([AnalyzedToken.position]), never list indexes: Greek, Hebrew and Thai
  * streams have position gaps (removed stop words) and Lucene's phrase offsets include them. Query tokens that share a

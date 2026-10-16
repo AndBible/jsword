@@ -17,6 +17,10 @@ object VocabularyExpansion {
      * The terms of [vocabulary] matching [pattern]: Lucene `WildcardQuery` / `WildcardTermEnum.wildcardEquals`
      * (`*` any run of UTF-16 units, `?` exactly one unit, no escapes, a leading wildcard allowed). There is no cap
      * on the number of terms (`CONSTANT_SCORE_AUTO_REWRITE_DEFAULT`). Order follows [vocabulary].
+     *
+     * For `strong:` the caller passes the Strong's tokens, which are uppercase (`H07225`) while the pattern is
+     * lowercased by the parser (Lucene's `getWildcardQuery`): such a pattern with a letter intentionally matches
+     * nothing, the baseline quirk reproduced for parity.
      */
     fun wildcard(pattern: String, vocabulary: Sequence<String>): List<String> {
         // WildcardTermEnum only tests terms starting with the pattern's literal prefix (up to the first wildcard).

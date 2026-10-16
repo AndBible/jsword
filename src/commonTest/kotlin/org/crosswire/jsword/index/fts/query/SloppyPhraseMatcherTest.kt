@@ -108,7 +108,7 @@ class SloppyPhraseMatcherTest {
         return rec(0)
     }
 
-    @Test fun scorerNeverMatchesWhatTheFormulaRejectsAndIsClose() {
+    @Test fun scorerAgreesWithTheFormulaOnRandomCases() {
         val rnd = kotlin.random.Random(13)
         val vocab = listOf("a", "b", "c", "d")
         var both = 0
@@ -122,6 +122,10 @@ class SloppyPhraseMatcherTest {
             if (port) assertTrue(f, "scorer matched but formula did not: $phrase~$slop on $doc")
             if (port) both++ else if (f) onlyFormula++
         }
-        println("K6 matcher vs formula: $both both, $onlyFormula only the formula (Lucene scorer quirks)")
+        println("K6 matcher vs formula: $both both, $onlyFormula only the formula")
+        // Observed on these 4000 seeded cases: the scorer and the formula agree exactly (the formula is still only
+        // used as an upper bound for candidates); a non-trivial share must match, or the comparison proves nothing.
+        assertTrue(both >= 400, "only $both of 4000 random cases match")
+        assertEquals(0, onlyFormula, "the formula matched where the scorer did not")
     }
 }
