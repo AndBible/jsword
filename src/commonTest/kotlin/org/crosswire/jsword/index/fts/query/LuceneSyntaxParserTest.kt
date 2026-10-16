@@ -63,6 +63,18 @@ class LuceneSyntaxParserTest {
         }
     }
 
+    /** Lucene's RangeIn/RangeEx lexical states: only `value [TO] value` closed by the right bracket is a range; the rest is a ParseException. */
+    @Test fun bracketsThatAreNotACompleteRangeAreParseErrors() {
+        for (q in listOf("[Rom] love", "love [Rom]", "[", "{", "[a", "{a", "[a TO", "{a TO b]", "[a TO b}", "faith [a", "[a TO b TO c]", "[TO a]",
+            "[a TO TO]", "[a b c]", "[\"a", "[]", "{}", "heading:a [x", "a^2 [x", "[a TO b] [x")) {
+            assertFailsWith<QueryParseException>("'$q'") { LuceneSyntaxParser.parse(q, analyzer) }
+        }
+        for (q in listOf("[a TO b]", "{a TO b}", "[a b]", "[\"a b\" TO c]", "faith [a TO b] hope", "[ a  TO  b ]", "[a TO b]^2", "{a b}")) {
+            val e = assertFailsWith<UnsupportedSearchSyntaxException>("'$q'") { LuceneSyntaxParser.parse(q, analyzer) }
+            assertEquals(if (q.contains("[")) "[a TO b]" else "{a TO b}", e.syntax, q)
+        }
+    }
+
     @Test fun bareOperatorsAreDroppedTerms() {
         assertEquals("content:faith", lucene("+ faith"))
         assertEquals("content:faith content:hope", lucene("faith + hope"))

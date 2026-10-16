@@ -47,8 +47,13 @@ object LuceneSyntaxParser {
      * Parses [query]. [analyzer] (the book's analyzer for the `content` field) is used only to find terms and
      * phrases that analyze to nothing, which Lucene drops (see the class KDoc).
      */
-    fun parse(query: String, analyzer: TextAnalyzer? = null): SearchNode =
-        Parser(Lexer.tokenize(query), analyzer).parseTop() ?: SearchNode.Bool(emptyList())
+    fun parse(query: String, analyzer: TextAnalyzer? = null): SearchNode {
+        val tokens = Lexer.tokenize(query)
+        // A lexical error anywhere fails the whole query in Lucene (as a ParseException), also when K6-3 syntax comes
+        // first: report it before any `UnsupportedSearchSyntaxException`, so the failure kind equals the baseline's.
+        tokens.lastOrNull()?.takeIf { it.kind == Kind.ERROR }?.let { throw QueryParseException(it.image) }
+        return Parser(tokens, analyzer).parseTop() ?: SearchNode.Bool(emptyList())
+    }
 
     // ---- lexer ----
 
@@ -90,11 +95,43 @@ object LuceneSyntaxParser {
                 offer(Kind.FUZZY_SLOP, if (c == '~') slopLength(s, i) else 0)
                 offer(Kind.PREFIXTERM, if (c == '*') 1 else if (termLen > 0 && i + termLen < s.length && s[i + termLen] == '*') termLen + 1 else 0)
                 offer(Kind.WILDTERM, termLength(s, i, wild = true))
-                offer(Kind.RANGE, if (c == '[' || c == '{') 1 else 0)
+                offer(Kind.RANGE, if (c == '[' || c == '{') rangeLength(s, i) else 0)
                 if (bestLen == 0) { out += Tok(Kind.ERROR, "Lexical error at column ${i + 1}: unexpected '${s[i]}'"); return out }
                 out += Tok(best, s.substring(i, i + bestLen))
                 i += bestLen
             }
+        }
+
+        /**
+         * The `RangeIn`/`RangeEx` lexical states of `QueryParser.jj`: `[` (or `{`), whitespace-skipped goops or quoted
+         * strings and an optional `TO`, closed by `]` (`}`). The parser needs exactly `value [TO] value`; anything else
+         * (`[Rom]`, `[a`, `[a TO`, `{a TO b]`) is a lexical or parse error in Lucene. Returns the length of a complete
+         * range, 0 when it is malformed (then a [Kind.ERROR] results).
+         */
+        private fun rangeLength(s: String, start: Int): Int {
+            val close = if (s[start] == '[') ']' else '}'
+            var j = start + 1
+            val items = ArrayList<Boolean>() // true = the TO token, false = a value
+            while (true) {
+                while (j < s.length && isWhitespace(s[j])) j++
+                if (j >= s.length) return 0
+                if (s[j] == close) { j++; break }
+                if (s[j] == '"') {
+                    var k = j + 1
+                    while (k < s.length && s[k] != '"') k += if (s[k] == '\\' && k + 1 < s.length && s[k + 1] == '"') 2 else 1
+                    if (k >= s.length || k == j + 1) return 0
+                    items += false
+                    j = k + 1
+                } else {
+                    var k = j
+                    while (k < s.length && s[k] != ' ' && s[k] != close) k++
+                    items += (s.substring(j, k) == "TO")
+                    j = k
+                }
+            }
+            val values = items.filter { !it }.size
+            val valid = values == 2 && (items.size == 2 || (items.size == 3 && items[1]))
+            return if (valid) j - start else 0
         }
 
         /** `_QUOTED_CHAR` sequence between quotes, 0 when unterminated. */
@@ -237,7 +274,7 @@ object LuceneSyntaxParser {
             val tok = peek()
             when (tok.kind) {
                 Kind.TERM, Kind.STAR, Kind.PREFIXTERM, Kind.WILDTERM, Kind.BAREOPER -> idx++
-                Kind.RANGE -> throw UnsupportedSearchSyntaxException(if (tok.image == "[") "[a TO b]" else "{a TO b}")
+                Kind.RANGE -> throw UnsupportedSearchSyntaxException(if (tok.image.startsWith("[")) "[a TO b]" else "{a TO b}")
                 Kind.QUOTED -> return parseQuoted(field)
                 else -> throw QueryParseException("Cannot parse query: unexpected '${tok.image}'")
             }

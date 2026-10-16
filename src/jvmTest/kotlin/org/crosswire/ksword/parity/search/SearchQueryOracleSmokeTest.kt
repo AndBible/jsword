@@ -187,6 +187,8 @@ class SearchQueryOracleSmokeTest {
             "\"faith", "faith\"", "\"", "\"\"", "\" \"", "(faith", "faith)", "()", "(()", ")(", "faith AND", "AND faith", "AND", "OR", "NOT", "faith AND OR hope",
             "\\*", "\\", "faith\\", "~", "~faith", "^", ":", "]", "}", "&&", "||", "&", "|", "faith &", "faith & hope", "3.14", "U.S.A.", "O'Reilly", "c3po",
             "faith \\* hope", "faith AND \\*", "faith OR hope AND \\*", "\"faith hope\"~0.5", "\"faith hope\"~0.9", "\"faith hope\"~-1", "\"faith hope\"~0.",  "faith OR \\* AND hope", "\\* AND faith", "\\* OR faith", "+ AND faith", "faith AND ! hope", "faith OR + AND hope",
+            // brackets left for Lucene (the UI adds a section range, JSword's layer removes only the first): lexical/parse errors in both
+            "[Rom] love", "love [Rom]", "[", "{", "[a", "{a", "[a TO", "{a TO b]", "[a TO b}", "faith [a", "[a TO b TO c]", "[TO a]", "[a TO TO]", "[a b c]", "[\"a", "[]", "{}", "faith {", "heading:a [x", "a^2 [x", "\\[Rom] love",
             "a\\u0062c", "a\\uzz", "\\u0066aith",
             "　faith　hope", "faith\nhope", "faith\thope",
         )
@@ -200,7 +202,7 @@ class SearchQueryOracleSmokeTest {
 
         /** K6-3: accepted by the baseline, rejected here (field other than strong/content, boost, range). */
         val UNSUPPORTED_QUERIES: List<String> = listOf(
-            "heading:x", "faith^2", "[a TO b]", "{a TO b}", "strong:\"h7225 g26\"", "faith AND [a TO b]", "(faith hope)^2", "\"faith hope\"^3", "a:b",
+            "heading:x", "faith^2", "[a TO b]", "{a TO b}", "strong:\"h7225 g26\"", "faith AND [a TO b]", "[a b]", "[\"a b\" TO c]", "{a b}", "[a TO b]^2", "faith [a TO b] hope", "(faith hope)^2", "\"faith hope\"^3", "a:b",
         )
 
         /** Nothing is pending since task 13 (sloppy phrases are evaluated; more shapes in `SearchProximityOracleTest`). */

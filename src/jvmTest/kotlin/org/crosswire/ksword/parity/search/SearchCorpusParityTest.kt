@@ -36,10 +36,12 @@ import kotlin.test.fail
  *
  * Index cache: keyed by the module hash (the zip hash of `parity/k6-corpus.sha256`, or a fingerprint of the module
  * files for KJV/FinPR which come from testmods.zip) plus the analyzer id, [FTS_SCHEMA_VERSION] and a digest of the
- * compiled index/analysis classes, so a change to the builder or the analyzers cannot be masked by a stale cache.
+ * compiled classes that shape an index (everything under `org/crosswire` except the query side), so a change to the builder,
+ * the analyzers or the canonical text (book, filter, passage) cannot be masked by a stale cache. A change in a dependency
+ * outside that (a resource, a library) is not seen: run `rm -rf jsword/build/k6-indexes` before gate runs.
  */
 class SearchCorpusParityTest {
-    private class Outcome(val hits: List<String>?, val failure: String?) {
+    private class Outcome(val hits: List<String>?, val failure: String?, val syntax: String? = null) {
         override fun toString() = hits?.let { "${it.size} verses ${it.take(3)}" } ?: "FAIL($failure)"
         fun sameAs(o: Outcome) = if (hits != null) hits == o.hits else o.hits == null && failure == o.failure
     }
@@ -57,7 +59,7 @@ class SearchCorpusParityTest {
         val key = searcher.search(query)
         Outcome(key.map { it.getOsisRef() }.sorted(), null)
     } catch (e: Throwable) {
-        Outcome(null, kind(e.javaClass.simpleName, e.cause?.javaClass?.simpleName))
+        Outcome(null, kind(e.javaClass.simpleName, e.cause?.javaClass?.simpleName), (e as? UnsupportedSearchSyntaxException)?.syntax)
     }
 
     /** Failure kind: the exception class and its cause's, with the baseline's Lucene `ParseException` and ours as one. */
@@ -71,15 +73,13 @@ class SearchCorpusParityTest {
      * difference, or null. Every rule is narrow: it states the exact shape of both outcomes.
      */
     private fun approvedRule(query: String, base: Outcome, mine: Outcome): String? {
-        val unsupported = mine.failure?.startsWith("UnsupportedSearchSyntaxException") == true
-        if (unsupported) {
-            if (K6_3_FIELD.containsMatchIn(query) || '^' in query || K6_3_RANGE.containsMatchIn(query)) return "K6-3-unsupported-syntax"
-            if (STRONG_PHRASE.containsMatchIn(query) || STRONG_FUZZY.containsMatchIn(query)) return "strong-phrase-or-fuzzy"
-            // A bracket that JSword's range layer left in the Lucene text (a second range, an unbalanced `[`): both fail.
-            if (base.failure?.startsWith("BookException") == true && ('[' in query || '{' in query)) return "malformed-range-bracket"
+        // Matched on the syntax the parser reports (UnsupportedSearchSyntaxException.syntax), not on the query text.
+        mine.syntax?.let { syn ->
+            if (syn == "^" || syn == "[a TO b]" || syn == "{a TO b}" || (syn.endsWith(":") && !syn.startsWith("strong:"))) return "K6-3-unsupported-syntax"
+            if (syn == "strong:term~" || syn == "strong:\"phrase\"") return "strong-phrase-or-fuzzy"
         }
         // term~1 (and larger): Lucene's FuzzyQuery throws a raw IllegalArgumentException, here a typed BookException.
-        if (base.failure == "IllegalArgumentException" && mine.failure?.startsWith("BookException") == true && FUZZY_INT.containsMatchIn(query)) {
+        if (base.failure == "IllegalArgumentException" && mine.failure == "BookException<-QueryParseException" && FUZZY_INT.containsMatchIn(query)) {
             return "fuzzy-similarity-at-least-1"
         }
         if (query.count { it == '(' } > 200 && mine.failure?.startsWith("BookException") == true) return "nesting-over-200"
@@ -138,8 +138,10 @@ class SearchCorpusParityTest {
             Files.walk(loc.toPath()).use { s ->
                 s.filter { Files.isRegularFile(it) }.map { loc.toPath().relativize(it).toString() to it }
                     .filter { (rel, _) ->
-                        (rel.contains("jsword/index/") && !rel.contains("index/fts/query") && !rel.contains("index/search") && !rel.contains("index/query")) ||
-                            rel.contains("tartarus") || rel.contains("snowball", true) || rel.contains("thai", true) || rel.contains("mmseg", true) || rel.contains("analysis")
+                        // every class that shapes an index: book access and canonical text (book, filter, passage, versification, ...),
+                        // builder, analyzers, codecs; not the query side (`index/fts/query`, `index/query`, `index/search`)
+                        (rel.contains("org/crosswire/") && !rel.contains("index/fts/query") && !rel.contains("index/search") && !rel.contains("index/query")) ||
+                            rel.contains("tartarus") || rel.contains("snowball", true) || rel.contains("thai", true) || rel.contains("mmseg", true)
                     }
                     .sorted(compareBy { it.first }).forEach { (rel, p) -> md.update(rel.toByteArray()); md.update(Files.readAllBytes(p)) }
             }
@@ -288,12 +290,7 @@ class SearchCorpusParityTest {
     }
 
     private companion object {
-        val RULES = listOf("K6-3-unsupported-syntax", "strong-phrase-or-fuzzy", "malformed-range-bracket", "fuzzy-similarity-at-least-1", "nesting-over-200")
-        /** A field prefix other than `strong:` / `content:` (the K6-3 dropped forms). */
-        val K6_3_FIELD = Regex("(^|[\\s(+\\-!])(?!strong:|content:)\\p{L}[\\p{L}\\p{M}\\p{N}_]*:")
-        val K6_3_RANGE = Regex("[\\[{][^\\]}]* TO [^\\]}]*[\\]}]")
-        val STRONG_PHRASE = Regex("strong:\"")
-        val STRONG_FUZZY = Regex("strong:[^\\s)]+~")
+        val RULES = listOf("K6-3-unsupported-syntax", "strong-phrase-or-fuzzy", "fuzzy-similarity-at-least-1", "nesting-over-200")
         val FUZZY_INT = Regex("~[1-9][0-9]*(\\.[0-9]+)?(\\s|\\)|$)")
     }
 }

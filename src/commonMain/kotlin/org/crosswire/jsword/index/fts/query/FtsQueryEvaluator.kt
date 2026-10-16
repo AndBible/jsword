@@ -22,13 +22,13 @@ import org.crosswire.jsword.index.fts.UnsupportedSearchSyntaxException
  * - [SearchNode.Bool]: `BooleanQuery`: the intersection of the MUST clauses, else the union of the SHOULD clauses
  *   (SHOULD clauses are optional next to a MUST), minus the MUST_NOT clauses; no MUST and no SHOULD (a purely
  *   negative query) matches nothing.
+ * - [SearchNode.StrongTerm] with a wildcard (`strong:h7*`) is matched, lowercased as Lucene's `getWildcardQuery` does,
+ *   against the uppercase padded tokens of the strongs table, so it intentionally matches nothing whenever the
+ *   pattern contains a letter (the baseline quirk, reproduced for parity; verified on KJV by the corpus matrix).
  * - [SearchNode.StrongTerm] without wildcard: `store.strongs` of the padded number (`h7225` is `H07225`).
  *   A term of several whitespace-separated numbers intersects them (the strongs table has no positions, so the
  *   baseline's phrase over the `strong` field is approximated).
  *
- * - A wildcard [SearchNode.StrongTerm] (`strong:h7*`) is matched, lowercased as Lucene's `getWildcardQuery` does,
- *   against the uppercase padded tokens of the strongs table, so it intentionally matches nothing whenever the
- *   pattern contains a letter (the baseline quirk, reproduced for parity; verified on KJV by the corpus matrix).
  * - [SearchNode.Wildcard], [SearchNode.Prefix], [SearchNode.Fuzzy] and wildcard [SearchNode.StrongTerm]: expanded
  *   against the index vocabulary by [VocabularyExpansion] (Lucene's term-dictionary expansion) and the matches of
  *   the terms are united, [MATCH_BATCH] terms per query.

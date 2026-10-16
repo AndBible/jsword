@@ -1,5 +1,6 @@
 package org.crosswire.ksword.parity.search
 
+import org.crosswire.jsword.index.analysis.SWIFT_ORACLE_QUERY_CASES
 import org.crosswire.jsword.index.search.SearchType
 
 /**
@@ -56,6 +57,16 @@ private val EMPTY_TERM: Map<String, List<String>> = mapOf(
     "FarOPV" to listOf("و", "از", "و از", "+و +از", "\"و از\"", "ـ", "‌", "و AND ‌", "از*", "ـ*"),
 )
 
+/** `SearchControl.cleanSearchString` + `SearchType.decorate` for the fixture's word modes (the app builds the query this way). */
+private fun swiftPrepare(input: String, wordMode: String): String {
+    val cleaned = input.replace("strong:", "strongCOLON").replace(":", " ").replace("strongCOLON", "strong:").replace("  ", " ").trim { it <= ' ' }
+    return when (wordMode) {
+        "allWords" -> SearchType.ALL_WORDS.decorate(cleaned)
+        "phrase" -> SearchType.PHRASE.decorate(cleaned)
+        else -> SearchType.ANY_WORDS.decorate(cleaned)
+    }
+}
+
 private fun parts(s: String): List<String> =
     if (s.contains(' ')) s.split(' ').filter { it.isNotEmpty() } else if (s.length == 4) listOf(s.substring(0, 2), s.substring(2)) else listOf(s)
 
@@ -96,6 +107,11 @@ private fun buildSpecs(initials: String, mw: ModuleWords): List<SearchQuerySpec>
     any(section[0] + a); any(section[1] + a); any(section[2] + a)
     hit("+[Gen-Rev] $a"); hit("-[Gen-Mal] $a"); any("-[Mat-Rev] $x1")
     any("+[Gen-Mal] +[Mat-Rev] $a")
+    // a second bracket reaches Lucene's parser (the UI adds a section range, the JSword layer removes only the first): parse errors in both
+    any("+[Gen-Mal] [Rom] $a"); any("+[Mat-Rev] [Rom] $a"); any("[Rom] $a")
+    // the UI's section term with all-words text that carries a typed operator
+    any(SearchType.ALL_WORDS.decorate("$x1 AND $x2")); any(SearchType.ALL_WORDS.decorate("$x1 NOT $x2"))
+    any(section[0] + SearchType.ALL_WORDS.decorate("$x1 AND $x2"))
     any("+[Gen-Mal]")
     hit("$x1 ~2 $x2"); hit("$x1 ~ $x2"); any("$a ~3 $b"); any("+[Gen-Mal] $x1 ~5 $x2")
     // booleans, prohibited, the five Review shapes, nesting
@@ -129,6 +145,16 @@ private fun buildSpecs(initials: String, mw: ModuleWords): List<SearchQuerySpec>
         hit("$a $faith"); any("+$a +$faith"); any("\"$a $faith\""); any("$a$faith"); any("$faith$a"); hit("$a OR Jesus"); any("$x1 AND $faith"); any("神爱 AND $faith")
         any("神"); any("神爱世人"); any("\"神爱世人\""); any("上帝"); any("+神 +爱"); any("神 爱"); any("，"); any("。")
         any("神$faith~"); any("${a.take(1)}*$faith")
+    }
+    if (initials == "KJV") {
+        any("+[1 Corinthians] $a"); any("+[1 Corinthians] $x1"); any("+[1 Corinthians] " + SearchType.ALL_WORDS.decorate("$x1 $x2"))
+        any("+[Song of Solomon] $a"); any("-[1 Corinthians] $x1")
+        // spec 6.2: the Swift fixture's query cases, prepared as the app does (cleanSearchString + SearchType.decorate)
+        for (c in SWIFT_ORACLE_QUERY_CASES) any(swiftPrepare(c.input, c.wordMode))
+    }
+    // LinkControl.checkStrongs probes (the app's "does this module have Strong's" check, spec 4.4)
+    if (initials in setOf("KJV", "ChiUns", "ChiUn", "Byz")) {
+        any("+[Gen 1:1] strong:h7225"); any("+[John 1:1] strong:g746"); any("+[Gen 1:1] strong:g746")
     }
     // K6-9: Strong's numbers
     STRONGS[initials]?.let { s ->
