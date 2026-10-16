@@ -17,15 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import org.crosswire.jsword.book.BookAdvancedParentTst;
+import org.crosswire.jsword.book.BookAdvancedParentTst
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class SwordBookTest extends BookAdvancedParentTst {
-}
+class SwordBookTest : BookAdvancedParentTst()

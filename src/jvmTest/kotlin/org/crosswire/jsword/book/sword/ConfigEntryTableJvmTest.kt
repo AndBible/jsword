@@ -17,75 +17,73 @@
  * © CrossWire Bible Society, 2009 - 2016
  *
  */
-package org.crosswire.jsword.book.sword;
+package org.crosswire.jsword.book.sword
 
-import java.io.File;
-import java.io.IOException;
-
-import org.crosswire.common.util.IniSection;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookData;
-import org.crosswire.jsword.book.BookException;
-import org.crosswire.jsword.book.BookMetaData;
-import org.crosswire.jsword.book.Books;
-import org.crosswire.jsword.book.FeatureType;
-import org.crosswire.jsword.book.OSISUtil;
-import org.crosswire.jsword.passage.Key;
-import org.crosswire.jsword.passage.NoSuchKeyException;
-import fi.sykero.kdom.Element;
-import org.junit.Assert;
-import org.junit.Test;
+import fi.sykero.kdom.Element
+import org.crosswire.common.util.IniSection
+import org.crosswire.jsword.book.BookData
+import org.crosswire.jsword.book.BookException
+import org.crosswire.jsword.book.BookMetaData
+import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.book.FeatureType
+import org.crosswire.jsword.book.OSISUtil
+import org.crosswire.jsword.passage.NoSuchKeyException
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * A Raw File format that allows for each verse to have it's own storage.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author mbergmann
  * @author DM Smith
  */
-public class ConfigEntryTableJvmTest {
+class ConfigEntryTableJvmTest {
 
     // TODO(DMS): make this test use mocks or setup its own environment
     @Test
-    public void failingAddConfigEntry() {
-        String modName = "TestBook";
-        IniSection table = new IniSection(modName);
-        Assert.assertNotNull(table);
+    fun failingAddConfigEntry() {
+        val modName = "TestBook"
+        val table = IniSection(modName)
+        assertNotNull(table)
 
-        table.add(BookMetaData.KEY_LANG, "de");
-        Assert.assertEquals("de", table.get(BookMetaData.KEY_LANG));
-        FeatureType feature = FeatureType.STRONGS_NUMBERS;
-        table.add(SwordBookMetaData.KEY_FEATURE, FeatureType.STRONGS_NUMBERS.toString());
+        table.add(BookMetaData.KEY_LANG, "de")
+        assertEquals("de", table.get(BookMetaData.KEY_LANG))
+        val feature = FeatureType.STRONGS_NUMBERS
+        table.add(SwordBookMetaData.KEY_FEATURE, FeatureType.STRONGS_NUMBERS.toString())
         if (table.containsValue(SwordBookMetaData.KEY_FEATURE, feature.toString())) {
-            Assert.assertTrue("Should have Strongs", true);
+            assertTrue(true, "Should have Strongs")
         } else {
             // Many "features" are GlobalOptionFilters, which in the Sword C++ API
             // indicate a class to use for filtering.
             // These mostly have the source type prepended to the feature
-            StringBuilder buffer = new StringBuilder(table.get(SwordBookMetaData.KEY_SOURCE_TYPE));
-            buffer.append(feature);
+            val buffer = StringBuilder(table.get(SwordBookMetaData.KEY_SOURCE_TYPE)!!)
+            buffer.append(feature)
             if (table.containsValue(SwordBookMetaData.KEY_GLOBAL_OPTION_FILTER, buffer.toString())) {
-                Assert.assertTrue("Should have Strongs", true);
+                assertTrue(true, "Should have Strongs")
             } else {
                 // But some do not
-                Assert.assertTrue("Should have Strongs",  table.containsValue(SwordBookMetaData.KEY_GLOBAL_OPTION_FILTER, feature.toString()));
+                assertTrue(table.containsValue(SwordBookMetaData.KEY_GLOBAL_OPTION_FILTER, feature.toString()), "Should have Strongs")
             }
         }
-        Book book = Books.installed().getBook("KJV");
-        Assert.assertTrue("Should have Strongs", book.getBookMetaData().hasFeature(FeatureType.STRONGS_NUMBERS));
+        val book = Books.installed().getBook("KJV")!!
+        assertTrue(book.bookMetaData.hasFeature(FeatureType.STRONGS_NUMBERS), "Should have Strongs")
 
         try {
-            Key key = book.getKey("Gen 1:1");
-            BookData data = new BookData(book, key);
+            val key = book.getKey("Gen 1:1")
+            val data = BookData(book, key)
             try {
-                Element osis = data.getOsisFragment();
-                String strongsNumbers = OSISUtil.getStrongsNumbers(osis);
-                Assert.assertTrue("No Strongs in KJV", strongsNumbers.length() > 0);
-            } catch (BookException ex) {
-                Assert.fail("Should have Gen 1:1 data");
+                val osis: Element = data.osisFragment
+                val strongsNumbers = OSISUtil.getStrongsNumbers(osis)
+                assertTrue(strongsNumbers.length > 0, "No Strongs in KJV")
+            } catch (ex: BookException) {
+                fail("Should have Gen 1:1 data")
             }
-        } catch (NoSuchKeyException ex) {
-            Assert.fail("Should have Gen 1:1 key");
+        } catch (ex: NoSuchKeyException) {
+            fail("Should have Gen 1:1 key")
         }
     }
 

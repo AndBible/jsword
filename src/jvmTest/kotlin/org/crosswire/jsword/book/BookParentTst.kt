@@ -17,39 +17,41 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test. For when we don't actually want to do testing of responses
- * 
+ *
+ * Open (not abstract) so that Gradle still runs this class itself, as it did in Java, and the
+ * subclasses inherit [testNothing].
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  */
-public class BookParentTst {
-    protected BookMetaData[] bmds;
-    protected Book[] bibles;
+open class BookParentTst {
+    protected lateinit var bmds: Array<BookMetaData?>
+    protected lateinit var bibles: Array<Book?>
 
-    @Before
-    public void setUp() throws Exception {
-        List<Book> lbmds = Books.installed().getBooks(BookFilters.getOnlyBibles());
-        bibles = new Book[lbmds.size()];
-        bmds = new BookMetaData[lbmds.size()];
+    @BeforeTest
+    @Throws(Exception::class)
+    open fun setUp() {
+        val lbmds = Books.installed().getBooks(BookFilters.getOnlyBibles())
+        bibles = arrayOfNulls(lbmds.size)
+        bmds = arrayOfNulls(lbmds.size)
 
-        int i = 0;
-        for (Book book : lbmds) {
-            bmds[i] = book.getBookMetaData();
-            i++;
+        var i = 0
+        for (book in lbmds) {
+            bmds[i] = book.bookMetaData
+            i++
         }
     }
 
     @Test
-    public void testNothing() {
-        Assert.assertTrue(true);
+    open fun testNothing() {
+        assertTrue(true)
     }
 }

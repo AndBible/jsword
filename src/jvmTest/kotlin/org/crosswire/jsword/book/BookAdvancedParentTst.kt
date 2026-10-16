@@ -17,16 +17,13 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class BookAdvancedParentTst extends BookParentTst {
-    public BookAdvancedParentTst() {
-    }
-}
+open class BookAdvancedParentTst : BookParentTst()

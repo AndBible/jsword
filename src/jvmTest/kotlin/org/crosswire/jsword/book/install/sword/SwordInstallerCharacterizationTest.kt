@@ -17,47 +17,49 @@
  * \u00A9 CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book.install.sword;
+package org.crosswire.jsword.book.install.sword
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
-
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.crosswire.common.progress.Progress;
-import org.crosswire.common.util.CWClassLoader;
-import org.crosswire.common.util.CWProject;
-import org.crosswire.common.util.NetUtil;
-import org.crosswire.common.util.NetUtilJvm;
-import org.crosswire.jsword.SuspendCalls;
-import org.crosswire.jsword.book.Book;
-import org.crosswire.jsword.book.BookFilters;
-import org.crosswire.jsword.book.Books;
-import org.crosswire.jsword.book.install.DownloadCancelledException;
-import org.crosswire.jsword.book.install.InstallException;
-import org.crosswire.jsword.book.install.Installer;
-import org.crosswire.jsword.book.install.InstallerFactory;
-import org.crosswire.jsword.book.sword.SwordBookMetaData;
-import org.crosswire.jsword.book.sword.SwordBookMetaDataJvm;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
+import org.crosswire.common.progress.Progress
+import org.crosswire.common.util.CWClassLoader
+import org.crosswire.common.util.CWProject
+import org.crosswire.common.util.NetUtilJvm
+import org.crosswire.common.util.splitLikeJava
+import org.crosswire.jsword.book.Book
+import org.crosswire.jsword.book.BookFilters
+import org.crosswire.jsword.book.Books
+import org.crosswire.jsword.book.install.DownloadCancelledException
+import org.crosswire.jsword.book.install.InstallException
+import org.crosswire.jsword.book.install.Installer
+import org.crosswire.jsword.book.install.InstallerFactory
+import org.crosswire.jsword.book.sword.SwordBookMetaData
+import org.crosswire.jsword.book.sword.SwordBookMetaDataJvm
+import org.junit.Assume
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
+import java.lang.reflect.Field
+import java.net.URI
+import java.nio.file.Files
+import java.util.Locale
+import java.util.zip.GZIPOutputStream
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
- * Characterization of {@link AbstractSwordInstaller}, {@link HttpSwordInstaller},
- * {@link HttpsSwordInstaller} and their factories: pins the behaviour of the Java
+ * Characterization of [AbstractSwordInstaller], [HttpSwordInstaller],
+ * [HttpsSwordInstaller] and their factories: pins the behaviour of the Java
  * classes before they are converted to Kotlin. A catalog (mods.d.tar.gz) is built
  * locally from two conf files of ~/.sword and put where the installer expects its
  * cached index, or handed out by a subclass that overrides the protected
@@ -66,558 +68,626 @@ import org.junit.Test;
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class SwordInstallerCharacterizationTest {
-    private Object savedInstance;
-    private String savedHomeProperty;
-    private File tempHome;
-    private File work;
+class SwordInstallerCharacterizationTest {
+    private var savedInstance: Any? = null
+    private var savedHomeProperty: String? = null
+    private lateinit var tempHome: File
+    private lateinit var work: File
 
-    @Before
-    public void setUp() throws Exception {
-        Field instanceField = CWProject.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        savedInstance = instanceField.get(null);
-        savedHomeProperty = System.getProperty("jsword.home");
+    @BeforeTest
+    @Throws(Exception::class)
+    fun setUp() {
+        val instanceField: Field = CWProject::class.java.getDeclaredField("instance")
+        instanceField.isAccessible = true
+        savedInstance = instanceField.get(null)
+        savedHomeProperty = System.getProperty("jsword.home")
 
-        tempHome = Files.createTempDirectory("swordinstaller-test").toFile();
-        System.setProperty("jsword.home", tempHome.getAbsolutePath());
+        tempHome = Files.createTempDirectory("swordinstaller-test").toFile()
+        System.setProperty("jsword.home", tempHome.absolutePath)
 
         // Fresh, not yet established CWProject so that the temporary home is used
-        java.lang.reflect.Method reset = CWProject.class.getDeclaredMethod("reset");
-        reset.setAccessible(true);
-        reset.invoke(null);
-        CWProject.instance().setFrontendName("jsword-test");
+        val reset = CWProject::class.java.getDeclaredMethod("reset")
+        reset.isAccessible = true
+        reset.invoke(null)
+        CWProject.instance().setFrontendName("jsword-test")
 
-        work = Files.createTempDirectory("swordinstaller-work").toFile();
+        work = Files.createTempDirectory("swordinstaller-work").toFile()
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterTest
+    @Throws(Exception::class)
+    fun tearDown() {
         // A cancelled job may have interrupted this thread
-        Thread.interrupted();
-        Field instanceField = CWProject.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, savedInstance);
+        Thread.interrupted()
+        val instanceField: Field = CWProject::class.java.getDeclaredField("instance")
+        instanceField.isAccessible = true
+        instanceField.set(null, savedInstance)
         if (savedHomeProperty == null) {
-            System.clearProperty("jsword.home");
+            System.clearProperty("jsword.home")
         } else {
-            System.setProperty("jsword.home", savedHomeProperty);
+            System.setProperty("jsword.home", savedHomeProperty!!)
         }
 
         // Re-point the statics that establishing the temporary home changed
-        CWProject restored = (CWProject) savedInstance;
-        CWClassLoader.setHome(restored.getProjectResourceDirs());
-        URI writable = restored.getWritableProjectDir();
-        NetUtilJvm.setURICacheDir(new File(new File(writable), "netcache"));
+        val restored = savedInstance as CWProject
+        CWClassLoader.setHome(restored.projectResourceDirs)
+        val writable = restored.writableProjectDir
+        NetUtilJvm.setURICacheDir(File(File(writable!!), "netcache"))
 
-        deleteRecursively(tempHome);
-        deleteRecursively(work);
-    }
-
-    private static void deleteRecursively(File file) {
-        File[] children = file.listFiles();
-        if (children != null) {
-            for (File child : children) {
-                deleteRecursively(child);
-            }
-        }
-        file.delete();
-    }
-
-    private static byte[] conf(String fileName) throws IOException {
-        File f = new File(System.getProperty("user.home"), ".sword/mods.d/" + fileName);
-        Assume.assumeTrue("missing test module conf " + fileName, f.isFile());
-        return Files.readAllBytes(f.toPath());
-    }
-
-    /** The value of a key=value line of a conf. */
-    private static String confValue(byte[] conf, String key) {
-        for (String line : new String(conf, StandardCharsets.UTF_8).split("\r?\n")) {
-            if (line.startsWith(key + "=")) {
-                return line.substring(key.length() + 1).trim();
-            }
-        }
-        return null;
-    }
-
-    private static void addEntry(TarArchiveOutputStream tar, String name, byte[] data) throws IOException {
-        TarArchiveEntry entry = new TarArchiveEntry(name);
-        entry.setSize(data.length);
-        tar.putArchiveEntry(entry);
-        tar.write(data);
-        tar.closeArchiveEntry();
-    }
-
-    /**
-     * A catalog with the given confs, plus a directory entry, an entry that is not a conf and
-     * an empty conf, which have to be skipped.
-     */
-    private static byte[] catalog(String... confFiles) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        GZIPOutputStream gz = new GZIPOutputStream(bos);
-        TarArchiveOutputStream tar = new TarArchiveOutputStream(gz);
-        TarArchiveEntry dir = new TarArchiveEntry("mods.d/");
-        tar.putArchiveEntry(dir);
-        tar.closeArchiveEntry();
-        addEntry(tar, "mods.d/readme.txt", "not a conf".getBytes(StandardCharsets.UTF_8));
-        addEntry(tar, "mods.d/empty.conf", new byte[0]);
-        for (String confFile : confFiles) {
-            addEntry(tar, "mods.d/" + confFile, conf(confFile));
-        }
-        tar.close();
-        return bos.toByteArray();
-    }
-
-    private static HttpSwordInstaller installer(String host) {
-        HttpSwordInstaller installer = new HttpSwordInstaller();
-        installer.setHost(host);
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        return installer;
-    }
-
-    private static void putCache(AbstractSwordInstaller installer, byte[] catalog) throws Exception {
-        File cache = new File(installer.getCachedIndexFile().getPath());
-        Files.write(cache.toPath(), catalog);
-    }
-
-    private static List<String> initials(List<Book> books) {
-        List<String> result = new ArrayList<String>();
-        for (Book book : books) {
-            result.add(book.getInitials());
-        }
-        Collections.sort(result);
-        return result;
+        deleteRecursively(tempHome)
+        deleteRecursively(work)
     }
 
     /** An installer whose "download" copies the catalog from a local file and records the requests. */
-    private class LocalInstaller extends HttpSwordInstaller {
-        final List<String> requests = new ArrayList<String>();
-        byte[] catalog;
-        InstallException failure;
-        URI remote;
+    private class LocalInstaller : HttpSwordInstaller() {
+        val requests: MutableList<String> = ArrayList()
+        var catalog: ByteArray? = null
+        var failure: InstallException? = null
+        var remote: URI? = null
 
-        @Override
-        protected Object download(Progress job, String dir, String file, URI dest, kotlin.coroutines.Continuation<? super kotlin.Unit> continuation) throws InstallException {
-            requests.add(dir + "|" + file);
+        @Throws(InstallException::class)
+        override suspend fun download(job: Progress?, dir: String?, file: String?, dest: URI?) {
+            requests.add("$dir|$file")
             if (failure != null) {
-                throw failure;
+                throw failure!!
             }
             try {
-                Files.write(new File(dest.getPath()).toPath(), catalog);
-            } catch (IOException e) {
-                throw new InstallException("local copy failed", e);
+                Files.write(File(dest!!.path).toPath(), catalog!!)
+            } catch (e: IOException) {
+                throw InstallException("local copy failed", e)
             }
-            return kotlin.Unit.INSTANCE;
         }
 
-        @Override
-        public URI toRemoteURI(Book book) {
-            return remote != null ? remote : super.toRemoteURI(book);
+        override fun toRemoteURI(book: Book): URI? {
+            return if (remote != null) remote else super.toRemoteURI(book)
+        }
+    }
+
+    /** Opens up the protected download method of the https installer. */
+    private class ExposedHttpsInstaller : HttpsSwordInstaller() {
+        @Throws(InstallException::class)
+        suspend fun exposedDownload(job: Progress?, dir: String?, file: String?, dest: URI?) {
+            download(job, dir, file, dest)
         }
     }
 
     @Test
-    public void testCachedIndexListsBothBooksSorted() throws Exception {
-        HttpSwordInstaller installer = installer("cache.invalid");
-        putCache(installer, catalog("kjv.conf", "strongsgreek.conf"));
+    @Throws(Exception::class)
+    fun testCachedIndexListsBothBooksSorted() {
+        val installer = installer("cache.invalid")
+        putCache(installer, catalog("kjv.conf", "strongsgreek.conf"))
 
-        List<Book> books = installer.getBooks();
-        Assert.assertEquals(Arrays.asList("KJV", "StrongsGreek"), initials(books));
-        Assert.assertTrue(installer.loaded);
+        val books = installer.getBooks()
+        assertEquals(listOf("KJV", "StrongsGreek"), initials(books))
+        assertTrue(loaded(installer))
         // A fresh list each time
-        Assert.assertNotSame(books, installer.getBooks());
-        books.clear();
-        Assert.assertEquals(2, installer.getBooks().size());
+        assertNotSame(books, installer.getBooks())
+        books.clear()
+        assertEquals(2, installer.getBooks().size)
 
-        Book kjv = installer.getBook("KJV");
-        Assert.assertEquals(confValue(conf("kjv.conf"), "Version"), kjv.getBookMetaData().getProperty("Version"));
-        Assert.assertEquals("2.3", kjv.getBookMetaData().getProperty("Version"));
-        Assert.assertEquals("StrongsGreek", installer.getBook("StrongsGreek").getInitials());
+        val kjv = installer.getBook("KJV")!!
+        assertEquals(confValue(conf("kjv.conf"), "Version"), kjv.bookMetaData.getProperty("Version"))
+        assertEquals("2.3", kjv.bookMetaData.getProperty("Version"))
+        assertEquals("StrongsGreek", installer.getBook("StrongsGreek")!!.initials)
     }
 
     @Test
-    public void testCachedIndexLocation() throws Exception {
-        HttpSwordInstaller installer = installer("cache.invalid");
-        File dir = new File(installer.getCachedIndexDir().getPath());
-        Assert.assertEquals("download-cache.invalid_cat", dir.getName());
-        Assert.assertTrue(dir.isDirectory());
-        Assert.assertTrue(dir.getPath().startsWith(tempHome.getCanonicalPath())
-                || dir.getPath().startsWith(tempHome.getAbsolutePath()));
-        Assert.assertEquals(new File(dir, "mods.d.tar.gz").getPath(), installer.getCachedIndexFile().getPath());
+    @Throws(Exception::class)
+    fun testCachedIndexLocation() {
+        val installer = installer("cache.invalid")
+        val dir = File(cachedIndexDir(installer).path)
+        assertEquals("download-cache.invalid_cat", dir.name)
+        assertTrue(dir.isDirectory)
+        assertTrue(dir.path.startsWith(tempHome.canonicalPath)
+                || dir.path.startsWith(tempHome.absolutePath))
+        assertEquals(File(dir, "mods.d.tar.gz").path, cachedIndexFile(installer).path)
     }
 
     @Test
-    public void testGetBookLookup() throws Exception {
-        HttpSwordInstaller installer = installer("lookup.invalid");
-        putCache(installer, catalog("kjv.conf", "strongsgreek.conf"));
+    @Throws(Exception::class)
+    fun testGetBookLookup() {
+        val installer = installer("lookup.invalid")
+        putCache(installer, catalog("kjv.conf", "strongsgreek.conf"))
 
-        Assert.assertNull(installer.getBook("NOPE"));
-        Assert.assertNull(installer.getBook(""));
-        Book kjv = installer.getBook("KJV");
-        Assert.assertEquals("KJV", kjv.getInitials());
+        assertNull(installer.getBook("NOPE"))
+        assertNull(installer.getBook(""))
+        val kjv = installer.getBook("KJV")!!
+        assertEquals("KJV", kjv.initials)
         // case insensitive initials
-        Assert.assertEquals("KJV", installer.getBook("kjv").getInitials());
+        assertEquals("KJV", installer.getBook("kjv")!!.initials)
         // by name, exact and case insensitive
-        Assert.assertEquals("KJV", installer.getBook(kjv.getName()).getInitials());
-        Assert.assertEquals("KJV", installer.getBook(kjv.getName().toUpperCase()).getInitials());
-        Assert.assertEquals("StrongsGreek", installer.getBook("strongsgreek").getInitials());
+        assertEquals("KJV", installer.getBook(kjv.name)!!.initials)
+        assertEquals("KJV", installer.getBook(kjv.name.uppercase(Locale.getDefault()))!!.initials)
+        assertEquals("StrongsGreek", installer.getBook("strongsgreek")!!.initials)
     }
 
     @Test
-    public void testFilteredBooks() throws Exception {
-        HttpSwordInstaller installer = installer("filter.invalid");
-        putCache(installer, catalog("kjv.conf", "strongsgreek.conf"));
+    @Throws(Exception::class)
+    fun testFilteredBooks() {
+        val installer = installer("filter.invalid")
+        putCache(installer, catalog("kjv.conf", "strongsgreek.conf"))
 
-        List<Book> bibles = installer.getBooks(BookFilters.getBibles());
-        Assert.assertEquals(Arrays.asList("KJV"), initials(bibles));
-        Assert.assertEquals(2, installer.getBooks(BookFilters.getAll()).size());
+        val bibles = installer.getBooks(BookFilters.getBibles())
+        assertEquals(listOf("KJV"), initials(bibles))
+        assertEquals(2, installer.getBooks(BookFilters.getAll()).size)
     }
 
     @Test
-    public void testBooksOfACatalogHaveNoConfFile() throws Exception {
-        HttpSwordInstaller installer = installer("noconf.invalid");
-        putCache(installer, catalog("kjv.conf"));
-        Book kjv = installer.getBook("KJV");
-        Assert.assertNull(((SwordBookMetaData) kjv.getBookMetaData()).getConfigFile());
+    @Throws(Exception::class)
+    fun testBooksOfACatalogHaveNoConfFile() {
+        val installer = installer("noconf.invalid")
+        putCache(installer, catalog("kjv.conf"))
+        val kjv = installer.getBook("KJV")!!
+        assertNull((kjv.bookMetaData as SwordBookMetaData).configFile)
         // Without a conf file in the download dir the book is never newer; no remote is asked
-        Assert.assertFalse(SuspendCalls.isNewer(installer, kjv));
+        assertFalse(runBlocking { installer.isNewer(kjv) })
     }
 
     @Test
-    public void testMissingCacheListsNothingUntilTheCatalogIsReloaded() throws Exception {
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("missing.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        installer.catalog = catalog("kjv.conf", "strongsgreek.conf");
+    @Throws(Exception::class)
+    fun testMissingCacheListsNothingUntilTheCatalogIsReloaded() {
+        val installer = LocalInstaller()
+        installer.setHost("missing.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setCatalogDirectory("/cat")
+        installer.catalog = catalog("kjv.conf", "strongsgreek.conf")
 
         // getBooks never downloads (K5b D4)
-        Assert.assertTrue(installer.getBooks().isEmpty());
-        Assert.assertTrue(installer.requests.isEmpty());
-        Assert.assertFalse(installer.loaded);
+        assertTrue(installer.getBooks().isEmpty())
+        assertTrue(installer.requests.isEmpty())
+        assertFalse(loaded(installer))
 
-        SuspendCalls.reload(installer);
-        Assert.assertEquals(Arrays.asList("KJV", "StrongsGreek"), initials(installer.getBooks()));
-        Assert.assertEquals(Arrays.asList("/cat|mods.d.tar.gz"), installer.requests);
+        runBlocking { installer.reloadBookList() }
+        assertEquals(listOf("KJV", "StrongsGreek"), initials(installer.getBooks()))
+        assertEquals(listOf("/cat|mods.d.tar.gz"), installer.requests)
         // Loaded now: no second download
-        installer.getBooks();
-        Assert.assertEquals(1, installer.requests.size());
+        installer.getBooks()
+        assertEquals(1, installer.requests.size)
     }
 
     @Test
-    public void testReloadBookListReplacesTheList() throws Exception {
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("reload.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        installer.catalog = catalog("kjv.conf", "strongsgreek.conf");
+    @Throws(Exception::class)
+    fun testReloadBookListReplacesTheList() {
+        val installer = LocalInstaller()
+        installer.setHost("reload.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setCatalogDirectory("/cat")
+        installer.catalog = catalog("kjv.conf", "strongsgreek.conf")
         // getBooks never downloads: the catalog is fetched by an explicit reload
-        Assert.assertTrue(installer.getBooks().isEmpty());
-        SuspendCalls.reload(installer);
-        Assert.assertEquals(2, installer.getBooks().size());
-        File zip = new File(new File(installer.getCachedIndexDir().getPath()), "mods.d.zip");
-        Assert.assertTrue(zip.isFile());
+        assertTrue(installer.getBooks().isEmpty())
+        runBlocking { installer.reloadBookList() }
+        assertEquals(2, installer.getBooks().size)
+        val zip = File(File(cachedIndexDir(installer).path), "mods.d.zip")
+        assertTrue(zip.isFile)
 
-        installer.catalog = catalog("kjv.conf");
-        SuspendCalls.reload(installer);
-        Assert.assertFalse(installer.loaded);
-        Assert.assertEquals(2, installer.requests.size());
-        Assert.assertTrue(zip.isFile());
-        Assert.assertFalse(new File(zip.getPath() + ".old").exists());
-        Assert.assertEquals(Arrays.asList("KJV"), initials(installer.getBooks()));
+        installer.catalog = catalog("kjv.conf")
+        runBlocking { installer.reloadBookList() }
+        assertFalse(loaded(installer))
+        assertEquals(2, installer.requests.size)
+        assertTrue(zip.isFile)
+        assertFalse(File(zip.path + ".old").exists())
+        assertEquals(listOf("KJV"), initials(installer.getBooks()))
     }
 
     @Test
-    public void testFailureOfTheDownloadPropagatesFromReloadAndIsLoggedByGetBooks() throws Exception {
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("fail.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        installer.failure = new InstallException("boom");
+    @Throws(Exception::class)
+    fun testFailureOfTheDownloadPropagatesFromReloadAndIsLoggedByGetBooks() {
+        val installer = LocalInstaller()
+        installer.setHost("fail.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setCatalogDirectory("/cat")
+        installer.failure = InstallException("boom")
         try {
-            SuspendCalls.reload(installer);
-            Assert.fail();
-        } catch (InstallException expected) {
-            Assert.assertSame(installer.failure, expected);
+            runBlocking { installer.reloadBookList() }
+            fail()
+        } catch (expected: InstallException) {
+            assertSame(installer.failure, expected)
         }
         // getBooks swallows it and answers an empty (modifiable) list
-        List<Book> books = installer.getBooks();
-        Assert.assertTrue(books.isEmpty());
-        books.add(null);
-        Assert.assertFalse(installer.loaded);
+        val books: MutableList<Book?> = installer.getBooks().toCollection(ArrayList<Book?>())
+        assertTrue(books.isEmpty())
+        books.add(null)
+        assertFalse(loaded(installer))
     }
 
     @Test
-    public void testCancelledDownloadKeepsItsType() throws Exception {
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("cancel.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        DownloadCancelledException cancelled = new DownloadCancelledException(URI.create("http://x/y"));
-        installer.failure = cancelled;
+    @Throws(Exception::class)
+    fun testCancelledDownloadKeepsItsType() {
+        val installer = LocalInstaller()
+        installer.setHost("cancel.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setCatalogDirectory("/cat")
+        val cancelled = DownloadCancelledException(URI.create("http://x/y"))
+        installer.failure = cancelled
         try {
-            SuspendCalls.reload(installer);
-            Assert.fail();
-        } catch (DownloadCancelledException expected) {
-            Assert.assertSame(cancelled, expected);
-            Assert.assertEquals("Downloading http://x/y was cancelled", expected.getMessage());
+            runBlocking { installer.reloadBookList() }
+            fail()
+        } catch (expected: DownloadCancelledException) {
+            assertSame(cancelled, expected)
+            assertEquals("Downloading http://x/y was cancelled", expected.message)
         }
 
         // The same for install: the exception is rethrown as it is
-        LocalInstaller other = new LocalInstaller();
-        other.setHost("cancel2.invalid");
-        other.setPackageDirectory("/pkg");
-        other.setCatalogDirectory("/cat");
-        other.catalog = catalog("kjv.conf");
-        SuspendCalls.reload(other);
-        Book kjv = other.getBook("KJV");
-        other.failure = cancelled;
+        val other = LocalInstaller()
+        other.setHost("cancel2.invalid")
+        other.setPackageDirectory("/pkg")
+        other.setCatalogDirectory("/cat")
+        other.catalog = catalog("kjv.conf")
+        runBlocking { other.reloadBookList() }
+        val kjv = other.getBook("KJV")!!
+        other.failure = cancelled
         try {
-            SuspendCalls.install(other, kjv);
-            Assert.fail();
-        } catch (DownloadCancelledException expected) {
-            Assert.assertSame(cancelled, expected);
+            runBlocking { other.install(kjv) }
+            fail()
+        } catch (expected: DownloadCancelledException) {
+            assertSame(cancelled, expected)
         }
         // The download of the package was asked for with the initials and the zip suffix
-        Assert.assertEquals("/pkg|KJV.zip", other.requests.get(other.requests.size() - 1));
+        assertEquals("/pkg|KJV.zip", other.requests[other.requests.size - 1])
     }
 
     @Test
-    public void testInstallFailureRethrowsTheInstallException() throws Exception {
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("install.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        installer.catalog = catalog("strongsgreek.conf");
-        SuspendCalls.reload(installer);
-        Book book = installer.getBook("StrongsGreek");
-        installer.failure = new InstallException("no way");
+    @Throws(Exception::class)
+    fun testInstallFailureRethrowsTheInstallException() {
+        val installer = LocalInstaller()
+        installer.setHost("install.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setCatalogDirectory("/cat")
+        installer.catalog = catalog("strongsgreek.conf")
+        runBlocking { installer.reloadBookList() }
+        val book = installer.getBook("StrongsGreek")!!
+        installer.failure = InstallException("no way")
         try {
-            SuspendCalls.install(installer, book, "my-job-id");
-            Assert.fail();
-        } catch (InstallException expected) {
-            Assert.assertSame(installer.failure, expected);
+            runBlocking { installer.install(book, "my-job-id") }
+            fail()
+        } catch (expected: InstallException) {
+            assertSame(installer.failure, expected)
         }
-        Assert.assertEquals("/pkg|StrongsGreek.zip", installer.requests.get(installer.requests.size() - 1));
+        assertEquals("/pkg|StrongsGreek.zip", installer.requests[installer.requests.size - 1])
     }
 
     @Test
-    public void testIsNewerComparesTheRemoteWithTheInstalledConf() throws Exception {
-        Book installed = Books.installed().getBook("KJV");
-        Assume.assumeNotNull(installed);
-        File conf = org.crosswire.jsword.book.sword.SwordBookMetaDataJvm.getConfigFile((SwordBookMetaData) installed.getBookMetaData());
-        Assume.assumeTrue(conf != null && conf.exists());
+    @Throws(Exception::class)
+    fun testIsNewerComparesTheRemoteWithTheInstalledConf() {
+        val installed = Books.installed().getBook("KJV")
+        Assume.assumeNotNull(installed)
+        val conf = SwordBookMetaDataJvm.getConfigFile(installed!!.bookMetaData as SwordBookMetaData)
+        Assume.assumeTrue(conf != null && conf.exists())
 
-        File remote = new File(work, "KJV.zip");
-        Files.write(remote.toPath(), new byte[] {1});
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("newer.invalid");
-        installer.remote = remote.toURI();
+        val remote = File(work, "KJV.zip")
+        Files.write(remote.toPath(), byteArrayOf(1))
+        val installer = LocalInstaller()
+        installer.setHost("newer.invalid")
+        installer.remote = remote.toURI()
 
-        Assert.assertTrue(remote.setLastModified(conf.lastModified() + 3600 * 1000L));
-        Assert.assertTrue(SuspendCalls.isNewer(installer, installed));
-        Assert.assertTrue(remote.setLastModified(conf.lastModified() - 3600 * 1000L));
-        Assert.assertFalse(SuspendCalls.isNewer(installer, installed));
-        Assert.assertTrue(remote.setLastModified(conf.lastModified()));
-        Assert.assertFalse(SuspendCalls.isNewer(installer, installed));
+        assertTrue(remote.setLastModified(conf!!.lastModified() + 3600 * 1000L))
+        assertTrue(runBlocking { installer.isNewer(installed) })
+        assertTrue(remote.setLastModified(conf.lastModified() - 3600 * 1000L))
+        assertFalse(runBlocking { installer.isNewer(installed) })
+        assertTrue(remote.setLastModified(conf.lastModified()))
+        assertFalse(runBlocking { installer.isNewer(installed) })
     }
 
     @Test
-    public void testInstallerDefinition() {
-        HttpSwordInstaller installer = new HttpSwordInstaller();
-        installer.setHost("h.invalid");
-        installer.setPackageDirectory("/p");
-        installer.setCatalogDirectory("/c");
-        installer.setIndexDirectory("/i");
-        Assert.assertEquals("h.invalid,/p,/c,/i,,", installer.getInstallerDefinition());
+    fun testInstallerDefinition() {
+        val installer = HttpSwordInstaller()
+        installer.setHost("h.invalid")
+        installer.setPackageDirectory("/p")
+        installer.setCatalogDirectory("/c")
+        installer.setIndexDirectory("/i")
+        assertEquals("h.invalid,/p,/c,/i,,", installer.getInstallerDefinition())
 
-        installer.setProxyHost("px");
-        installer.setProxyPort(Integer.valueOf(8080));
-        Assert.assertEquals("h.invalid,/p,/c,/i,px,8080", installer.getInstallerDefinition());
-        Assert.assertEquals("h.invalid", installer.getHost());
-        Assert.assertEquals("/p", installer.getPackageDirectory());
-        Assert.assertEquals("/c", installer.getCatalogDirectory());
-        Assert.assertEquals("/i", installer.getIndexDirectory());
-        Assert.assertEquals("px", installer.getProxyHost());
-        Assert.assertEquals(Integer.valueOf(8080), installer.getProxyPort());
+        installer.setProxyHost("px")
+        installer.setProxyPort(Integer.valueOf(8080))
+        assertEquals("h.invalid,/p,/c,/i,px,8080", installer.getInstallerDefinition())
+        assertEquals("h.invalid", installer.getHost())
+        assertEquals("/p", installer.getPackageDirectory())
+        assertEquals("/c", installer.getCatalogDirectory())
+        assertEquals("/i", installer.getIndexDirectory())
+        assertEquals("px", installer.getProxyHost())
+        assertEquals(Integer.valueOf(8080), installer.getProxyPort())
 
         // An empty proxy host is stored as null
-        installer.setProxyHost("");
-        Assert.assertNull(installer.getProxyHost());
-        installer.setProxyPort(null);
-        Assert.assertNull(installer.getProxyPort());
-        Assert.assertEquals("h.invalid,/p,/c,/i,,", installer.getInstallerDefinition());
+        installer.setProxyHost("")
+        assertNull(installer.getProxyHost())
+        installer.setProxyPort(null)
+        assertNull(installer.getProxyPort())
+        assertEquals("h.invalid,/p,/c,/i,,", installer.getInstallerDefinition())
     }
 
     @Test
-    public void testDefaults() throws Exception {
-        HttpSwordInstaller installer = new HttpSwordInstaller();
-        Assert.assertNull(installer.getHost());
-        Assert.assertEquals("", installer.getPackageDirectory());
-        Assert.assertEquals("", installer.getCatalogDirectory());
-        Assert.assertEquals("", installer.getIndexDirectory());
-        Assert.assertNull(installer.getProxyHost());
-        Assert.assertNull(installer.getProxyPort());
-        Assert.assertFalse(installer.loaded);
-        Assert.assertEquals("sword-http", installer.getType());
-        Assert.assertEquals(Long.valueOf(0L), SuspendCalls.indexLastUpdated(installer));
+    @Throws(Exception::class)
+    fun testDefaults() {
+        val installer = HttpSwordInstaller()
+        assertNull(installer.getHost())
+        assertEquals("", installer.getPackageDirectory())
+        assertEquals("", installer.getCatalogDirectory())
+        assertEquals("", installer.getIndexDirectory())
+        assertNull(installer.getProxyHost())
+        assertNull(installer.getProxyPort())
+        assertFalse(loaded(installer))
+        assertEquals("sword-http", installer.getType())
+        assertEquals(java.lang.Long.valueOf(0L), runBlocking { installer.indexLastUpdated() })
     }
 
     @Test
-    public void testSettersInvalidateTheLoadedFlagOnlyOnChange() throws Exception {
-        LocalInstaller installer = new LocalInstaller();
-        installer.setHost("flag.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setCatalogDirectory("/cat");
-        installer.catalog = catalog("kjv.conf");
-        installer.setProxyHost("px");
-        installer.setProxyPort(Integer.valueOf(3128));
-        SuspendCalls.reload(installer);
-        installer.getBooks();
-        Assert.assertTrue(installer.loaded);
+    @Throws(Exception::class)
+    fun testSettersInvalidateTheLoadedFlagOnlyOnChange() {
+        val installer = LocalInstaller()
+        installer.setHost("flag.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setCatalogDirectory("/cat")
+        installer.catalog = catalog("kjv.conf")
+        installer.setProxyHost("px")
+        installer.setProxyPort(Integer.valueOf(3128))
+        runBlocking { installer.reloadBookList() }
+        installer.getBooks()
+        assertTrue(loaded(installer))
 
-        installer.setHost("flag.invalid");
-        installer.setPackageDirectory("/pkg");
-        installer.setProxyHost("px");
-        installer.setProxyPort(Integer.valueOf(3128));
+        installer.setHost("flag.invalid")
+        installer.setPackageDirectory("/pkg")
+        installer.setProxyHost("px")
+        installer.setProxyPort(Integer.valueOf(3128))
         // the catalog and index directories never reset the flag
-        installer.setCatalogDirectory("/other");
-        installer.setIndexDirectory("/index");
-        Assert.assertTrue(installer.loaded);
+        installer.setCatalogDirectory("/other")
+        installer.setIndexDirectory("/index")
+        assertTrue(loaded(installer))
 
-        installer.setProxyPort(Integer.valueOf(1));
-        Assert.assertFalse(installer.loaded);
-        installer.loaded = true;
-        installer.setProxyHost("");
-        Assert.assertFalse(installer.loaded);
-        installer.loaded = true;
-        installer.setPackageDirectory("/pkg2");
-        Assert.assertFalse(installer.loaded);
-        installer.loaded = true;
-        installer.setHost("flag2.invalid");
-        Assert.assertFalse(installer.loaded);
+        installer.setProxyPort(Integer.valueOf(1))
+        assertFalse(loaded(installer))
+        setLoaded(installer, true)
+        installer.setProxyHost("")
+        assertFalse(loaded(installer))
+        setLoaded(installer, true)
+        installer.setPackageDirectory("/pkg2")
+        assertFalse(loaded(installer))
+        setLoaded(installer, true)
+        installer.setHost("flag2.invalid")
+        assertFalse(loaded(installer))
     }
 
     @Test
-    public void testCloseDropsTheLoadedList() throws Exception {
-        HttpSwordInstaller installer = installer("close.invalid");
-        putCache(installer, catalog("kjv.conf"));
-        Assert.assertEquals(1, installer.getBooks().size());
-        Assert.assertEquals(1, installer.entries.size());
-        installer.close();
-        Assert.assertTrue(installer.entries.isEmpty());
-        Assert.assertFalse(installer.loaded);
+    @Throws(Exception::class)
+    fun testCloseDropsTheLoadedList() {
+        val installer = installer("close.invalid")
+        putCache(installer, catalog("kjv.conf"))
+        assertEquals(1, installer.getBooks().size)
+        assertEquals(1, entries(installer).size)
+        installer.close()
+        assertTrue(entries(installer).isEmpty())
+        assertFalse(loaded(installer))
         // and it is simply reloaded from the cache
-        Assert.assertEquals(1, installer.getBooks().size());
+        assertEquals(1, installer.getBooks().size)
     }
 
     @Test
-    public void testEqualsHashCodeAndCompareTo() {
-        HttpSwordInstaller a = installer("a.invalid");
-        HttpSwordInstaller a2 = installer("a.invalid");
-        HttpSwordInstaller b = installer("b.invalid");
-        HttpSwordInstaller aOtherPackage = installer("a.invalid");
-        aOtherPackage.setPackageDirectory("/zzz");
+    fun testEqualsHashCodeAndCompareTo() {
+        val a = installer("a.invalid")
+        val a2 = installer("a.invalid")
+        val b = installer("b.invalid")
+        val aOtherPackage = installer("a.invalid")
+        aOtherPackage.setPackageDirectory("/zzz")
 
-        Assert.assertEquals(a, a);
-        Assert.assertEquals(a, a2);
-        Assert.assertEquals(a.hashCode(), a2.hashCode());
-        Assert.assertEquals("a.invalid".hashCode() + "/pkg".hashCode(), a.hashCode());
-        Assert.assertNotEquals(a, b);
-        Assert.assertNotEquals(a, aOtherPackage);
-        Assert.assertNotEquals(a, null);
-        Assert.assertNotEquals(a, "a.invalid");
+        assertEquals(a, a)
+        assertEquals(a, a2)
+        assertEquals(a.hashCode(), a2.hashCode())
+        assertEquals("a.invalid".hashCode() + "/pkg".hashCode(), a.hashCode())
+        assertNotEquals(a, b)
+        assertNotEquals(a, aOtherPackage)
+        assertNotEquals<Any?>(a, null)
+        assertNotEquals<Any?>(a, "a.invalid")
         // the catalog directory does not take part
-        a2.setCatalogDirectory("/else");
-        Assert.assertEquals(a, a2);
+        a2.setCatalogDirectory("/else")
+        assertEquals(a, a2)
 
         // The same host and package are equal for the Https subclass too, but the two classes never are
-        HttpsSwordInstaller https = new HttpsSwordInstaller();
-        https.setHost("a.invalid");
-        https.setPackageDirectory("/pkg");
-        Assert.assertNotEquals(a, https);
-        Assert.assertNotEquals(https, a);
-        Assert.assertEquals(a.hashCode(), https.hashCode());
+        val https = HttpsSwordInstaller()
+        https.setHost("a.invalid")
+        https.setPackageDirectory("/pkg")
+        assertNotEquals<Any?>(a, https)
+        assertNotEquals<Any?>(https, a)
+        assertEquals(a.hashCode(), https.hashCode())
 
-        Assert.assertEquals(0, a.compareTo(a2));
+        assertEquals(0, a.compareTo(a2))
         // compareTo only looks at the package directory when the hosts differ (and answers 0 for the same host)
-        Assert.assertEquals(0, a.compareTo(b));
-        Assert.assertEquals(0, a.compareTo(aOtherPackage));
-        b.setPackageDirectory("/aaa");
-        Assert.assertTrue(a.compareTo(b) > 0);
-        Assert.assertTrue(b.compareTo(a) < 0);
+        assertEquals(0, a.compareTo(b))
+        assertEquals(0, a.compareTo(aOtherPackage))
+        b.setPackageDirectory("/aaa")
+        assertTrue(a.compareTo(b) > 0)
+        assertTrue(b.compareTo(a) < 0)
     }
 
     @Test
-    public void testRemoteUriAndType() throws Exception {
-        Book kjv = Books.installed().getBook("KJV");
-        Assume.assumeNotNull(kjv);
-        HttpSwordInstaller http = installer("h.invalid");
-        Assert.assertEquals("sword-http", http.getType());
-        Assert.assertEquals(URI.create("http://h.invalid/pkg/KJV.zip"), http.toRemoteURI(kjv));
+    @Throws(Exception::class)
+    fun testRemoteUriAndType() {
+        val kjv = Books.installed().getBook("KJV")
+        Assume.assumeNotNull(kjv)
+        val http = installer("h.invalid")
+        assertEquals("sword-http", http.getType())
+        assertEquals(URI.create("http://h.invalid/pkg/KJV.zip"), http.toRemoteURI(kjv!!))
 
-        HttpsSwordInstaller https = new HttpsSwordInstaller();
-        https.setHost("h.invalid");
-        https.setPackageDirectory("/pkg");
-        Assert.assertEquals("sword-https", https.getType());
-        Assert.assertEquals(URI.create("https://h.invalid/pkg/KJV.zip"), https.toRemoteURI(kjv));
+        val https = HttpsSwordInstaller()
+        https.setHost("h.invalid")
+        https.setPackageDirectory("/pkg")
+        assertEquals("sword-https", https.getType())
+        assertEquals(URI.create("https://h.invalid/pkg/KJV.zip"), https.toRemoteURI(kjv))
 
         // an unusable host gives no uri
-        HttpSwordInstaller bad = installer("bad host");
-        Assert.assertNull(bad.toRemoteURI(kjv));
+        val bad = installer("bad host")
+        assertNull(bad.toRemoteURI(kjv))
     }
 
     @Test
-    public void testHttpsDownloadOfAnUnreachableServerIsAnInstallException() throws Exception {
-        HttpsSwordInstaller https = new HttpsSwordInstaller();
-        https.setHost("localhost");
-        https.setPackageDirectory("/pkg");
+    @Throws(Exception::class)
+    fun testHttpsDownloadOfAnUnreachableServerIsAnInstallException() {
+        val https = ExposedHttpsInstaller()
+        https.setHost("localhost")
+        https.setPackageDirectory("/pkg")
         // nobody is expected to listen on the default https port of the loopback interface
-        Assert.assertEquals(Long.valueOf(0L), SuspendCalls.indexLastUpdated(https));
-        File dest = new File(work, "x.zip");
+        assertEquals(java.lang.Long.valueOf(0L), runBlocking { https.indexLastUpdated() })
+        val dest = File(work, "x.zip")
         try {
-            SuspendCalls.blocking(c -> https.download(null, "/dir", "file.zip", dest.toURI(), c));
-            Assert.fail();
-        } catch (InstallException expected) {
-            Assert.assertEquals("Unable to find: https://localhost/dir/file.zip", expected.getMessage());
+            runBlocking { https.exposedDownload(null, "/dir", "file.zip", dest.toURI()) }
+            fail()
+        } catch (expected: InstallException) {
+            assertEquals("Unable to find: https://localhost/dir/file.zip", expected.message)
         }
     }
 
     @Test
-    public void testFactories() {
-        InstallerFactory http = new HttpSwordInstallerFactory();
-        InstallerFactory https = new HttpsSwordInstallerFactory();
-        Assert.assertEquals(HttpSwordInstaller.class, http.createInstaller().getClass());
-        Assert.assertEquals(HttpsSwordInstaller.class, https.createInstaller().getClass());
+    fun testFactories() {
+        val http: InstallerFactory = HttpSwordInstallerFactory()
+        val https: InstallerFactory = HttpsSwordInstallerFactory()
+        assertEquals<Class<*>>(HttpSwordInstaller::class.java, http.createInstaller().javaClass)
+        assertEquals<Class<*>>(HttpsSwordInstaller::class.java, https.createInstaller().javaClass)
 
         // host,package,catalog,proxyHost,proxyPort,(unused)
-        Installer six = http.createInstaller("h.invalid,/pub,/idx,px,3128,");
-        Assert.assertEquals(HttpSwordInstaller.class, six.getClass());
-        Assert.assertEquals("h.invalid,/pub,/idx,,px,3128", six.getInstallerDefinition());
-        Installer sixHttps = https.createInstaller("h.invalid,/pub,/idx,,,");
-        Assert.assertEquals(HttpsSwordInstaller.class, sixHttps.getClass());
-        Assert.assertEquals("h.invalid,/pub,/idx,,,", sixHttps.getInstallerDefinition());
+        val six: Installer = http.createInstaller("h.invalid,/pub,/idx,px,3128,")
+        assertEquals<Class<*>>(HttpSwordInstaller::class.java, six.javaClass)
+        assertEquals("h.invalid,/pub,/idx,,px,3128", six.getInstallerDefinition())
+        val sixHttps: Installer = https.createInstaller("h.invalid,/pub,/idx,,,")
+        assertEquals<Class<*>>(HttpsSwordInstaller::class.java, sixHttps.javaClass)
+        assertEquals("h.invalid,/pub,/idx,,,", sixHttps.getInstallerDefinition())
         // a proxy host without a port
-        Assert.assertEquals("h.invalid,/pub,/idx,,px,", http.createInstaller("h.invalid,/pub,/idx,px,,").getInstallerDefinition());
+        assertEquals("h.invalid,/pub,/idx,,px,", http.createInstaller("h.invalid,/pub,/idx,px,,").getInstallerDefinition())
 
         // the old format: host,directory,proxyHost,proxyPort
-        Installer old = https.createInstaller("h.invalid,/dir,px,8080");
-        Assert.assertEquals(HttpsSwordInstaller.class, old.getClass());
-        Assert.assertEquals("h.invalid,/dir/packages/rawzip,/dir/raw,,px,8080", old.getInstallerDefinition());
-        Assert.assertEquals("h.invalid,/dir/packages/rawzip,/dir/raw,,,", http.createInstaller("h.invalid,/dir,,").getInstallerDefinition());
+        val old: Installer = https.createInstaller("h.invalid,/dir,px,8080")
+        assertEquals<Class<*>>(HttpsSwordInstaller::class.java, old.javaClass)
+        assertEquals("h.invalid,/dir/packages/rawzip,/dir/raw,,px,8080", old.getInstallerDefinition())
+        assertEquals("h.invalid,/dir/packages/rawzip,/dir/raw,,,", http.createInstaller("h.invalid,/dir,,").getInstallerDefinition())
 
         try {
-            http.createInstaller("a,b,c");
-            Assert.fail();
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage(), expected.getMessage().contains("a,b,c"));
+            http.createInstaller("a,b,c")
+            fail()
+        } catch (expected: IllegalArgumentException) {
+            assertTrue(expected.message!!.contains("a,b,c"), expected.message)
         }
         try {
-            https.createInstaller("h,/p,/c,px,notanumber,");
-            Assert.fail();
-        } catch (NumberFormatException expected) {
+            https.createInstaller("h,/p,/c,px,notanumber,")
+            fail()
+        } catch (expected: NumberFormatException) {
             // expected
+        }
+    }
+
+    companion object {
+        private fun deleteRecursively(file: File) {
+            val children = file.listFiles()
+            if (children != null) {
+                for (child in children) {
+                    deleteRecursively(child)
+                }
+            }
+            file.delete()
+        }
+
+        @Throws(IOException::class)
+        private fun conf(fileName: String): ByteArray {
+            val f = File(System.getProperty("user.home"), ".sword/mods.d/$fileName")
+            Assume.assumeTrue("missing test module conf $fileName", f.isFile)
+            return Files.readAllBytes(f.toPath())
+        }
+
+        /** The value of a key=value line of a conf. */
+        private fun confValue(conf: ByteArray, key: String): String? {
+            for (line in String(conf, Charsets.UTF_8).splitLikeJava(Regex("\r?\n"))) {
+                if (line.startsWith("$key=")) {
+                    return line.substring(key.length + 1).trim { it <= ' ' }
+                }
+            }
+            return null
+        }
+
+        @Throws(IOException::class)
+        private fun addEntry(tar: TarArchiveOutputStream, name: String, data: ByteArray) {
+            val entry = TarArchiveEntry(name)
+            entry.size = data.size.toLong()
+            tar.putArchiveEntry(entry)
+            tar.write(data)
+            tar.closeArchiveEntry()
+        }
+
+        /**
+         * A catalog with the given confs, plus a directory entry, an entry that is not a conf and
+         * an empty conf, which have to be skipped.
+         */
+        @Throws(IOException::class)
+        private fun catalog(vararg confFiles: String): ByteArray {
+            val bos = ByteArrayOutputStream()
+            val gz = GZIPOutputStream(bos)
+            val tar = TarArchiveOutputStream(gz)
+            val dir = TarArchiveEntry("mods.d/")
+            tar.putArchiveEntry(dir)
+            tar.closeArchiveEntry()
+            addEntry(tar, "mods.d/readme.txt", "not a conf".toByteArray(Charsets.UTF_8))
+            addEntry(tar, "mods.d/empty.conf", ByteArray(0))
+            for (confFile in confFiles) {
+                addEntry(tar, "mods.d/$confFile", conf(confFile))
+            }
+            tar.close()
+            return bos.toByteArray()
+        }
+
+        private fun installer(host: String): HttpSwordInstaller {
+            val installer = HttpSwordInstaller()
+            installer.setHost(host)
+            installer.setPackageDirectory("/pkg")
+            installer.setCatalogDirectory("/cat")
+            return installer
+        }
+
+        @Throws(Exception::class)
+        private fun putCache(installer: AbstractSwordInstaller, catalog: ByteArray) {
+            val cache = File(cachedIndexFile(installer).path)
+            Files.write(cache.toPath(), catalog)
+        }
+
+        private fun initials(books: List<Book?>): List<String> {
+            val result = ArrayList<String>()
+            for (book in books) {
+                result.add(book!!.initials)
+            }
+            result.sort()
+            return result
+        }
+
+        // The Java test sat in the installer's package and used its protected members directly;
+        // Kotlin protected is subclass-only, so the tests read them reflectively.
+
+        private fun field(name: String): Field {
+            val field = AbstractSwordInstaller::class.java.getDeclaredField(name)
+            field.isAccessible = true
+            return field
+        }
+
+        private fun loaded(installer: AbstractSwordInstaller): Boolean = field("loaded").getBoolean(installer)
+
+        private fun setLoaded(installer: AbstractSwordInstaller, value: Boolean) = field("loaded").setBoolean(installer, value)
+
+        @Suppress("UNCHECKED_CAST")
+        private fun entries(installer: AbstractSwordInstaller): MutableMap<String, Book> =
+            field("entries").get(installer) as MutableMap<String, Book>
+
+        private fun cachedIndexDir(installer: AbstractSwordInstaller): URI {
+            val method = AbstractSwordInstaller::class.java.getDeclaredMethod("getCachedIndexDir")
+            method.isAccessible = true
+            return invokeUnwrapped(method, installer) as URI
+        }
+
+        private fun cachedIndexFile(installer: AbstractSwordInstaller): URI {
+            val method = AbstractSwordInstaller::class.java.getDeclaredMethod("getCachedIndexFile")
+            method.isAccessible = true
+            return invokeUnwrapped(method, installer) as URI
+        }
+
+        /** Reflective call that rethrows what the method threw, as a direct Java call did. */
+        private fun invokeUnwrapped(method: java.lang.reflect.Method, target: Any): Any? {
+            try {
+                return method.invoke(target)
+            } catch (e: java.lang.reflect.InvocationTargetException) {
+                throw e.cause!!
+            }
         }
     }
 }

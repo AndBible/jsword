@@ -17,21 +17,21 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.jsword.book;
+package org.crosswire.jsword.book
 
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class BookDriverParentTst {
+open class BookDriverParentTst {
     @Test
-    public void testNothing() {
-        Assert.assertTrue(true);
+    open fun testNothing() {
+        assertTrue(true)
     }
 }
