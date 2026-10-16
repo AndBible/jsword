@@ -64,7 +64,8 @@ class FtsIndexManager internal constructor(
         get() = synchronized(lock) { policy }
         set(value) = synchronized(lock) { policy = value ?: IndexPolicyAdapter() }
 
-    override fun isIndexed(book: Book?): Boolean = book != null && fs.exists(finalPath(book))
+    /** False for a null book and for a book without a driver (it has no index location; the Lucene manager did the same). */
+    override fun isIndexed(book: Book?): Boolean = book != null && hasDriver(book) && fs.exists(finalPath(book))
 
     @Throws(BookException::class)
     override fun getIndex(book: Book?): Index {
@@ -199,10 +200,11 @@ class FtsIndexManager internal constructor(
     }
 
     /** True when the legacy Lucene index directory `lucene/<driverName>/<initials>/` of [book] exists. */
-    fun hasLegacyLuceneIndex(book: Book): Boolean = fs.exists(legacyPath(book))
+    fun hasLegacyLuceneIndex(book: Book): Boolean = hasDriver(book) && fs.exists(legacyPath(book))
 
     /** Deletes the legacy Lucene index directory of [book] (and its `.creating` sibling), if any. */
     fun deleteLegacyLuceneIndex(book: Book) {
+        if (!hasDriver(book)) return
         val dir = legacyPath(book)
         fs.deleteRecursively(dir, mustExist = false)
         fs.deleteRecursively(creatingPath(dir), mustExist = false)
@@ -229,6 +231,8 @@ class FtsIndexManager internal constructor(
     }
 
     private val fs get() = FileSystem.SYSTEM
+
+    private fun hasDriver(book: Book) = book.bookMetaData.driverName != null
 
     private fun driverSegment(book: Book) = book.bookMetaData.driverName ?: error("book ${book.initials} has no driver")
 

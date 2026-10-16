@@ -143,6 +143,20 @@ class FtsIndexManagerTest {
         assertTrue(creatingFiles().isEmpty())
     }
 
+    @Test fun aBookWithoutADriverIsNotIndexedAndNeverThrows() {
+        val b = book("K4RawText")
+        val driverless = object : Book by b {
+            override var bookMetaData: org.crosswire.jsword.book.BookMetaData = object : org.crosswire.jsword.book.BookMetaData by b.bookMetaData {
+                override val driverName: String? get() = null
+            }
+        }
+        val m = manager()
+        assertFalse(m.isIndexed(driverless))
+        assertTrue(m.needsReindexing(driverless))
+        assertFalse(m.hasLegacyLuceneIndex(driverless))
+        m.deleteLegacyLuceneIndex(driverless)
+    }
+
     @Test fun cancelledRebuildKeepsTheLegacyDirectory() {
         val b = book("K4RawText")
         val legacy = luceneDir / b.bookMetaData.driverName!! / b.initials
