@@ -17,31 +17,31 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
 
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * JUnit Test.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class MatchTest {
+class MatchTest {
 
     @Test
-    public void testMatchMain() {
-        Assert.assertEquals("match_main: Equality.", 0, new Match("abcdef", "abcdef", 1000).locate());
-        Assert.assertEquals("match_main: Null text.", -1, new Match("", "abcdef", 1).locate());
-        Assert.assertEquals("match_main: Null pattern.", 3, new Match("abcdef", "", 3).locate());
-        Assert.assertEquals("match_main: Exact match.", 3, new Match("abcdef", "de", 3).locate());
-        Bitap.setThreshold(0.7f);
-        Assert.assertEquals("match_main: Complex match.", 4, new Match("I am the very model of a modern major general.", " that berry ", 5).locate());
-        Bitap.setThreshold(0.5f);
+    fun testMatchMain() {
+        assertEquals(0, Match("abcdef", "abcdef", 1000).locate(), "match_main: Equality.")
+        assertEquals(-1, Match("", "abcdef", 1).locate(), "match_main: Null text.")
+        assertEquals(3, Match("abcdef", "", 3).locate(), "match_main: Null pattern.")
+        assertEquals(3, Match("abcdef", "de", 3).locate(), "match_main: Exact match.")
+        Bitap.setThreshold(0.7f)
+        assertEquals(4, Match("I am the very model of a modern major general.", " that berry ", 5).locate(), "match_main: Complex match.")
+        Bitap.setThreshold(0.5f)
     }
 
 }

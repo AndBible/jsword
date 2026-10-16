@@ -17,162 +17,95 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * JUnit Test.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DifferenceEngineTest {
+class DifferenceEngineTest {
+
+    /**
+     * Exposes the protected path tracing of [DifferenceEngine] to this test. The Java original
+     * reached it as a same-package caller, which Kotlin does not allow.
+     */
+    private class PathProbe : DifferenceEngine() {
+        fun tracePath1(vMap: MutableList<MutableSet<String>>, newSource: String, newTarget: String): MutableList<Difference> =
+            path1(vMap, newSource, newTarget)
+
+        fun tracePath2(vMap: MutableList<MutableSet<String>>, newSource: String, newTarget: String): MutableList<Difference> =
+            path2(vMap, newSource, newTarget)
+    }
+
     @Test
-    public void testDiffPath() {
+    fun testDiffPath() {
         // Single letters
         // Trace a path from back to front.
-        DifferenceEngine generator = new DifferenceEngine();
-        List<Set<String>> vMap = new ArrayList<Set<String>>();
-        Set<String> rowSet = new HashSet<String>();
-        rowSet.add("0,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,1");
-        rowSet.add("1,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,2");
-        rowSet.add("2,0");
-        rowSet.add("2,2");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,3");
-        rowSet.add("2,3");
-        rowSet.add("3,0");
-        rowSet.add("4,3");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,4");
-        rowSet.add("2,4");
-        rowSet.add("4,0");
-        rowSet.add("4,4");
-        rowSet.add("5,3");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,5");
-        rowSet.add("2,5");
-        rowSet.add("4,5");
-        rowSet.add("5,0");
-        rowSet.add("6,3");
-        rowSet.add("6,5");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,6");
-        rowSet.add("2,6");
-        rowSet.add("4,6");
-        rowSet.add("6,6");
-        rowSet.add("7,5");
-        vMap.add(rowSet);
+        val generator = PathProbe()
+        val vMap: MutableList<MutableSet<String>> = mutableListOf()
+        vMap.add(mutableSetOf("0,0"))
+        vMap.add(mutableSetOf("0,1", "1,0"))
+        vMap.add(mutableSetOf("0,2", "2,0", "2,2"))
+        vMap.add(mutableSetOf("0,3", "2,3", "3,0", "4,3"))
+        vMap.add(mutableSetOf("0,4", "2,4", "4,0", "4,4", "5,3"))
+        vMap.add(mutableSetOf("0,5", "2,5", "4,5", "5,0", "6,3", "6,5"))
+        vMap.add(mutableSetOf("0,6", "2,6", "4,6", "6,6", "7,5"))
 
-        List<Difference> diffs = diffList(
-                new Difference(EditType.INSERT, "W"), new Difference(EditType.DELETE, "A"), new Difference(EditType.EQUAL, "1"), new Difference(EditType.DELETE, "B"), new Difference(EditType.EQUAL, "2"), new Difference(EditType.INSERT, "X"), new Difference(EditType.DELETE, "C"), new Difference(EditType.EQUAL, "3"), new Difference(EditType.DELETE, "D"));
-        Assert.assertEquals("diff_path1: Single letters.", diffs, generator.path1(vMap, "A1B2C3D", "W12X3"));
+        var diffs: MutableList<Difference> = diffList(
+            Difference(EditType.INSERT, "W"), Difference(EditType.DELETE, "A"), Difference(EditType.EQUAL, "1"), Difference(EditType.DELETE, "B"), Difference(EditType.EQUAL, "2"), Difference(EditType.INSERT, "X"), Difference(EditType.DELETE, "C"), Difference(EditType.EQUAL, "3"), Difference(EditType.DELETE, "D"))
+        assertEquals(diffs, generator.tracePath1(vMap, "A1B2C3D", "W12X3"), "diff_path1: Single letters.")
 
         // Trace a path from front to back.
-        vMap.remove(vMap.size() - 1);
+        vMap.removeAt(vMap.size - 1)
         diffs = diffList(
-                new Difference(EditType.EQUAL, "4"), new Difference(EditType.DELETE, "E"), new Difference(EditType.INSERT, "Y"), new Difference(EditType.EQUAL, "5"), new Difference(EditType.DELETE, "F"), new Difference(EditType.EQUAL, "6"), new Difference(EditType.DELETE, "G"), new Difference(EditType.INSERT, "Z"));
-        Assert.assertEquals("diff_path2: Single letters.", diffs, generator.path2(vMap, "4E5F6G", "4Y56Z"));
+            Difference(EditType.EQUAL, "4"), Difference(EditType.DELETE, "E"), Difference(EditType.INSERT, "Y"), Difference(EditType.EQUAL, "5"), Difference(EditType.DELETE, "F"), Difference(EditType.EQUAL, "6"), Difference(EditType.DELETE, "G"), Difference(EditType.INSERT, "Z"))
+        assertEquals(diffs, generator.tracePath2(vMap, "4E5F6G", "4Y56Z"), "diff_path2: Single letters.")
 
         // Double letters
         // Trace a path from back to front.
-        vMap = new ArrayList<Set<String>>();
-        rowSet = new HashSet<String>();
-        rowSet.add("0,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,1");
-        rowSet.add("1,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,2");
-        rowSet.add("1,1");
-        rowSet.add("2,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,3");
-        rowSet.add("1,2");
-        rowSet.add("2,1");
-        rowSet.add("3,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,4");
-        rowSet.add("1,3");
-        rowSet.add("3,1");
-        rowSet.add("4,0");
-        rowSet.add("4,4");
-        vMap.add(rowSet);
+        val vMap2: MutableList<MutableSet<String>> = mutableListOf()
+        vMap2.add(mutableSetOf("0,0"))
+        vMap2.add(mutableSetOf("0,1", "1,0"))
+        vMap2.add(mutableSetOf("0,2", "1,1", "2,0"))
+        vMap2.add(mutableSetOf("0,3", "1,2", "2,1", "3,0"))
+        vMap2.add(mutableSetOf("0,4", "1,3", "3,1", "4,0", "4,4"))
 
         diffs = diffList(
-                new Difference(EditType.INSERT, "WX"), new Difference(EditType.DELETE, "AB"), new Difference(EditType.EQUAL, "12"));
-        Assert.assertEquals("diff_path1: Double letters.", diffs, generator.path1(vMap, "AB12", "WX12"));
+            Difference(EditType.INSERT, "WX"), Difference(EditType.DELETE, "AB"), Difference(EditType.EQUAL, "12"))
+        assertEquals(diffs, generator.tracePath1(vMap2, "AB12", "WX12"), "diff_path1: Double letters.")
 
         // Trace a path from front to back.
-        vMap = new ArrayList<Set<String>>();
-        rowSet = new HashSet<String>();
-        rowSet.add("0,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("0,1");
-        rowSet.add("1,0");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("1,1");
-        rowSet.add("2,0");
-        rowSet.add("2,4");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("2,1");
-        rowSet.add("2,5");
-        rowSet.add("3,0");
-        rowSet.add("3,4");
-        vMap.add(rowSet);
-        rowSet = new HashSet<String>();
-        rowSet.add("2,6");
-        rowSet.add("3,5");
-        rowSet.add("4,4");
-        vMap.add(rowSet);
+        val vMap3: MutableList<MutableSet<String>> = mutableListOf()
+        vMap3.add(mutableSetOf("0,0"))
+        vMap3.add(mutableSetOf("0,1", "1,0"))
+        vMap3.add(mutableSetOf("1,1", "2,0", "2,4"))
+        vMap3.add(mutableSetOf("2,1", "2,5", "3,0", "3,4"))
+        vMap3.add(mutableSetOf("2,6", "3,5", "4,4"))
 
         diffs = diffList(
-                new Difference(EditType.DELETE, "CD"), new Difference(EditType.EQUAL, "34"), new Difference(EditType.INSERT, "YZ"));
-        Assert.assertEquals("diff_path2: Double letters.", diffs, generator.path2(vMap, "CD34", "34YZ"));
+            Difference(EditType.DELETE, "CD"), Difference(EditType.EQUAL, "34"), Difference(EditType.INSERT, "YZ"))
+        assertEquals(diffs, generator.tracePath2(vMap3, "CD34", "34YZ"), "diff_path2: Double letters.")
     }
 
     @Test
-    public void testTimeout() {
-        DifferenceEngine.setTimeout(0.001f); // 1ms
+    fun testTimeout() {
+        DifferenceEngine.setTimeout(0.001f) // 1ms
         // This test may fail on extremely fast computers. If so, just increase
         // the text lengths.
-        Assert.assertNull(
-                "diff_main: Timeout.", new DifferenceEngine("`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.", "I am the very model of a modern major general,\nI've information vegetable, animal, and mineral,\nI know the kings of England, and I quote the fights historical,\nFrom Marathon to Waterloo, in order categorical.").generate());
-        DifferenceEngine.setTimeout(0);
+        assertNull(
+            DifferenceEngine("`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.", "I am the very model of a modern major general,\nI've information vegetable, animal, and mineral,\nI know the kings of England, and I quote the fights historical,\nFrom Marathon to Waterloo, in order categorical.").generate(), "diff_main: Timeout.")
+        DifferenceEngine.setTimeout(0f)
     }
 
     // Private function for quickly building lists of diffs.
-    private static <T> List<T> diffList(T... items) {
-        List<T> list = new ArrayList<T>();
-        list.addAll(Arrays.asList(items));
-        return list;
-    }
+    private fun <T> diffList(vararg items: T): MutableList<T> = items.toMutableList()
 }

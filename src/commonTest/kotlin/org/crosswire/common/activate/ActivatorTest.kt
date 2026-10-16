@@ -17,12 +17,14 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.activate;
+package org.crosswire.common.activate
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Tests that the Activator tracks activation per instance rather than per
@@ -33,132 +35,121 @@ import org.junit.Test;
  * in the instance, so tracking by value would skip activating the replacement
  * and leave it permanently unusable.
  */
-public class ActivatorTest {
+class ActivatorTest {
 
     /**
      * Activatable whose equality is by name, mimicking AbstractBook.
      */
-    private static final class NamedActivatable implements Activatable {
-        private final String name;
-        private int activateCount;
-        private int deactivateCount;
+    private class NamedActivatable(private val name: String) : Activatable {
+        var activateCount = 0
+        var deactivateCount = 0
 
-        NamedActivatable(String name) {
-            this.name = name;
+        override fun activate(lock: Lock?) {
+            activateCount++
         }
 
-        public void activate(Lock lock) {
-            activateCount++;
+        override fun deactivate(lock: Lock?) {
+            deactivateCount++
         }
 
-        public void deactivate(Lock lock) {
-            deactivateCount++;
-        }
+        fun isActivated(): Boolean = activateCount > deactivateCount
 
-        boolean isActivated() {
-            return activateCount > deactivateCount;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof NamedActivatable)) {
-                return false;
+        override fun equals(other: Any?): Boolean {
+            if (other !is NamedActivatable) {
+                return false
             }
-            return name.equals(((NamedActivatable) obj).name);
+            return name == other.name
         }
 
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
+        override fun hashCode(): Int = name.hashCode()
     }
 
-    @Before
-    public void setUp() {
-        Activator.deactivateAll();
+    @BeforeTest
+    fun setUp() {
+        Activator.deactivateAll()
     }
 
-    @After
-    public void tearDown() {
-        Activator.deactivateAll();
+    @AfterTest
+    fun tearDown() {
+        Activator.deactivateAll()
     }
 
     @Test
-    public void testActivatesEachInstanceEvenWhenTheyCompareEqual() {
-        NamedActivatable original = new NamedActivatable("KJV");
-        NamedActivatable replacement = new NamedActivatable("KJV");
-        Assert.assertEquals("precondition: the two instances compare equal", original, replacement);
+    fun testActivatesEachInstanceEvenWhenTheyCompareEqual() {
+        val original = NamedActivatable("KJV")
+        val replacement = NamedActivatable("KJV")
+        assertEquals(original, replacement, "precondition: the two instances compare equal")
 
-        Activator.activate(original);
-        Activator.activate(replacement);
+        Activator.activate(original)
+        Activator.activate(replacement)
 
-        Assert.assertEquals(1, original.activateCount);
-        Assert.assertEquals("replacement instance must be activated in its own right",
-                1, replacement.activateCount);
+        assertEquals(1, original.activateCount)
+        assertEquals(
+            1, replacement.activateCount, "replacement instance must be activated in its own right")
     }
 
     @Test
-    public void testReplacementIsActivatedAfterTheOriginalIsDeactivated() {
-        NamedActivatable original = new NamedActivatable("KJV");
-        Activator.activate(original);
-        Activator.deactivate(original);
+    fun testReplacementIsActivatedAfterTheOriginalIsDeactivated() {
+        val original = NamedActivatable("KJV")
+        Activator.activate(original)
+        Activator.deactivate(original)
 
-        NamedActivatable replacement = new NamedActivatable("KJV");
-        Activator.activate(replacement);
+        val replacement = NamedActivatable("KJV")
+        Activator.activate(replacement)
 
-        Assert.assertTrue(replacement.isActivated());
+        assertTrue(replacement.isActivated())
     }
 
     @Test
-    public void testDeactivatingOneInstanceLeavesAnEqualInstanceActive() {
-        NamedActivatable first = new NamedActivatable("KJV");
-        NamedActivatable second = new NamedActivatable("KJV");
-        Activator.activate(first);
-        Activator.activate(second);
+    fun testDeactivatingOneInstanceLeavesAnEqualInstanceActive() {
+        val first = NamedActivatable("KJV")
+        val second = NamedActivatable("KJV")
+        Activator.activate(first)
+        Activator.activate(second)
 
-        Activator.deactivate(first);
+        Activator.deactivate(first)
 
-        Assert.assertFalse(first.isActivated());
-        Assert.assertTrue("deactivating one instance must not deactivate an equal one",
-                second.isActivated());
-        Assert.assertEquals(0, second.deactivateCount);
+        assertFalse(first.isActivated())
+        assertTrue(
+            second.isActivated(), "deactivating one instance must not deactivate an equal one")
+        assertEquals(0, second.deactivateCount)
     }
 
     @Test
-    public void testActivateIsNotRepeatedForTheSameInstance() {
-        NamedActivatable subject = new NamedActivatable("KJV");
+    fun testActivateIsNotRepeatedForTheSameInstance() {
+        val subject = NamedActivatable("KJV")
 
-        Activator.activate(subject);
-        Activator.activate(subject);
+        Activator.activate(subject)
+        Activator.activate(subject)
 
-        Assert.assertEquals(1, subject.activateCount);
+        assertEquals(1, subject.activateCount)
     }
 
     @Test
-    public void testDeactivateAllDeactivatesEveryTrackedInstance() {
-        NamedActivatable first = new NamedActivatable("KJV");
-        NamedActivatable second = new NamedActivatable("KJV");
-        NamedActivatable other = new NamedActivatable("ESV");
-        Activator.activate(first);
-        Activator.activate(second);
-        Activator.activate(other);
+    fun testDeactivateAllDeactivatesEveryTrackedInstance() {
+        val first = NamedActivatable("KJV")
+        val second = NamedActivatable("KJV")
+        val other = NamedActivatable("ESV")
+        Activator.activate(first)
+        Activator.activate(second)
+        Activator.activate(other)
 
-        Activator.deactivateAll();
+        Activator.deactivateAll()
 
-        Assert.assertFalse(first.isActivated());
-        Assert.assertFalse(second.isActivated());
-        Assert.assertFalse(other.isActivated());
+        assertFalse(first.isActivated())
+        assertFalse(second.isActivated())
+        assertFalse(other.isActivated())
     }
 
     @Test
-    public void testDeactivateOfAnUntrackedInstanceIsANoOp() {
-        NamedActivatable activated = new NamedActivatable("KJV");
-        NamedActivatable neverActivated = new NamedActivatable("KJV");
-        Activator.activate(activated);
+    fun testDeactivateOfAnUntrackedInstanceIsANoOp() {
+        val activated = NamedActivatable("KJV")
+        val neverActivated = NamedActivatable("KJV")
+        Activator.activate(activated)
 
-        Activator.deactivate(neverActivated);
+        Activator.deactivate(neverActivated)
 
-        Assert.assertEquals(0, neverActivated.deactivateCount);
-        Assert.assertTrue(activated.isActivated());
+        assertEquals(0, neverActivated.deactivateCount)
+        assertTrue(activated.isActivated())
     }
 }

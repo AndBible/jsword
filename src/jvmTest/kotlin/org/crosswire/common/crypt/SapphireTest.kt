@@ -17,37 +17,35 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.crypt;
+package org.crosswire.common.crypt
 
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 
 /**
  * JUnit tests for the Sapphire cipher, including the personalize() key derivation function.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  */
-public class SapphireTest {
+class SapphireTest {
 
     /**
      * Test that license-format keys are correctly transformed to internal cipher keys.
      * Uses a synthetic test key (not a real commercial license).
      */
     @Test
-    public void testPersonalizeLicenseKey() throws Exception {
+    fun testPersonalizeLicenseKey() {
         // Synthetic test key generated for unit testing
         // License key format: SALT-SEG1-SEG2-SEG3-CHECKSUM
-        String licenseKey = "test-VvUj-UeY2-Yg11-nKAK";
-        String expectedInternal = "abcd-efgh-ijkl";
+        val licenseKey = "test-VvUj-UeY2-Yg11-nKAK"
+        val expectedInternal = "abcd-efgh-ijkl"
 
-        byte[] result = callPersonalize(licenseKey.getBytes(StandardCharsets.ISO_8859_1));
-        String actual = new String(result, StandardCharsets.ISO_8859_1);
+        val result = callPersonalize(licenseKey.toByteArray(Charsets.ISO_8859_1))
+        val actual = String(result, Charsets.ISO_8859_1)
 
-        Assert.assertEquals("License key should be transformed to internal key",
-                expectedInternal, actual);
+        assertEquals(
+            expectedInternal, actual, "License key should be transformed to internal key")
     }
 
     /**
@@ -55,56 +53,56 @@ public class SapphireTest {
      * This ensures backward compatibility with existing modules.
      */
     @Test
-    public void testPersonalizeSimpleKeyPassthrough() throws Exception {
-        String simpleKey = "mysimplekey";
+    fun testPersonalizeSimpleKeyPassthrough() {
+        val simpleKey = "mysimplekey"
 
-        byte[] result = callPersonalize(simpleKey.getBytes(StandardCharsets.ISO_8859_1));
-        String actual = new String(result, StandardCharsets.ISO_8859_1);
+        val result = callPersonalize(simpleKey.toByteArray(Charsets.ISO_8859_1))
+        val actual = String(result, Charsets.ISO_8859_1)
 
-        Assert.assertEquals("Simple key should pass through unchanged", simpleKey, actual);
+        assertEquals(simpleKey, actual, "Simple key should pass through unchanged")
     }
 
     /**
      * Test that keys with wrong number of segments pass through unchanged.
      */
     @Test
-    public void testPersonalizeWrongSegmentCount() throws Exception {
+    fun testPersonalizeWrongSegmentCount() {
         // Only 3 segments instead of 5
-        String key = "abc-def-ghi";
+        val key = "abc-def-ghi"
 
-        byte[] result = callPersonalize(key.getBytes(StandardCharsets.ISO_8859_1));
-        String actual = new String(result, StandardCharsets.ISO_8859_1);
+        val result = callPersonalize(key.toByteArray(Charsets.ISO_8859_1))
+        val actual = String(result, Charsets.ISO_8859_1)
 
-        Assert.assertEquals("Key with wrong segment count should pass through unchanged",
-                key, actual);
+        assertEquals(
+            key, actual, "Key with wrong segment count should pass through unchanged")
     }
 
     /**
      * Test that keys with invalid checksum pass through unchanged.
      */
     @Test
-    public void testPersonalizeInvalidChecksum() throws Exception {
+    fun testPersonalizeInvalidChecksum() {
         // Valid format but wrong checksum (last segment)
-        String key = "test-VvUj-UeY2-Yg11-XXXX";
+        val key = "test-VvUj-UeY2-Yg11-XXXX"
 
-        byte[] result = callPersonalize(key.getBytes(StandardCharsets.ISO_8859_1));
-        String actual = new String(result, StandardCharsets.ISO_8859_1);
+        val result = callPersonalize(key.toByteArray(Charsets.ISO_8859_1))
+        val actual = String(result, Charsets.ISO_8859_1)
 
-        Assert.assertEquals("Key with invalid checksum should pass through unchanged",
-                key, actual);
+        assertEquals(
+            key, actual, "Key with invalid checksum should pass through unchanged")
     }
 
     /**
      * Test that empty key is handled gracefully.
      */
     @Test
-    public void testPersonalizeEmptyKey() throws Exception {
-        String emptyKey = "";
+    fun testPersonalizeEmptyKey() {
+        val emptyKey = ""
 
-        byte[] result = callPersonalize(emptyKey.getBytes(StandardCharsets.ISO_8859_1));
-        String actual = new String(result, StandardCharsets.ISO_8859_1);
+        val result = callPersonalize(emptyKey.toByteArray(Charsets.ISO_8859_1))
+        val actual = String(result, Charsets.ISO_8859_1)
 
-        Assert.assertEquals("Empty key should pass through unchanged", emptyKey, actual);
+        assertEquals(emptyKey, actual, "Empty key should pass through unchanged")
     }
 
     /**
@@ -112,51 +110,50 @@ public class SapphireTest {
      * This handles the case where someone directly provides the internal key.
      */
     @Test
-    public void testPersonalizeInternalKeyPassthrough() throws Exception {
+    fun testPersonalizeInternalKeyPassthrough() {
         // This is an internal key format (output of personalize)
-        String internalKey = "abcd-efgh-ijkl";
+        val internalKey = "abcd-efgh-ijkl"
 
-        byte[] result = callPersonalize(internalKey.getBytes(StandardCharsets.ISO_8859_1));
-        String actual = new String(result, StandardCharsets.ISO_8859_1);
+        val result = callPersonalize(internalKey.toByteArray(Charsets.ISO_8859_1))
+        val actual = String(result, Charsets.ISO_8859_1)
 
-        Assert.assertEquals("Internal key should pass through unchanged", internalKey, actual);
+        assertEquals(internalKey, actual, "Internal key should pass through unchanged")
     }
 
     /**
      * Test that cipher with license key produces same result as cipher with internal key.
      */
     @Test
-    public void testCipherWithLicenseKeyEquivalence() {
-        String licenseKey = "test-VvUj-UeY2-Yg11-nKAK";
-        String internalKey = "abcd-efgh-ijkl";
+    fun testCipherWithLicenseKeyEquivalence() {
+        val licenseKey = "test-VvUj-UeY2-Yg11-nKAK"
+        val internalKey = "abcd-efgh-ijkl"
 
-        byte[] testData = "Test data for encryption".getBytes(StandardCharsets.UTF_8);
+        val testData = "Test data for encryption".toByteArray(Charsets.UTF_8)
 
         // Encrypt with license key
-        Sapphire cipher1 = new Sapphire(licenseKey.getBytes(StandardCharsets.ISO_8859_1));
-        byte[] result1 = new byte[testData.length];
-        for (int i = 0; i < testData.length; i++) {
-            result1[i] = cipher1.cipher(testData[i]);
+        val cipher1 = Sapphire(licenseKey.toByteArray(Charsets.ISO_8859_1))
+        val result1 = ByteArray(testData.size)
+        for (i in testData.indices) {
+            result1[i] = cipher1.cipher(testData[i])
         }
 
         // Encrypt with internal key (what license key transforms to)
-        Sapphire cipher2 = new Sapphire(internalKey.getBytes(StandardCharsets.ISO_8859_1));
-        byte[] result2 = new byte[testData.length];
-        for (int i = 0; i < testData.length; i++) {
-            result2[i] = cipher2.cipher(testData[i]);
+        val cipher2 = Sapphire(internalKey.toByteArray(Charsets.ISO_8859_1))
+        val result2 = ByteArray(testData.size)
+        for (i in testData.indices) {
+            result2[i] = cipher2.cipher(testData[i])
         }
 
-        Assert.assertArrayEquals(
-                "Cipher with license key should produce same result as cipher with internal key",
-                result1, result2);
+        assertContentEquals(
+            result1, result2, "Cipher with license key should produce same result as cipher with internal key")
     }
 
     /**
      * Helper method to call the private personalize method via reflection.
      */
-    private byte[] callPersonalize(byte[] key) throws Exception {
-        Method method = Sapphire.class.getDeclaredMethod("personalize", byte[].class);
-        method.setAccessible(true);
-        return (byte[]) method.invoke(null, key);
+    private fun callPersonalize(key: ByteArray): ByteArray {
+        val method = Sapphire::class.java.getDeclaredMethod("personalize", ByteArray::class.java)
+            .apply { isAccessible = true }
+        return method.invoke(null, key) as ByteArray
     }
 }

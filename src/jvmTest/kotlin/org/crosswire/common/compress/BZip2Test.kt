@@ -17,64 +17,51 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.compress;
+package org.crosswire.common.compress
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.MissingResourceException;
-
-import org.crosswire.common.util.PlatformTestUtils;
-import org.crosswire.common.util.ResourceUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.IOException
+import java.io.InputStream
+import java.util.MissingResourceException
+import kotlin.test.Test
+import kotlin.test.assertTrue
+import kotlin.test.fail
+import org.crosswire.common.util.PlatformTestUtils
+import org.crosswire.common.util.ResourceUtil
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class BZip2Test {
+class BZip2Test {
 
     @Test
-    public void testCompression() throws IOException {
-        InputStream kjvGenesis = null;
-        try {
-            kjvGenesis = ResourceUtil.getResourceAsStream("kjv_genesis.txt");
-        } catch (MissingResourceException e) {
-            Assert.fail();
-        } catch (IOException e) {
-            Assert.fail();
+    fun testCompression() {
+        val kjvGenesis: InputStream = try {
+            ResourceUtil.getResourceAsStream("kjv_genesis.txt")
+        } catch (e: MissingResourceException) {
+            fail()
+        } catch (e: IOException) {
+            fail()
         }
         // new ByteArrayInputStream("ATATAAAFFFF".getBytes()));
-        Compressor compressor = new BZip2(org.apache.commons.compress.utils.IOUtils.toByteArray(kjvGenesis));
-        byte[] bosCompressed = null;
-        try {
-            bosCompressed = compressor.compress();
-        } catch (IOException e) {
-            Assert.fail();
-            return;
+        val compressor: Compressor = BZip2(org.apache.commons.compress.utils.IOUtils.toByteArray(kjvGenesis))
+        val bosCompressed: ByteArray = try {
+            compressor.compress()
+        } catch (e: IOException) {
+            fail()
         }
-        Compressor uncompressor = new BZip2(bosCompressed);
-        byte[] bosUncompressed = null;
-        try {
-            bosUncompressed = uncompressor.uncompress();
-        } catch (IOException e) {
-            Assert.fail();
-            return;
+        val uncompressor: Compressor = BZip2(bosCompressed)
+        val bosUncompressed: ByteArray = try {
+            uncompressor.uncompress()
+        } catch (e: IOException) {
+            fail()
         }
-        String result;
-        try {
-            byte[] back = bosUncompressed;
-            result = new String(back, "UTF-8");
-            Assert.assertTrue("round trip ZIP uncompression", PlatformTestUtils.startsWith(result, "^          \r?\nThe First Book of Moses, called Genesis"));
-        } catch (UnsupportedEncodingException e) {
-            Assert.fail();
-            return;
-        }
-
+        // The UnsupportedEncodingException catch of the Java original cannot fire for UTF-8,
+        // and String(bytes, UTF_8) does not throw, so it is not translated.
+        val result = String(bosUncompressed, Charsets.UTF_8)
+        assertTrue(
+            PlatformTestUtils.startsWith(result, "^          \r?\nThe First Book of Moses, called Genesis"), "round trip ZIP uncompression")
     }
 }

@@ -17,29 +17,26 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.util;
+package org.crosswire.common.util
 
-import java.util.regex.Pattern;
-
-import org.junit.Ignore;
+import kotlin.jvm.JvmStatic
+import kotlin.test.Ignore
 
 /**
  * A set of utilities to help tests run properly
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
 @Ignore
-public class PlatformTestUtils {
-    private PlatformTestUtils() {
-    }
+object PlatformTestUtils {
     /**
      * Simple helper to wrap around the pattern
      * @param result the string to be tested
      * @param prefixPattern the pattern
      * @return true if matches
      */
-    public static boolean startsWith(String result, String prefixPattern) {
-        return Pattern.compile(prefixPattern).matcher(result).find();
-    }
+    @JvmStatic
+    fun startsWith(result: String, prefixPattern: String): Boolean =
+        Regex(prefixPattern).containsMatchIn(result)
 }

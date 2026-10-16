@@ -17,81 +17,81 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.progress;
+package org.crosswire.common.progress
 
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.UUID;
-
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.File
+import java.util.UUID
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test.
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author Joe Walker
  * @author DM Smith
  */
-public class JobTest {
+class JobTest {
 
-    private static final String WIBBLE = "wibble";
+    companion object {
+        private const val WIBBLE = "wibble"
+    }
 
     @Test
-    public void testJob() throws IOException {
-        Progress job;
-        File tempfile = File.createTempFile("jobtest", "tmp");
-        URI uri = tempfile.toURI();
+    fun testJob() {
+        var job: Progress
+        val tempfile = File.createTempFile("jobtest", "tmp")
+        val uri = tempfile.toURI()
 
-        job = JobManager.createJob(WIBBLE);
-        job.beginJob(WIBBLE);
+        job = JobManager.createJob(WIBBLE)
+        job.beginJob(WIBBLE)
 
-        Assert.assertEquals(WIBBLE, job.getJobName());
-        Assert.assertFalse(job.isFinished());
-        Assert.assertFalse(job.isCancelable());
-        Assert.assertEquals(WIBBLE, job.getSectionName());
-        Assert.assertEquals(0, job.getWork());
-        job.done();
-        Assert.assertTrue(job.isFinished());
-        Assert.assertEquals(100, job.getWork());
-        Assert.assertFalse(job.isCancelable());
+        assertEquals(WIBBLE, job.jobName)
+        assertFalse(job.isFinished)
+        assertFalse(job.isCancelable)
+        assertEquals(WIBBLE, job.sectionName)
+        assertEquals(0, job.work)
+        job.done()
+        assertTrue(job.isFinished)
+        assertEquals(100, job.work)
+        assertFalse(job.isCancelable)
 
-        job = org.crosswire.common.progress.JobManagerJvm.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread());
-        job.beginJob(WIBBLE);
-        Assert.assertEquals(WIBBLE, job.getJobName());
-        Assert.assertFalse(job.isFinished());
-        Assert.assertTrue(job.isCancelable());
-        Assert.assertEquals(WIBBLE, job.getSectionName());
-        Assert.assertEquals(0, job.getWork());
-        job.done();
-        Assert.assertTrue(job.isFinished());
-        Assert.assertEquals(100, job.getWork());
-        // Assert.assertEquals(job.isCancelable(), false);
+        job = JobManagerJvm.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread())
+        job.beginJob(WIBBLE)
+        assertEquals(WIBBLE, job.jobName)
+        assertFalse(job.isFinished)
+        assertTrue(job.isCancelable)
+        assertEquals(WIBBLE, job.sectionName)
+        assertEquals(0, job.work)
+        job.done()
+        assertTrue(job.isFinished)
+        assertEquals(100, job.work)
+        // assertEquals(job.isCancelable, false);
 
-        job = JobManager.createJob(WIBBLE);
-        job.beginJob(WIBBLE, uri);
-        job.setTotalWork(100);
-        Assert.assertEquals(WIBBLE, job.getJobName());
-        Assert.assertFalse(job.isFinished());
-        Assert.assertFalse(job.isCancelable());
-        Assert.assertEquals(WIBBLE, job.getSectionName());
-        job.cancel();
-        job.done();
-        Assert.assertTrue(job.isFinished());
-        Assert.assertEquals(100, job.getWork());
-        // Assert.assertFalse(job.isCancelable());
+        job = JobManager.createJob(WIBBLE)
+        job.beginJob(WIBBLE, uri)
+        job.totalWork = 100
+        assertEquals(WIBBLE, job.jobName)
+        assertFalse(job.isFinished)
+        assertFalse(job.isCancelable)
+        assertEquals(WIBBLE, job.sectionName)
+        job.cancel()
+        job.done()
+        assertTrue(job.isFinished)
+        assertEquals(100, job.work)
+        // assertFalse(job.isCancelable);
 
-        job = org.crosswire.common.progress.JobManagerJvm.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread());
-        job.beginJob(WIBBLE, uri);
-        Assert.assertEquals(WIBBLE, job.getJobName());
-        Assert.assertFalse(job.isFinished());
-        Assert.assertTrue(job.isCancelable());
-        Assert.assertEquals(WIBBLE, job.getSectionName());
-        job.done();
-        Assert.assertTrue(job.isFinished());
-        Assert.assertEquals(100, job.getWork());
-        // Assert.assertFalse(job.isCancelable());
+        job = JobManagerJvm.createJob(UUID.randomUUID().toString(), WIBBLE, Thread.currentThread())
+        job.beginJob(WIBBLE, uri)
+        assertEquals(WIBBLE, job.jobName)
+        assertFalse(job.isFinished)
+        assertTrue(job.isCancelable)
+        assertEquals(WIBBLE, job.sectionName)
+        job.done()
+        assertTrue(job.isFinished)
+        assertEquals(100, job.work)
+        // assertFalse(job.isCancelable);
     }
 }

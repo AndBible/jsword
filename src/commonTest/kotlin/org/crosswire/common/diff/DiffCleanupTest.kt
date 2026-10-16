@@ -17,129 +17,119 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * JUnit Test.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DiffCleanupTest {
+class DiffCleanupTest {
 
     @Test
-    public void testDiffCleanupMerge() {
+    fun testDiffCleanupMerge() {
         // Cleanup a messy diff
-        List<Difference> diffs = diffList();
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals("DiffCleanup.cleanupMerge: Null case.", diffList(), diffs);
+        var diffs: MutableList<Difference> = diffList()
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(diffList(), diffs, "DiffCleanup.cleanupMerge: Null case.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "b"), new Difference(EditType.INSERT, "c"));
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupMerge: No change case.", diffList(new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "b"), new Difference(EditType.INSERT, "c")), diffs);
+            Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "b"), Difference(EditType.INSERT, "c"))
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(
+            diffList(Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "b"), Difference(EditType.INSERT, "c")), diffs, "DiffCleanup.cleanupMerge: No change case.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "a"), new Difference(EditType.EQUAL, "b"), new Difference(EditType.EQUAL, "c"));
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals("DiffCleanup.cleanupMerge: Merge equalities.", diffList(new Difference(EditType.EQUAL, "abc")), diffs);
+            Difference(EditType.EQUAL, "a"), Difference(EditType.EQUAL, "b"), Difference(EditType.EQUAL, "c"))
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(diffList(Difference(EditType.EQUAL, "abc")), diffs, "DiffCleanup.cleanupMerge: Merge equalities.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.DELETE, "b"), new Difference(EditType.DELETE, "c"));
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals("DiffCleanup.cleanupMerge: Merge deletions.", diffList(new Difference(EditType.DELETE, "abc")), diffs);
+            Difference(EditType.DELETE, "a"), Difference(EditType.DELETE, "b"), Difference(EditType.DELETE, "c"))
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(diffList(Difference(EditType.DELETE, "abc")), diffs, "DiffCleanup.cleanupMerge: Merge deletions.")
         diffs = diffList(
-                new Difference(EditType.INSERT, "a"), new Difference(EditType.INSERT, "b"), new Difference(EditType.INSERT, "c"));
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals("DiffCleanup.cleanupMerge: Merge insertions.", diffList(new Difference(EditType.INSERT, "abc")), diffs);
+            Difference(EditType.INSERT, "a"), Difference(EditType.INSERT, "b"), Difference(EditType.INSERT, "c"))
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(diffList(Difference(EditType.INSERT, "abc")), diffs, "DiffCleanup.cleanupMerge: Merge insertions.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.INSERT, "b"), new Difference(EditType.DELETE, "c"), new Difference(EditType.INSERT, "d"), new Difference(EditType.EQUAL, "e"), new Difference(EditType.EQUAL, "f"));
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupMerge: Merge interweave.", diffList(new Difference(EditType.DELETE, "ac"), new Difference(EditType.INSERT, "bd"), new Difference(EditType.EQUAL, "ef")), diffs);
+            Difference(EditType.DELETE, "a"), Difference(EditType.INSERT, "b"), Difference(EditType.DELETE, "c"), Difference(EditType.INSERT, "d"), Difference(EditType.EQUAL, "e"), Difference(EditType.EQUAL, "f"))
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "ac"), Difference(EditType.INSERT, "bd"), Difference(EditType.EQUAL, "ef")), diffs, "DiffCleanup.cleanupMerge: Merge interweave.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.INSERT, "abc"), new Difference(EditType.DELETE, "dc"));
-        DiffCleanup.cleanupMerge(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupMerge: Prefix and suffix detection.", diffList(new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "d"), new Difference(EditType.INSERT, "b"), new Difference(EditType.EQUAL, "c")), diffs);
+            Difference(EditType.DELETE, "a"), Difference(EditType.INSERT, "abc"), Difference(EditType.DELETE, "dc"))
+        DiffCleanup.cleanupMerge(diffs)
+        assertEquals(
+            diffList(Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "d"), Difference(EditType.INSERT, "b"), Difference(EditType.EQUAL, "c")), diffs, "DiffCleanup.cleanupMerge: Prefix and suffix detection.")
     }
 
     @Test
-    public void testDiffCleanupSemantic() {
+    fun testDiffCleanupSemantic() {
         // Cleanup semantically trivial equalities
-        List<Difference> diffs = diffList();
-        DiffCleanup.cleanupSemantic(diffs);
-        Assert.assertEquals("DiffCleanup.cleanupSemantic: Null case.", diffList(), diffs);
+        var diffs: MutableList<Difference> = diffList()
+        DiffCleanup.cleanupSemantic(diffs)
+        assertEquals(diffList(), diffs, "DiffCleanup.cleanupSemantic: Null case.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.INSERT, "b"), new Difference(EditType.EQUAL, "cd"), new Difference(EditType.DELETE, "e"));
-        DiffCleanup.cleanupSemantic(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupSemantic: No elimination.", diffList(new Difference(EditType.DELETE, "a"), new Difference(EditType.INSERT, "b"), new Difference(EditType.EQUAL, "cd"), new Difference(EditType.DELETE, "e")), diffs);
+            Difference(EditType.DELETE, "a"), Difference(EditType.INSERT, "b"), Difference(EditType.EQUAL, "cd"), Difference(EditType.DELETE, "e"))
+        DiffCleanup.cleanupSemantic(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "a"), Difference(EditType.INSERT, "b"), Difference(EditType.EQUAL, "cd"), Difference(EditType.DELETE, "e")), diffs, "DiffCleanup.cleanupSemantic: No elimination.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.EQUAL, "b"), new Difference(EditType.DELETE, "c"));
-        DiffCleanup.cleanupSemantic(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupSemantic: Simple elimination.", diffList(new Difference(EditType.DELETE, "abc"), new Difference(EditType.INSERT, "b")), diffs);
+            Difference(EditType.DELETE, "a"), Difference(EditType.EQUAL, "b"), Difference(EditType.DELETE, "c"))
+        DiffCleanup.cleanupSemantic(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "abc"), Difference(EditType.INSERT, "b")), diffs, "DiffCleanup.cleanupSemantic: Simple elimination.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "ab"), new Difference(EditType.EQUAL, "cd"), new Difference(EditType.DELETE, "e"), new Difference(EditType.EQUAL, "f"), new Difference(EditType.INSERT, "g"));
-        DiffCleanup.cleanupSemantic(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupSemantic: Backpass elimination.", diffList(new Difference(EditType.DELETE, "abcdef"), new Difference(EditType.INSERT, "cdfg")), diffs);
+            Difference(EditType.DELETE, "ab"), Difference(EditType.EQUAL, "cd"), Difference(EditType.DELETE, "e"), Difference(EditType.EQUAL, "f"), Difference(EditType.INSERT, "g"))
+        DiffCleanup.cleanupSemantic(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "abcdef"), Difference(EditType.INSERT, "cdfg")), diffs, "DiffCleanup.cleanupSemantic: Backpass elimination.")
     }
 
     @Test
-    public void testDiffCleanupEfficiency() {
+    fun testDiffCleanupEfficiency() {
         // Cleanup operationally trivial equalities
-        DiffCleanup.setEditCost(4);
-        List<Difference> diffs = diffList();
-        DiffCleanup.cleanupEfficiency(diffs);
-        Assert.assertEquals("DiffCleanup.cleanupEfficiency: Null case.", diffList(), diffs);
+        DiffCleanup.setEditCost(4)
+        var diffs: MutableList<Difference> = diffList()
+        DiffCleanup.cleanupEfficiency(diffs)
+        assertEquals(diffList(), diffs, "DiffCleanup.cleanupEfficiency: Null case.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "ab"), new Difference(EditType.INSERT, "12"), new Difference(EditType.EQUAL, "wxyz"), new Difference(EditType.DELETE, "cd"), new Difference(EditType.INSERT, "34"));
-        DiffCleanup.cleanupEfficiency(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupEfficiency: No elimination.", diffList(new Difference(EditType.DELETE, "ab"), new Difference(EditType.INSERT, "12"), new Difference(EditType.EQUAL, "wxyz"), new Difference(EditType.DELETE, "cd"), new Difference(EditType.INSERT, "34")), diffs);
+            Difference(EditType.DELETE, "ab"), Difference(EditType.INSERT, "12"), Difference(EditType.EQUAL, "wxyz"), Difference(EditType.DELETE, "cd"), Difference(EditType.INSERT, "34"))
+        DiffCleanup.cleanupEfficiency(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "ab"), Difference(EditType.INSERT, "12"), Difference(EditType.EQUAL, "wxyz"), Difference(EditType.DELETE, "cd"), Difference(EditType.INSERT, "34")), diffs, "DiffCleanup.cleanupEfficiency: No elimination.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "ab"), new Difference(EditType.INSERT, "12"), new Difference(EditType.EQUAL, "xyz"), new Difference(EditType.DELETE, "cd"), new Difference(EditType.INSERT, "34"));
-        DiffCleanup.cleanupEfficiency(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupEfficiency: Four-edit elimination.", diffList(new Difference(EditType.DELETE, "abxyzcd"), new Difference(EditType.INSERT, "12xyz34")), diffs);
+            Difference(EditType.DELETE, "ab"), Difference(EditType.INSERT, "12"), Difference(EditType.EQUAL, "xyz"), Difference(EditType.DELETE, "cd"), Difference(EditType.INSERT, "34"))
+        DiffCleanup.cleanupEfficiency(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "abxyzcd"), Difference(EditType.INSERT, "12xyz34")), diffs, "DiffCleanup.cleanupEfficiency: Four-edit elimination.")
         diffs = diffList(
-                new Difference(EditType.INSERT, "12"), new Difference(EditType.EQUAL, "x"), new Difference(EditType.DELETE, "cd"), new Difference(EditType.INSERT, "34"));
-        DiffCleanup.cleanupEfficiency(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupEfficiency: Three-edit elimination.", diffList(new Difference(EditType.DELETE, "xcd"), new Difference(EditType.INSERT, "12x34")), diffs);
+            Difference(EditType.INSERT, "12"), Difference(EditType.EQUAL, "x"), Difference(EditType.DELETE, "cd"), Difference(EditType.INSERT, "34"))
+        DiffCleanup.cleanupEfficiency(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "xcd"), Difference(EditType.INSERT, "12x34")), diffs, "DiffCleanup.cleanupEfficiency: Three-edit elimination.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "ab"), new Difference(EditType.INSERT, "12"), new Difference(EditType.EQUAL, "xy"), new Difference(EditType.INSERT, "34"), new Difference(EditType.EQUAL, "z"), new Difference(EditType.DELETE, "cd"), new Difference(EditType.INSERT, "56"));
-        DiffCleanup.cleanupEfficiency(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupEfficiency: Backpass elimination.", diffList(new Difference(EditType.DELETE, "abxyzcd"), new Difference(EditType.INSERT, "12xy34z56")), diffs);
-        DiffCleanup.setEditCost(5);
+            Difference(EditType.DELETE, "ab"), Difference(EditType.INSERT, "12"), Difference(EditType.EQUAL, "xy"), Difference(EditType.INSERT, "34"), Difference(EditType.EQUAL, "z"), Difference(EditType.DELETE, "cd"), Difference(EditType.INSERT, "56"))
+        DiffCleanup.cleanupEfficiency(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "abxyzcd"), Difference(EditType.INSERT, "12xy34z56")), diffs, "DiffCleanup.cleanupEfficiency: Backpass elimination.")
+        DiffCleanup.setEditCost(5)
         diffs = diffList(
-                new Difference(EditType.DELETE, "ab"), new Difference(EditType.INSERT, "12"), new Difference(EditType.EQUAL, "wxyz"), new Difference(EditType.DELETE, "cd"), new Difference(EditType.INSERT, "34"));
-        DiffCleanup.cleanupEfficiency(diffs);
-        Assert.assertEquals(
-                "DiffCleanup.cleanupEfficiency: High cost elimination.", diffList(new Difference(EditType.DELETE, "abwxyzcd"), new Difference(EditType.INSERT, "12wxyz34")), diffs);
-        DiffCleanup.setEditCost(4);
+            Difference(EditType.DELETE, "ab"), Difference(EditType.INSERT, "12"), Difference(EditType.EQUAL, "wxyz"), Difference(EditType.DELETE, "cd"), Difference(EditType.INSERT, "34"))
+        DiffCleanup.cleanupEfficiency(diffs)
+        assertEquals(
+            diffList(Difference(EditType.DELETE, "abwxyzcd"), Difference(EditType.INSERT, "12wxyz34")), diffs, "DiffCleanup.cleanupEfficiency: High cost elimination.")
+        DiffCleanup.setEditCost(4)
     }
 
     // Private function for quickly building lists of diffs.
-    private static List<Difference> diffList() {
-        return new ArrayList<Difference>();
-    }
+    private fun diffList(): MutableList<Difference> = mutableListOf()
 
     // Private function for quickly building lists of diffs.
-    private static <T> List<T> diffList(T... items) {
-        List<T> list = new ArrayList<T>();
-        list.addAll(Arrays.asList(items));
-        return list;
-    }
+    private fun <T> diffList(vararg items: T): MutableList<T> = items.toMutableList()
 }

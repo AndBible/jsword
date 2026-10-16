@@ -17,72 +17,59 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * JUnit Test.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class LineMapTest {
+class LineMapTest {
 
     @Test
-    public void testCompile() {
+    fun testCompile() {
         // Convert lines down to characters
-        ArrayList<String> list = new ArrayList<String>();
-        list.add("");
-        list.add("alpha\n");
-        list.add("beta\n");
-        LineMap map = new LineMap("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n");
-        Assert.assertEquals("new LineMap:", "\u0001\u0002\u0001", map.getSourceMap());
-        Assert.assertEquals("new LineMap:", "\u0002\u0001\u0002", map.getTargetMap());
-        Assert.assertEquals("new LineMap:", list, map.getLines());
+        val list = mutableListOf("")
+        list.add("alpha\n")
+        list.add("beta\n")
+        var map = LineMap("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n")
+        assertEquals("\u0001\u0002\u0001", map.getSourceMap(), "new LineMap:")
+        assertEquals("\u0002\u0001\u0002", map.getTargetMap(), "new LineMap:")
+        assertEquals(list, map.getLines(), "new LineMap:")
 
-        list.clear();
-        list.add("");
-        list.add("alpha\r\n");
-        list.add("beta\r\n");
-        list.add("\r\n");
-        map = new LineMap("", "alpha\r\nbeta\r\n\r\n\r\n");
-        Assert.assertEquals("new LineMap:", "", map.getSourceMap());
-        Assert.assertEquals("new LineMap:", "\u0001\u0002\u0003\u0003", map.getTargetMap());
-        Assert.assertEquals("new LineMap:", list, map.getLines());
+        list.clear()
+        list.add("")
+        list.add("alpha\r\n")
+        list.add("beta\r\n")
+        list.add("\r\n")
+        map = LineMap("", "alpha\r\nbeta\r\n\r\n\r\n")
+        assertEquals("", map.getSourceMap(), "new LineMap:")
+        assertEquals("\u0001\u0002\u0003\u0003", map.getTargetMap(), "new LineMap:")
+        assertEquals(list, map.getLines(), "new LineMap:")
     }
 
     @Test
-    public void testRestore() {
+    fun testRestore() {
         // Convert chars up to lines
-        List<Difference> diffs = diffList(
-                new Difference(EditType.EQUAL, "\u0001\u0002\u0001"), new Difference(EditType.INSERT, "\u0002\u0001\u0002"));
-        ArrayList<String> list = new ArrayList<String>();
-        list.add("");
-        list.add("alpha\n");
-        list.add("beta\n");
-        LineMap map = new LineMap("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n");
-        map.restore(diffs);
-        Assert.assertEquals(
-                "LineMap.restore:", diffList(new Difference(EditType.EQUAL, "alpha\nbeta\nalpha\n"), new Difference(EditType.INSERT, "beta\nalpha\nbeta\n")).get(0), diffs.get(0));
-        Assert.assertEquals(
-                "LineMap.restore:", diffList(new Difference(EditType.EQUAL, "alpha\nbeta\nalpha\n"), new Difference(EditType.INSERT, "beta\nalpha\nbeta\n")).get(diffs.size() - 1), diffs.get(diffs.size() - 1));
-        Assert.assertEquals(
-                "LineMap.restore:", diffList(new Difference(EditType.EQUAL, "alpha\nbeta\nalpha\n"), new Difference(EditType.INSERT, "beta\nalpha\nbeta\n")), diffs);
+        val diffs = diffList(
+            Difference(EditType.EQUAL, "\u0001\u0002\u0001"), Difference(EditType.INSERT, "\u0002\u0001\u0002"))
+        val map = LineMap("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n")
+        map.restore(diffs)
+        assertEquals(
+            diffList(Difference(EditType.EQUAL, "alpha\nbeta\nalpha\n"), Difference(EditType.INSERT, "beta\nalpha\nbeta\n"))[0], diffs[0], "LineMap.restore:")
+        assertEquals(
+            diffList(Difference(EditType.EQUAL, "alpha\nbeta\nalpha\n"), Difference(EditType.INSERT, "beta\nalpha\nbeta\n"))[diffs.size - 1], diffs[diffs.size - 1], "LineMap.restore:")
+        assertEquals(
+            diffList(Difference(EditType.EQUAL, "alpha\nbeta\nalpha\n"), Difference(EditType.INSERT, "beta\nalpha\nbeta\n")), diffs, "LineMap.restore:")
     }
 
     // Private function for quickly building lists of diffs.
-    private static <T> List<T> diffList(T... items) {
-        List<T> list = new ArrayList<T>();
-        list.addAll(Arrays.asList(items));
-        return list;
-    }
+    private fun <T> diffList(vararg items: T): MutableList<T> = items.toMutableList()
 }

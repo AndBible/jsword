@@ -17,32 +17,34 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
 
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * JUnit Test.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DifferenceTest {
+class DifferenceTest {
     @Test
-    public void testHashCode() {
-        Assert.assertTrue("Difference.hashCode:", (new Difference(EditType.EQUAL, "a")).hashCode() == (new Difference(EditType.EQUAL, "a")).hashCode());
-        Assert.assertFalse("Difference.hashCode:", (new Difference(EditType.EQUAL, "a")).hashCode() == (new Difference(EditType.EQUAL, "ab")).hashCode());
-        Assert.assertFalse("Difference.hashCode:", (new Difference(EditType.EQUAL, "a")).hashCode() == (new Difference(EditType.INSERT, "a")).hashCode());
+    fun testHashCode() {
+        assertTrue(Difference(EditType.EQUAL, "a").hashCode() == Difference(EditType.EQUAL, "a").hashCode(), "Difference.hashCode:")
+        assertFalse(Difference(EditType.EQUAL, "a").hashCode() == Difference(EditType.EQUAL, "ab").hashCode(), "Difference.hashCode:")
+        assertFalse(Difference(EditType.EQUAL, "a").hashCode() == Difference(EditType.INSERT, "a").hashCode(), "Difference.hashCode:")
     }
 
     @Test
-    public void testEquals() {
+    fun testEquals() {
         // First check that Diff equality works
-        Assert.assertTrue("Difference.equals:", new Difference(EditType.EQUAL, "a").equals(new Difference(EditType.EQUAL, "a")));
-        Assert.assertEquals("Difference.equals:", new Difference(EditType.EQUAL, "a"), new Difference(EditType.EQUAL, "a"));
+        assertTrue(Difference(EditType.EQUAL, "a").equals(Difference(EditType.EQUAL, "a")), "Difference.equals:")
+        assertEquals(Difference(EditType.EQUAL, "a"), Difference(EditType.EQUAL, "a"), "Difference.equals:")
     }
 }

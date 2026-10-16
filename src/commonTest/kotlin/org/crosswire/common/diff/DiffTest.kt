@@ -17,104 +17,96 @@
  * © CrossWire Bible Society, 2005 - 2016
  *
  */
-package org.crosswire.common.diff;
+package org.crosswire.common.diff
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 
 /**
  * JUnit Test.
- * 
+ *
  * Based on the LGPL Diff_Match_Patch v1.5 javascript of Neil Fraser, Copyright © 2006<br>
  * <a href="http://neil.fraser.name/software/diff_match_patch/">http://neil.fraser.name/software/diff_match_patch/</a>
- * 
+ *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
  */
-public class DiffTest {
+class DiffTest {
     @Test
-    public void testDiffMain() {
+    fun testDiffMain() {
         // Perform a trivial diff
-        List<Difference> diffs = diffList(
-            new Difference(EditType.EQUAL, "abc"));
-        Assert.assertEquals("diff_main: Null case.", diffs, new Diff("abc", "abc", false).compare());
+        var diffs: List<Difference> = diffList(
+            Difference(EditType.EQUAL, "abc"))
+        assertEquals(diffs, Diff("abc", "abc", false).compare(), "diff_main: Null case.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "ab"), new Difference(EditType.INSERT, "123"), new Difference(EditType.EQUAL, "c"));
-        Assert.assertEquals("diff_main: Simple insertion.", diffs, new Diff("abc", "ab123c", false).compare());
+            Difference(EditType.EQUAL, "ab"), Difference(EditType.INSERT, "123"), Difference(EditType.EQUAL, "c"))
+        assertEquals(diffs, Diff("abc", "ab123c", false).compare(), "diff_main: Simple insertion.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "123"), new Difference(EditType.EQUAL, "bc"));
-        Assert.assertEquals("diff_main: Simple deletion.", diffs, new Diff("a123bc", "abc", false).compare());
+            Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "123"), Difference(EditType.EQUAL, "bc"))
+        assertEquals(diffs, Diff("a123bc", "abc", false).compare(), "diff_main: Simple deletion.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "a"), new Difference(EditType.INSERT, "123"), new Difference(EditType.EQUAL, "b"), new Difference(EditType.INSERT, "456"), new Difference(EditType.EQUAL, "c"));
-        Assert.assertEquals("diff_main: Two insertions.", diffs, new Diff("abc", "a123b456c", false).compare());
+            Difference(EditType.EQUAL, "a"), Difference(EditType.INSERT, "123"), Difference(EditType.EQUAL, "b"), Difference(EditType.INSERT, "456"), Difference(EditType.EQUAL, "c"))
+        assertEquals(diffs, Diff("abc", "a123b456c", false).compare(), "diff_main: Two insertions.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "123"), new Difference(EditType.EQUAL, "b"), new Difference(EditType.DELETE, "456"), new Difference(EditType.EQUAL, "c"));
-        Assert.assertEquals("diff_main: Two deletions.", diffs, new Diff("a123b456c", "abc", false).compare());
+            Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "123"), Difference(EditType.EQUAL, "b"), Difference(EditType.DELETE, "456"), Difference(EditType.EQUAL, "c"))
+        assertEquals(diffs, Diff("a123b456c", "abc", false).compare(), "diff_main: Two deletions.")
 
         // Perform a real diff
         // Switch off the timeout.
         // dmp.Diff_Timeout = 0;
         diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.INSERT, "b"));
-        Assert.assertEquals("diff_main: Simple case #1.", diffs, new Diff("a", "b", false).compare());
+            Difference(EditType.DELETE, "a"), Difference(EditType.INSERT, "b"))
+        assertEquals(diffs, Diff("a", "b", false).compare(), "diff_main: Simple case #1.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "Apple"), new Difference(EditType.INSERT, "Banana"), new Difference(EditType.EQUAL, "s are a"), new Difference(EditType.INSERT, "lso"), new Difference(EditType.EQUAL, " fruit."));
-        Assert.assertEquals("diff_main: Simple case #2.", diffs, new Diff("Apples are a fruit.", "Bananas are also fruit.", false).compare());
+            Difference(EditType.DELETE, "Apple"), Difference(EditType.INSERT, "Banana"), Difference(EditType.EQUAL, "s are a"), Difference(EditType.INSERT, "lso"), Difference(EditType.EQUAL, " fruit."))
+        assertEquals(diffs, Diff("Apples are a fruit.", "Bananas are also fruit.", false).compare(), "diff_main: Simple case #2.")
         diffs = diffList(
-                new Difference(EditType.DELETE, "1"), new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "y"), new Difference(EditType.EQUAL, "b"), new Difference(EditType.DELETE, "2"), new Difference(EditType.INSERT, "xab"));
-        Assert.assertEquals("diff_main: Overlap #1.", diffs, new Diff("1ayb2", "abxab", false).compare());
+            Difference(EditType.DELETE, "1"), Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "y"), Difference(EditType.EQUAL, "b"), Difference(EditType.DELETE, "2"), Difference(EditType.INSERT, "xab"))
+        assertEquals(diffs, Diff("1ayb2", "abxab", false).compare(), "diff_main: Overlap #1.")
         diffs = diffList(
-                new Difference(EditType.INSERT, "x"), new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "b"), new Difference(EditType.INSERT, "x"), new Difference(EditType.EQUAL, "c"), new Difference(EditType.DELETE, "y"), new Difference(EditType.INSERT, "xabc"));
-        Assert.assertEquals("diff_main: Overlap #2.", diffs, new Diff("abcy", "xaxcxabc", false).compare());
+            Difference(EditType.INSERT, "x"), Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "b"), Difference(EditType.INSERT, "x"), Difference(EditType.EQUAL, "c"), Difference(EditType.DELETE, "y"), Difference(EditType.INSERT, "xabc"))
+        assertEquals(diffs, Diff("abcy", "xaxcxabc", false).compare(), "diff_main: Overlap #2.")
 
         // Test the linemode speedup
         // Must be long to pass the 250 char cutoff.
-        String a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n";
-        String b = "abcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n";
-        Assert.assertEquals("diff_main: Simple.", new Diff(a, b, true).compare(), new Diff(a, b, false).compare());
-        a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n";
-        b = "abcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n";
-        String[] textsLineMode = diffRebuildTests(new Diff(a, b, true).compare());
-        String[] textsTextMode = diffRebuildTests(new Diff(a, b, false).compare());
-        Assert.assertArrayEquals("diff_main: Overlap.", textsTextMode, textsLineMode);
+        var a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n"
+        var b = "abcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n"
+        assertEquals(Diff(a, b, false).compare(), Diff(a, b, true).compare(), "diff_main: Simple.")
+        a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n"
+        b = "abcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n"
+        val textsLineMode = diffRebuildTests(Diff(a, b, true).compare())
+        val textsTextMode = diffRebuildTests(Diff(a, b, false).compare())
+        assertContentEquals(textsTextMode, textsLineMode, "diff_main: Overlap.")
     }
 
     @Test
-    public void testDiffXIndex() {
+    fun testDiffXIndex() {
         // Translate a location in text1 to text2
-        List<Difference> diffs = diffList(
-                new Difference(EditType.DELETE, "a"), new Difference(EditType.INSERT, "1234"), new Difference(EditType.EQUAL, "xyz"));
-        Assert.assertEquals("diff_xIndex: Translation on equality.", 5, new Diff("", "").xIndex(diffs, 2));
+        var diffs: List<Difference> = diffList(
+            Difference(EditType.DELETE, "a"), Difference(EditType.INSERT, "1234"), Difference(EditType.EQUAL, "xyz"))
+        assertEquals(5, Diff("", "").xIndex(diffs, 2), "diff_xIndex: Translation on equality.")
         diffs = diffList(
-                new Difference(EditType.EQUAL, "a"), new Difference(EditType.DELETE, "1234"), new Difference(EditType.EQUAL, "xyz"));
-        Assert.assertEquals("diff_xIndex: Translation on deletion.", 1, new Diff("", "").xIndex(diffs, 3));
+            Difference(EditType.EQUAL, "a"), Difference(EditType.DELETE, "1234"), Difference(EditType.EQUAL, "xyz"))
+        assertEquals(1, Diff("", "").xIndex(diffs, 3), "diff_xIndex: Translation on deletion.")
     }
 
     // Construct the two texts which made up the diff originally.
-    private static String[] diffRebuildTests(List<Difference> diffs) {
-        String[] text = {
-                "", ""};
-        for (Difference myDiff : diffs) {
-            EditType editType = myDiff.getEditType();
-            if (!EditType.INSERT.equals(editType)) {
-                text[0] += myDiff.getText();
+    private fun diffRebuildTests(diffs: List<Difference>): Array<String> {
+        val text = arrayOf("", "")
+        for (myDiff in diffs) {
+            val editType = myDiff.editType
+            if (EditType.INSERT != editType) {
+                text[0] += myDiff.text
             }
 
-            if (!EditType.DELETE.equals(editType)) {
-                text[1] += myDiff.getText();
+            if (EditType.DELETE != editType) {
+                text[1] += myDiff.text
             }
         }
-        return text;
+        return text
     }
 
     // Private function for quickly building lists of diffs.
-    private static <T> List<T> diffList(T... items) {
-        List<T> list = new ArrayList<T>();
-        list.addAll(Arrays.asList(items));
-        return list;
-    }
+    private fun <T> diffList(vararg items: T): MutableList<T> = items.toMutableList()
 }
