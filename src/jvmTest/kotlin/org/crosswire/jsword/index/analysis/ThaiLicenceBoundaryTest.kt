@@ -16,6 +16,14 @@ class ThaiLicenceBoundaryTest {
         assertFailsWith<ClassNotFoundException> { Class.forName("org.crosswire.common.util.IosKswordResources") }
     }
 
+    @Test fun commonKswordResourcesHoldNoOpenJdkThaiData() {
+        // Base64-embedded data leaves no file named thai_dict anywhere, so the file-name checks below cannot see it.
+        val leaked = org.crosswire.common.util.KswordResources.paths.filter {
+            "openjdk17" in it || it.endsWith("thai_dict") || it.endsWith("WordBreakIteratorData_th")
+        }
+        assertEquals(emptyList<String>(), leaked)
+    }
+
     @Test fun jvmMainOutputsHoldNoOpenJdkThaiData() {
         val dirs = listOf(File(System.getProperty("ksword.mainResourcesDir") ?: error("ksword.mainResourcesDir not set"))) +
             (System.getProperty("ksword.mainClassesDirs") ?: error("ksword.mainClassesDirs not set")).split(File.pathSeparator).map(::File)
