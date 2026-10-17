@@ -69,8 +69,8 @@ the same nullability.
 - Boxed vs primitive overloads (`remove(int)` vs `remove(Object)` on lists) — check every call.
 
 ## 5. Tests
-Tests are **not** converted in the batch that converts their subject; the Java tests stay an independent
-check. They are converted in phase 2 when they move to `commonTest`.
+Tests were not converted in the batch that converted their subject; the Java tests stayed an independent
+check until K7 (section 30), which converted them. Only the oracle probe harness is still Java.
 
 ## 6. Comments
 Keep comments and Javadoc as KDoc; keep the licence header.
@@ -323,3 +323,13 @@ K5b moved the book facade (`Book`, `Books`, `AbstractBook*`, the Sword book clas
 - **Cancellation.** `install` and `downloadSearchIndex` run the download phase in an install-owned coroutine scope (`CancelBridge`). A user cancel through the Progress API cancels only that scope and raises `DownloadCancelledException` while the caller stays active. Cancelling the caller's own coroutine surfaces as `CancellationException` and cancels the job. The bridge is disarmed once the download phase ends and before the installer cancels its own job after an internal failure.
 - **One remaining seam.** `todayDevotionKey()` (`internal expect`, `TodayDevotionKey.kt`) stays: common code has no local calendar for today's month and day, and `DevotionDateFormat` maps 29 February to 1 March in a non-leap year, so a string comparison with a key title is not equivalent.
 - **Other rules used.** Regex splits use `kotlin.text.Regex` with a commonTest (section 21); `Serializable`, `readObject` and `serialVersionUID` are dropped on moved classes and the allowlist records them (section 23); resources such as `FTPMsg.properties` live in `src/embeddedResources/` (section 25); file and URI APIs use the K4 storage spellings, `KFiles` and `pathUri` (section 27).
+
+## 30. K7 outcome
+- **Converted.** 53 Java test classes became Kotlin one class for one class (same package and name, `git mv` then translate, so `git log --follow` works); 18 of them in `commonTest` (diff, activate, icu, `LanguageTest`, `LanguagesCharacterizationTest`, `StringUtilCharacterizationTest`, `XMLUtilTest`, `OSISUtilCharacterizationTest`, `StrongsNumberCharacterizationTest`) and 35 in `jvmTest`. Placement follows the rule: no `java.*`/reflection/threads/installed module/default locale in `commonTest`.
+- **Per-class counts** equal the pre-K7 baseline for every leaf class (2590 tests in 412 result rows before; after: 1664 tests in 280 result rows; 280 distinct classes before and after; the total test count also fell by the suite repeats below).
+- **Suites deleted (D3).** All 13 `@RunWith(Suite)` classes (`AllTests`, `CommonAllTests`, `JSwordAllTests`) are gone. They made Gradle run their member classes a second time (the baseline held repeated rows, e.g. `BooksTest` four times); each member still has its own result row.
+- **Probes stay Java (D1).** `ParityProbe.java`, `CorpusProbe.java` and `src/oracleProbe/java/.../SearchProbe.java` are compiled twice (against the frozen baseline jar by `compileOracleProbe`, and for the current side by `compileJvmTestJava`), and the oracle class loader has no Kotlin stdlib. `compileJvmTestJava` takes only the probe-only source (the `parity` package), and a guard fails the build if any Java file exists outside the oracle probe harness, so a new Java test cannot slip back in unnoticed.
+- **Java-ABI null tests (D4).** `AccuracyNullTokensJvmTest`, `PassageEventConstructorTest` and the null cases of the XML tests call the constructor or method through `java.lang.reflect` with `null` arguments and assert on `InvocationTargetException.cause`. Protected Java members used by same-package tests are reached through small test subclasses or reflection.
+- **`SuspendCalls` removed (D5).** Tests call the suspend installer API in `runBlocking { }`.
+- **Base classes.** `BookParentTst`, `BookAdvancedParentTst` and `BookDriverParentTst` are `open` (not `abstract`), because the baseline ran each as its own test row; `SwordBookTest` and `SwordBookDriverTest` inherit `testNothing`.
+- **Left as is.** Two unannotated `PatchEntryTest` methods still never run; a dead `UnsupportedEncodingException` catch in `BZip2Test` was dropped.

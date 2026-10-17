@@ -15,7 +15,7 @@ kotlin {
     // @JvmStatic/@JvmField etc. are optional expectations in common code; converted files need no file-level opt-in.
     compilerOptions { optIn.add("kotlin.ExperimentalMultiplatform") }
 
-    // JVM target: hosts the not-yet-converted Java (src/jvmMain/java) next to converted Kotlin.
+    // JVM target; the only Java left is the oracle probe harness (src/jvmTest/java/.../parity, src/oracleProbe/java).
     jvm {
         compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
     }
@@ -306,9 +306,16 @@ val generateCurrentCorpusProbe by tasks.registering {
         output.writeText(original.asFile.readText().replace("org.jdom2.", "fi.sykero.kdom."))
     }
 }
+val strayJavaTests = fileTree("src/jvmTest/java") {
+    exclude("org/crosswire/ksword/parity/**")
+}
 tasks.named<JavaCompile>("compileJvmTestJava") {
     dependsOn(generateCurrentCorpusProbe)
+    doFirst {
+        check(strayJavaTests.isEmpty) { "Java test sources outside the oracle probe harness: ${strayJavaTests.files}" }
+    }
     setSource(files(fileTree("src/jvmTest/java") {
+        include("org/crosswire/ksword/parity/**")
         exclude("org/crosswire/ksword/parity/CorpusProbe.java")
     }, currentCorpusProbeDir))
 }
