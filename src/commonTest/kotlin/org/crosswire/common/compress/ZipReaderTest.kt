@@ -179,4 +179,121 @@ class ZipReaderTest {
             assertFalse(r.nextEntry() != null)
         }
     }
+
+    private fun flipFirstDescriptorCrc(zip: ByteArray) {
+        val sig = byteArrayOf(0x50, 0x4b, 0x07, 0x08)
+        var at = -1
+        for (i in 0 until zip.size - 4) if (zip.copyOfRange(i, i + 4).contentEquals(sig)) { at = i; break }
+        assertTrue(at > 0)
+        zip[at + 4] = (zip[at + 4].toInt() xor 0x55).toByte()
+    }
+
+    @Test fun readerRefusesToContinueAfterABadCrc() {
+        val zip = archive()
+        flipFirstDescriptorCrc(zip)
+        ZipReader(Buffer().write(zip)).use { r ->
+            assertNotNull(r.nextEntry())
+            val body = r.entry.buffer()
+            assertFailsWith<ZipFormatException> { body.readByteArray() }
+            assertFailsWith<ZipFormatException> { r.entry.buffer().readByteArray() } // read after failure
+            assertFailsWith<ZipFormatException> { r.nextEntry() }
+            assertFailsWith<ZipFormatException> { r.nextEntry() }
+        }
+    }
+
+    @Test fun readerRefusesToContinueAfterATruncatedDeflateBody() {
+        val zip = archive()
+        ZipReader(Buffer().write(zip.copyOf(zip.size / 2))).use { r ->
+            assertNotNull(r.nextEntry())
+            assertFailsWith<IOException> { r.entry.buffer().readByteArray() }
+            assertFailsWith<IOException> { r.nextEntry() }
+        }
+    }
+
+    @Test fun skippingABadEntryFailsWithoutANullPointerException() {
+        val zip = archive()
+        flipFirstDescriptorCrc(zip)
+        ZipReader(Buffer().write(zip)).use { r ->
+            assertNotNull(r.nextEntry())
+            assertFailsWith<ZipFormatException> { r.nextEntry() } // skipRest verifies
+            assertFailsWith<ZipFormatException> { r.nextEntry() }
+        }
+    }
+
+    @Test fun retriedNextEntryAfterAHeaderErrorRethrows() {
+        val zip = rawLocalEntry(byteArrayOf(0x81.toByte()), 0, 0, 0, 0, 0, ByteArray(0))
+        ZipReader(Buffer().write(zip)).use { r ->
+            assertFailsWith<ZipFormatException> { r.nextEntry() }
+            assertFailsWith<ZipFormatException> { r.nextEntry() }
+        }
+    }
+
+    @Test fun upstreamIoErrorsKeepTheirIdentity() {
+        val zip = archive()
+        val failing = object : okio.Source {
+            val data = Buffer().write(zip.copyOf(30_000))
+            override fun read(sink: Buffer, byteCount: Long): Long {
+                if (data.size == 0L) throw IOException("disk error")
+                return data.read(sink, minOf(byteCount, data.size))
+            }
+            override fun timeout() = okio.Timeout.NONE
+            override fun close() {}
+        }
+        ZipReader(failing).use { r ->
+            assertNotNull(r.nextEntry())
+            val e = assertFailsWith<IOException> { r.entry.buffer().readByteArray() }
+            assertEquals("disk error", e.message)
+            assertFalse(e is ZipFormatException)
+        }
+    }
+
+    private fun zip64Extra(vararg values: Long) = Buffer().apply {
+        writeShortLe(1); writeShortLe(values.size * 8)
+        for (v in values) writeLongLe(v)
+    }.readByteArray()
+
+    private fun deflate(body: ByteArray) = Buffer().also { out ->
+        val d = okio.Deflater(-1, true)
+        try { okio.DeflaterSink(out, d).buffer().use { it.write(body) } } finally { d.end() }
+    }.readByteArray()
+
+    @Test fun storedSizesAreResolvedFromTheLocalZip64Extra() {
+        val body = "zip64 stored".encodeToByteArray()
+        val n = body.size.toLong()
+        val name = "a".encodeToByteArray()
+        val both = rawLocalEntry(name, 0, 0, crcOf(body), 0xFFFFFFFFL, 0xFFFFFFFFL, body, zip64Extra(n, n))
+        assertContentEquals(body, readAll(both).single().third)
+        // Only the compressed size is marked: it is still the second value of a full extra.
+        val onlyCompressed = rawLocalEntry(name, 0, 0, crcOf(body), 0xFFFFFFFFL, n, body, zip64Extra(n, n))
+        assertContentEquals(body, readAll(onlyCompressed).single().third)
+        val onlySize = rawLocalEntry(name, 0, 0, crcOf(body), n, 0xFFFFFFFFL, body, zip64Extra(n, n))
+        assertContentEquals(body, readAll(onlySize).single().third)
+        // A short extra holding just the one marked field.
+        val shortExtra = rawLocalEntry(name, 0, 0, crcOf(body), n, 0xFFFFFFFFL, body, zip64Extra(n))
+        assertContentEquals(body, readAll(shortExtra).single().third)
+    }
+
+    @Test fun deflatedEntryWithZip64ExtraReadsEightByteDescriptor() {
+        // More lenient than ZipInputStream, which may reject this commons-compress style layout.
+        val body = "deflated zip64 descriptor".encodeToByteArray()
+        val packed = deflate(body)
+        val name = "a".encodeToByteArray()
+        for (signature in listOf(true, false)) {
+            val descriptor = Buffer().apply {
+                if (signature) writeIntLe(0x08074b50)
+                writeIntLe(crcOf(body).toInt()); writeLongLe(packed.size.toLong()); writeLongLe(body.size.toLong())
+            }.readByteArray()
+            val zip = rawLocalEntry(name, 8, 8, 0, 0, 0, packed, zip64Extra(), descriptor + ByteArray(8))
+            assertContentEquals(body, readAll(zip).single().third, "signature=$signature")
+        }
+    }
+
+    @Test fun wrongEightByteDescriptorSizeIsRejected() {
+        val body = "deflated".encodeToByteArray()
+        val packed = deflate(body)
+        val descriptor = Buffer().writeIntLe(0x08074b50).writeIntLe(crcOf(body).toInt())
+            .writeLongLe(packed.size.toLong()).writeLongLe(body.size + 1L).readByteArray()
+        val zip = rawLocalEntry("a".encodeToByteArray(), 8, 8, 0, 0, 0, packed, zip64Extra(), descriptor)
+        assertFailsWith<ZipFormatException> { readAll(zip) }
+    }
 }

@@ -72,7 +72,7 @@ internal class RawInflateStream(
             }
             val n = inflater.inflate(out, offset, count)
             if (n > 0) return n
-            if (!inflater.finished && !inflater.needsInput) throw IOException("corrupt deflate data")
+            if (!inflater.finished && !inflater.needsInput) throw RawDeflateException("corrupt deflate data")
         }
     }
 }

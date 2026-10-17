@@ -141,4 +141,14 @@ class ZipReaderJdkParityTest {
         assertFailsWith<ZipException> { jdk(zip) }
         assertFailsWith<ZipFormatException> { ours(zip) }
     }
+
+    @Test fun parityOnStoredEntryWithSizesInTheLocalZip64Extra() {
+        val body = "zip64 stored".encodeToByteArray()
+        val extra = Buffer().writeShortLe(1).writeShortLe(16).writeLongLe(body.size.toLong())
+            .writeLongLe(body.size.toLong()).readByteArray()
+        val zip = rawLocalEntry("a".encodeToByteArray(), 0, 0, crcOf(body), 0xFFFFFFFFL, 0xFFFFFFFFL, body, extra)
+        assertParity(zip)
+        val onlyCompressed = rawLocalEntry("a".encodeToByteArray(), 0, 0, crcOf(body), 0xFFFFFFFFL, body.size.toLong(), body, extra)
+        assertParity(onlyCompressed)
+    }
 }

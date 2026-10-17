@@ -53,6 +53,12 @@ class ZipReader(private val upstream: Source) : Closeable {
     private var done = false
     private var closed = false
 
+    /**
+     * The first failure, rethrown by every later [nextEntry] or read: after a failed header or entry the reader
+     * cannot know where the next record starts, so it refuses to continue.
+     */
+    private var failure: IOException? = null
+
     /** The body of the entry returned by the last [nextEntry]. Closing it does not close the archive. */
     val entry: Source
         get() = checkNotNull(current) { "no current entry" }
@@ -60,6 +66,17 @@ class ZipReader(private val upstream: Source) : Closeable {
     /** Moves to the next entry, skipping what is left of the current one; null at the central directory or the end. */
     fun nextEntry(): Entry? {
         check(!closed) { "closed" }
+        failure?.let { throw it }
+        try {
+            return readNextEntry()
+        } catch (e: IOException) {
+            failure = e
+            current?.release()
+            throw e
+        }
+    }
+
+    private fun readNextEntry(): Entry? {
         current?.let { body ->
             try {
                 body.skipRest()
@@ -103,9 +120,15 @@ class ZipReader(private val upstream: Source) : Closeable {
         val zip64 = zip64Extra(extra)
         if (zip64 != null && !hasDescriptor) {
             // Only the fields the header marked with 0xFFFFFFFF are present, uncompressed size first.
-            var at = 0
-            if (size == MAX_32 && at + 8 <= zip64.size) { size = le64(zip64, at); at += 8 }
-            if (compressedSize == MAX_32 && at + 8 <= zip64.size) compressedSize = le64(zip64, at)
+            if (zip64.size >= 16) {
+                // A full local ZIP64 extra holds both sizes, uncompressed first.
+                if (size == MAX_32) size = le64(zip64, 0)
+                if (compressedSize == MAX_32) compressedSize = le64(zip64, 8)
+            } else {
+                var at = 0
+                if (size == MAX_32 && at + 8 <= zip64.size) { size = le64(zip64, at); at += 8 }
+                if (compressedSize == MAX_32 && at + 8 <= zip64.size) compressedSize = le64(zip64, at)
+            }
         }
         if (method == METHOD_STORED && compressedSize != size) throw fail("invalid entry size")
 
@@ -192,6 +215,7 @@ class ZipReader(private val upstream: Source) : Closeable {
         override fun read(sink: Buffer, byteCount: Long): Long {
             require(byteCount >= 0) { "byteCount < 0: $byteCount" }
             check(!closed) { "closed" }
+            failure?.let { throw it }
             if (finished) return -1
             if (byteCount == 0L) return 0
             try {
@@ -206,18 +230,12 @@ class ZipReader(private val upstream: Source) : Closeable {
                 produced += n
                 sink.write(scratch, 0, n)
                 return n.toLong()
-            } catch (e: ZipFormatException) {
+            } catch (e: Throwable) {
                 release()
-                throw e
-            } catch (e: EOFException) {
-                release()
-                throw e
-            } catch (e: IOException) {
-                release()
-                throw ZipFormatException(e.message ?: "invalid file")
-            } catch (t: Throwable) {
-                release()
-                throw t
+                // Only corrupt deflate data is an invalid archive; other I/O errors keep their identity.
+                val error = if (e is RawDeflateException) ZipFormatException(e.message ?: "invalid file") else e
+                if (error is IOException) failure = error
+                throw error
             }
         }
 

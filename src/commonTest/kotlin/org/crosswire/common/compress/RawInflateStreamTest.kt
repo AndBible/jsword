@@ -79,4 +79,19 @@ class RawInflateStreamTest {
         val packed = deflate(ByteArray(50_000) { (it * 31 % 251).toByte() })
         assertFailsWith<okio.IOException> { inflateAll(Buffer().write(packed.copyOf(packed.size / 2))) }
     }
+
+    @Test fun readingAgainAfterTheEndDoesNotPushBytesBackTwice() {
+        val input = Buffer().write(deflate("hello".encodeToByteArray())).write(byteArrayOf(1, 2, 3))
+        val inflater = newRawInflater()
+        try {
+            val stream = RawInflateStream(inflater, input) { false }
+            val chunk = ByteArray(64)
+            while (stream.read(chunk, 0, chunk.size) != -1) { /* drain */ }
+            assertEquals(-1, stream.read(chunk, 0, chunk.size))
+            assertEquals(-1, stream.read(chunk, 0, chunk.size))
+        } finally {
+            inflater.close()
+        }
+        assertContentEquals(byteArrayOf(1, 2, 3), input.readByteArray())
+    }
 }
