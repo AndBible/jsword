@@ -54,13 +54,13 @@ class XMLUtilTest {
         assertEquals("aa &amp;a", XMLUtil.cleanAllEntities("aa &a"))
         assertEquals("aa &amp;", XMLUtil.cleanAllEntities("aa &"))
 
-        assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &nbsp; aa"))
+        assertEquals("aa \u00A0 aa", XMLUtil.cleanAllEntities("aa &nbsp; aa"))
         assertEquals("aa &amp;nbsp aa", XMLUtil.cleanAllEntities("aa &nbsp aa"))
         assertEquals("aa &amp;nb-sp aa", XMLUtil.cleanAllEntities("aa &nb-sp aa"))
         assertEquals("aa   aa", XMLUtil.cleanAllEntities("aa &nb; aa"))
         assertEquals("aa &amp;nb aa", XMLUtil.cleanAllEntities("aa &nb aa"))
 
-        assertEquals("-&amp;- -&lt;-&gt;-&quot;-£-€-", XMLUtil.cleanAllEntities("-&amp;-&nbsp;-&lt;-&gt;-&quot;-&pound;-&euro;-"))
+        assertEquals("-&amp;-\u00A0-&lt;-&gt;-&quot;-\u00A3-\u20AC-", XMLUtil.cleanAllEntities("-&amp;-&nbsp;-&lt;-&gt;-&quot;-&pound;-&euro;-"))
     }
 
     @Test

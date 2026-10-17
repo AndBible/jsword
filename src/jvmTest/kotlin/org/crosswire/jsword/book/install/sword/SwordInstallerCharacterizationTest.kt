@@ -284,7 +284,8 @@ class SwordInstallerCharacterizationTest {
             assertSame(installer.failure, expected)
         }
         // getBooks swallows it and answers an empty (modifiable) list
-        val books: MutableList<Book?> = installer.getBooks().toCollection(ArrayList<Book?>())
+        @Suppress("UNCHECKED_CAST")
+        val books = installer.getBooks() as MutableList<Book?>
         assertTrue(books.isEmpty())
         books.add(null)
         assertFalse(loaded(installer))

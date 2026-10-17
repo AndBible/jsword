@@ -72,7 +72,7 @@ class DiffTest {
         // Must be long to pass the 250 char cutoff.
         var a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n"
         var b = "abcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n"
-        assertEquals(Diff(a, b, false).compare(), Diff(a, b, true).compare(), "diff_main: Simple.")
+        assertEquals(Diff(a, b, true).compare(), Diff(a, b, false).compare(), "diff_main: Simple.")
         a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n"
         b = "abcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n"
         val textsLineMode = diffRebuildTests(Diff(a, b, true).compare())

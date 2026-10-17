@@ -306,8 +306,14 @@ val generateCurrentCorpusProbe by tasks.registering {
         output.writeText(original.asFile.readText().replace("org.jdom2.", "fi.sykero.kdom."))
     }
 }
+val strayJavaTests = fileTree("src/jvmTest/java") {
+    exclude("org/crosswire/ksword/parity/**")
+}
 tasks.named<JavaCompile>("compileJvmTestJava") {
     dependsOn(generateCurrentCorpusProbe)
+    doFirst {
+        check(strayJavaTests.isEmpty) { "Java test sources outside the oracle probe harness: ${strayJavaTests.files}" }
+    }
     setSource(files(fileTree("src/jvmTest/java") {
         include("org/crosswire/ksword/parity/**")
         exclude("org/crosswire/ksword/parity/CorpusProbe.java")

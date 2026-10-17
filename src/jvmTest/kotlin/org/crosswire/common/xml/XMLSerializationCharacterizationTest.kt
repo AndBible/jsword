@@ -305,7 +305,7 @@ class XMLSerializationCharacterizationTest {
     fun testCleanAllEntities() {
         // &nbsp; becomes U+00A0, &amp; stays, unknown &foo; becomes a space, numeric references stay
         // (also the hex one with decimal digits), and the final bare & is escaped
-        assertEquals(" &amp; &#65;&#x42;&amp;", XMLUtil.cleanAllEntities("&nbsp;&amp;&foo;&#65;&#x42;&"))
+        assertEquals("\u00A0&amp; &#65;&#x42;&amp;", XMLUtil.cleanAllEntities("&nbsp;&amp;&foo;&#65;&#x42;&"))
         // The numeric pattern only allows 2-4 decimal digits: letters in a hex reference are not accepted
         assertEquals("&amp;#xAB;", XMLUtil.cleanAllEntities("&#xAB;"))
         assertEquals("&amp;#1;", XMLUtil.cleanAllEntities("&#1;"))
@@ -315,9 +315,9 @@ class XMLSerializationCharacterizationTest {
     fun testCleanAllCharacters() {
         assertEquals("", XMLUtil.cleanAllCharacters(""))
         assertEquals("a\tb\r\nc" + UNICODE, XMLUtil.cleanAllCharacters("a\tb\r\nc" + UNICODE))
-        assertEquals("a b c d", XMLUtil.cleanAllCharacters("a\u0001b￾c￿d"))
+        assertEquals("a b c d", XMLUtil.cleanAllCharacters("a\u0001b\uFFFEc\uFFFFd"))
         // The range ends at U+FFFD
-        assertEquals("퟿�", XMLUtil.cleanAllCharacters("퟿�"))
+        assertEquals("\uD7FF\uE000\uFFFD", XMLUtil.cleanAllCharacters("\uD7FF\uE000\uFFFD"))
         assertEquals(" ", XMLUtil.cleanAllCharacters("\u0000"))
         assertEquals(" ", XMLUtil.cleanAllCharacters("\u0008"))
         // A supplementary character is one code point for the regex and not in the allowed set: one space
@@ -413,6 +413,6 @@ class XMLSerializationCharacterizationTest {
 
     private companion object {
         /** é and the euro sign, written as escapes so that the source stays ASCII. */
-        const val UNICODE = "é€"
+        const val UNICODE = "\u00E9\u20AC"
     }
 }

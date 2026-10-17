@@ -54,8 +54,8 @@ class StringUtilCharacterizationTest {
         check("emoji", a(EMOJI), StringUtil.split(EMOJI))
         check("leading", a("a"), StringUtil.split(" a"))
         // Character.isWhitespace: NO-BREAK SPACE is not whitespace, EM SPACE is
-        check("nbsp", a("a b"), StringUtil.split("a b"))
-        check("emspace", a("a", "b"), StringUtil.split("a b"))
+        check("nbsp", a("a\u00A0b"), StringUtil.split("a\u00A0b"))
+        check("emspace", a("a", "b"), StringUtil.split("a\u2003b"))
         check("tab", a("a", "b"), StringUtil.split("a\tb"))
     }
 
@@ -236,8 +236,8 @@ class StringUtilCharacterizationTest {
         assertEquals(-1, StringUtil.indexOfWhitespace(str, 5))
         assertEquals(-1, StringUtil.indexOfWhitespace(str, 6))
         assertEquals(-1, StringUtil.indexOfWhitespace(str, 99))
-        assertEquals(-1, StringUtil.indexOfWhitespace("a b".toCharArray(), 0))
-        assertEquals(1, StringUtil.indexOfWhitespace("a b".toCharArray(), 0))
+        assertEquals(-1, StringUtil.indexOfWhitespace("a\u00A0b".toCharArray(), 0))
+        assertEquals(1, StringUtil.indexOfWhitespace("a\u2003b".toCharArray(), 0))
     }
 
     private companion object {

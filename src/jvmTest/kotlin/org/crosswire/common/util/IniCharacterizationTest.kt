@@ -207,7 +207,7 @@ class IniCharacterizationTest {
     @Test
     fun testSectionByteOrderMarkIsStripped() {
         val s = IniSection()
-        s.load(bytes("﻿[Bom]\nk=v\n"), UTF8)
+        s.load(bytes("\uFEFF[Bom]\nk=v\n"), UTF8)
         assertEquals("Bom", s.name)
         assertEquals("v", s.get("k"))
     }
@@ -366,8 +366,8 @@ class IniCharacterizationTest {
 
     @Test
     fun testIniDoesNotStripByteOrderMark() {
-        // Unlike IniSection, "﻿[Bom]" is not a section line; it has no '=' so it is skipped
-        val ini = loadedIni("﻿[Bom]\nk=v\n")
+        // Unlike IniSection, "\uFEFF[Bom]" is not a section line; it has no '=' so it is skipped
+        val ini = loadedIni("\uFEFF[Bom]\nk=v\n")
         assertEquals(Arrays.asList(""), ini.sections)
         assertEquals("v", ini.getValue("", "k"))
     }
@@ -496,7 +496,7 @@ class IniCharacterizationTest {
         private const val LOGOS = "λόγος"
         private const val AAKKOSET = "Ääkköset"
 
-        private val CONF = "﻿".substring(1) +
+        private val CONF = "\uFEFF".substring(1) +
             "[ Name ]\n" +
             "# a comment\n" +
             "; another comment\n" +
