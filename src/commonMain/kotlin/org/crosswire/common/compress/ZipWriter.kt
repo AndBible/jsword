@@ -48,6 +48,10 @@ class ZipWriter(sink: Sink, internal val zip64Threshold: Long = 0xFFFFFFFFL) : C
         var crc: Long = 0, var compressedSize: Long = 0, var size: Long = 0,
     )
 
+    init {
+        require(zip64Threshold in 1..0xFFFFFFFFL) { "zip64Threshold must fit in 32 bits: $zip64Threshold" }
+    }
+
     private val counting = CountingSink(sink)
     private val out: BufferedSink = counting.buffer()
     private val entries = ArrayList<Entry>()
@@ -94,7 +98,6 @@ class ZipWriter(sink: Sink, internal val zip64Threshold: Long = 0xFFFFFFFFL) : C
     }
 
     private fun writeBody(e: Entry, write: (BufferedSink) -> Unit) {
-        out.emit() // so that the compressed byte counter below is exact
         val compressed = CountingSink(NonClosingSink(out))
         val deflater = Deflater(-1, true)
         try {
