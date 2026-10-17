@@ -174,6 +174,8 @@ tasks.withType<Test>().configureEach {
     }
     // K5b inventory, catalog fixture and Books startup timing tools: plain -D system properties, passed on when set.
     systemProperty("k5b.project.dir", layout.projectDirectory.asFile.absolutePath)
+    // BookPreRequisitesTest downloads reference books into ~/.sword; opt-in only.
+    System.getProperty("ksword.installPrerequisites")?.let { systemProperty("ksword.installPrerequisites", it) }
     for (flag in listOf("k5b.inventory.write", "k5b.inventory.check", "k5b.fixture.write", "k5b.timing", "k5b.timing.out")) {
         System.getProperty(flag)?.let { systemProperty(flag, it) }
     }

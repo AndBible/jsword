@@ -25,12 +25,17 @@ import org.crosswire.jsword.book.install.InstallException
 import org.crosswire.jsword.book.install.InstallManager
 import org.crosswire.jsword.book.install.Installer
 import org.slf4j.LoggerFactory
+import org.junit.Assume.assumeTrue
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.fail
 
 /**
  * JUnit Test.
+ *
+ * Downloads missing reference books into the real Sword home (`~/.sword`), so it only runs when asked for with
+ * `-Dksword.installPrerequisites=true` (passed through by `jsword/build.gradle.kts`). Run unconditionally it leaves
+ * extra modules behind that change the book set seen by later tests (e.g. `BookListContractTest`) and by the `:app` suite.
  *
  * @see gnu.lgpl.License The GNU Lesser General Public License for details.
  * @author DM Smith
@@ -43,6 +48,7 @@ class BookPreRequisitesTest {
 
     @Test
     fun testInstallBook() {
+        assumeTrue("opt-in: -Dksword.installPrerequisites=true", System.getProperty("ksword.installPrerequisites") == "true")
         for (ii in BOOKS.indices) {
             try {
                 if (installedBooks.getBook(BOOKS[ii]) == null) {
