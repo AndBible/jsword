@@ -37,28 +37,42 @@ internal class RawInflateStream(
     private val refill: () -> Boolean
 ) {
     private var fed = ByteArray(0)
+    private var ended = false
 
     /** Uncompressed bytes produced so far. */
     val totalWritten: Long get() = inflater.totalWritten
 
-    /** Inflates into [out]; -1 once the stream has ended. Throws [IOException] if it is corrupt or truncated. */
+    /**
+     * Inflates into [out]; -1 once the stream has ended. Throws [IOException] if it is corrupt or truncated.
+     * [finished] is checked before [RawInflater.needsInput]: a stream that ends exactly where the fed bytes
+     * end (nothing follows it) is complete, not truncated.
+     */
     fun read(out: ByteArray, offset: Int, count: Int): Int {
         while (true) {
+            if (inflater.finished) {
+                if (!ended) {
+                    ended = true
+                    val unread = inflater.remaining
+                    val rest = input.readByteArray()
+                    input.write(fed, fed.size - unread, unread)
+                    input.write(rest)
+                }
+                return -1
+            }
             if (inflater.needsInput) {
-                if (input.size == 0L && !refill()) throw EOFException("truncated deflate data")
+                if (input.size == 0L && !refill()) {
+                    // Nothing more to feed; the inflater may still hold output it had no room for.
+                    val n = inflater.inflate(out, offset, count)
+                    if (n > 0) return n
+                    if (!inflater.finished) throw EOFException("truncated deflate data")
+                    continue
+                }
                 fed = input.readByteArray(minOf(input.size, 8192L))
                 inflater.setInput(fed, 0, fed.size)
             }
             val n = inflater.inflate(out, offset, count)
             if (n > 0) return n
-            if (inflater.finished) {
-                val unread = inflater.remaining
-                val rest = input.readByteArray()
-                input.write(fed, fed.size - unread, unread)
-                input.write(rest)
-                return -1
-            }
-            if (!inflater.needsInput) throw IOException("corrupt deflate data")
+            if (!inflater.finished && !inflater.needsInput) throw IOException("corrupt deflate data")
         }
     }
 }
