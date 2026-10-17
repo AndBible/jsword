@@ -64,3 +64,5 @@ internal class NativeRawInflater : RawInflater {
         }
     }
 }
+
+internal actual fun newRawInflater(): RawInflater = NativeRawInflater()

@@ -15,19 +15,6 @@ class LegacyGzipSourceContractTest {
         GzipCompressorOutputStream(out).use { it.write(body) }
     }.toByteArray()
 
-    private class JdkInflater : RawInflater {
-        private val inflater = Inflater(true)
-        override val remaining get() = inflater.remaining
-        override val finished get() = inflater.finished()
-        override val needsInput get() = inflater.needsInput()
-        override val totalWritten get() = inflater.bytesWritten
-        override fun setInput(bytes: ByteArray, offset: Int, count: Int) = inflater.setInput(bytes, offset, count)
-        override fun inflate(bytes: ByteArray, offset: Int, count: Int): Int = try {
-            inflater.inflate(bytes, offset, count)
-        } catch (error: java.util.zip.DataFormatException) { throw RawDeflateException(error.message) }
-        override fun close() = inflater.end()
-    }
-
     @Test fun framingCorpusMatchesRealCommonsErrorsAndFirstMember() {
         val body = "hello".encodeToByteArray()
         val encoded = gzip(body)
@@ -39,7 +26,7 @@ class LegacyGzipSourceContractTest {
                 encoded.copyOf().apply { this[2] = 99 }, encoded.copyOf().apply { this[3] = 32 })
         for ((index, bytes) in cases.withIndex()) {
             val reference = runCatching { GzipCompressorInputStream(bytes.inputStream()).use { it.readBytes() } }
-            val actual = runCatching { LegacyGzipSource(Buffer().write(bytes), ::JdkInflater).use { source ->
+            val actual = runCatching { LegacyGzipSource(Buffer().write(bytes), ::JdkRawInflater).use { source ->
                 val output = Buffer()
                 while (source.read(output, 4096) != -1L) Unit
                 output.readByteArray()
@@ -60,7 +47,7 @@ class LegacyGzipSourceContractTest {
             override fun timeout() = Timeout.NONE
             override fun close() { closed++ }
         }
-        LegacyGzipSource(raw, ::JdkInflater).use { source ->
+        LegacyGzipSource(raw, ::JdkRawInflater).use { source ->
             val output = Buffer()
             assertEquals(512L, source.read(output, 512))
             assertContentEquals(body.copyOf(512), output.readByteArray())
@@ -95,7 +82,7 @@ class LegacyGzipSourceContractTest {
                 val writer = org.crosswire.common.util.StoredZipWriter.Writer(output)
                 val actual = runCatching {
                     try {
-                        org.crosswire.common.util.TarReader(LegacyGzipSource(Buffer().write(bytes), ::JdkInflater)).use { reader ->
+                        org.crosswire.common.util.TarReader(LegacyGzipSource(Buffer().write(bytes), ::JdkRawInflater)).use { reader ->
                             while (true) {
                                 val entry = reader.nextInstaller() ?: break
                                 if (!entry.isDirectory && entry.name.endsWith(".conf") && entry.size != 0L) {
@@ -133,7 +120,7 @@ class LegacyGzipSourceContractTest {
             override fun read(sink: Buffer, byteCount: Long) = -1L
             override fun close() { closed++; throw closeError }
         }
-        val error = assertFailsWith<java.io.IOException> { LegacyGzipSource(raw, ::JdkInflater) }
+        val error = assertFailsWith<java.io.IOException> { LegacyGzipSource(raw, ::JdkRawInflater) }
         assertEquals("Input is not in the .gz format", error.message)
         assertEquals(1, closed)
         assertTrue(error.suppressed.contains(closeError))

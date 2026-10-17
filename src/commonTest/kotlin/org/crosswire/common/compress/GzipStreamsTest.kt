@@ -1,6 +1,10 @@
 package org.crosswire.common.compress
 
+import okio.Buffer
 import okio.IOException
+import okio.Source
+import okio.Timeout
+import okio.buffer
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -60,6 +64,52 @@ class GzipStreamsTest {
             2, 0, 9, 9, // extra: length 2
             'n'.code.toByte(), 0, 'c'.code.toByte(), 0)
         assertEquals("xyz", GzipStreams.gunzip(header + plain.copyOfRange(10, plain.size)).decodeToString())
+    }
+
+    /** Hands out at most [chunk] bytes per read, like a slow network or file source. */
+    private class ChunkedSource(bytes: ByteArray, private val chunk: Long) : Source {
+        private val data = Buffer().write(bytes)
+        var closed = false
+        override fun read(sink: Buffer, byteCount: Long): Long = data.read(sink, minOf(byteCount, chunk))
+        override fun timeout() = Timeout.NONE
+        override fun close() { closed = true }
+    }
+
+    @Test fun gunzipOverChunkedUpstreamWithSmallReads() {
+        val one = pseudoRandom(20_000)
+        val bytes = GzipStreams.gzip(one) + GzipStreams.gzip("tail".encodeToByteArray()) + byteArrayOf(1, 2, 3)
+        for (chunk in listOf(1L, 7L, 8192L)) {
+            for (readSize in listOf(1L, 5L, 100_000L)) {
+                val source = GzipStreams.gunzip(ChunkedSource(bytes, chunk)).buffer()
+                val out = Buffer()
+                while (true) {
+                    val n = source.read(out, readSize)
+                    if (n == -1L) break
+                }
+                assertContentEquals(one + "tail".encodeToByteArray(), out.readByteArray(), "chunk $chunk read $readSize")
+            }
+        }
+    }
+
+    @Test fun gunzipChecksFirstMemberHeaderCrcAndMethod() {
+        val plain = GzipStreams.gzip("xyz".encodeToByteArray())
+        val head = plain.copyOf(10).also { it[3] = 2 }
+        val crc = Crc32().apply { update(head) }.value.toInt()
+        val body = plain.copyOfRange(10, plain.size)
+        val good = head + byteArrayOf(crc.toByte(), (crc shr 8).toByte()) + body
+        assertEquals("xyz", GzipStreams.gunzip(good).decodeToString())
+        val bad = good.copyOf().also { it[10] = (it[10].toInt() xor 1).toByte() }
+        assertFailsWith<IOException> { GzipStreams.gunzip(bad) }
+        assertFailsWith<IOException> { GzipStreams.gunzip(plain.copyOf().also { it[2] = 7 }) }
+    }
+
+    @Test fun closingMidStreamClosesUpstreamAndIsSafeToRepeat() {
+        val upstream = ChunkedSource(GzipStreams.gzip(pseudoRandom(100_000)), 4096)
+        val source = GzipStreams.gunzip(upstream)
+        source.read(Buffer(), 100)
+        source.close()
+        source.close()
+        assertEquals(true, upstream.closed)
     }
 
     @Test fun crc32OfCheckStringIs0xCBF43926() {

@@ -5,19 +5,6 @@ import okio.Buffer
 import kotlin.test.*
 
 class LegacyRawZipSourceContractTest {
-    private class JdkInflater : RawInflater {
-        private val inflater = Inflater(true)
-        override val remaining get() = inflater.remaining
-        override val finished get() = inflater.finished()
-        override val needsInput get() = inflater.needsInput()
-        override val totalWritten get() = inflater.bytesWritten
-        override fun setInput(bytes: ByteArray, offset: Int, count: Int) = inflater.setInput(bytes, offset, count)
-        override fun inflate(bytes: ByteArray, offset: Int, count: Int): Int = try {
-            inflater.inflate(bytes, offset, count)
-        } catch (error: java.util.zip.DataFormatException) { throw RawDeflateException(error.message) }
-        override fun close() = inflater.end()
-    }
-
     private fun malformed(suffix: Int): ByteArray {
         val length = 6 + suffix
         return byteArrayOf(0, length.toByte(), (length ushr 8).toByte(), length.inv().toByte(), (length.inv() ushr 8).toByte()) +
@@ -27,14 +14,14 @@ class LegacyRawZipSourceContractTest {
     @Test fun prefixReadPreservesConditionalAdvanceAndDoesNotDecodeOnClose() {
         for (suffix in listOf(200, 5000)) {
             val compressed = malformed(suffix)
-            LegacyRawZipSource(compressed + ByteArray(200), 0, ::JdkInflater, "Truncated ZIP file").use { source ->
+            LegacyRawZipSource(compressed + ByteArray(200), 0, ::JdkRawInflater, "Truncated ZIP file").use { source ->
                 val output = Buffer()
                 assertEquals(6L, source.read(output, 6))
                 assertEquals("prefix", output.readUtf8())
                 if (suffix == 200) assertFailsWith<RawDeflateException> { source.advance(compressed.size) }
                 else source.advance(compressed.size)
             }
-            LegacyRawZipSource(compressed, 0, ::JdkInflater, "Truncated ZIP file").use { source ->
+            LegacyRawZipSource(compressed, 0, ::JdkRawInflater, "Truncated ZIP file").use { source ->
                 val output = Buffer()
                 assertEquals(6L, source.read(output, 6))
                 assertEquals("prefix", output.readUtf8())
@@ -47,7 +34,7 @@ class LegacyRawZipSourceContractTest {
         val size = 5000
         val payload = byteArrayOf(1, size.toByte(), (size ushr 8).toByte(), size.inv().toByte(), (size.inv() ushr 8).toByte()) + ByteArray(size) { 65 }
         val bytes = byteArrayOf(42, 43) + payload + ByteArray(100) { 7 }
-        LegacyRawZipSource(bytes, 2, ::JdkInflater, "Unexpected end of ZLIB input stream").use { source ->
+        LegacyRawZipSource(bytes, 2, ::JdkRawInflater, "Unexpected end of ZLIB input stream").use { source ->
             val output = Buffer()
             val reference = java.util.zip.InflaterInputStream(bytes.inputStream().apply { skip(2) }, Inflater(true))
             reference.use { input ->

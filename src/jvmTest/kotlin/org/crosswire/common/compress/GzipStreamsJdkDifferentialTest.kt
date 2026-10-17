@@ -56,6 +56,18 @@ class GzipStreamsJdkDifferentialTest {
         }
     }
 
+    @Test fun gunzipRejectsFirstMemberHeaderLikeJdk() {
+        val plain = GzipStreams.gzip("xyz".encodeToByteArray())
+        val head = plain.copyOf(10).also { it[3] = 2 }
+        val body = plain.copyOfRange(10, plain.size)
+        val badMethod = plain.copyOf().also { it[2] = 7 }
+        val badHeaderCrc = head + byteArrayOf(0, 0) + body // CRC16 of the header is not 0
+        for (input in listOf(badMethod, badHeaderCrc, byteArrayOf(), byteArrayOf(0x1f, 0x8b.toByte(), 8))) {
+            kotlin.test.assertFailsWith<java.io.IOException> { jdkGunzip(input) }
+            kotlin.test.assertFailsWith<okio.IOException> { GzipStreams.gunzip(input) }
+        }
+    }
+
     @Test fun crc32MatchesJavaUtilZipCrc32() {
         repeat(20) {
             val data = ByteArray(random.nextInt(100_000)).also { random.nextBytes(it) }
