@@ -168,6 +168,7 @@ class UnpackInterruptionTest {
         try {
             for (overwrite in listOf(false, true)) {
                 fun fresh(name: String): File {
+                    SwordArchive.onPublishStep = {} // the previous iteration's failing hook must not hit the setup install
                     val dest = File(work, name).apply { deleteRecursively(); mkdirs() }
                     SwordBookPathJvm.setDownloadDir(dest)
                     if (overwrite) SwordArchive.unpackZipSpelling(oldZip.path, dest.path, true)
