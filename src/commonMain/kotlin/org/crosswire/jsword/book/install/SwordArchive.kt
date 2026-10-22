@@ -114,6 +114,9 @@ object SwordArchive {
         }
         val parts = LinkedHashSet<String>()
         val confs = LinkedHashMap<String, ByteArray>()
+        val asides = ArrayList<String>()
+        var publishStep = 0
+        var dataReplaced = false
         try {
             for (entry in entries) {
                 if (!safeName(entry.name)) throw IOException("Unsafe archive entry: ${entry.name}")
@@ -130,17 +133,37 @@ object SwordArchive {
                     }
                 }
             }
-            for (name in parts) archivePublish(dest, name + PART_SUFFIX, name)
+            // An installed module's conf is first moved aside (".old", ignored by the scan), so a kill while the data
+            // files are replaced leaves the module ABSENT, never the old conf next to mixed old/new data.
+            for (name in confs.keys) {
+                if (runCatching { archivePublish(dest, name, name + ".old") }.isSuccess) asides.add(name)
+            }
+            for (name in parts) {
+                onPublishStep(publishStep++)
+                dataReplaced = true
+                archivePublish(dest, name + PART_SUFFIX, name)
+            }
             parts.clear()
             for ((name, bytes) in confs) {
+                onPublishStep(publishStep++)
                 archiveExtract(dest, name + ".tmp", false) { Buffer().write(bytes) }
                 archivePublish(dest, name + ".tmp", name)
             }
+            for (name in asides) archiveDiscard(dest, name + ".old")
+            asides.clear()
         } finally {
             for (name in parts) archiveDiscard(dest, name + PART_SUFFIX)
             for (name in confs.keys) archiveDiscard(dest, name + ".tmp")
+            // Handled failure: nothing replaced yet -> restore the old conf; otherwise data may be mixed, module stays absent.
+            for (name in asides) {
+                if (!dataReplaced && runCatching { archivePublish(dest, name + ".old", name) }.isSuccess) continue
+                archiveDiscard(dest, name + ".old")
+            }
         }
     }
+
+    /** Test hook: called before each publish move (data files, then confs) of a staged unpack. */
+    internal var onPublishStep: (Int) -> Unit = {}
 
     private const val PART_SUFFIX = ".part"
 

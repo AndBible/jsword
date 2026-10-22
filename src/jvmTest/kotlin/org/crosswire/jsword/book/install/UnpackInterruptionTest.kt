@@ -10,6 +10,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -77,6 +78,16 @@ class UnpackInterruptionTest {
         return File(work, name).apply { writeBytes(buffer.readByteArray()) }
     }
 
+    private fun strayFiles(root: File) = root.walkTopDown().filter { it.isFile && (it.name.endsWith(".part") ||
+        it.name.endsWith(".tmp") || it.name.endsWith(".old")) }.map { it.relativeTo(root).path }.toList()
+
+    /** File-level state a kill would leave: "absent", "gen1"/"gen2", or "VIOLATION" (conf next to partial or mixed data). */
+    private fun snapshot(dest: File, generations: List<List<Pair<String, ByteArray>>>): String {
+        if (!File(dest, "mods.d/$INITIALS.conf").exists()) return "absent"
+        val index = generations.indexOfFirst { matches(dest, it) }
+        return if (index < 0) "VIOLATION" else "gen${index + 1}"
+    }
+
     private fun rescan() {
         Books.installed().getBook(INITIALS)?.let { Books.installed().removeBook(it) }
         Books.installed().registerDriver(SwordBookDriver.instance())
@@ -88,6 +99,7 @@ class UnpackInterruptionTest {
 
     /** Applies the consistency rule, returning "absent", "gen1" or "gen2". */
     private fun assertConsistent(dest: File, label: String, generations: List<List<Pair<String, ByteArray>>>): String {
+        assertEquals(emptyList(), strayFiles(dest), "$label: staged .part/.tmp/.old files left behind")
         rescan()
         val conf = File(dest, "mods.d/$INITIALS.conf")
         if (!conf.exists()) {
@@ -140,6 +152,46 @@ class UnpackInterruptionTest {
             val book = assertNotNull(Books.installed().getBook(INITIALS), "k=$k: installed module vanished")
             assertEquals("In the beginning God created the heaven and the earth.",
                 book.getRawText(book.getKey("Gen.1.1")).trim(), "k=$k: Gen 1:1 unreadable")
+        }
+    }
+
+    /**
+     * The publish phase (data renames, then conf) is not atomic as a whole. The state at every step boundary is what a
+     * kill would leave: it must be absent or one complete generation, never the old conf next to mixed data; and a
+     * handled failure at any step must leave absent or a complete generation and no staged leftovers.
+     */
+    @Test fun interruptedPublishNeverLeavesConfNextToMixedData() {
+        val old = generation(1)
+        val new = generation(2)
+        val oldZip = zip(old, "gen1.zip")
+        val newZip = zip(new, "gen2.zip")
+        try {
+            for (overwrite in listOf(false, true)) {
+                fun fresh(name: String): File {
+                    val dest = File(work, name).apply { deleteRecursively(); mkdirs() }
+                    SwordBookPathJvm.setDownloadDir(dest)
+                    if (overwrite) SwordArchive.unpackZipSpelling(oldZip.path, dest.path, true)
+                    return dest
+                }
+                val dest = fresh("pub-$overwrite")
+                val snapshots = mutableListOf<String>()
+                SwordArchive.onPublishStep = { snapshots += snapshot(dest, listOf(old, new)) }
+                SwordArchive.unpackZipSpelling(newZip.path, dest.path, true)
+                assertEquals(new.size, snapshots.size, "one publish step per data file plus the conf")
+                assertTrue(snapshots.none { it == "VIOLATION" }, "overwrite=$overwrite: kill-state snapshots $snapshots")
+                assertEquals("gen2", assertConsistent(dest, "overwrite=$overwrite full publish", listOf(old, new)))
+                for (j in 0 until new.size) {
+                    val target = fresh("pub-$overwrite-$j")
+                    SwordArchive.onPublishStep = { step -> if (step == j) throw IOException("injected publish failure at $j") }
+                    val result = runCatching { SwordArchive.unpackZipSpelling(newZip.path, target.path, true) }
+                    assertTrue(result.isFailure, "overwrite=$overwrite j=$j: the publish failure must surface")
+                    val state = assertConsistent(target, "overwrite=$overwrite j=$j", listOf(old, new))
+                    println("PUBLISH-INTERRUPTION overwrite=$overwrite j=$j -> $state")
+                    if (overwrite && j == 0) assertEquals("gen1", state, "nothing replaced yet: the old module must be restored")
+                }
+            }
+        } finally {
+            SwordArchive.onPublishStep = {}
         }
     }
 
