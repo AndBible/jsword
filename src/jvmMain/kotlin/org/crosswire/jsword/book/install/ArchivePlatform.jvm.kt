@@ -101,3 +101,12 @@ internal actual fun archiveExtract(dest: String, name: String, directory: Boolea
         input.close()
     }
 }
+
+internal actual fun archivePublish(dest: String, from: String, to: String) {
+    val root = File(dest)
+    java.nio.file.Files.move(File(root, from).toPath(), File(root, to).toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+}
+
+internal actual fun archiveDiscard(dest: String, name: String) {
+    runCatching { File(File(dest), name).delete() }
+}

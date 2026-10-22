@@ -136,3 +136,13 @@ internal actual fun archiveExtract(dest: String, name: String, directory: Boolea
         }
     }
 }
+
+internal actual fun archivePublish(dest: String, from: String, to: String) {
+    val source = NativeLexicalFiles.child(NativeLexicalFiles.spelling(dest), from)
+    val target = NativeLexicalFiles.child(NativeLexicalFiles.spelling(dest), to)
+    if (!NativeLexicalFiles.move(source, target)) throw IOException("Cannot move $from to $to")
+}
+
+internal actual fun archiveDiscard(dest: String, name: String) {
+    runCatching { unlink(NativeLexicalFiles.child(NativeLexicalFiles.spelling(dest), name)) }
+}

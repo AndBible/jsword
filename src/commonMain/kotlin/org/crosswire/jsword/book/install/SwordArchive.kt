@@ -4,7 +4,6 @@ import okio.Buffer
 import okio.buffer
 import okio.use
 import okio.Path
-import okio.Path.Companion.toPath
 import org.crosswire.common.util.LoggerFactory
 import org.crosswire.common.util.StoredZipWriter
 import org.crosswire.common.util.TarReader
@@ -113,8 +112,6 @@ object SwordArchive {
             }
             return
         }
-        val fs = okio.FileSystem.SYSTEM
-        val root = dest.toPath()
         val parts = LinkedHashSet<String>()
         val confs = LinkedHashMap<String, ByteArray>()
         try {
@@ -133,16 +130,15 @@ object SwordArchive {
                     }
                 }
             }
-            for (name in parts) fs.atomicMove(root / (name + PART_SUFFIX), root / name)
+            for (name in parts) archivePublish(dest, name + PART_SUFFIX, name)
             parts.clear()
             for ((name, bytes) in confs) {
-                val tmp = root / (name + ".tmp")
-                fs.write(tmp) { write(bytes) }
-                fs.atomicMove(tmp, root / name)
+                archiveExtract(dest, name + ".tmp", false) { Buffer().write(bytes) }
+                archivePublish(dest, name + ".tmp", name)
             }
         } finally {
-            for (name in parts) runCatching { fs.delete(root / (name + PART_SUFFIX)) }
-            for (name in confs.keys) runCatching { fs.delete(root / (name + ".tmp")) }
+            for (name in parts) archiveDiscard(dest, name + PART_SUFFIX)
+            for (name in confs.keys) archiveDiscard(dest, name + ".tmp")
         }
     }
 
