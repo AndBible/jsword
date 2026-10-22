@@ -4,6 +4,7 @@ import okio.Buffer
 import okio.buffer
 import okio.use
 import okio.Path
+import okio.Path.Companion.toPath
 import org.crosswire.common.util.LoggerFactory
 import org.crosswire.common.util.StoredZipWriter
 import org.crosswire.common.util.TarReader
@@ -89,16 +90,66 @@ object SwordArchive {
     fun unpackZip(zip: Path, dest: Path, include: Boolean, vararg dirs: String) =
         unpackZipSpelling(zip.toString(), dest.toString(), include, *dirs)
 
+    /**
+     * Unpacks [zip] into [dest]. When a selected entry is a module conf (`mods.d/<name>.conf`) the unpack is
+     * "data first, conf last": data entries are written to `<name>.part` siblings, confs are buffered, and only after
+     * every entry succeeded are the data files moved into place and then each conf published through
+     * `<conf>.tmp` + atomic move. An interrupted install therefore never leaves a conf next to partial data, and an
+     * installed module is left untouched until the replacement is complete. Archives without a module conf keep the
+     * plain in-order write (legacy behaviour).
+     */
     internal fun unpackZipSpelling(zip: String, dest: String, include: Boolean, vararg dirs: String) {
-        for (entry in readZip(archiveRead(zip),zip)) {
-            if (!safeName(entry.name)) throw IOException("Unsafe archive entry: ${entry.name}")
-            if (dirs.isNotEmpty()) {
-                val matches = dirs.any { archiveLowercase(entry.name).startsWith(it) }
-                if (matches != include) continue
+        val entries = readZip(archiveRead(zip), zip).toList()
+        fun selected(entry: ZipEntry): Boolean {
+            if (dirs.isEmpty()) return true
+            return dirs.any { archiveLowercase(entry.name).startsWith(it) } == include
+        }
+        val staged = entries.any { safeName(it.name) && selected(it) && isModuleConf(it) }
+        if (!staged) {
+            for (entry in entries) {
+                if (!safeName(entry.name)) throw IOException("Unsafe archive entry: ${entry.name}")
+                if (!selected(entry)) continue
+                archiveExtract(dest, entry.name, entry.directory) { entry.source() }
             }
-            archiveExtract(dest, entry.name, entry.directory) { entry.source() }
+            return
+        }
+        val fs = okio.FileSystem.SYSTEM
+        val root = dest.toPath()
+        val parts = LinkedHashSet<String>()
+        val confs = LinkedHashMap<String, ByteArray>()
+        try {
+            for (entry in entries) {
+                if (!safeName(entry.name)) throw IOException("Unsafe archive entry: ${entry.name}")
+                if (!selected(entry)) continue
+                when {
+                    entry.directory -> archiveExtract(dest, entry.name, true) { entry.source() }
+                    isModuleConf(entry) -> {
+                        archiveExtract(dest, entry.name, true) { entry.source() } // creates only the parent
+                        confs[entry.name] = entry.source().buffer().use { it.readByteArray() }
+                    }
+                    else -> {
+                        archiveExtract(dest, entry.name + PART_SUFFIX, false) { entry.source() }
+                        parts.add(entry.name)
+                    }
+                }
+            }
+            for (name in parts) fs.atomicMove(root / (name + PART_SUFFIX), root / name)
+            parts.clear()
+            for ((name, bytes) in confs) {
+                val tmp = root / (name + ".tmp")
+                fs.write(tmp) { write(bytes) }
+                fs.atomicMove(tmp, root / name)
+            }
+        } finally {
+            for (name in parts) runCatching { fs.delete(root / (name + PART_SUFFIX)) }
+            for (name in confs.keys) runCatching { fs.delete(root / (name + ".tmp")) }
         }
     }
+
+    private const val PART_SUFFIX = ".part"
+
+    private fun isModuleConf(entry: ZipEntry): Boolean = !entry.directory &&
+        archiveLowercase(entry.name).let { it.startsWith("mods.d/") && it.endsWith(".conf") }
 
     private fun safeName(name: String): Boolean = name.isNotEmpty() && !name.startsWith('/') &&
         !name.startsWith('\\') && !(name.length > 1 && name[1] == ':') &&
