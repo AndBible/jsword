@@ -58,7 +58,7 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
      */
     override fun toRemoteURI(book: Book): KUri? {
         try {
-            return KUri(NetUtil.PROTOCOL_HTTPS, host, packageDirectory + '/' + book.initials + ZIP_SUFFIX, null)
+            return httpsUri(packageDirectory + '/' + book.initials + ZIP_SUFFIX)
         } catch (e: Exception) {
             if (!netUriSyntaxFailure(e)) throw e
             return null
@@ -72,7 +72,7 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
     override suspend fun download(job: Progress?, dir: String?, file: String?, dest: KUri?) {
         val uri: KUri
         try {
-            uri = KUri(NetUtil.PROTOCOL_HTTPS, host, dir + '/' + file, null)
+            uri = httpsUri(joinPath(dir, file))
         } catch (ex: Exception) {
             if (!netUriSyntaxFailure(ex)) throw ex
             // TRANSLATOR: Common error condition: {0} is a placeholder for the URL of what could not be found.
@@ -89,9 +89,32 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
         }
     }
 
+    /** `dir/file` without doubling the slash when [dir] is "/" or ends with one. */
+    private fun joinPath(dir: String?, file: String?): String = dir.orEmpty().trimEnd('/') + '/' + file
+
+    /**
+     * An https URI on [host], which may carry an explicit port (`host:8443`, `[::1]:8443`). The port
+     * is split off so that it stays a port: passing `host:port` as the host argument is read as a
+     * malformed IPv6 address. Without a port the URI has none, so a default-port repository is unchanged.
+     */
+    private fun httpsUri(path: String): KUri {
+        val h = host
+        val colon = h?.lastIndexOf(':') ?: -1
+        // A trailing :digits is a port only when what precedes it is a plain host or a bracketed IPv6
+        // literal; a bare IPv6 address (fe80::1, ::1) has more colons and no port.
+        val port = if (h != null && colon >= 0 && h.substring(colon + 1).let { it.isNotEmpty() && it.all { c -> c in '0'..'9' } } &&
+            h.substring(0, colon).let { !it.contains(':') || it.endsWith("]") }) {
+            h.substring(colon + 1).toIntOrNull()
+        } else null
+        if (h == null || port == null) return KUri(NetUtil.PROTOCOL_HTTPS, h, path, null)
+        // 443 is the https default: an explicit :443 gives the same URI as no port.
+        if (port == 443) return KUri(NetUtil.PROTOCOL_HTTPS, h.substring(0, colon), path, null)
+        return KUri(NetUtil.PROTOCOL_HTTPS, null, h.substring(0, colon), port, path, null, null)
+    }
+
     override suspend fun indexLastUpdated(): Long? {
         try {
-            val uri = KUri(NetUtil.PROTOCOL_HTTPS, host, catalogDirectory + "/" + FILE_LIST_GZ, null)
+            val uri = httpsUri(joinPath(catalogDirectory, FILE_LIST_GZ))
             val transport = WebResource.transport ?: return 0L
             return transport.head(uri, WebResource.getTimeout()).lastModified
         } catch (e: kotlinx.coroutines.CancellationException) {
