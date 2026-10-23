@@ -55,4 +55,21 @@ class HttpsSwordInstallerPortTest {
         assertEquals("https://example.org/mods.d.tar.gz", catalogUri(i))
         assertEquals("https://example.org/packages/KJV.zip", i.toRemoteURI(book("KJV")).toString())
     }
+
+    @Test fun explicit443GivesDefaultPortUris() {
+        val i = installer("example.org:443")
+        assertEquals("https://example.org/mods.d.tar.gz", catalogUri(i))
+        assertEquals("https://example.org/packages/KJV.zip", i.toRemoteURI(book("KJV")).toString())
+    }
+
+    @Test fun bareIpv6HostIsNotSplitIntoHostAndPort() {
+        for (h in listOf("::1", "fe80::1")) {
+            val i = installer(h)
+            assertEquals("https://[$h]/packages/KJV.zip", i.toRemoteURI(book("KJV")).toString(), h)
+        }
+    }
+
+    @Test fun bracketedIpv6WithPortKeepsPort() {
+        assertEquals("https://[::1]:8443/packages/KJV.zip", installer("[::1]:8443").toRemoteURI(book("KJV")).toString())
+    }
 }

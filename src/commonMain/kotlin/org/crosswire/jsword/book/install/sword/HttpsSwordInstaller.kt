@@ -100,10 +100,15 @@ open class HttpsSwordInstaller : AbstractSwordInstaller() {
     private fun httpsUri(path: String): KUri {
         val h = host
         val colon = h?.lastIndexOf(':') ?: -1
-        val port = if (colon >= 0 && h!!.substring(colon + 1).let { it.isNotEmpty() && it.all { c -> c in '0'..'9' } }) {
+        // A trailing :digits is a port only when what precedes it is a plain host or a bracketed IPv6
+        // literal; a bare IPv6 address (fe80::1, ::1) has more colons and no port.
+        val port = if (h != null && colon >= 0 && h.substring(colon + 1).let { it.isNotEmpty() && it.all { c -> c in '0'..'9' } } &&
+            h.substring(0, colon).let { !it.contains(':') || it.endsWith("]") }) {
             h.substring(colon + 1).toIntOrNull()
         } else null
         if (h == null || port == null) return KUri(NetUtil.PROTOCOL_HTTPS, h, path, null)
+        // 443 is the https default: an explicit :443 gives the same URI as no port.
+        if (port == 443) return KUri(NetUtil.PROTOCOL_HTTPS, h.substring(0, colon), path, null)
         return KUri(NetUtil.PROTOCOL_HTTPS, null, h.substring(0, colon), port, path, null, null)
     }
 
