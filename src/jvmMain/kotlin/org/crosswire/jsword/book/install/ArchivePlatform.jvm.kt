@@ -82,8 +82,10 @@ internal actual fun archiveInflateSource(bytes: ByteArray): okio.Source = java.u
 internal actual fun archiveExtract(dest: String, name: String, directory: Boolean, source: () -> okio.Source) {
     val root = File(dest)
     val target = File(root, name)
-    val canonicalRoot = root.canonicalFile.toPath()
-    if (!target.canonicalFile.toPath().startsWith(canonicalRoot)) throw IOException("Archive entry escapes destination: $name")
+    // String comparison, not java.nio.file.Path: that package needs Android API 26 and minSdk is 23.
+    val canonicalRoot = root.canonicalPath
+    val canonicalTarget = target.canonicalPath
+    if (canonicalTarget != canonicalRoot && !canonicalTarget.startsWith(canonicalRoot + File.separator)) throw IOException("Archive entry escapes destination: $name")
     val parent = target.parentFile
     if (!parent.isDirectory && !parent.mkdirs()) {
         throw MalformedURLException(JSMsg.gettext("The URL {0} could not be created as a directory.", parent.toString()))
@@ -104,7 +106,7 @@ internal actual fun archiveExtract(dest: String, name: String, directory: Boolea
 
 internal actual fun archivePublish(dest: String, from: String, to: String) {
     val root = File(dest)
-    java.nio.file.Files.move(File(root, from).toPath(), File(root, to).toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+    if (!File(root, from).renameTo(File(root, to))) throw IOException("Cannot move $from to $to")
 }
 
 internal actual fun archiveDiscard(dest: String, name: String) {

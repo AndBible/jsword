@@ -23,6 +23,20 @@ class ArchiveLegacyCharacterizationTest {
         fun expand(dir: File, input: File) = unpack(dir.toURI(), input.toURI())
     }
 
+    @Test fun siblingPrefixDirectoryIsStillRejected() {
+        val tmp = Files.createTempDirectory("archive-sibling").toFile()
+        try {
+            val dest = File(tmp, "dest").apply { mkdirs() }
+            File(tmp, "dest-evil").mkdirs()
+            val error = kotlin.runCatching {
+                archiveExtract(dest.path, "../dest-evil/f", false) { okio.Buffer().writeUtf8("x") }
+            }.exceptionOrNull()
+            assertTrue(error is java.io.IOException, "expected IOException, got $error")
+            assertTrue(error.message!!.contains("escapes destination"), error.message)
+            assertTrue(!File(tmp, "dest-evil/f").exists())
+        } finally { tmp.deleteRecursively() }
+    }
+
     @Test fun saveActualLegacyCache() {
         val root = Files.createTempDirectory("archive-legacy-cache").toFile()
         try {
