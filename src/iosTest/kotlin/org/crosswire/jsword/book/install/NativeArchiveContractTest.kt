@@ -98,4 +98,24 @@ class NativeArchiveContractTest {
         assertEquals(99, error.entry.method); assertEquals(0, error.entry.localMethod)
         assertContentEquals("same".encodeToByteArray(), error.entry.rawName)
     }
+
+    /** The conf-aside step of a staged unpack (`SwordArchive`) relies on these three on iOS. */
+    @Test fun confAsideExistsPublishOverStaleAndMissingSourceThrows() = temp { root ->
+        assertFalse(archiveExists(root, "mods.d/kjv.conf"))
+        NativeLexicalFiles.mkdirs("$root/mods.d")
+        write("$root/mods.d/kjv.conf", "live".encodeToByteArray())
+        write("$root/mods.d/kjv.conf.old", "stale".encodeToByteArray())
+        assertTrue(archiveExists(root, "mods.d/kjv.conf"))
+
+        archivePublish(root, "mods.d/kjv.conf", "mods.d/kjv.conf.old")
+        assertFalse(archiveExists(root, "mods.d/kjv.conf"))
+        assertContentEquals("live".encodeToByteArray(), NativeLexicalFiles.read("$root/mods.d/kjv.conf.old"))
+
+        assertFailsWith<IOException> { archivePublish(root, "mods.d/kjv.conf", "mods.d/other.conf") }
+        assertFalse(archiveExists(root, "mods.d/other.conf"))
+
+        archiveDiscard(root, "mods.d/kjv.conf.old")
+        archiveDiscard(root, "mods.d/kjv.conf.old")
+        assertFalse(archiveExists(root, "mods.d/kjv.conf.old"))
+    }
 }
