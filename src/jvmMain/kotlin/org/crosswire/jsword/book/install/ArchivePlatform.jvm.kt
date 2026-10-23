@@ -109,6 +109,8 @@ internal actual fun archivePublish(dest: String, from: String, to: String) {
     if (!File(root, from).renameTo(File(root, to))) throw IOException("Cannot move $from to $to")
 }
 
+internal actual fun archiveExists(dest: String, name: String): Boolean = File(File(dest), name).exists()
+
 internal actual fun archiveDiscard(dest: String, name: String) {
     runCatching { File(File(dest), name).delete() }
 }

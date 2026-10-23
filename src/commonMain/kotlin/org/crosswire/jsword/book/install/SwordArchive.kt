@@ -134,9 +134,14 @@ object SwordArchive {
                 }
             }
             // An installed module's conf is first moved aside (".old", ignored by the scan), so a kill while the data
-            // files are replaced leaves the module ABSENT, never the old conf next to mixed old/new data.
+            // files are replaced leaves the module ABSENT, never the old conf next to mixed old/new data. A conf that
+            // exists but cannot be moved aside throws here, before any data is published: the unpack aborts and the
+            // finally block restores the earlier asides. A missing conf is a fresh install and needs no aside.
             for (name in confs.keys) {
-                if (runCatching { archivePublish(dest, name, name + ".old") }.isSuccess) asides.add(name)
+                if (archiveExists(dest, name)) {
+                    archivePublish(dest, name, name + ".old")
+                    asides.add(name)
+                }
             }
             for (name in parts) {
                 onPublishStep(publishStep++)

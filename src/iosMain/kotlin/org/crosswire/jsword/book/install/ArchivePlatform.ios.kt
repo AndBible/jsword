@@ -143,6 +143,9 @@ internal actual fun archivePublish(dest: String, from: String, to: String) {
     if (!NativeLexicalFiles.move(source, target)) throw IOException("Cannot move $from to $to")
 }
 
+internal actual fun archiveExists(dest: String, name: String): Boolean =
+    NativeLexicalFiles.exists(NativeLexicalFiles.child(NativeLexicalFiles.spelling(dest), name))
+
 internal actual fun archiveDiscard(dest: String, name: String) {
     runCatching { unlink(NativeLexicalFiles.child(NativeLexicalFiles.spelling(dest), name)) }
 }

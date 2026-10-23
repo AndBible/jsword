@@ -196,5 +196,37 @@ class UnpackInterruptionTest {
         }
     }
 
+    /** A conf that cannot be moved aside must abort the install before any data file is replaced. */
+    @Test fun confAsideFailureAbortsBeforeAnyDataIsReplaced() {
+        val old = generation(1)
+        val new = generation(2)
+        val dest = File(work, "aside-fail").apply { mkdirs() }
+        SwordBookPathJvm.setDownloadDir(dest)
+        SwordArchive.unpackZipSpelling(zip(old, "gen1.zip").path, dest.path, true)
+        // Renaming a file onto a non-empty directory fails.
+        val blocker = File(dest, "mods.d/$INITIALS.conf.old/blocker").apply { parentFile.mkdirs(); writeText("x") }
+        val failure = runCatching { SwordArchive.unpackZipSpelling(zip(new, "gen2.zip").path, dest.path, true) }
+        assertTrue(failure.isFailure, "the failed conf-aside move must surface")
+        assertEquals(emptyList(), dest.walkTopDown().filter { it.isFile && (it.name.endsWith(".part") ||
+            it.name.endsWith(".tmp")) }.map { it.relativeTo(dest).path }.toList(), "staged files left behind")
+        assertTrue(blocker.exists(), "the blocking directory content must be untouched")
+        blocker.deleteRecursively() // not a stray of the installer; remove so the consistency rule applies as is
+        File(dest, "mods.d/$INITIALS.conf.old").delete()
+        assertEquals("gen1", assertConsistent(dest, "aside failure", listOf(old, new)))
+    }
+
+    /** A leftover plain `.old` file from an earlier crash is replaced by the move, not an obstacle. */
+    @Test fun staleOldConfFileDoesNotBlockReinstall() {
+        val old = generation(1)
+        val new = generation(2)
+        val dest = File(work, "stale-old").apply { mkdirs() }
+        SwordBookPathJvm.setDownloadDir(dest)
+        SwordArchive.unpackZipSpelling(zip(old, "gen1.zip").path, dest.path, true)
+        val stale = File(dest, "mods.d/$INITIALS.conf.old").apply { writeText("stale") }
+        SwordArchive.unpackZipSpelling(zip(new, "gen2.zip").path, dest.path, true)
+        assertTrue(!stale.exists(), "the stale .old file must be gone")
+        assertEquals("gen2", assertConsistent(dest, "stale old", listOf(old, new)))
+    }
+
     private companion object { const val INITIALS = "K4ZTextBook" }
 }

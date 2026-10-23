@@ -18,5 +18,7 @@ internal expect fun archiveInflateSource(bytes: ByteArray): okio.Source
 internal expect fun archiveExtract(dest: String, name: String, directory: Boolean, source: () -> okio.Source): Unit
 /** Moves `dest/from` over `dest/to` by one rename(2); replaces an existing file at `to` (same directory tree, same adapter spelling as [archiveExtract]). */
 internal expect fun archivePublish(dest: String, from: String, to: String)
+/** Whether `dest/name` exists (file or directory). */
+internal expect fun archiveExists(dest: String, name: String): Boolean
 /** Best-effort removal of `dest/name`; never throws. */
 internal expect fun archiveDiscard(dest: String, name: String)
