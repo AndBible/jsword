@@ -34,7 +34,11 @@ import org.crosswire.jsword.passage.DefaultLeafKeyList
 import org.crosswire.jsword.passage.Key
 import okio.IOException
 import kotlin.concurrent.Volatile
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import org.crosswire.common.util.KswordLocale
+import org.crosswire.common.util.Logger
+import org.crosswire.common.util.LoggerFactory
 import org.crosswire.common.util.MessageFormatLite
 
 /**
@@ -98,7 +102,7 @@ open class RawLDBackend<T : RawLDBackendState>
         while (true) {
             var pos = search(state, target)
             if (pos in visited) {
-                pos = getUnsortedKeyIndex(state)?.get(normalizeForSearch(target)) ?: -1
+                pos = findUnvisitedDuplicate(state, pos, visited)
             }
             if (pos < 0 || !visited.add(pos)) {
                 break
@@ -118,57 +122,131 @@ open class RawLDBackend<T : RawLDBackendState>
     }
 
     /**
+     * Another, not yet visited entry with the same key as the entry at [pos], or -1. Used when a
+     * link leads back to an entry already visited, e.g. a self link `A -> @LINK A` that is a
+     * duplicate of the real `A`. In a sorted index duplicates are neighbours; in an unsorted one
+     * they come from the key map.
+     */
+    @Throws(IOException::class)
+    private fun findUnvisitedDuplicate(state: RawLDBackendState, pos: Int, visited: Set<Int>): Int {
+        val key = readSearchKey(state, pos) ?: return -1
+        getUnsortedKeyPositions(state)?.get(key)?.let { positions ->
+            return positions.firstOrNull { it !in visited } ?: -1
+        }
+        val total = getCardinality()
+        for (step in listOf(-1, 1)) {
+            var i = pos + step
+            while (i in 0 until total && readSearchKey(state, i) == key) {
+                if (i !in visited) {
+                    return i
+                }
+                i += step
+            }
+        }
+        return -1
+    }
+
+    /**
      * Key positions of a module whose index is not sorted the way [search] expects, or null when
      * it is sorted. Some user-made dictionaries (issue #3148) list Strong's-number aliases first
      * and lemmata in an order that upper-casing does not preserve, so the binary search misses
-     * keys that are present. Built once, on the first miss, from the keys only.
+     * keys that are present. Each key lists its positions, real entries before aliases.
+     *
+     * Decided once, on the first miss: a sampled order check (see [looksSorted]) keeps sorted
+     * modules, the common case, from paying a read of every entry; only an unsorted module builds
+     * the map. Both run under [keyPositionsLock], so concurrent first misses do the work once.
      */
     @Volatile
-    private var unsortedKeyIndex: Map<String, Int>? = null
+    private var unsortedKeyPositions: Map<String, List<Int>>? = null
 
     @Volatile
-    private var unsortedKeyIndexBuilt = false
+    private var unsortedKeyPositionsChecked = false
+
+    private val keyPositionsLock = SynchronizedObject()
 
     @Throws(IOException::class)
-    private fun getUnsortedKeyIndex(state: RawLDBackendState): Map<String, Int>? {
-        if (unsortedKeyIndexBuilt) {
-            return unsortedKeyIndex
+    private fun getUnsortedKeyPositions(state: RawLDBackendState): Map<String, List<Int>>? {
+        if (!unsortedKeyPositionsChecked) {
+            synchronized(keyPositionsLock) {
+                if (!unsortedKeyPositionsChecked) {
+                    unsortedKeyPositions = if (looksSorted(state)) null else buildKeyPositions(state)
+                    unsortedKeyPositionsChecked = true
+                }
+            }
         }
-        val keys = HashMap<String, Int>()
-        val links = HashSet<Int>()
-        var sorted = true
-        var previous: String? = null
+        return unsortedKeyPositions
+    }
+
+    /**
+     * Whether the index is in [search] order, judged by comparing up to [SORT_CHECK_PAIRS]
+     * evenly spaced pairs of neighbouring keys (all pairs of a small module). The first entry may
+     * be an out-of-order introduction, see [search], so it is not compared. An unsorted module
+     * whose disorder all falls between the sampled pairs is taken as sorted and keeps the plain
+     * binary search, as before #3148; the unsorted modules seen in the wild are out of order
+     * throughout.
+     */
+    private fun looksSorted(state: RawLDBackendState): Boolean {
+        val pairs = getCardinality() - 2
+        if (pairs <= 0) {
+            return true
+        }
+        val samples = minOf(pairs, SORT_CHECK_PAIRS)
+        for (s in 0 until samples) {
+            val i = 1 + (s.toLong() * pairs / samples).toInt()
+            val first = readSearchKeyOrNull(state, i) ?: continue
+            val second = readSearchKeyOrNull(state, i + 1) ?: continue
+            if (first > second) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /** All keys and their positions; an entry that cannot be read is left out. */
+    private fun buildKeyPositions(state: RawLDBackendState): Map<String, List<Int>> {
+        val real = HashMap<String, MutableList<Int>>()
+        val links = HashMap<String, MutableList<Int>>()
         for (i in 0 until getCardinality()) {
-            val dataIndex = getIndex(state, i.toLong())
-            if (dataIndex.getSize() == 0) {
+            val entry = try {
+                readKeyEntry(state, i) ?: continue
+            } catch (e: IOException) {
+                log.warn("Skipping unreadable entry {} of {}: {}", i.toString(), bookMetaData.initials, e.message)
                 continue
             }
-            // The key and a possible "@LINK" are at the start of the entry.
-            var data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), minOf(dataIndex.getSize(), KEY_PREFIX_SIZE))
-            if (SwordUtil.findByte(data, '\n'.code.toByte()) < 0) {
-                data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), dataIndex.getSize())
-            }
-            val entry = DataEntry(bookMetaData.initials, data, bookMetaData.bookCharset)
-            val key = normalizeForSearch(entry.getKey())
-            // The first entry may be an out-of-order introduction, see search().
-            if (i > 1 && previous != null && previous > key) {
-                sorted = false
-            }
-            if (i > 0) {
-                previous = key
-            }
-            // Prefer the real entry over an alias that duplicates its key.
-            val known = keys[key]
-            if (known == null || (known in links && !entry.isLinkEntry())) {
-                keys[key] = i
-            }
-            if (entry.isLinkEntry()) {
-                links.add(i)
-            }
+            // ZLD key records do not carry the "@LINK", so there every entry counts as real.
+            val positions = if (entry.isLinkEntry()) links else real
+            positions.getOrPut(normalizeForSearch(entry.getKey())) { ArrayList() }.add(i)
         }
-        unsortedKeyIndex = if (sorted) null else keys
-        unsortedKeyIndexBuilt = true
-        return unsortedKeyIndex
+        for ((key, positions) in links) {
+            real.getOrPut(key) { ArrayList() }.addAll(positions)
+        }
+        return real
+    }
+
+    /**
+     * The start of entry [i]: its key and a possible "@LINK", or null for an empty index slot.
+     */
+    @Throws(IOException::class)
+    private fun readKeyEntry(state: RawLDBackendState, i: Int): DataEntry? {
+        val dataIndex = getIndex(state, i.toLong())
+        if (dataIndex.getSize() == 0) {
+            return null
+        }
+        var data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), minOf(dataIndex.getSize(), KEY_PREFIX_SIZE))
+        if (SwordUtil.findByte(data, '\n'.code.toByte()) < 0) {
+            data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), dataIndex.getSize())
+        }
+        return DataEntry(bookMetaData.initials, data, bookMetaData.bookCharset)
+    }
+
+    @Throws(IOException::class)
+    private fun readSearchKey(state: RawLDBackendState, i: Int): String? =
+        readKeyEntry(state, i)?.let { normalizeForSearch(it.getKey()) }
+
+    private fun readSearchKeyOrNull(state: RawLDBackendState, i: Int): String? = try {
+        readSearchKey(state, i)
+    } catch (e: IOException) {
+        null
     }
 
     protected open fun getRawText(entry: DataEntry): String {
@@ -402,7 +480,7 @@ open class RawLDBackend<T : RawLDBackendState>
         }
 
         // An unsorted index defeats the binary search; look the key up among all keys.
-        val unsortedPos = getUnsortedKeyIndex(state)?.get(suppliedKey)
+        val unsortedPos = getUnsortedKeyPositions(state)?.get(suppliedKey)?.first()
         if (unsortedPos != null) {
             return unsortedPos
         }
@@ -658,6 +736,8 @@ open class RawLDBackend<T : RawLDBackendState>
     }
 
     private companion object {
+        private val log: Logger = LoggerFactory.getLogger(RawLDBackend::class)
+
         /**
          * Date formatter
          */
@@ -684,6 +764,11 @@ open class RawLDBackend<T : RawLDBackendState>
          * How many bytes of an entry to read to get its key and whether it is a link
          */
         private const val KEY_PREFIX_SIZE = 128
+
+        /**
+         * How many pairs of neighbouring keys to compare to decide whether an index is sorted
+         */
+        private const val SORT_CHECK_PAIRS = 200
 
     }
 }
