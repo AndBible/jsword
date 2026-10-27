@@ -2,6 +2,9 @@ package org.crosswire.jsword.versification
 
 import java.io.File
 import java.util.Properties
+import org.crosswire.common.util.KLocale
+import org.crosswire.jsword.internationalisation.LocaleProvider
+import org.crosswire.jsword.internationalisation.LocaleProviderManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -29,6 +32,35 @@ class BibleNamesBundleFilesTest {
         }
         if (problems.isNotEmpty()) {
             fail("Incomplete BibleNames bundles (missing keys inherit English values):\n" + problems.joinToString("\n"))
+        }
+    }
+
+    @Test
+    fun testClementAlternativeNamesResolveToDistinctBooks() {
+        val provider = LocaleProviderManager.getLocaleProvider()
+        val names = BibleNames.instance()
+        val fuzzy = names.enableFuzzy
+        try {
+            LocaleProviderManager.setLocaleProvider(object : LocaleProvider {
+                override fun getUserLocale() = KLocale.ENGLISH
+            })
+            names.enableFuzzy = false
+            assertEquals(BibleBook.CLEM1, names.getBook("iclement"))
+            assertEquals(BibleBook.CLEM2, names.getBook("iiclement"))
+        } finally {
+            names.enableFuzzy = fuzzy
+            LocaleProviderManager.setLocaleProvider(provider)
+        }
+    }
+
+    @Test
+    fun testBundlesWithEnglishClementAliasesKeepThemDistinct() {
+        for (bundle in listBibleNamesBundles()) {
+            val props = Properties()
+            bundle.inputStream().use { props.load(it) }
+            if (props.getProperty("2Clem.Alt") == "iiclement") {
+                assertEquals("iclement", props.getProperty("1Clem.Alt"), bundle.name)
+            }
         }
     }
 
