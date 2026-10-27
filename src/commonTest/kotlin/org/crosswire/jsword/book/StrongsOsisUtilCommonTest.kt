@@ -45,4 +45,9 @@ class StrongsOsisUtilCommonTest {
         val out = XMLOutputter(Format.getRawFormat()).outputString(OSISUtil.rtfToOsis("Plain \\i italic\\i0  then \\b bold\\b0  end\\par"))
         assertEquals("Plain <hi type=\"italic\">italic</hi> then <hi type=\"bold\">bold</hi> end<lb />", out)
     }
+
+    @Test fun strongsNumbersAcceptCapitalisedStrongPrefix() {
+        val root = KdomBuilder().build("<div><w lemma=\"Strong:H7225\">beginning</w> <w lemma=\"strong:H430\">God</w></div>").rootElement
+        assertEquals("H7225 H430", OSISUtil.getStrongsNumbers(root))
+    }
 }

@@ -1261,7 +1261,7 @@ private constructor() {
         }
 
         private const val strongsNumber = "strong:([GgHh][0-9]+!?[A-Za-z]*)"
-        private val strongsNumberPattern: Regex = Regex(strongsNumber)
+        private val strongsNumberPattern: Regex = Regex(strongsNumber, RegexOption.IGNORE_CASE)
 
         private fun ArrayDeque<Content>.popElement(): Content =
             if (isEmpty()) throw NoSuchElementException(RTF_STACK_EMPTY) else removeLast()
