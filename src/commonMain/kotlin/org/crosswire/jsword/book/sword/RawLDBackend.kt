@@ -33,6 +33,7 @@ import org.crosswire.jsword.book.sword.state.RawLDBackendState
 import org.crosswire.jsword.passage.DefaultLeafKeyList
 import org.crosswire.jsword.passage.Key
 import okio.IOException
+import kotlin.concurrent.Volatile
 import org.crosswire.common.util.KswordLocale
 import org.crosswire.common.util.MessageFormatLite
 
@@ -90,20 +91,84 @@ open class RawLDBackend<T : RawLDBackendState>
         if (key == null || key.length == 0) {
             return ""
         }
-        val pos = search(state, key)
-        if (pos >= 0) {
-            val index = getIndex(state, pos.toLong())
-            var entry = getEntry(state, key, index)
-            entry = getEntry(state, entry)
-            if (entry.isLinkEntry()) {
-                return doReadRawContent(state, entry.getLinkTarget())
+        // Follow @LINK chains, but never revisit an entry: a self link (A -> @LINK A, a duplicate
+        // key of the real entry) or a cycle would otherwise recurse until the stack overflows.
+        val visited = HashSet<Int>()
+        var target: String = key
+        while (true) {
+            var pos = search(state, target)
+            if (pos in visited) {
+                pos = getUnsortedKeyIndex(state)?.get(normalizeForSearch(target)) ?: -1
             }
-            return getRawText(entry)
+            if (pos < 0 || !visited.add(pos)) {
+                break
+            }
+            val index = getIndex(state, pos.toLong())
+            var entry = getEntry(state, target, index)
+            entry = getEntry(state, entry)
+            if (!entry.isLinkEntry()) {
+                return getRawText(entry)
+            }
+            target = entry.getLinkTarget()
         }
 
         // TRANSLATOR: Error condition: Indicates that something could not
         // be found in the book. {0} is a placeholder for the unknown key.
         throw IOException(JSMsg.gettext("Key not found {0}", key))
+    }
+
+    /**
+     * Key positions of a module whose index is not sorted the way [search] expects, or null when
+     * it is sorted. Some user-made dictionaries (issue #3148) list Strong's-number aliases first
+     * and lemmata in an order that upper-casing does not preserve, so the binary search misses
+     * keys that are present. Built once, on the first miss, from the keys only.
+     */
+    @Volatile
+    private var unsortedKeyIndex: Map<String, Int>? = null
+
+    @Volatile
+    private var unsortedKeyIndexBuilt = false
+
+    @Throws(IOException::class)
+    private fun getUnsortedKeyIndex(state: RawLDBackendState): Map<String, Int>? {
+        if (unsortedKeyIndexBuilt) {
+            return unsortedKeyIndex
+        }
+        val keys = HashMap<String, Int>()
+        val links = HashSet<Int>()
+        var sorted = true
+        var previous: String? = null
+        for (i in 0 until getCardinality()) {
+            val dataIndex = getIndex(state, i.toLong())
+            if (dataIndex.getSize() == 0) {
+                continue
+            }
+            // The key and a possible "@LINK" are at the start of the entry.
+            var data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), minOf(dataIndex.getSize(), KEY_PREFIX_SIZE))
+            if (SwordUtil.findByte(data, '\n'.code.toByte()) < 0) {
+                data = SwordUtil.readRAF(state.getDatRaf(), dataIndex.getOffset().toLong(), dataIndex.getSize())
+            }
+            val entry = DataEntry(bookMetaData.initials, data, bookMetaData.bookCharset)
+            val key = normalizeForSearch(entry.getKey())
+            // The first entry may be an out-of-order introduction, see search().
+            if (i > 1 && previous != null && previous > key) {
+                sorted = false
+            }
+            if (i > 0) {
+                previous = key
+            }
+            // Prefer the real entry over an alias that duplicates its key.
+            val known = keys[key]
+            if (known == null || (known in links && !entry.isLinkEntry())) {
+                keys[key] = i
+            }
+            if (entry.isLinkEntry()) {
+                links.add(i)
+            }
+        }
+        unsortedKeyIndex = if (sorted) null else keys
+        unsortedKeyIndexBuilt = true
+        return unsortedKeyIndex
     }
 
     protected open fun getRawText(entry: DataEntry): String {
@@ -334,6 +399,12 @@ open class RawLDBackend<T : RawLDBackendState>
         }
         if (entryKey.compareTo(suppliedKey) == 0) {
             return 0
+        }
+
+        // An unsorted index defeats the binary search; look the key up among all keys.
+        val unsortedPos = getUnsortedKeyIndex(state)?.get(suppliedKey)
+        if (unsortedPos != null) {
+            return unsortedPos
         }
 
         // It wasn't found so see if it is present in a linear search if case sensitive keys are used.
@@ -608,6 +679,11 @@ open class RawLDBackend<T : RawLDBackendState>
          * How many bytes in the offset pointers in the index
          */
         private const val OFFSETSIZE = 4
+
+        /**
+         * How many bytes of an entry to read to get its key and whether it is a link
+         */
+        private const val KEY_PREFIX_SIZE = 128
 
     }
 }
