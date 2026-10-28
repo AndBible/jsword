@@ -658,10 +658,10 @@ class SwordBookMetaData : AbstractBookMetaData {
         if (focusedCategory == BookCategory.OTHER) {
             focusedCategory = bookType!!.bookCategory
         }
-        // RawGenBook creates a tree-backed SwordGenBook, never a verse-based passage book.
-        if (bookType!!.toString() == "RawGenBook" &&
+        // A tree-keyed type (RawGenBook) creates a tree-backed SwordGenBook, never a verse-based passage book.
+        if (bookType!!.keyType == KeyType.TREE &&
             (focusedCategory == BookCategory.BIBLE || focusedCategory == BookCategory.COMMENTARY)) {
-            LOGGER.warn("Invalid verse-based category for RawGenBook [{}]; using Generic Books.", configAll.name)
+            LOGGER.warn("Invalid verse-based category for tree-backed book [{}]; using Generic Books.", configAll.name)
             focusedCategory = BookCategory.GENERAL_BOOK
         }
 
