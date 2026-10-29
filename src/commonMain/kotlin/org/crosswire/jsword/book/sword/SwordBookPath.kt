@@ -53,6 +53,10 @@ private constructor() {
          * old `~/.jsword` book dir there. Hosts that own their module directory (the desktop app) turn it off before
          * JSword is first used; then only the download dir and the augment path are searched, and nothing in the
          * user's home is read or moved. Default true (Android, iOS).
+         *
+         * A host that turns it off must also set the download dir ([setDownloadDir]) before the first driver
+         * registration (the first [setAugmentPath] or book scan): without one the download dir falls back to JSword's
+         * default, `~/.sword`, which the scan then reads after all.
          */
         @JvmStatic
         @kotlin.concurrent.Volatile
