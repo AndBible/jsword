@@ -47,6 +47,17 @@ class SwordBookPath
  */
 private constructor() {
     companion object {
+        /**
+         * Whether JSword looks for books in the "standard" SWORD locations (`sword.conf` and `mods.d` in the current
+         * directory, `sword.home`, `~/.sword`, the system `sword.conf` files, the JSword project dir) and migrates an
+         * old `~/.jsword` book dir there. Hosts that own their module directory (the desktop app) turn it off before
+         * JSword is first used; then only the download dir and the augment path are searched, and nothing in the
+         * user's home is read or moved. Default true (Android, iOS).
+         */
+        @JvmStatic
+        @kotlin.concurrent.Volatile
+        var scanDefaultLocations: Boolean = true
+
         @JvmStatic @Throws(BookException::class)
         fun setAugmentPath(dirs: Array<Path>?) = setAugmentLocations(dirs?.map { StorageLocation(it.toString()) }?.toTypedArray())
         @JvmStatic fun getAugmentPath(): Array<Path> = getAugmentLocations().map { it.path }.toTypedArray()
@@ -137,7 +148,9 @@ private constructor() {
          * Search all of the "standard" Sword locations for Books. Remember all the
          * locations.
          */
-        private fun getDefaultPaths(): Array<StorageLocation> {
+        internal fun getDefaultPaths(): Array<StorageLocation> { // internal: SwordBookPathDefaultLocationsTest
+            if (!scanDefaultLocations) return arrayOf()
+
             // If possible migrate the old location to the new one
             migrateBookDir()
 
@@ -431,7 +444,7 @@ private constructor() {
         /**
          * The directory URL
          */
-        private var defaultDownloadDir: StorageLocation = getDefaultDownloadPath()
+        private val defaultDownloadDir: StorageLocation by lazy { getDefaultDownloadPath() } // lazy: after scanDefaultLocations is set
 
         /**
          * The directory URL
