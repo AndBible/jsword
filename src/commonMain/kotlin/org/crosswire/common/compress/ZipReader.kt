@@ -134,7 +134,8 @@ class ZipReader(private val upstream: Source) : Closeable {
 
         val start = position
         current = Body(method, hasDescriptor, zip64 != null, crc, compressedSize, size, start)
-        return Entry(name, name.endsWith("/"))
+        // Some Windows tools (PowerShell 5.1 Compress-Archive) write directory entries as "dir\" instead of "dir/".
+        return Entry(name, name.endsWith("/") || name.endsWith("\\"))
     }
 
     override fun close() {
