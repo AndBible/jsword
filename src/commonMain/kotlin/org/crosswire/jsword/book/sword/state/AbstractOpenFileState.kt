@@ -44,6 +44,9 @@ abstract class AbstractOpenFileState
 
     internal fun markResourcesClosed() { closedForTest = true }
 
+    // A pool generation is an identity token, independent of BookMetaData's value equality.
+    internal var poolGeneration: Any? = null
+
     private var lastAccess: Long = currentTimeMillis()
 
     /**

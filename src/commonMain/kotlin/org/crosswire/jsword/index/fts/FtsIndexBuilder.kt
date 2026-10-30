@@ -13,6 +13,7 @@ import org.crosswire.jsword.index.IndexPolicy
 import org.crosswire.jsword.index.analysis.BookAnalyzers
 import org.crosswire.jsword.index.analysis.StrongsTokens
 import org.crosswire.jsword.passage.Key
+import org.crosswire.jsword.passage.TreeKey
 import org.crosswire.jsword.passage.Verse
 
 /** Thrown inside a build when its job was cancelled; the manager maps it to status UNDONE. */
@@ -34,11 +35,11 @@ internal class FtsIndexBuilder(
     private val fragmentOf: (Book, Key) -> Element = { b, k -> BookData(b, k).getOsisFragment(false) },
 ) {
     /**
-     * Writes the index to [target] (created fresh) and returns the keys that could not be indexed. The store is closed
-     * on every path. [isCancelled] is polled after every key; true aborts with [IndexBuildCancelled], leaving [target]
+     * Writes the index to [target] (created fresh) and returns the keys that could not be read, with the number of keys
+     * processed (readable or not, nameless tree containers excluded). The store is closed on every path. [isCancelled] is polled after every key; true aborts with [IndexBuildCancelled], leaving [target]
      * for the caller to delete.
      */
-    fun build(target: Path, job: Progress, isCancelled: () -> Boolean): List<Key> {
+    fun build(target: Path, job: Progress, isCancelled: () -> Boolean): BuildResult {
         val errors = ArrayList<Key>()
         val store = FtsIndexStore.create(target)
         try {
@@ -50,11 +51,14 @@ internal class FtsIndexBuilder(
             walk(store, root, job, errors, includeStrongs, state, isCancelled)
             store.writeMetadata(metadata(size))
             store.commitBuild()
+            return BuildResult(errors, state.done + errors.size)
         } finally {
             store.close()
         }
-        return errors
     }
+
+    /** What a build found: the keys that could not be read, and how many keys it processed in all. */
+    class BuildResult(val errors: List<Key>, val processed: Int)
 
     private class State(val size: Int) {
         var done = 0
@@ -69,9 +73,9 @@ internal class FtsIndexBuilder(
         for (sub in key) {
             if (isCancelled()) throw IndexBuildCancelled()
             // A tree key (general book) iterates itself first and then every descendant, depth first (KeyIterator), so
-            // no recursion is needed: Lucene's recursion on canHaveChildren() never terminated for such a key. The
-            // iterated root itself is the nameless container and has no text.
-            if (sub === key) continue
+            // no recursion is needed: Lucene's recursion on canHaveChildren() never terminated for such a key.
+            // Nameless tree containers have no text, including a nested root in the global key list.
+            if (sub === key || (sub is TreeKey && sub.getOsisRef().isEmpty())) continue
 
             val osis = try { fragmentOf(book, sub) } catch (e: BookException) { errors.add(sub); continue }
             val text = if (sub is Verse && sub.verse == 0) "" else OSISUtil.getCanonicalText(osis)

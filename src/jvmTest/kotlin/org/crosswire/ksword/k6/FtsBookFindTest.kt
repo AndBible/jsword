@@ -106,6 +106,62 @@ class FtsBookFindTest {
         assertEquals(3, count("beginning"))
     }
 
+    @Test fun registeringAReplacementInvalidatesTheOldSearchIndex() = app {
+        val original = book
+        try {
+            manager.scheduleIndexCreation(original)
+            assertEquals(3, count("beginning"))
+            org.crosswire.jsword.book.sword.SwordBookDriver.registerNewBook(
+                original.bookMetaData as org.crosswire.jsword.book.sword.SwordBookMetaData
+            )
+            assertTrue(!manager.isIndexed(book), "an index built from the replaced module must be removed")
+            assertEquals(IndexStatus.UNDONE, book.indexStatus)
+        } finally {
+            Books.installed().addBook(original)
+            original.resetSearcher()
+        }
+    }
+
+    @Test fun aFailingIndexDeleteDoesNotAbortRegisteringTheReplacement() = app {
+        val original = book
+        val replacement = original.bookMetaData as org.crosswire.jsword.book.sword.SwordBookMetaData
+        manager.deleteHook = { throw BookException("simulated index IO error") }
+        try {
+            org.crosswire.jsword.book.sword.SwordBookDriver.registerNewBook(replacement)
+            assertTrue(Books.installed().getBook("K4RawText") !== original, "the replacement must be registered")
+        } finally {
+            manager.deleteHook = null
+            Books.installed().addBook(original)
+            original.resetSearcher()
+        }
+    }
+
+    @Test fun registeringADifferentlyCasedModuleDoesNotTouchTheOtherModule() = app {
+        val original = book
+        val deleted = mutableListOf<String>()
+        manager.deleteHook = { deleted.add(it.initials) }
+        val root = Files.createTempDirectory("fts-case").toFile()
+        try {
+            java.io.File(root, "modules/lexdict/rawld/x").mkdirs()
+            java.io.File(root, "modules/lexdict/rawld/x/test.dat").writeText("x")
+            java.io.File(root, "modules/lexdict/rawld/x/test.idx").writeText("x")
+            val conf = java.io.File(root, "mods.d/k4rawtext.conf").apply {
+                parentFile.mkdirs()
+                writeText("[k4rawtext]\nDataPath=./modules/lexdict/rawld/x/test\nModDrv=RawLD\nEncoding=UTF-8\nDescription=Other\n")
+            }
+            org.crosswire.jsword.book.sword.SwordBookDriver.registerNewBook(
+                org.crosswire.jsword.book.sword.SwordBookMetaDataJvm.create(conf, root.toURI()).apply {
+                    setDriver(org.crosswire.jsword.book.sword.SwordBookDriver.instance())
+                })
+            assertEquals(emptyList(), deleted, "a different module's index must not be deleted")
+            assertTrue(Books.installed().getBooks().any { it === original }, "the other module must stay registered")
+        } finally {
+            manager.deleteHook = null
+            Books.installed().getBooks().filter { it.initials == "k4rawtext" }.forEach { Books.installed().removeBook(it) }
+            root.deleteRecursively()
+        }
+    }
+
     @Test fun searchAfterDeleteIndexFailsWithAProperError() = app {
         manager.scheduleIndexCreation(book)
         assertEquals(3, count("beginning"))

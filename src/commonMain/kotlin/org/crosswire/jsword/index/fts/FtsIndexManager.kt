@@ -109,6 +109,29 @@ class FtsIndexManager internal constructor(
     }
 
     /**
+     * Startup marks a book `DONE` from the mere existence of its index file, which is cheap enough for the thread that
+     * registers the books (Main on Android). This is the full check, to run once off that thread: every book in
+     * [installed] that is `DONE` but whose index is empty, corrupt, stale or of another engine goes back to `UNDONE`,
+     * so it is not offered for search and is built again. A book that is being built is left alone. Returns the
+     * number of books reset.
+     */
+    fun revalidateIndexStatuses(installed: Collection<Book>): Int {
+        var reset = 0
+        for (book in installed) {
+            if (book.indexStatus != IndexStatus.DONE || !hasDriver(book)) continue
+            if (synchronized(lock) { building.containsKey(indexKey(book)) }) continue
+            if (hasUsableIndex(book)) continue
+            // A build that started meanwhile owns the status now.
+            // (Listeners of the status run outside [lock].)
+            if (synchronized(lock) { !building.containsKey(indexKey(book)) } && book.indexStatus == IndexStatus.DONE) {
+                book.indexStatus = IndexStatus.UNDONE
+                reset++
+            }
+        }
+        return reset
+    }
+
+    /**
      * Builds the index of [book] (status `SCHEDULED`, `CREATING`, then `DONE`, or `UNDONE` on failure or cancellation).
      * A request for a book that is already scheduled or building is dropped and returns immediately: the running build
      * serves both, so callers must observe the outcome through an [org.crosswire.jsword.index.IndexStatusListener].
@@ -149,10 +172,15 @@ class FtsIndexManager internal constructor(
                     deleteDb(creating)
                     // The open index (if any) keeps serving searches from the old file until the rename below.
                     book.indexStatus = IndexStatus.CREATING
-                    val errors = FtsIndexBuilder(book, currentPolicy, fragmentOf)
+                    val built = FtsIndexBuilder(book, currentPolicy, fragmentOf)
                         .build(creating, newJob) { cancelled.value || newJob.isFinished }
+                    val errors = built.errors
                     newJob.isCancelable = false
                     if (cancelled.value || newJob.isFinished) throw IndexBuildCancelled()
+                    if (!IndexReadErrors.isTolerable(errors.size, built.processed)) {
+                        // Too much is unreadable for the index to be worth publishing. Keep any previous index intact.
+                        throw BookException(IndexReadErrors.message(errors, IndexReadErrors.MAX_REFUSAL_REFERENCES))
+                    }
                     // The rename and the eviction of the cached handle are one step under [lock], so getIndex never
                     // opens the new file and has it evicted, nor serves the old one after the rename. A search that
                     // still holds the evicted index is forwarded to the new one (see [FtsIndex.successor]).
@@ -164,12 +192,8 @@ class FtsIndexManager internal constructor(
                     finalStatus = IndexStatus.DONE
                     // The legacy Lucene directory is also the "engine changed" signal, so it goes only now.
                     try { deleteLegacyLuceneIndex(book) } catch (e: Exception) { /* best effort: the orphan sweep never touches installed books, a retry happens at the next rebuild */ }
-                    if (errors.isNotEmpty()) {
-                        // TRANSLATOR: It is likely that one or more verses could not be indexed due to errors in those verses.
-                        // This message gives a listing of them to the user.
-                        Reporter.informUser(this, JSMsg.gettext("The following verses have errors and could not be indexed\n{0}",
-                            errors.joinToString("") { "$it\n" }))
-                    }
+                    // The index is complete as far as the module can be read: tell the user once what is not searchable.
+                    if (errors.isNotEmpty()) Reporter.informUser(this, IndexReadErrors.message(errors, IndexReadErrors.MAX_WARNED_REFERENCES))
                 } catch (e: IndexBuildCancelled) {
                     // cancelled by the user: UNDONE, nothing to report
                 } catch (e: Exception) {

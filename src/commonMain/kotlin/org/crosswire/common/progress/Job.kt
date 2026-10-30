@@ -340,8 +340,9 @@ internal constructor(
             }
         }
 
-        // Report that the job is done.
+        // Silent jobs still belong to the registry and must release their entry on completion.
         if (isNotifyUser) JobManager.fireWorkProgressed(this)
+        else JobManager.removeFinishedJob(this)
 
         synchronized(lock) {
             if (predictionMapURI != null) {

@@ -23,6 +23,8 @@ import kotlin.jvm.JvmStatic
 import okio.IOException
 import okio.Path.Companion.toPath
 
+import org.crosswire.common.activate.Activator
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.common.util.KFiles
 import org.crosswire.common.util.KUri
 import org.crosswire.common.util.pathUri
@@ -115,6 +117,8 @@ open class SwordBookDriver
                     valid.add(book)
 
                     val imanager = IndexManagerFactory.getIndexManager()
+                    // Existence only: this runs on the thread that first touches Books (Main on Android), so it must
+                    // stay cheap. FtsIndexManager.revalidateIndexStatuses does the full check off that thread.
                     if (imanager.isIndexed(book)) {
                         sbmd.indexStatus = IndexStatus.DONE
                     } else {
@@ -248,6 +252,22 @@ open class SwordBookDriver
             val d = sbmd.driver as SwordBookDriver?
             bmd.setDriver(d)
             val book = d!!.createBook(bmd)
+            // Exact initials, like Books.addBookLocked's replace-by-initials: getBook() also matches names and ignores
+            // case, which could retire a different module.
+            val previous = Books.installed().getBooks().firstOrNull { it.initials == book.initials }
+            if (previous != null && previous.bookMetaData.driver is SwordBookDriver) {
+                // Outside Books' registry lock: an index build may resolve books while we wait for it to stop.
+                // A failed index delete must not abort registration: the files are already published, and the stale
+                // index is detected by its recorded book version.
+                try {
+                    IndexManagerFactory.getIndexManager().deleteIndex(previous)
+                } catch (e: Exception) {
+                    LOGGER.warn("Could not delete the search index of replaced book {}", previous.initials, e)
+                }
+                OpenFileStateManager.instance().evict(previous.initials)
+                Activator.deactivate(previous)
+                book.indexStatus = IndexStatus.UNDONE
+            }
             Books.installed().addBook(book)
         }
 
