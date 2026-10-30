@@ -79,6 +79,30 @@ private constructor() {
         fun filePathOf(uriPath: String, separator: String = okio.Path.DIRECTORY_SEPARATOR): okio.Path =
             (if (separator == "\\" && windowsDriveUriPath.matches(uriPath)) uriPath.substring(1) else uriPath).toPath()
 
+        private val windowsDrivePath = Regex("^[A-Za-z]:([/\\\\].*)?$")
+
+        /**
+         * The reverse of [filePathOf]: the (undecoded) path component of the `file:` URI for [path].
+         *
+         * On Windows (a `\` [separator]) `C:\Users\x` becomes `/C:/Users/x`; on every other platform the result is
+         * [path]'s string unchanged. With [directory] a trailing `/` is ensured. [separator] is a parameter so the
+         * Windows form can be tested on any host.
+         */
+        @JvmStatic
+        fun fileUriPathOf(path: okio.Path, directory: Boolean = false, separator: String = okio.Path.DIRECTORY_SEPARATOR): String {
+            var s = path.toString()
+            if (separator == "\\") {
+                s = s.replace('\\', '/')
+                if (windowsDrivePath.matches(s)) s = "/$s"
+            }
+            return if (directory && !s.endsWith("/")) "$s/" else s
+        }
+
+        /** A `file:` [KUri] for [path] (see [fileUriPathOf]); the KUri constructor does the percent-encoding. */
+        @JvmStatic
+        fun fileKUri(path: okio.Path, directory: Boolean = false, separator: String = okio.Path.DIRECTORY_SEPARATOR): KUri =
+            KUri(PROTOCOL_FILE, null, fileUriPathOf(path, directory, separator), null)
+
         /**
          * Constant for the file: protocol or scheme
          */
