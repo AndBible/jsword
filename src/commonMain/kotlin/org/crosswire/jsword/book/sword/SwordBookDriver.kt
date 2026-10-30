@@ -117,7 +117,7 @@ open class SwordBookDriver
                     valid.add(book)
 
                     val imanager = IndexManagerFactory.getIndexManager()
-                    if (imanager.isIndexed(book)) {
+                    if (imanager.hasUsableIndex(book)) {
                         sbmd.indexStatus = IndexStatus.DONE
                     } else {
                         sbmd.indexStatus = IndexStatus.UNDONE

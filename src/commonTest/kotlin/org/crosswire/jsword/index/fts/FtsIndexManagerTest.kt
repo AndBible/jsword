@@ -8,6 +8,8 @@ import org.crosswire.jsword.book.BookData
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.book.Books
 import org.crosswire.jsword.book.sword.SwordBookPath
+import org.crosswire.jsword.book.sword.SwordBookDriver
+import org.crosswire.jsword.index.IndexManagerFactory
 import org.crosswire.jsword.index.IndexStatus
 import org.crosswire.jsword.index.IndexStatusEvent
 import org.crosswire.jsword.index.IndexStatusListener
@@ -116,6 +118,58 @@ class FtsIndexManagerTest {
         assertFalse(fs.exists(finalFile(b)))
         assertTrue(creatingFiles().isEmpty())
         assertFalse(m.isIndexed(b))
+    }
+
+    @Test fun verseReadFailureDoesNotPublishAPartialIndex() {
+        val b = book("K4RawText")
+        val seen = statuses(b)
+        var failures = 0
+        val m = manager { book, key ->
+            if (key.getOsisRef() == "John.1.1") {
+                failures++
+                throw BookException("Injected verse read failure")
+            }
+            BookData(book, key).getOsisFragment(false)
+        }
+        m.scheduleIndexCreation(b)
+        assertEquals(1, failures)
+        assertEquals(IndexStatus.UNDONE, seen.last())
+        assertFalse(m.isIndexed(b))
+        assertTrue(m.needsReindexing(b))
+        assertFalse(fs.exists(finalFile(b)))
+        assertTrue(creatingFiles().isEmpty())
+
+        // A new manager must not rediscover the incomplete build as a usable index.
+        val restarted = manager()
+        assertTrue(restarted.needsReindexing(b))
+    }
+
+    @Test fun startupDoesNotMarkEmptyCorruptOrStaleIndexesDone() {
+        val b = book("K4RawText")
+        val m = manager()
+        val file = finalFile(b)
+        fs.createDirectories(file.parent!!)
+        IndexManagerFactory.withIndexManagerForTest(m) {
+            for (content in listOf("", "not a sqlite file")) {
+                fs.write(file) { writeUtf8(content) }
+                val loaded = SwordBookDriver.instance().getBooks()
+                    .first { it.initials == "K4RawText" }
+                assertEquals(IndexStatus.UNDONE, loaded.indexStatus, "index content: '$content'")
+                assertTrue(m.needsReindexing(loaded))
+            }
+            m.scheduleIndexCreation(b)
+            val indexed = SwordBookDriver.instance().getBooks()
+                .first { it.initials == "K4RawText" }
+            assertEquals(IndexStatus.DONE, indexed.indexStatus)
+
+            m.closeAllIndexes()
+            assertNotNull(FtsIndexStore.open(file)).use { store ->
+                store.writeMetadata(store.metadata().copy(bookVersion = "outdated"))
+            }
+            val stale = SwordBookDriver.instance().getBooks()
+                .first { it.initials == "K4RawText" }
+            assertEquals(IndexStatus.UNDONE, stale.indexStatus)
+        }
     }
 
     @Test fun creatingLeftoversAreDeletedByANewManager() {

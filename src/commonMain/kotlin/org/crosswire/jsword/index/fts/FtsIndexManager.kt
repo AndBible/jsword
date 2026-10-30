@@ -153,6 +153,12 @@ class FtsIndexManager internal constructor(
                         .build(creating, newJob) { cancelled.value || newJob.isFinished }
                     newJob.isCancelable = false
                     if (cancelled.value || newJob.isFinished) throw IndexBuildCancelled()
+                    if (errors.isNotEmpty()) {
+                        // Never publish a searchable but silently incomplete index. Keep any previous index intact.
+                        // TRANSLATOR: One or more verses could not be indexed due to errors in those verses.
+                        throw BookException(JSMsg.gettext("The following verses have errors and could not be indexed\n{0}",
+                            errors.joinToString("") { "$it\n" }))
+                    }
                     // The rename and the eviction of the cached handle are one step under [lock], so getIndex never
                     // opens the new file and has it evicted, nor serves the old one after the rename. A search that
                     // still holds the evicted index is forwarded to the new one (see [FtsIndex.successor]).
@@ -164,12 +170,6 @@ class FtsIndexManager internal constructor(
                     finalStatus = IndexStatus.DONE
                     // The legacy Lucene directory is also the "engine changed" signal, so it goes only now.
                     try { deleteLegacyLuceneIndex(book) } catch (e: Exception) { /* best effort: the orphan sweep never touches installed books, a retry happens at the next rebuild */ }
-                    if (errors.isNotEmpty()) {
-                        // TRANSLATOR: It is likely that one or more verses could not be indexed due to errors in those verses.
-                        // This message gives a listing of them to the user.
-                        Reporter.informUser(this, JSMsg.gettext("The following verses have errors and could not be indexed\n{0}",
-                            errors.joinToString("") { "$it\n" }))
-                    }
                 } catch (e: IndexBuildCancelled) {
                     // cancelled by the user: UNDONE, nothing to report
                 } catch (e: Exception) {

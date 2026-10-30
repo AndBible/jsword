@@ -33,12 +33,15 @@ import org.crosswire.jsword.book.BookException
  */
 interface IndexManager {
     /**
-     * Detects if index data has been stored and is valid for this Bible.
-     * 
+     * Detects if index data has been stored for this Bible. Use [hasUsableIndex] to check validity too.
+     *
      * @param book the book
-     * @return true if the book has a usable index
+     * @return true if stored index data exists
      */
     fun isIndexed(book: Book?): Boolean
+
+    /** True only when stored index data is readable and current, not merely present on disk. */
+    fun hasUsableIndex(book: Book?): Boolean = isIndexed(book) && !needsReindexing(book)
 
     /**
      * Create a new Searcher.
