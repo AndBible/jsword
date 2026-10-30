@@ -72,4 +72,41 @@ class SwordBookReplacementTest {
             root.deleteRecursively()
         }
     }
+
+    @Test fun staleBookReadsNeverPoolStatesForTheReplacementEvenWithChangedDataPath() {
+        val root = Files.createTempDirectory("sword-stale").toFile()
+        val manager = OpenFileStateManager.instance()
+        val initials = "StaleDict"
+        fun register(dataDir: String, body: String): org.crosswire.jsword.book.Book {
+            val dir = File(root, "modules/lexdict/rawld/$dataDir").apply { mkdirs() }
+            val bytes = "strong\n$body".toByteArray()
+            File(dir, "test.dat").writeBytes(bytes)
+            File(dir, "test.idx").writeBytes(ByteBuffer.allocate(6).order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(0).putShort(bytes.size.toShort()).array())
+            val conf = File(root, "mods.d/stale.conf").apply {
+                parentFile.mkdirs()
+                writeText("[$initials]\nDataPath=./modules/lexdict/rawld/$dataDir/test\nModDrv=RawLD\nEncoding=UTF-8\nDescription=Stale dictionary\n")
+            }
+            SwordBookDriver.registerNewBook(SwordBookMetaDataJvm.create(conf, root.toURI()).apply {
+                setDriver(SwordBookDriver.instance())
+            })
+            return Books.installed().getBook(initials)!!
+        }
+        try {
+            val old = register("a", "old text")
+            val replacement = register("b", "new text")
+            assertNotSame(old, replacement)
+            // A window still holding the old Book reads (and returns a state) after the replacement.
+            assertTrue(old.getRawText(old.getKey("strong")).contains("old text"))
+            repeat(3) {
+                assertTrue("the replacement must never get a state built from the old config",
+                    replacement.getRawText(replacement.getKey("strong")).contains("new text"))
+                assertTrue(old.getRawText(old.getKey("strong")).contains("old text"))
+            }
+        } finally {
+            manager.evict(initials)
+            Books.installed().getBooks().filter { it.initials == initials }.forEach { Books.installed().removeBook(it) }
+            root.deleteRecursively()
+        }
+    }
 }

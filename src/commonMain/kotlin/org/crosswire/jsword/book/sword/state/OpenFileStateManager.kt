@@ -65,7 +65,9 @@ class OpenFileStateManager
  */
 private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     private val lock = SynchronizedObject()
-    private val metaToStates = mutableMapOf<BookMetaData, ArrayDeque<OpenFileState>>()
+    // BookMetaData is value-equal across a module replacement (same name), but the files and config differ, so the pool
+    // is keyed by metadata IDENTITY: a stale Book can never share handles with its replacement.
+    private val metaToStates = mutableMapOf<MetadataIdentity, ArrayDeque<OpenFileState>>()
     private val generations = mutableMapOf<String, Any>()
 
     @Volatile
@@ -114,7 +116,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     @Suppress("UNCHECKED_CAST")
     private fun <T : AbstractOpenFileState> checkout(metadata: BookMetaData, create: () -> T): T = synchronized(lock) {
         ensureNotShuttingDown()
-        val state = metaToStates.getOrPut(metadata) { ArrayDeque() }.removeFirstOrNull() as T?
+        val state = metaToStates.getOrPut(MetadataIdentity(metadata)) { ArrayDeque() }.removeFirstOrNull() as T?
         LOGGER.trace(if (state == null) "Initializing: {}" else "Reusing: {}", metadata.initials)
         (state ?: create()).also {
             it.poolGeneration = generations.getOrPut(metadata.initials) { Any() }
@@ -128,7 +130,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
         val iterator = metaToStates.iterator()
         while (iterator.hasNext()) {
             val entry = iterator.next()
-            if (entry.key.initials != initials) continue
+            if (entry.key.metadata.initials != initials) continue
             entry.value.forEach { it.releaseResources() }
             iterator.remove()
         }
@@ -145,7 +147,7 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
             }
             fileState.setLastAccess(currentTimeMillis())
             LOGGER.trace("Offering to releasing: {}", metadata.initials)
-            metaToStates.getOrPut(metadata) { ArrayDeque() }.addLast(fileState)
+            metaToStates.getOrPut(MetadataIdentity(metadata)) { ArrayDeque() }.addLast(fileState)
         }
     }
 
@@ -165,6 +167,12 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
         if (shuttingDown) {
             throw BookException("Unable to read book, application is shutting down.")
         }
+    }
+
+    /** Map key comparing [BookMetaData] by reference; the hash may collide across instances but equality never does. */
+    private class MetadataIdentity(val metadata: BookMetaData) {
+        override fun equals(other: Any?): Boolean = other is MetadataIdentity && other.metadata === metadata
+        override fun hashCode(): Int = metadata.initials.hashCode()
     }
 
     companion object {
