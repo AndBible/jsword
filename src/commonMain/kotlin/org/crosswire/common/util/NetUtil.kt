@@ -66,6 +66,52 @@ private constructor() {
         @JvmStatic
         fun toPath(uri: KUri): okio.Path = validatedFileUriPath(uri)
 
+        private val windowsDriveUriPath = Regex("^/[A-Za-z]:([/\\\\].*)?$")
+
+        /**
+         * Converts the decoded path of a `file:` URI to an okio [okio.Path].
+         *
+         * On Windows (a `\` [separator]) `file:` URIs carry the drive letter after a slash (`/C:/Users/x`), which
+         * is no filesystem path; the slash is dropped. On every other platform the string is used unchanged.
+         * [separator] is a parameter so the Windows form can be tested on any host.
+         */
+        @JvmStatic
+        fun filePathOf(uriPath: String, separator: String = okio.Path.DIRECTORY_SEPARATOR): okio.Path =
+            when {
+                separator != "\\" -> uriPath
+                windowsDriveUriPath.matches(uriPath) -> uriPath.substring(1)
+                // A UNC path (file:////server/share/x has the path //server/share/x).
+                uriPath.startsWith("//") && !uriPath.startsWith("///") -> uriPath.replace('/', '\\')
+                else -> uriPath
+            }.toPath()
+
+        private val windowsDrivePath = Regex("^[A-Za-z]:([/\\\\].*)?$")
+
+        /**
+         * The reverse of [filePathOf]: the (undecoded) path component of the `file:` URI for [path].
+         *
+         * On Windows (a `\` [separator]) `C:\Users\x` becomes `/C:/Users/x`; on every other platform the result is
+         * [path]'s string unchanged. With [directory] a trailing `/` is ensured. [separator] is a parameter so the
+         * Windows form can be tested on any host.
+         */
+        @JvmStatic
+        fun fileUriPathOf(path: okio.Path, directory: Boolean = false, separator: String = okio.Path.DIRECTORY_SEPARATOR): String {
+            var s = path.toString()
+            if (separator == "\\") {
+                s = s.replace('\\', '/')
+                if (windowsDrivePath.matches(s)) s = "/$s"
+                // UNC: \\server\share\x -> ////server/share/x (as File.toURI writes it), so the server stays in the path
+                // instead of becoming the URI's host.
+                else if (s.startsWith("//") && !s.startsWith("///")) s = "//$s"
+            }
+            return if (directory && !s.endsWith("/")) "$s/" else s
+        }
+
+        /** A `file:` [KUri] for [path] (see [fileUriPathOf]); the KUri constructor does the percent-encoding. */
+        @JvmStatic
+        fun fileKUri(path: okio.Path, directory: Boolean = false, separator: String = okio.Path.DIRECTORY_SEPARATOR): KUri =
+            KUri(PROTOCOL_FILE, null, fileUriPathOf(path, directory, separator), null)
+
         /**
          * Constant for the file: protocol or scheme
          */
@@ -138,7 +184,7 @@ private constructor() {
         fun makeDirectory(orig: KUri) {
             checkFileURI(orig)
 
-            val path = orig.getPath()!!.toPath()
+            val path = NetUtil.filePathOf(orig.getPath()!!)
 
             // If it is a file, except
             if (KFiles.isFile(path)) {
@@ -177,7 +223,7 @@ private constructor() {
         fun makeFile(orig: KUri) {
             checkFileURI(orig)
 
-            val path = orig.getPath()!!.toPath()
+            val path = NetUtil.filePathOf(orig.getPath()!!)
 
             // If it is a file, except
             if (KFiles.isDirectory(path)) {
@@ -207,7 +253,7 @@ private constructor() {
         @JvmStatic
         fun isFile(uri: KUri): Boolean {
             if (uri.getScheme().equals(PROTOCOL_FILE)) {
-                return KFiles.isFile(uri.getPath()!!.toPath())
+                return KFiles.isFile(NetUtil.filePathOf(uri.getPath()!!))
             }
 
             try {
@@ -233,7 +279,7 @@ private constructor() {
                 return false
             }
 
-            return KFiles.isDirectory(orig.getPath()!!.toPath())
+            return KFiles.isDirectory(NetUtil.filePathOf(orig.getPath()!!))
         }
 
         /**
@@ -288,7 +334,7 @@ private constructor() {
             checkFileURI(oldUri)
             checkFileURI(newUri)
 
-            return KFiles.move(oldUri.getPath()!!.toPath(), newUri.getPath()!!.toPath())
+            return KFiles.move(NetUtil.filePathOf(oldUri.getPath()!!), NetUtil.filePathOf(newUri.getPath()!!))
         }
 
         /**
@@ -305,7 +351,7 @@ private constructor() {
         fun delete(orig: KUri): Boolean {
             checkFileURI(orig)
 
-            return KFiles.delete(orig.getPath()!!.toPath())
+            return KFiles.delete(NetUtil.filePathOf(orig.getPath()!!))
         }
 
 
@@ -462,7 +508,7 @@ private constructor() {
         @JvmStatic
         @Throws(NetMalformedURLException::class)
         fun listByFile(uri: KUri, filter: URIFilter?): Array<String>? {
-            val dir = uri.getPath()!!.toPath()
+            val dir = NetUtil.filePathOf(uri.getPath()!!)
             if (!KFiles.isDirectory(dir)) {
                 // TRANSLATOR: Error condition: A directory was expected, but a file was found. {0} is a placeholder for the file.
                 throw NetMalformedURLException(JSMsg.gettext("The URL {0} is not a directory", uri.toString()))
@@ -572,7 +618,7 @@ private constructor() {
         @JvmStatic
         suspend fun getSize(uri: KUri, proxyHost: String?, proxyPort: Int?): Int {
             if (uri.getScheme().equals(PROTOCOL_FILE)) {
-                val path = uri.getPath()!!.toPath()
+                val path = NetUtil.filePathOf(uri.getPath()!!)
                 // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
                 if (KFiles.isFile(path)) {
                     return fileSizeToInt(KFiles.size(path))
@@ -633,7 +679,7 @@ private constructor() {
         @JvmStatic
         suspend fun getLastModified(uri: KUri, proxyHost: String?, proxyPort: Int?): Long {
             if (uri.getScheme().equals(PROTOCOL_FILE)) {
-                val path = uri.getPath()!!.toPath()
+                val path = NetUtil.filePathOf(uri.getPath()!!)
                 // Plain files only; anything else (missing, directory) keeps the URLConnection behaviour.
                 if (KFiles.isFile(path)) {
                     return KFiles.lastModifiedMillis(path)
