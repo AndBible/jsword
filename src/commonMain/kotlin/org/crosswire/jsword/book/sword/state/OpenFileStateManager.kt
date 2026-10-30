@@ -66,6 +66,7 @@ class OpenFileStateManager
 private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     private val lock = SynchronizedObject()
     private val metaToStates = mutableMapOf<BookMetaData, ArrayDeque<OpenFileState>>()
+    private val generations = mutableMapOf<String, Any>()
 
     @Volatile
     private var shuttingDown = false
@@ -87,101 +88,62 @@ private constructor(cleanupIntervalSeconds: Int, maxExpiry: Int) {
     }
 
     @Throws(BookException::class)
-    fun getRawBackendState(metadata: BookMetaData): RawBackendState {
-        ensureNotShuttingDown()
-
-        val state: RawBackendState? = getInstance(metadata)
-        if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.initials)
-            return RawBackendState(metadata)
-        }
-
-        LOGGER.trace("Reusing: {}", metadata.initials)
-        return state
-    }
+    fun getRawBackendState(metadata: BookMetaData): RawBackendState =
+        checkout(metadata) { RawBackendState(metadata) }
 
     @Throws(BookException::class)
-    fun getRawFileBackendState(metadata: BookMetaData): RawFileBackendState {
-        ensureNotShuttingDown()
-
-        val state: RawFileBackendState? = getInstance(metadata)
-        if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.initials)
-            return RawFileBackendState(metadata)
-        }
-
-        LOGGER.trace("Reusing: {}", metadata.initials)
-        return state
-    }
+    fun getRawFileBackendState(metadata: BookMetaData): RawFileBackendState =
+        checkout(metadata) { RawFileBackendState(metadata) }
 
     @Throws(BookException::class)
-    fun getGenBookBackendState(metadata: BookMetaData): GenBookBackendState {
-        ensureNotShuttingDown()
-
-        val state: GenBookBackendState? = getInstance(metadata)
-        if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.initials)
-            return GenBookBackendState(metadata)
-        }
-
-        LOGGER.trace("Reusing: {}", metadata.initials)
-        return state
-    }
+    fun getGenBookBackendState(metadata: BookMetaData): GenBookBackendState =
+        checkout(metadata) { GenBookBackendState(metadata) }
 
     @Throws(BookException::class)
-    fun getRawLDBackendState(metadata: BookMetaData): RawLDBackendState {
-        ensureNotShuttingDown()
-
-        val state: RawLDBackendState? = getInstance(metadata)
-        if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.initials)
-            return RawLDBackendState(metadata)
-        }
-
-        LOGGER.trace("Reusing: {}", metadata.initials)
-        return state
-    }
+    fun getRawLDBackendState(metadata: BookMetaData): RawLDBackendState =
+        checkout(metadata) { RawLDBackendState(metadata) }
 
     @Throws(BookException::class)
-    fun getZLDBackendState(metadata: BookMetaData): ZLDBackendState {
-        ensureNotShuttingDown()
-
-        val state: ZLDBackendState? = getInstance(metadata)
-        if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.initials)
-            return ZLDBackendState(metadata)
-        }
-
-        LOGGER.trace("Reusing: {}", metadata.initials)
-        return state
-    }
+    fun getZLDBackendState(metadata: BookMetaData): ZLDBackendState =
+        checkout(metadata) { ZLDBackendState(metadata) }
 
     @Throws(BookException::class)
-    fun getZVerseBackendState(metadata: BookMetaData, blockType: BlockType): ZVerseBackendState {
-        ensureNotShuttingDown()
-
-        val state: ZVerseBackendState? = getInstance(metadata)
-        if (state == null) {
-            LOGGER.trace("Initializing: {}", metadata.initials)
-            return ZVerseBackendState(metadata, blockType)
-        }
-
-        LOGGER.trace("Reusing: {}", metadata.initials)
-        return state
-    }
+    fun getZVerseBackendState(metadata: BookMetaData, blockType: BlockType): ZVerseBackendState =
+        checkout(metadata) { ZVerseBackendState(metadata, blockType) }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : OpenFileState> getInstance(metadata: BookMetaData): T? = synchronized(lock) {
+    private fun <T : AbstractOpenFileState> checkout(metadata: BookMetaData, create: () -> T): T = synchronized(lock) {
+        ensureNotShuttingDown()
         val state = metaToStates.getOrPut(metadata) { ArrayDeque() }.removeFirstOrNull() as T?
-        state?.setLastAccess(currentTimeMillis())
-        state
+        LOGGER.trace(if (state == null) "Initializing: {}" else "Reusing: {}", metadata.initials)
+        (state ?: create()).also {
+            it.poolGeneration = generations.getOrPut(metadata.initials) { Any() }
+            it.setLastAccess(currentTimeMillis())
+        }
+    }
+
+    /** Close idle handles now; borrowed handles finish their read and are discarded on return. */
+    internal fun evict(initials: String) = synchronized(lock) {
+        generations[initials] = Any()
+        val iterator = metaToStates.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.key.initials != initials) continue
+            entry.value.forEach { it.releaseResources() }
+            iterator.remove()
+        }
     }
 
     fun release(fileState: OpenFileState?) {
         if (fileState == null) return
         synchronized(lock) {
-            fileState.setLastAccess(currentTimeMillis())
             val metadata = fileState.getBookMetaData()
+            if (shuttingDown || (fileState is AbstractOpenFileState &&
+                    fileState.poolGeneration !== generations[metadata.initials])) {
+                fileState.releaseResources()
+                return@synchronized
+            }
+            fileState.setLastAccess(currentTimeMillis())
             LOGGER.trace("Offering to releasing: {}", metadata.initials)
             metaToStates.getOrPut(metadata) { ArrayDeque() }.addLast(fileState)
         }

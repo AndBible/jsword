@@ -23,6 +23,8 @@ import kotlin.jvm.JvmStatic
 import okio.IOException
 import okio.Path.Companion.toPath
 
+import org.crosswire.common.activate.Activator
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.common.util.KFiles
 import org.crosswire.common.util.KUri
 import org.crosswire.common.util.pathUri
@@ -248,6 +250,14 @@ open class SwordBookDriver
             val d = sbmd.driver as SwordBookDriver?
             bmd.setDriver(d)
             val book = d!!.createBook(bmd)
+            val previous = Books.installed().getBook(book.initials)
+            if (previous != null && previous.bookMetaData.driver is SwordBookDriver) {
+                // Outside Books' registry lock: an index build may resolve books while we wait for it to stop.
+                IndexManagerFactory.getIndexManager().deleteIndex(previous)
+                OpenFileStateManager.instance().evict(previous.initials)
+                Activator.deactivate(previous)
+                book.indexStatus = IndexStatus.UNDONE
+            }
             Books.installed().addBook(book)
         }
 

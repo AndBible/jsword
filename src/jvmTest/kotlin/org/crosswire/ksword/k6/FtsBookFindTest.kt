@@ -106,6 +106,22 @@ class FtsBookFindTest {
         assertEquals(3, count("beginning"))
     }
 
+    @Test fun registeringAReplacementInvalidatesTheOldSearchIndex() = app {
+        val original = book
+        try {
+            manager.scheduleIndexCreation(original)
+            assertEquals(3, count("beginning"))
+            org.crosswire.jsword.book.sword.SwordBookDriver.registerNewBook(
+                original.bookMetaData as org.crosswire.jsword.book.sword.SwordBookMetaData
+            )
+            assertTrue(!manager.isIndexed(book), "an index built from the replaced module must be removed")
+            assertEquals(IndexStatus.UNDONE, book.indexStatus)
+        } finally {
+            Books.installed().addBook(original)
+            original.resetSearcher()
+        }
+    }
+
     @Test fun searchAfterDeleteIndexFailsWithAProperError() = app {
         manager.scheduleIndexCreation(book)
         assertEquals(3, count("beginning"))

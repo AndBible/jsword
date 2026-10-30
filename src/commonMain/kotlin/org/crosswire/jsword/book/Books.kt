@@ -29,6 +29,8 @@ import org.crosswire.common.util.Reporter
 import org.crosswire.common.util.SortedArraySet
 import org.crosswire.common.util.currentTimeMillis
 import org.crosswire.jsword.JSOtherMsg
+import org.crosswire.jsword.book.sword.SwordBookDriver
+import org.crosswire.jsword.book.sword.state.OpenFileStateManager
 import org.crosswire.common.util.Logger
 import org.crosswire.common.util.LoggerFactory
 
@@ -132,11 +134,12 @@ private constructor() : AbstractBookList() {
     private fun addBookLocked(book: Book?) {
         if (book == null) return
 
-        // If we are upgrading module, we need to remove existing data first.
-        if (books.contains(book)) {
-            initials.remove(book.initials)
-            names.remove(book.name)
-            books.remove(book)
+        // Initials identify a replacement even when its description/category changed.
+        val previous = initials[book.initials]
+        if (previous != null) {
+            initials.remove(previous.initials)
+            names.remove(previous.name)
+            books.remove(previous)
         }
 
         if (books.add(book)) {
@@ -160,6 +163,8 @@ private constructor() : AbstractBookList() {
         // log.debug("unregistering book: {}", bmd.getName());
 
         Activator.deactivate(book)
+        // Uninstall/reinstall must not resurrect pooled handles from the removed module either.
+        if (book.bookMetaData.driver is SwordBookDriver) OpenFileStateManager.instance().evict(book.initials)
 
         val removed = books.remove(book)
         if (removed) {
