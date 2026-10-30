@@ -77,7 +77,13 @@ private constructor() {
          */
         @JvmStatic
         fun filePathOf(uriPath: String, separator: String = okio.Path.DIRECTORY_SEPARATOR): okio.Path =
-            (if (separator == "\\" && windowsDriveUriPath.matches(uriPath)) uriPath.substring(1) else uriPath).toPath()
+            when {
+                separator != "\\" -> uriPath
+                windowsDriveUriPath.matches(uriPath) -> uriPath.substring(1)
+                // A UNC path (file:////server/share/x has the path //server/share/x).
+                uriPath.startsWith("//") && !uriPath.startsWith("///") -> uriPath.replace('/', '\\')
+                else -> uriPath
+            }.toPath()
 
         private val windowsDrivePath = Regex("^[A-Za-z]:([/\\\\].*)?$")
 
@@ -94,6 +100,9 @@ private constructor() {
             if (separator == "\\") {
                 s = s.replace('\\', '/')
                 if (windowsDrivePath.matches(s)) s = "/$s"
+                // UNC: \\server\share\x -> ////server/share/x (as File.toURI writes it), so the server stays in the path
+                // instead of becoming the URI's host.
+                else if (s.startsWith("//") && !s.startsWith("///")) s = "//$s"
             }
             return if (directory && !s.endsWith("/")) "$s/" else s
         }

@@ -39,4 +39,20 @@ class FileUriPathOfTest {
     @Test fun posixDriveLikePathIsNotRewritten() {
         assertEquals("/C:/x", NetUtil.fileUriPathOf("/C:/x".toPath(), separator = posix))
     }
+
+    /**
+     * UNC paths (a redirected %APPDATA% or a backup on a share): written as `file:////server/share/x`, the form
+     * `File.toURI()` uses, so the server stays part of the path instead of becoming the URI host, and read back.
+     */
+    @Test fun windowsUncPathKeepsTheServerInThePath() {
+        val unc = "\\\\nas\\share\\Jänis Ö\\sword".toPath()
+        assertEquals("////nas/share/Jänis Ö/sword/", NetUtil.fileUriPathOf(unc, directory = true, separator = win))
+        val uri = NetUtil.fileKUri(unc, directory = true, separator = win)
+        assertEquals(null, uri.getHost())
+        assertEquals("//nas/share/Jänis Ö/sword/", uri.getPath())
+        assertEquals("\\\\nas\\share\\Jänis Ö\\sword\\".toPath(), NetUtil.filePathOf(uri.getPath()!!, win))
+        // POSIX: no UNC handling; the path's own spelling in both directions.
+        assertEquals("//srv/x".toPath().toString(), NetUtil.fileUriPathOf("//srv/x".toPath(), separator = posix))
+        assertEquals("//srv/x".toPath(), NetUtil.filePathOf("//srv/x", posix))
+    }
 }
