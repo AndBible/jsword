@@ -128,7 +128,7 @@ private constructor() {
     fun getWritableProjectSubdirPath(subject: String, create: Boolean): Path? =
         getWritableProjectSubdir(subject, create)?.toOkioPath()
 
-    private fun KUri.toOkioPath(): Path = getPath()!!.toPath()
+    private fun KUri.toOkioPath(): Path = NetUtil.filePathOf(getPath()!!)
 
     /**
      * Get the locations where project resources can be found.
@@ -244,7 +244,7 @@ private constructor() {
 
             try {
                 val uricache = getWritableProjectSubdir(DIR_NETCACHE, true)
-                setUriCachePath(uricache!!.getPath()!!.toPath())
+                setUriCachePath(NetUtil.filePathOf(uricache!!.getPath()!!))
             } catch (ex: IOException) {
                 // This isn't fatal, it just means that NetUtil will try to use $TMP
                 // in place of a more permanent solution.
@@ -282,8 +282,8 @@ private constructor() {
         }
 
         if (NetUtil.isDirectory(oldPath)) {
-            val oldDir = oldPath.getPath()!!.toPath()
-            val newDir = newPath.getPath()!!.toPath()
+            val oldDir = NetUtil.filePathOf(oldPath.getPath()!!)
+            val newDir = NetUtil.filePathOf(newPath.getPath()!!)
 
             // renameTo will return false if it could not rename.
             // This will happen if the directory already exists.
