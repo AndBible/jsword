@@ -170,6 +170,11 @@ private constructor() {
             // Do we need to remove the job? Note that the section above will
             // probably execute after this so we will be firing events for jobs
             // that are no longer in our list of jobs. ho hum.
+            removeFinishedJob(job)
+        }
+
+        /** Registry cleanup must also run for jobs whose progress notifications are disabled. */
+        internal fun removeFinishedJob(job: Progress) {
             if (job.isFinished) {
                 log.debug("job finished: {}", job.jobName)
                 synchronized(lock) { jobs.remove(job) }

@@ -40,6 +40,46 @@ class JobTest {
     }
 
     @Test
+    fun silentDownloadsAreRemovedWhenDoneWithoutNotifyingListeners() {
+        val job = JobManager.createJob("silent-download")
+        var events = 0
+        val listener = object : WorkListener {
+            override fun workProgressed(ev: WorkEvent) { if (ev.job === job) events++ }
+            override fun workStateChanged(ev: WorkEvent) = Unit
+        }
+        JobManager.addWorkListener(listener)
+        try {
+            job.isNotifyUser = false
+            job.beginJob("Downloading files")
+            job.work = 100
+            assertFalse(job.isFinished, "100% is not completion: installation may still be running")
+            job.done()
+            assertTrue(job.isFinished)
+            assertFalse(JobManager.iterator().asSequence().contains(job), "a completed silent job must leave the registry")
+            assertEquals(0, events, "silent downloads must remain silent")
+        } finally {
+            JobManager.removeWorkListener(listener)
+            job.isNotifyUser = true
+            job.done()
+        }
+    }
+
+    @Test
+    fun silentCancelledDownloadsAreRemoved() {
+        val job = JobManager.createJob("cancelled-silent-download")
+        try {
+            job.isNotifyUser = false
+            job.beginJob("Downloading files")
+            job.cancel()
+            assertTrue(job.isFinished)
+            assertFalse(JobManager.iterator().asSequence().contains(job))
+        } finally {
+            job.isNotifyUser = true
+            job.done()
+        }
+    }
+
+    @Test
     fun testJob() {
         var job: Progress
         val tempfile = File.createTempFile("jobtest", "tmp")
