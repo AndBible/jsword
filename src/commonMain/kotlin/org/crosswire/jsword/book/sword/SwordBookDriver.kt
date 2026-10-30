@@ -117,7 +117,9 @@ open class SwordBookDriver
                     valid.add(book)
 
                     val imanager = IndexManagerFactory.getIndexManager()
-                    if (imanager.hasUsableIndex(book)) {
+                    // Existence only: this runs on the thread that first touches Books (Main on Android), so it must
+                    // stay cheap. FtsIndexManager.revalidateIndexStatuses does the full check off that thread.
+                    if (imanager.isIndexed(book)) {
                         sbmd.indexStatus = IndexStatus.DONE
                     } else {
                         sbmd.indexStatus = IndexStatus.UNDONE

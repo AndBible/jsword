@@ -3,6 +3,9 @@ package org.crosswire.jsword.index.fts
 import okio.FileSystem
 import okio.Path
 import org.crosswire.common.progress.JobManager
+import org.crosswire.common.util.Reporter
+import org.crosswire.common.util.ReporterEvent
+import org.crosswire.common.util.ReporterListener
 import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookData
 import org.crosswire.jsword.book.BookException
@@ -15,6 +18,7 @@ import org.crosswire.jsword.index.IndexStatusEvent
 import org.crosswire.jsword.index.IndexStatusListener
 import org.crosswire.jsword.index.search.DefaultSearchModifier
 import org.crosswire.jsword.passage.NoSuchVerseException
+import org.crosswire.jsword.passage.TreeKey
 import org.crosswire.ksword.fixtures.fixtureRoot
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -120,7 +124,19 @@ class FtsIndexManagerTest {
         assertFalse(m.isIndexed(b))
     }
 
-    @Test fun verseReadFailureDoesNotPublishAPartialIndex() {
+    /** Runs [block] with a Reporter listener and returns the messages shown to the user meanwhile. */
+    private fun reported(block: () -> Unit): List<String> {
+        val seen = ArrayList<String>()
+        val l = object : ReporterListener {
+            override fun reportException(ev: ReporterEvent) { seen += ev.exception?.message ?: ev.message ?: "" }
+            override fun reportMessage(ev: ReporterEvent) { seen += ev.message ?: "" }
+        }
+        Reporter.addReporterListener(l)
+        try { block() } finally { Reporter.removeReporterListener(l) }
+        return seen
+    }
+
+    @Test fun aFewUnreadableVersesStillPublishTheIndexAndWarnOnce() {
         val b = book("K4RawText")
         val seen = statuses(b)
         var failures = 0
@@ -131,20 +147,71 @@ class FtsIndexManagerTest {
             }
             BookData(book, key).getOsisFragment(false)
         }
-        m.scheduleIndexCreation(b)
+        val messages = reported { m.scheduleIndexCreation(b) }
         assertEquals(1, failures)
+        assertEquals(listOf<IndexStatus?>(IndexStatus.SCHEDULED, IndexStatus.CREATING, IndexStatus.DONE), seen)
+        assertTrue(m.isIndexed(b))
+        assertEquals(1, messages.size, messages.toString())
+        assertTrue(messages.single().contains("John 1:1"), messages.single())
+        assertTrue(creatingFiles().isEmpty())
+        // The readable verses are searchable, the unreadable one is not.
+        assertEquals(listOf("Gen.1.1", "John.1.2"), m.getIndex(b).find("beginning").map { it.getOsisRef() })
+
+        // An index with skipped entries is complete: no re-index loop, at a restart or at startup.
+        val restarted = manager()
+        assertFalse(restarted.needsReindexing(b))
+        assertEquals(0, restarted.revalidateIndexStatuses(listOf(b)))
+        assertEquals(IndexStatus.DONE, b.indexStatus)
+    }
+
+    @Test fun anIndexWhereEveryVerseFailsIsNotPublished() {
+        val b = book("K4RawText")
+        val seen = statuses(b)
+        val m = manager { _, _ -> throw BookException("Injected verse read failure") }
+        val messages = reported { m.scheduleIndexCreation(b) }
         assertEquals(IndexStatus.UNDONE, seen.last())
         assertFalse(m.isIndexed(b))
         assertTrue(m.needsReindexing(b))
         assertFalse(fs.exists(finalFile(b)))
         assertTrue(creatingFiles().isEmpty())
+        assertEquals(1, messages.size, messages.toString())
+        assertTrue(messages.single().contains("Genesis 1:1"), messages.single())
 
         // A new manager must not rediscover the incomplete build as a usable index.
-        val restarted = manager()
-        assertTrue(restarted.needsReindexing(b))
+        assertTrue(manager().needsReindexing(b))
     }
 
-    @Test fun startupDoesNotMarkEmptyCorruptOrStaleIndexesDone() {
+    @Test fun aFailedRebuildKeepsThePreviousIndexUsable() {
+        val b = book("K4RawText")
+        val m = manager()
+        m.scheduleIndexCreation(b)
+        assertEquals(3, m.getIndex(b).find("beginning").getCardinality())
+        val broken = manager { _, _ -> throw BookException("Injected verse read failure") }
+        reported { broken.scheduleIndexCreation(b) }
+        assertTrue(m.hasUsableIndex(b))
+        assertEquals(3, manager().getIndex(b).find("beginning").getCardinality())
+    }
+
+    @Test fun aGeneralBookNodeWithoutAnEntryDoesNotFailTheBuild() {
+        val b = book("K4GenBook")
+        var failed = 0
+        val m = manager { book, key ->
+            // A named node whose entry cannot be read: counts as a skipped entry, not as a failed build.
+            if (key is TreeKey && failed == 0 && key.getOsisRef().isNotEmpty()) {
+                failed++
+                throw BookException("No entry for node")
+            }
+            BookData(book, key).getOsisFragment(false)
+        }
+        val messages = reported { m.scheduleIndexCreation(b) }
+        assertEquals(1, failed)
+        assertEquals(IndexStatus.DONE, b.indexStatus)
+        assertTrue(m.hasUsableIndex(b))
+        assertEquals(1, messages.size, messages.toString())
+        FtsIndexStore.open(finalFile(b))!!.use { assertTrue(it.allRowIds().size >= 2, "${it.allRowIds()}") }
+    }
+
+    @Test fun startupTrustsFileExistenceAndRevalidationDowngradesEmptyCorruptOrStaleIndexes() {
         val b = book("K4RawText")
         val m = manager()
         val file = finalFile(b)
@@ -152,22 +219,28 @@ class FtsIndexManagerTest {
         IndexManagerFactory.withIndexManagerForTest(m) {
             for (content in listOf("", "not a sqlite file")) {
                 fs.write(file) { writeUtf8(content) }
-                val loaded = SwordBookDriver.instance().getBooks()
-                    .first { it.initials == "K4RawText" }
-                assertEquals(IndexStatus.UNDONE, loaded.indexStatus, "index content: '$content'")
+                // Cheap at startup (it runs on Main on Android): existence only.
+                val loaded = SwordBookDriver.instance().getBooks().first { it.initials == "K4RawText" }
+                assertEquals(IndexStatus.DONE, loaded.indexStatus, "index content: '$content'")
                 assertTrue(m.needsReindexing(loaded))
+                // The full check, run off the startup thread.
+                assertEquals(1, m.revalidateIndexStatuses(listOf(loaded)), "index content: '$content'")
+                assertEquals(IndexStatus.UNDONE, loaded.indexStatus)
+                assertEquals(0, m.revalidateIndexStatuses(listOf(loaded)))
             }
             m.scheduleIndexCreation(b)
-            val indexed = SwordBookDriver.instance().getBooks()
-                .first { it.initials == "K4RawText" }
+            val indexed = SwordBookDriver.instance().getBooks().first { it.initials == "K4RawText" }
+            assertEquals(IndexStatus.DONE, indexed.indexStatus)
+            assertEquals(0, m.revalidateIndexStatuses(listOf(indexed)))
             assertEquals(IndexStatus.DONE, indexed.indexStatus)
 
             m.closeAllIndexes()
             assertNotNull(FtsIndexStore.open(file)).use { store ->
                 store.writeMetadata(store.metadata().copy(bookVersion = "outdated"))
             }
-            val stale = SwordBookDriver.instance().getBooks()
-                .first { it.initials == "K4RawText" }
+            val stale = SwordBookDriver.instance().getBooks().first { it.initials == "K4RawText" }
+            assertEquals(IndexStatus.DONE, stale.indexStatus)
+            assertEquals(1, m.revalidateIndexStatuses(listOf(stale)))
             assertEquals(IndexStatus.UNDONE, stale.indexStatus)
         }
     }

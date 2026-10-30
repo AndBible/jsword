@@ -35,11 +35,11 @@ internal class FtsIndexBuilder(
     private val fragmentOf: (Book, Key) -> Element = { b, k -> BookData(b, k).getOsisFragment(false) },
 ) {
     /**
-     * Writes the index to [target] (created fresh) and returns the keys that could not be indexed. The store is closed
-     * on every path. [isCancelled] is polled after every key; true aborts with [IndexBuildCancelled], leaving [target]
+     * Writes the index to [target] (created fresh) and returns the keys that could not be read, with the number of keys
+     * processed (readable or not, nameless tree containers excluded). The store is closed on every path. [isCancelled] is polled after every key; true aborts with [IndexBuildCancelled], leaving [target]
      * for the caller to delete.
      */
-    fun build(target: Path, job: Progress, isCancelled: () -> Boolean): List<Key> {
+    fun build(target: Path, job: Progress, isCancelled: () -> Boolean): BuildResult {
         val errors = ArrayList<Key>()
         val store = FtsIndexStore.create(target)
         try {
@@ -51,11 +51,14 @@ internal class FtsIndexBuilder(
             walk(store, root, job, errors, includeStrongs, state, isCancelled)
             store.writeMetadata(metadata(size))
             store.commitBuild()
+            return BuildResult(errors, state.done + errors.size)
         } finally {
             store.close()
         }
-        return errors
     }
+
+    /** What a build found: the keys that could not be read, and how many keys it processed in all. */
+    class BuildResult(val errors: List<Key>, val processed: Int)
 
     private class State(val size: Int) {
         var done = 0
