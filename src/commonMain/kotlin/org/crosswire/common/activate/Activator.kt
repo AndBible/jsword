@@ -74,7 +74,7 @@ private constructor() {
          * another thread (it runs under the activation lock).
          */
         @JvmStatic
-        fun <T> readActivated(subject: Activatable, read: () -> T): T =
+        internal fun <T> readActivated(subject: Activatable, read: () -> T): T =
             synchronized(activationLock) {
                 if (activated.none { it === subject }) {
                     subject.activate(lock)
