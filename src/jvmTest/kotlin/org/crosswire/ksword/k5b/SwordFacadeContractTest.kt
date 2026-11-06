@@ -139,13 +139,20 @@ class SwordFacadeContractTest {
     }
 }
 
-/** Readers of a general book must survive concurrent activate/deactivate (the app deactivates on document switches). */
+/**
+ * Readers of a general book must survive concurrent activate/deactivate (the app deactivates on document switches).
+ *
+ * The reader's fallback (re-activate after finding the state gone, then read it again) once lost to a second
+ * deactivate between those two steps: an existing key threw NoSuchKeyException, the global key list came back empty.
+ * That window is tiny, so the readers run for a fixed time with four togglers and count every failure instead of
+ * stopping at the first (about 13 hits per 10 s before the fix; 200 rounds with two togglers hit it only rarely).
+ */
 class SwordGenBookActivationRaceTest {
     @Test fun readersSurviveConcurrentActivateAndDeactivate() {
         val book = K5bFixtureBook.create("K4GenBook") as SwordGenBook
         val stop = java.util.concurrent.atomic.AtomicBoolean(false)
         val failures = java.util.concurrent.ConcurrentLinkedQueue<Throwable>()
-        val togglers = (1..2).map {
+        val togglers = (1..4).map {
             Thread {
                 try {
                     while (!stop.get()) {
@@ -155,15 +162,16 @@ class SwordGenBookActivationRaceTest {
                 } catch (t: Throwable) { failures += t }
             }
         }
-        val readers = (1..2).map {
+        val readers = (1..4).map {
             Thread {
-                try {
-                    repeat(200) {
+                val end = System.nanoTime() + 10_000_000_000L
+                while (System.nanoTime() < end) {
+                    try {
                         book.getKey("Part 2")
                         book.getKey("part 1")
-                        book.getGlobalKeyList().getChildCount()
-                    }
-                } catch (t: Throwable) { failures += t }
+                        if (book.getGlobalKeyList().getChildCount() == 0) failures += AssertionError("empty global key list")
+                    } catch (t: Throwable) { failures += t }
+                }
             }
         }
         togglers.forEach { it.start() }
@@ -172,7 +180,10 @@ class SwordGenBookActivationRaceTest {
         stop.set(true)
         togglers.forEach { it.join(30_000) }
         try {
-            assertTrue("failures: ${failures.map { it.stackTraceToString().lines().take(8).joinToString("\n") }}", failures.isEmpty())
+            assertTrue(
+                "${failures.size} failures, first: ${failures.take(3).map { it.stackTraceToString().lines().take(8).joinToString("\n") }}",
+                failures.isEmpty(),
+            )
         } finally {
             org.crosswire.common.activate.Activator.deactivate(book)
         }

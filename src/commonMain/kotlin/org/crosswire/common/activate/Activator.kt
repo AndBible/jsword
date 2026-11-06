@@ -68,6 +68,22 @@ private constructor() {
         }
 
         /**
+         * Activates [subject] if needed and runs [read] before any [deactivate] can intervene, so [read] sees the
+         * activated state. A reader that calls [activate] and then reads the subject's state can otherwise lose it to
+         * a deactivate that lands in between. [read] must be short and must not call back into the Activator from
+         * another thread (it runs under the activation lock).
+         */
+        @JvmStatic
+        fun <T> readActivated(subject: Activatable, read: () -> T): T =
+            synchronized(activationLock) {
+                if (activated.none { it === subject }) {
+                    subject.activate(lock)
+                    activated.add(subject)
+                }
+                read()
+            }
+
+        /**
          * If we need to tighten things up a bit we can save memory with this
          *
          * @param amount the amount by which to to reduce memory

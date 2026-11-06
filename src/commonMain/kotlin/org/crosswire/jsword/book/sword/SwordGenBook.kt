@@ -214,20 +214,13 @@ open class SwordGenBook
         checkActive()
 
         // Snapshot the field into a local reference. A concurrent deactivate()
-        // may null the global field after checkActive() has returned, so
-        // returning the field directly could hand back null to the caller. If
-        // we lost that race, force a re-activation and re-snapshot before
-        // falling back to an empty key list.
-        var localGlobal = global
-        if (localGlobal == null) {
-            Activator.activate(this)
-            localGlobal = global
-        }
-        if (localGlobal == null) {
-            return createEmptyKeyList()
-        }
-
-        return localGlobal
+        // may null the global field after checkActive() has returned. If we
+        // lost that race, re-activate and re-snapshot under the activation
+        // lock: a plain activate-then-read could lose to another deactivate in
+        // between and hand back an empty key list for a loaded book.
+        return global
+            ?: Activator.readActivated(this) { global }
+            ?: createEmptyKeyList()
     }
 
     /* (non-Javadoc)
@@ -250,17 +243,13 @@ open class SwordGenBook
         checkActive()
 
         // Snapshot the map into a local reference. A concurrent deactivate()
-        // may null the map field after checkActive() has returned, so working
-        // off the field directly could hit map.get() on null. If we lost that
-        // race, force a re-activation and re-snapshot before giving up.
-        var localMap = map
-        if (localMap == null) {
-            Activator.activate(this)
-            localMap = map
-        }
-        if (localMap == null) {
-            throw NoSuchKeyException(JSMsg.gettext("No entry for '{0}' in {1}.", text, initials))
-        }
+        // may null the map field after checkActive() has returned. If we lost
+        // that race, re-activate and re-snapshot under the activation lock: a
+        // plain activate-then-read could lose to another deactivate in between
+        // and report an existing key as missing.
+        val localMap = map
+            ?: Activator.readActivated(this) { map }
+            ?: throw NoSuchKeyException(JSMsg.gettext("No entry for '{0}' in {1}.", text, initials))
 
         val key = localMap[text]
         if (key != null) {
