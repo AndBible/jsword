@@ -127,6 +127,7 @@ open class SwordBookDriver
                 }
             } catch (e: Exception) {
                 // A single invalid module (including a custom backend failure) must not abort discovery.
+                restoreInterruptFlag(e)
                 LOGGER.warn("Couldn't load module configuration $mods/$bookConf", e)
             }
         }
