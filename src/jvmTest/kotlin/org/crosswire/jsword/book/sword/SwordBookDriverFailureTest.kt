@@ -23,11 +23,13 @@ class SwordBookDriverFailureTest {
         try {
             org.crosswire.jsword.book.Books.installed()
             Files.createDirectories(root.resolve("mods.d"))
+            Files.createDirectories(root.resolve("modules/i"))
             Files.writeString(root.resolve("mods.d/i.conf"), "[Intr]\nModDrv=InterruptFailureTest\nDataPath=./modules/i/\n")
             BookType.addSupportedBookType(interruptType)
             SwordBookPath.scanDefaultLocations = false
             SwordBookPath.setDownloadDir(root.toOkioPath())
             SwordBookPath.setAugmentPath(arrayOf(root.toOkioPath()))
+            Thread.interrupted() // configuring the paths may already have rescanned and set the flag
             assertEquals(emptySet<String>(), SwordBookDriver().getBooks().map { it.initials }.toSet())
             assertTrue("interrupt flag must be restored", Thread.interrupted())
         } finally {
