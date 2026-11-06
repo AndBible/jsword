@@ -125,10 +125,9 @@ open class SwordBookDriver
                         sbmd.indexStatus = IndexStatus.UNDONE
                     }
                 }
-            } catch (e: IOException) {
-                LOGGER.warn("Couldn't create SwordBookMetaData", e)
-            } catch (e: BookException) {
-                LOGGER.warn("Couldn't create SwordBookMetaData", e)
+            } catch (e: Exception) {
+                // A single invalid module (including a custom backend failure) must not abort discovery.
+                LOGGER.warn("Couldn't load module configuration $mods/$bookConf", e)
             }
         }
     }
