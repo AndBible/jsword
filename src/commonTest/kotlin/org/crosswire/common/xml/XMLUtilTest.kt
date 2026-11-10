@@ -75,6 +75,34 @@ class XMLUtilTest {
     }
 
     @Test
+    fun testRecloseTagsBoundaryTailVariants() {
+        val note = "<note>n</note>"
+        // Two unmatched closes before an end milestone both recover (the final close is stripped first).
+        assertEquals(
+            "Text$note <chapter eID=\"x\"/>",
+            XMLUtil.recloseTags("Text$note</div></div> <chapter eID=\"x\"/></div>"),
+        )
+        // A malformed close inside an open note is still rejected.
+        assertNull(XMLUtil.recloseTags("<note>x</div></note> <chapter eID=\"x\"/>"))
+        // An end milestone that is not self-closing is not a boundary tail.
+        assertNull(XMLUtil.recloseTags("Text</div> <chapter eID=\"x\">"))
+        // Single-quoted eID is accepted.
+        assertEquals("Text <chapter eID='x'/>", XMLUtil.recloseTags("Text</div> <chapter eID='x'/>"))
+        // Tab and CR count as trailing whitespace.
+        assertEquals(
+            "Text\t<chapter eID=\"x\"/>\r",
+            XMLUtil.recloseTags("Text</div>\t<chapter eID=\"x\"/>\r"),
+        )
+    }
+
+    @Test
+    fun testRecloseTagsMultiLineVerseEndingInUnmatchedClose() {
+        // The strip loop's regex does not cross newlines, so the unmatched close is handled by the
+        // boundary-tail path; this used to return null.
+        assertEquals("line one\nline two", XMLUtil.recloseTags("line one\nline two</div>"))
+    }
+
+    @Test
     fun testCleanAllTags() {
         assertNull(XMLUtil.cleanAllTags(null))
 
