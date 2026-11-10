@@ -78,7 +78,11 @@ abstract class AbstractBookList
      * @param added
      *            Is it added?
      */
-    protected open fun fireBooksChanged(source: Any?, book: Book?, added: Boolean, startupDiscovery: Boolean = false) {
+    protected open fun fireBooksChanged(source: Any?, book: Book?, added: Boolean) {
+        fireBooksChanged(source, book, added, startupDiscovery = false)
+    }
+
+    protected open fun fireBooksChanged(source: Any?, book: Book?, added: Boolean, startupDiscovery: Boolean) {
         val ev = BooksEvent(source, book, added, startupDiscovery)
         for (listener in listeners) {
             if (added) {

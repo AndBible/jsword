@@ -129,7 +129,10 @@ private constructor() : AbstractBookList() {
      *
      * @param book the book to add to this book list
      */
-    fun addBook(book: Book?, startupDiscovery: Boolean = false) = synchronized(lock) { addBookLocked(book, startupDiscovery) }
+    fun addBook(book: Book?) = addBook(book, startupDiscovery = false)
+
+    /** Startup discovery retains normal registration side effects without reporting a new installation. */
+    fun addBook(book: Book?, startupDiscovery: Boolean) = synchronized(lock) { addBookLocked(book, startupDiscovery) }
 
     private fun addBookLocked(book: Book?, startupDiscovery: Boolean) {
         if (book == null) return

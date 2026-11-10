@@ -38,7 +38,9 @@ open class BooksEvent
  */
 (source: Any?, book: Book?, private var added: Boolean,
  /** True only for rediscovery of installed files, not a new install or replacement. */
- val startupDiscovery: Boolean = false) {
+ val startupDiscovery: Boolean) {
+    constructor(source: Any?, book: Book?, added: Boolean) : this(source, book, added, false)
+
     private val source: Any = requireNotNull(source) { "null source" }
 
     /**
