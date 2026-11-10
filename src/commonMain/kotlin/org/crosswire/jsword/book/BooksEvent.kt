@@ -36,7 +36,9 @@ open class BooksEvent
  * @param added
  *            True if the changed Bible is an addition.
  */
-(source: Any?, book: Book?, private var added: Boolean) {
+(source: Any?, book: Book?, private var added: Boolean,
+ /** True only for rediscovery of installed files, not a new install or replacement. */
+ val startupDiscovery: Boolean = false) {
     private val source: Any = requireNotNull(source) { "null source" }
 
     /**

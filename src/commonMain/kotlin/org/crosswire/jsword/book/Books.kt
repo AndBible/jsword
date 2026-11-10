@@ -129,9 +129,9 @@ private constructor() : AbstractBookList() {
      *
      * @param book the book to add to this book list
      */
-    fun addBook(book: Book?) = synchronized(lock) { addBookLocked(book) }
+    fun addBook(book: Book?, startupDiscovery: Boolean = false) = synchronized(lock) { addBookLocked(book, startupDiscovery) }
 
-    private fun addBookLocked(book: Book?) {
+    private fun addBookLocked(book: Book?, startupDiscovery: Boolean) {
         if (book == null) return
 
         // Initials identify a replacement even when its description/category changed.
@@ -145,7 +145,7 @@ private constructor() : AbstractBookList() {
         if (books.add(book)) {
             initials.put(book.initials, book)
             names.put(book.name, book)
-            fireBooksChanged(instance, book, true)
+            fireBooksChanged(instance, book, true, startupDiscovery)
         }
     }
 
