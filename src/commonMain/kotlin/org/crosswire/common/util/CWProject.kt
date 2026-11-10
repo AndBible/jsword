@@ -222,9 +222,14 @@ private constructor() {
         }
 
         if (writeHome == null) {
-            val path = OSType.getOSType().getUserAreaFolder(homeDirectory, homeAltDirectory)
-            val oldPath = deprecatedWritableProjectDir
-            writeHome = migrateUserProjectDir(oldPath!!, path!!)
+            val absoluteHome = homeDirectory?.toPath()?.takeIf { it.isAbsolute }
+            if (absoluteHome != null) {
+                writeHome = pathUri(absoluteHome)
+            } else {
+                val path = OSType.getOSType().getUserAreaFolder(homeDirectory, homeAltDirectory)
+                val oldPath = deprecatedWritableProjectDir
+                writeHome = migrateUserProjectDir(oldPath!!, path!!)
+            }
         }
 
         if (homes == null) {
