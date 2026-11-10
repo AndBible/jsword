@@ -258,6 +258,8 @@ object XMLUtil {
         val matches = Regex("</?[a-zA-Z]+").findAll(result)
         var lTagFound = false
         var lgTagFound = false
+        val unmatchedEndTags = mutableListOf<IntRange>()
+        val boundaryTail = Regex("""(?:\s*(?:</[a-zA-Z]+>|<[a-zA-Z]+\b[^<>]*\beID\s*=\s*(?:"[^"]*"|'[^']*')[^<>]*/>))*\s*""")
         for (m in matches) {
             val match = m.value
             if (match.startsWith("</")) {
@@ -267,8 +269,15 @@ object XMLUtil {
                 if (openTags.size == 0 && match == "</lg" && !lgTagFound) {
                     return recloseTags("<lg>" + broken)
                 }
-                if (openTags.size == 0)
-                    return null
+                if (openTags.size == 0) {
+                    val closePos = result.indexOf('>', m.range.last + 1)
+                    if (closePos == -1 || !boundaryTail.matches(result.substring(closePos + 1)))
+                        return null
+                    // Per-verse SWORD fragments can end an ancestor opened in an earlier entry.
+                    // End milestones may follow that close; keep them and the note markup intact.
+                    unmatchedEndTags.add(m.range.first..closePos)
+                    continue
+                }
                 val lastTag = openTags.removeAt(openTags.size - 1)
                 if (match != "</" + lastTag)
                     return null
@@ -283,6 +292,9 @@ object XMLUtil {
                     openTags.add(match.substring(1))
                 }
             }
+        }
+        for (range in unmatchedEndTags.asReversed()) {
+            result = result.removeRange(range)
         }
         openTags.reverse()
         for (openTag in openTags) {

@@ -64,6 +64,17 @@ class XMLUtilTest {
     }
 
     @Test
+    fun testRecloseTagsPreservesNotesBeforeBookEndMilestones() {
+        val note = """<note type="study"><hi type="italic">sn</hi> Final note.</note>"""
+        val chapterEnd = """<chapter eID="Isa.66"/>"""
+        assertEquals("Text$note $chapterEnd", XMLUtil.recloseTags("Text$note</div> $chapterEnd</div>"))
+        assertEquals("Text$note\n$chapterEnd", XMLUtil.recloseTags("Text$note</div>\n$chapterEnd</div>"))
+        // Do not repair an unmatched close in the middle of text or before a new start milestone.
+        assertNull(XMLUtil.recloseTags("Text$note</div> more text"))
+        assertNull(XMLUtil.recloseTags("""Text$note</div><chapter sID="Isa.67"/>"""))
+    }
+
+    @Test
     fun testCleanAllTags() {
         assertNull(XMLUtil.cleanAllTags(null))
 
