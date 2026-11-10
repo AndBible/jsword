@@ -34,6 +34,22 @@ class CWProjectPathTest {
     }
 
     @Test
+    fun absoluteFallbackHomeIsNotPrefixedWithUserHome() {
+        val oldProp = System.getProperty("jsword.home")
+        val reset = CWProject.Companion::class.java.getDeclaredMethod("reset").apply { isAccessible = true }
+        try {
+            System.clearProperty("jsword.home")
+            reset.invoke(CWProject.Companion)
+            CWProject.setHome("jsword.home", tmp.root.absolutePath, null)
+            assertEquals(tmp.root.absolutePath.toPath(), CWProject.instance().writableProjectDirPath)
+        } finally {
+            if (oldProp == null) System.clearProperty("jsword.home") else System.setProperty("jsword.home", oldProp)
+            reset.invoke(CWProject.Companion)
+            CWProject.setHome("jsword.home", ".jsword", "JSword")
+        }
+    }
+
+    @Test
     fun writableProjectDirPathMatchesUri() = withTempHome(null) { p ->
         assertEquals(p.writableProjectDir!!.path.toPath(), p.writableProjectDirPath)
         assertEquals(tmp.root.absolutePath.toPath(), p.writableProjectDirPath)
