@@ -21,6 +21,7 @@ package org.crosswire.jsword.passage
 
 import kotlin.test.*
 
+import org.crosswire.common.util.KLocale
 import org.crosswire.jsword.book.CaseType
 import org.crosswire.jsword.versification.BibleBook
 import org.crosswire.jsword.versification.BookName
@@ -114,6 +115,22 @@ class VerseRangeTest {
     fun tearDown() {
         BookName.setCase(storedCase)
         BookName.setFullBookName(fullName)
+    }
+
+    @Test
+    fun missingBookRetainsItsNameInWholeChapterRanges() {
+        val otOnly = Versifications.instance().getVersification("Leningrad")!!
+        assertFalse(otOnly.containsBook(BibleBook.ROM))
+        BookName.setFullBookName(true)
+        val range = VerseRange(
+            otOnly,
+            Verse(otOnly, BibleBook.ROM, 8, 0),
+            Verse(otOnly, BibleBook.ROM, 8, otOnly.getLastVerse(BibleBook.ROM, 8)),
+        )
+
+        assertEquals("Romans 8", range.getName())
+        assertEquals("Romans 8", range.getNameInLocale(null, KLocale.ENGLISH))
+        assertEquals("Römer 8", range.getNameInLocale(null, KLocale("de")))
     }
 
     @Test
