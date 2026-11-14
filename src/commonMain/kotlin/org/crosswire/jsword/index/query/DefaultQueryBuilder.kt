@@ -17,7 +17,9 @@ class DefaultQueryBuilder : QueryBuilder {
         var range: Query? = null
         var rangeModifier = ""
         // Look for a range +[...], -[...], or [...]
-        val rangeMatch = RANGE_PATTERN.find(sought)
+        // A Lucene term range ("[a TO b]") is not a passage: it stays in the text, where the search parser reports it
+        // as unsupported syntax instead of the whole query failing as an invalid passage (#4093).
+        val rangeMatch = RANGE_PATTERN.findAll(sought).firstOrNull { !TERM_RANGE_PATTERN.matches(it.groupValues[2]) }
         if (rangeMatch != null) {
             rangeModifier = rangeMatch.groupValues[1]
             range = RangeQuery(rangeMatch.groupValues[2])
@@ -59,6 +61,9 @@ class DefaultQueryBuilder : QueryBuilder {
          * perhaps surrounded by whitespace.
          */
         private val RANGE_PATTERN = Regex("\\s*([-+]?)\\[([^\\[\\]]+)\\]\\s*")
+
+        /** The content of a Lucene term range: two values around the upper-case `TO` keyword. */
+        private val TERM_RANGE_PATTERN = Regex("\\s*\\S+\\s+TO\\s+\\S+\\s*")
 
         /** The pattern of a blur: a '~', optionally followed by a number, representing the number of verses. */
         private val BLUR_PATTERN = Regex("\\s~(\\d*)?\\s")

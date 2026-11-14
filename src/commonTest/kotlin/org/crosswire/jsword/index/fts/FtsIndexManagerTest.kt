@@ -17,6 +17,7 @@ import org.crosswire.jsword.index.IndexStatus
 import org.crosswire.jsword.index.IndexStatusEvent
 import org.crosswire.jsword.index.IndexStatusListener
 import org.crosswire.jsword.index.search.DefaultSearchModifier
+import org.crosswire.jsword.index.search.DefaultSearcher
 import org.crosswire.jsword.passage.NoSuchVerseException
 import org.crosswire.jsword.passage.TreeKey
 import org.crosswire.ksword.fixtures.fixtureRoot
@@ -106,6 +107,20 @@ class FtsIndexManagerTest {
         assertEquals("ranked", assertFailsWith<UnsupportedSearchSyntaxException> { index.find("god") }.syntax)
         index.searchModifier = null
         assertFailsWith<UnsupportedSearchSyntaxException> { index.find("\"god light\"^2") }
+        m.closeAllIndexes()
+    }
+
+    /** #4093: through the query builder, as `Book.find` searches, a term range is reported, with or without a section restriction. */
+    @Test fun termRangeThroughTheQueryBuilderIsUnsupported() {
+        val b = book("K4RawText")
+        val m = manager()
+        m.scheduleIndexCreation(b)
+        val searcher = DefaultSearcher().apply { init(m.getIndex(b)) }
+        for (q in listOf("[grace TO hope]", " [grace TO hope]", "+[Gen-Mal] [grace TO hope]", "{grace TO hope}")) {
+            assertEquals(if ('{' in q) "{a TO b}" else "[a TO b]",
+                assertFailsWith<UnsupportedSearchSyntaxException>(q) { searcher.search(q) }.syntax, q)
+        }
+        assertEquals(listOf("Gen.1.1"), searcher.search("+[Gen-Mal] beginning").map { it.getOsisRef() })
         m.closeAllIndexes()
     }
 

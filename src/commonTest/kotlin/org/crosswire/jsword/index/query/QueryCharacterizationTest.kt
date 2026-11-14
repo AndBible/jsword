@@ -122,6 +122,24 @@ class QueryCharacterizationTest {
         assertEquals("AndQuery(RangeQuery(B),BaseQuery([A ]))", parse("[A[B]]"))
     }
 
+    // A Lucene term range ("[a TO b]") is query text, not a passage restriction (#4093): the search parser then
+    // reports it as unsupported syntax instead of the range failing as an invalid passage and finding nothing.
+    @Test fun luceneTermRangeIsNotAPassageRange() {
+        assertEquals("BaseQuery([grace TO hope])", parse("[grace TO hope]"))
+        assertEquals("BaseQuery(faith [ a  TO  b ])", parse("faith [ a  TO  b ]"))
+        assertEquals("BaseQuery(+[grace TO hope])", parse("+[grace TO hope]"))
+    }
+
+    @Test fun passageRangeIsFoundAfterALuceneTermRange() {
+        assertEquals("AndQuery(RangeQuery(Mat-Rev),BaseQuery( [grace TO hope]))", parse("+[Mat-Rev] [grace TO hope]"))
+        assertEquals("AndQuery(RangeQuery(Mat-Rev),BaseQuery([grace TO hope]  ))", parse("[grace TO hope] +[Mat-Rev]"))
+    }
+
+    @Test fun lowercaseToIsStillAPassageRange() {
+        // Lucene's range keyword is the upper-case TO only; "to" is not a term range.
+        assertEquals("AndQuery(RangeQuery(Gen to Exo),BaseQuery( ))", parse("[Gen to Exo]"))
+    }
+
     // ---- query classes ----
 
     @Test fun accessorsReturnConstructorArguments() {
