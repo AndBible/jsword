@@ -24,6 +24,8 @@ import kotlin.jvm.JvmStatic
 import org.crosswire.common.icu.NumberShaper
 import org.crosswire.common.util.assertionsEnabled
 import org.crosswire.common.util.jswordAssert
+import org.crosswire.jsword.versification.BibleBook
+import org.crosswire.jsword.versification.BibleNames
 import org.crosswire.jsword.versification.Versification
 import org.crosswire.common.util.KLocale
 
@@ -582,6 +584,14 @@ class VerseRange : VerseKey<VerseRange> {
         this.parent = parent
     }
 
+    /**
+     * The display name of [book], whether or not [v11n] contains it. A range kept in a Bible that lacks its book
+     * (Romans 8 after switching to an Old-Testament-only Bible) must still name it, as [Verse] already does;
+     * [Versification.getPreferredNameInLocale] returns null for such a book (#4084).
+     */
+    private fun bookName(book: BibleBook, locale: KLocale?): String =
+        BibleNames.instance().getPreferredNameInLocale(book, locale)
+
     private fun doGetName(base: Key?, locale: KLocale?): String {
         // Cache these we're going to be using them a lot.
         val startBook = start.book
@@ -598,21 +608,21 @@ class VerseRange : VerseKey<VerseRange> {
                 // Just report the name of the book, we don't need to worry
                 // about the base since we start at the start of a book,
                 // and should have been recently normalized()
-                return v11n.getPreferredNameInLocale(startBook, locale) + RANGE_PREF_DELIM + v11n.getPreferredNameInLocale(endBook, locale)
+                return bookName(startBook, locale) + RANGE_PREF_DELIM + bookName(endBook, locale)
             }
 
             // If this range is exactly a whole chapter
             if (isWholeChapters) {
                 // Just report book and chapter names
-                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM +
-                        v11n.getPreferredNameInLocale(endBook, locale) + Verse.VERSE_PREF_DELIM1 + endChapter
+                return bookName(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM +
+                        bookName(endBook, locale) + Verse.VERSE_PREF_DELIM1 + endChapter
             }
 
             if (v11n.isChapterIntro(start)) {
-                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
+                return bookName(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
             }
             if (v11n.isBookIntro(start)) {
-                return v11n.getPreferredNameInLocale(startBook, locale) + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
+                return bookName(startBook, locale) + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
             }
             return start.getNameInLocale(base, locale) + RANGE_PREF_DELIM + end.getNameInLocale(base, locale)
         }
@@ -623,7 +633,7 @@ class VerseRange : VerseKey<VerseRange> {
             // the
             // base since we start at the start of a book, and should have been
             // recently normalized()
-            return v11n.getPreferredNameInLocale(startBook, locale)!!
+            return bookName(startBook, locale)
         }
 
         // If this is 2 separate chapters
@@ -631,7 +641,7 @@ class VerseRange : VerseKey<VerseRange> {
             // If this range is a whole number of chapters
             if (isWholeChapters) {
                 // Just report the name of the book and the chapters
-                return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM + endChapter
+                return bookName(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter + RANGE_PREF_DELIM + endChapter
             }
 
             return start.getNameInLocale(base, locale) + RANGE_PREF_DELIM + endChapter + Verse.VERSE_PREF_DELIM2 + endVerse
@@ -640,7 +650,7 @@ class VerseRange : VerseKey<VerseRange> {
         // If this range is exactly a whole chapter
         if (isWholeChapter) {
             // Just report the name of the book and the chapter
-            return v11n.getPreferredNameInLocale(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter
+            return bookName(startBook, locale) + Verse.VERSE_PREF_DELIM1 + startChapter
         }
 
         // If this is 2 separate verses
