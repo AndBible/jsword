@@ -12,9 +12,26 @@ private const val OPENING = "([«“‘"
  * unchanged. A text that genuinely has a space before such a mark (French "mot : mot") loses it in the stored copy;
  * that is the accepted price of matching what the other (far more common) modules show.
  *
+ * The space `getCanonicalText` puts at an element boundary inside a word is also removed where the word is an
+ * apostrophe-s or n't contraction: `day ' s` (KJV Acts 1:12) becomes `day's`, `do n't` becomes
+ * `don't`. Ordinary adjacent words are never joined.
+ *
  * Only the stored text is normalised. The analyzer input stays the canonical text, so the token stream is unchanged.
  */
-internal fun writtenText(canonical: String): String {
+internal fun writtenText(canonical: String): String = joinContractions(spacedPunctuationRemoved(canonical))
+
+private val apostropheS = Regex("""(\w)(\s*)(['’])(\s*)s\b""")
+private val nApostropheT = Regex("""(\w)\s+(n['’]t)\b""")
+
+private fun joinContractions(text: String): String {
+    if ('\'' !in text && '’' !in text) return text
+    val s = apostropheS.replace(text) { m ->
+        if (m.groupValues[2].isEmpty() && m.groupValues[4].isEmpty()) m.value else m.groupValues[1] + m.groupValues[3] + "s"
+    }
+    return nApostropheT.replace(s) { m -> m.groupValues[1] + m.groupValues[2] }
+}
+
+private fun spacedPunctuationRemoved(canonical: String): String {
     val sb = StringBuilder(canonical.length)
     var i = 0
     while (i < canonical.length) {

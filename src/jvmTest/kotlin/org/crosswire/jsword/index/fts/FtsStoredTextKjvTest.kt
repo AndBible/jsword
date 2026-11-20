@@ -24,14 +24,18 @@ class FtsStoredTextKjvTest {
             val store = FtsIndexStore.open(manager.finalPathForTest(book), readOnly = true)!!
             val texts = HashMap<String, String>()
             var artifacts = 0
+            var splitContractions = 0
             store.forEachEntryText { e ->
                 texts[e.osisRef] = e.text
                 if (Regex("\\s[,.;:!?)\\]]|[(\\[]\\s").containsMatchIn(e.text)) artifacts++
+                if (Regex("\\w\\s+['’]\\s*s\\b|\\w['’]\\s+s\\b|\\w\\s+n['’]t\\b").containsMatchIn(e.text)) splitContractions++
                 true
             }
             store.close()
             assertEquals("And God said, Let there be light: and there was light.", texts["Gen.1.3"])
             assertEquals(0, artifacts, "verses with a space before closing or after opening punctuation")
+            assertTrue(texts["Acts.1.12"]!!.endsWith("a sabbath day's journey."), texts["Acts.1.12"])
+            assertEquals(0, splitContractions, "verses with an apostrophe-s or n't split by a space")
             assertTrue(texts.size > 31000)
         } finally {
             manager.closeAllIndexes()

@@ -27,4 +27,19 @@ class WrittenTextTest {
         assertEquals("", writtenText(""))
         assertEquals("said:", writtenText("said :"))
     }
+
+    @Test fun joinsApostropheSAndNtSplitAtAnElementBoundary() {
+        assertEquals("a sabbath day's journey.", writtenText("a sabbath day ' s journey ."))
+        assertEquals("the Lord's passover", writtenText("the Lord 's passover"))
+        assertEquals("the Lord’s passover", writtenText("the Lord ’s passover"))
+        assertEquals("the Lord’s passover", writtenText("the Lord ’ s passover"))
+        assertEquals("I don't know", writtenText("I do n't know"))
+    }
+
+    @Test fun keepsPluralPossessivesAndOrdinaryWords() {
+        assertEquals("his sons' wives and his sons' sons", writtenText("his sons' wives and his sons' sons"))
+        assertEquals("it is so", writtenText("it is so"))
+        assertEquals("Jesus' sake", writtenText("Jesus' sake"))
+        assertEquals("brother's keeper", writtenText("brother's keeper"))
+    }
 }
