@@ -203,10 +203,12 @@ class FtsRegexSearchTest {
     }
 
     @Test fun aDeepRepetitionDoesNotCrashTheScan() = boundedRun {
-        // (a|b)* recurses per character on the JVM engine; on Native the match is iterative or fails per row.
-        val idx = indexOf("Gen.1.1" to "ab".repeat(20_000), "Gen.1.2" to "xyz")
+        // `(a|b)*` recurses once per character in java.util.regex (a stack overflow on the JVM, which counts as no match for
+        // the row and marks the result incomplete); Kotlin/Native's engine must survive the same depth. Anchored, so that
+        // the cost is linear and only the depth matters.
+        val idx = indexOf("Gen.1.1" to "ab".repeat(50_000), "Gen.1.2" to "xyz")
         try {
-            val r = idx.findRegex(Regex("(a|b)*c|xyz"), null, 10, budget())
+            val r = idx.findRegex(Regex("^(a|b)*c|xyz"), null, 10, RegexSearchBudget(TimeSource.Monotonic.markNow() + 20.seconds))
             assertEquals(listOf("Gen.1.2"), refs(r.keys))
         } finally {
             idx.close()
