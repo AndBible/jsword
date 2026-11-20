@@ -51,6 +51,19 @@ class WrittenTextTest {
         assertEquals("in huis 's Heeren", writtenText(verse("<in huis", " ", "<'s", " ", "<Heeren")))
     }
 
+    @Test fun anEmptyTextNodeDoesNotBreakTheBuild() {
+        val f = OSISUtil.factory()
+        val div = f.createDiv()
+        val verse = f.createVerse()
+        div.addContent(verse)
+        val w = f.createW()
+        w.addContent("")
+        verse.addContent("a")
+        verse.addContent(w)
+        verse.addContent("b")
+        assertEquals(OSISUtil.getCanonicalText(div), writtenText(div))
+    }
+
     @Test fun spacesThatAreInTheTextAreNeverRemoved() {
         assertEquals("mot : mot", writtenText(verse("mot : mot")))
         assertEquals("In the beginning  God", writtenText(verse("In the beginning  God")))

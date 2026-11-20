@@ -23,7 +23,7 @@ internal fun writtenText(osis: Element): String = OSISUtil.getCanonicalText(osis
 
 /** Whether the space [OSISUtil.getCanonicalText] would insert between [previous] and the start of [next] is kept. */
 internal fun separatesAtNodeBoundary(previous: Char, next: String): Boolean =
-    next[0] !in CLOSING && previous !in OPENING && previous !in APOSTROPHES && !startsWithNt(next)
+    next.isEmpty() || next[0] !in CLOSING && previous !in OPENING && previous !in APOSTROPHES && !startsWithNt(next)
 
 /** English `n't` starting a node (`do` + `n't`): the node is the tail of the word before it. */
 private fun startsWithNt(next: String): Boolean = next.length >= 3 && next[0] == 'n' && next[1] in APOSTROPHES && next[2] == 't'
