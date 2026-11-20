@@ -110,16 +110,29 @@ class FtsIndex internal constructor(internal val book: Book, private val store: 
      * `truncated = true`; reaching [maxResults] stops it with `truncated = false`. Closed/successor forwarding and
      * error wrapping are as in [find]; an index closed in the middle of the scan forwards the whole scan.
      *
+     * Errors are never hidden as "no match": a failure of the index itself (a missing column, a corrupt file) is a
+     * [BookException]. A row whose match fails (a stack overflow, an engine exception) counts as no match for that row
+     * but sets `truncated`, because the result may then be incomplete. Rows without text (verse 0, entries that only
+     * carry Strong's numbers) are skipped.
+     *
      * The rows are read [REGEX_BATCH_ROWS] at a time under the index lock, and matched outside it. Android's ICU regex
      * engine matches a `toString()` copy natively, so [BudgetedText] cannot interrupt a runaway pattern there: such a
      * match then must not block [close], a rebuild or a [find] (the caller stops waiting for it instead, see
-     * `SearchControl.getMultiRegexResults`). A row whose match overflows the stack counts as no match.
-     */
+     * `SearchControl.getMultiRegexResults`).      */
     @Throws(BookException::class)
-    override fun findRegex(regex: Regex, restriction: Key?, maxResults: Int, budget: RegexSearchBudget): RegexSearchResult {
+    override fun findRegex(regex: Regex, restriction: Key?, maxResults: Int, budget: RegexSearchBudget): RegexSearchResult =
+        findRegex(regex, restriction, maxResults, budget) { r, text -> r.containsMatchIn(text) }
+
+    /** [findRegex] with the per-row match as a seam, so that tests can make a row's match fail. */
+    @Throws(BookException::class)
+    internal fun findRegex(
+        regex: Regex, restriction: Key?, maxResults: Int, budget: RegexSearchBudget, matches: (Regex, CharSequence) -> Boolean,
+    ): RegexSearchResult {
         val v11n = Versifications.instance().getVersification(book.bookMetaData.getProperty("Versification"))
         val hits = ArrayList<String>()
         var truncated = false
+        // The osisRefs of the restriction, so that a row is filtered by a set lookup instead of parsing its reference.
+        val allowed = restriction?.let { r -> HashSet<String>().also { set -> for (k in r) set += k.getOsisRef() } }
         var afterRowId = Long.MIN_VALUE
         scan@ while (true) {
             var forward: (() -> Index)? = null
@@ -136,25 +149,28 @@ class FtsIndex internal constructor(internal val book: Book, private val store: 
             }
             forward?.let { next ->
                 val idx = next().also { it.searchModifier = searchModifier }
-                return (idx as? RegexSearchableIndex ?: throw BookException(JSMsg.gettext("Search failed.")))
-                    .findRegex(regex, restriction, maxResults, budget)
+                return (idx as? FtsIndex)?.findRegex(regex, restriction, maxResults, budget, matches)
+                    ?: (idx as? RegexSearchableIndex ?: throw BookException(JSMsg.gettext("Search failed.")))
+                        .findRegex(regex, restriction, maxResults, budget)
             }
             if (batch.isEmpty()) break
             for (row in batch) {
                 if (hits.size >= maxResults) break@scan
                 if (budget.exhausted) { truncated = true; break@scan }
+                if (row.text.isEmpty() || (allowed != null && row.osisRef !in allowed)) continue
                 val matched = try {
-                    val inRestriction = restriction == null ||
-                        restriction.contains(VerseFactory.fromString(v11n, row.osisRef) ?: throw NoSuchVerseException(row.osisRef))
-                    inRestriction && regex.containsMatchIn(BudgetedText(row.text, budget))
+                    matches(regex, BudgetedText(row.text, budget))
                 } catch (_: BudgetExhaustedException) {
                     truncated = true
                     break@scan
                 } catch (e: Exception) {
-                    throw BookException(JSMsg.gettext("Search failed."), e)
+                    log.warn("Regex match failed in {} {}: counted as no match, result marked incomplete: {}", book.initials, row.osisRef, e.message)
+                    truncated = true
+                    false
                 } catch (e: Throwable) {
                     if (!isStackOverflow(e)) throw e
-                    log.warn("Regex match overflowed the stack in {} {}: counted as no match", book.initials, row.osisRef)
+                    log.warn("Regex match overflowed the stack in {} {}: counted as no match, result marked incomplete", book.initials, row.osisRef)
+                    truncated = true
                     false
                 }
                 if (matched) hits += row.osisRef

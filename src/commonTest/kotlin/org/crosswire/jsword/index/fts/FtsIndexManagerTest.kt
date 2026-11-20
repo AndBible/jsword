@@ -331,7 +331,7 @@ class FtsIndexManagerTest {
         val m = manager()
         m.scheduleIndexCreation(b)
         m.closeAllIndexes()
-        val texts = assertNotNull(FtsIndexStore.open(finalFile(b), readOnly = true)).use { ArrayList<EntryText>().also { out -> it.forEachEntryText { e -> out += e; true } } }
+        val texts = assertNotNull(FtsIndexStore.open(finalFile(b), readOnly = true)).use { it.entryTexts(Long.MIN_VALUE, Int.MAX_VALUE) }
         val gen11 = texts.first { it.osisRef == "Gen.1.1" }.text
         assertTrue(gen11.contains("beginning"), gen11)
         assertFalse(texts.any { '<' in it.text }, "OSIS markup leaked into the stored text")

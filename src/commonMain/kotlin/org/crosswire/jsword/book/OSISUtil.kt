@@ -656,7 +656,14 @@ private constructor() {
          * @return The canonical text without markup
          */
         @JvmStatic
-        fun getCanonicalText(root: Element?): String {
+        fun getCanonicalText(root: Element?): String = getCanonicalText(root) { _, _ -> true }
+
+        /**
+         * [getCanonicalText] with a say over the separator space it inserts where two text nodes meet without
+         * whitespace: [separate] gets the last character already written and the text about to be appended, and
+         * returns false to join them directly. Whitespace that is part of the text itself is never touched.
+         */
+        fun getCanonicalText(root: Element?, separate: (previous: Char, next: String) -> Boolean): String {
             // if someone passes a root element which has text in, we need to check whether it's worth processing.
             // For example. where you have a non-canonical title being passed in, we deal with this here.
             if (!isCanonical(root)) {
@@ -686,9 +693,9 @@ private constructor() {
                     }
 
                     if (sID != null) {
-                        getCanonicalContent(ele, sID, dit, buffer)
+                        getCanonicalContent(ele, sID, dit, buffer, separate)
                     } else {
-                        getCanonicalContent(ele, null, ele.content.iterator(), buffer)
+                        getCanonicalContent(ele, null, ele.content.iterator(), buffer, separate)
                     }
                 } else if (data is Text) {
                     // make sure that adjacent text elements are separated by
@@ -700,7 +707,7 @@ private constructor() {
                     // Ignore empty text nodes and do not add 
                     if (text.length != 0) {
                         //do not add spaces when within a OSIS seg
-                        if (lastIndex >= 0 && !buffer[lastIndex].isJavaWhitespace() && !text[0].isJavaWhitespace()) {
+                        if (lastIndex >= 0 && !buffer[lastIndex].isJavaWhitespace() && !text[0].isJavaWhitespace() && separate(buffer[lastIndex], text)) {
                             buffer.append(' ')
                         }
                         buffer.append(text)
@@ -868,7 +875,7 @@ private constructor() {
             return buffer.toString()
         }
 
-        private fun getCanonicalContent(parent: Element, sID: String?, iter: MutableIterator<Content>, buffer: StringBuilder) {
+        private fun getCanonicalContent(parent: Element, sID: String?, iter: MutableIterator<Content>, buffer: StringBuilder, separate: (Char, String) -> Boolean) {
             if (!isCanonical(parent)) {
                 return
             }
@@ -889,7 +896,7 @@ private constructor() {
                     if (eID != null && eID == sID && eleName == parent.name) {
                         break
                     }
-                    OSISUtil.getCanonicalContent(ele, sID, ele.content.iterator(), buffer)
+                    OSISUtil.getCanonicalContent(ele, sID, ele.content.iterator(), buffer, separate)
                 } else if (data is Text) {
                     // make sure that adjacent text elements are separated by
                     // whitespace
@@ -898,7 +905,7 @@ private constructor() {
                     // containing entities.
                     val lastIndex = buffer.length - 1
                     val text = data.text
-                    if (lastIndex >= 0 && !buffer[lastIndex].isJavaWhitespace() && (text.length == 0 || !text[0].isJavaWhitespace()) && OSIS_ELEMENT_SEG != parent.name) {
+                    if (lastIndex >= 0 && !buffer[lastIndex].isJavaWhitespace() && (text.length == 0 || !text[0].isJavaWhitespace()) && OSIS_ELEMENT_SEG != parent.name && separate(buffer[lastIndex], text)) {
                         buffer.append(' ')
                     }
                     buffer.append(text)

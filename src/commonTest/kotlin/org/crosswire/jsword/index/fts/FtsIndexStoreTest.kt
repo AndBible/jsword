@@ -49,22 +49,20 @@ class FtsIndexStoreTest {
         }
     }
 
-    @Test fun forEachEntryTextStopsWhenTheBlockReturnsFalse() {
+    @Test fun entryTextsArePagedByRowId() {
         val s = built {
             addEntry(1, "a", toks("x"), emptyList(), "one")
             addEntry(2, "b", toks("x"), emptyList(), "two")
             addEntry(3, "c", toks("x"), emptyList(), "three")
         }
         s.use {
-            val seen = ArrayList<Long>()
-            assertEquals(false, it.forEachEntryText { e -> seen += e.rowId; e.rowId < 2 })
-            assertEquals(listOf(1L, 2L), seen)
-            assertEquals(true, it.forEachEntryText { true })
-            assertEquals(3, it.entryTexts().size) // the statement of the stopped run was released
+            assertEquals(listOf(1L, 2L), it.entryTexts(Long.MIN_VALUE, 2).map { e -> e.rowId })
+            assertEquals(listOf(3L), it.entryTexts(2, 2).map { e -> e.rowId })
+            assertEquals(emptyList(), it.entryTexts(3, 2))
         }
     }
 
-    private fun FtsIndexStore.entryTexts(): List<EntryText> = ArrayList<EntryText>().also { out -> forEachEntryText { out += it; true } }
+    private fun FtsIndexStore.entryTexts(): List<EntryText> = entryTexts(Long.MIN_VALUE, Int.MAX_VALUE)
 
     @Test fun greekRegexIsCaseInsensitive() {
         val s = built { addEntry(1, "John.1.1", toks("αγάπη"), emptyList(), "Ἀγάπη") }

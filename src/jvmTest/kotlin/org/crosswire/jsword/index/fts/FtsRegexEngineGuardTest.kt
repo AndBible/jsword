@@ -77,10 +77,12 @@ class FtsRegexEngineGuardTest {
         val idx = indexOf("Gen.1.1" to "ab".repeat(100_000), "Gen.1.2" to "xyz")
         val refs = AtomicReference<List<String>>()
         val failure = AtomicReference<Throwable>()
+        val truncated = java.util.concurrent.atomic.AtomicBoolean(false)
         val t = Thread(null, {
             try {
                 val r = idx.findRegex(Regex("(a|b)*c|xyz"), null, 10, RegexSearchBudget(TimeSource.Monotonic.markNow() + 1.hours))
                 refs.set(r.keys.map { it.getOsisRef() })
+                truncated.set(r.truncated)
             } catch (e: Throwable) {
                 failure.set(e)
             }
@@ -90,5 +92,6 @@ class FtsRegexEngineGuardTest {
         idx.close()
         assertNull(failure.get(), "failure: ${failure.get()}")
         assertEquals(listOf("Gen.1.2"), refs.get())
+        assertTrue(truncated.get(), "the row that overflowed the stack must mark the result incomplete")
     }
 }

@@ -44,7 +44,7 @@ internal class FtsIndexStore private constructor(private val db: SQLiteConnectio
     /**
      * Adds one entry. [tokens] need strictly increasing positions (all analyzers satisfy this); [strongs] are the
      * Strong's tokens of the entry (stored verbatim in table `strongs`, not in the FTS table). [text] is the canonical
-     * text the tokens came from, kept for regex search ([forEachEntryText]).
+     * text the tokens came from, kept for regex search ([entryTexts]).
      */
     // A huge position jump writes one gap token per missing position (no cap; unrealistic for the analyzers).
     fun addEntry(rowId: Long, osisRef: String, tokens: List<AnalyzedToken>, strongs: List<String>, text: String) {
@@ -137,19 +137,8 @@ internal class FtsIndexStore private constructor(private val db: SQLiteConnectio
     }
 
     /**
-     * Calls [block] with every entry's stored text in rowid order, through one prepared statement that is always closed
-     * on return. Iteration stops as soon as [block] returns false. Returns true when all rows were visited, false when
-     * [block] stopped it. Do not modify the file from [block].
-     */
-    fun forEachEntryText(block: (EntryText) -> Boolean): Boolean =
-        db.prepare("SELECT rowid, osis_ref, text FROM entry ORDER BY rowid").use { st ->
-            while (st.step()) if (!block(EntryText(st.getLong(0), st.getText(1), st.getText(2)))) return@use false
-            true
-        }
-
-    /**
-     * Up to [limit] entries with a rowid greater than [afterRowId], in rowid order (a page of [forEachEntryText] read
-     * through its own, always closed statement). An empty list means there are no more rows.
+     * Up to [limit] entries with a rowid greater than [afterRowId], in rowid order (a page read through its own, always closed
+     * statement). An empty list means there are no more rows.
      */
     fun entryTexts(afterRowId: Long, limit: Int): List<EntryText> =
         db.prepare("SELECT rowid, osis_ref, text FROM entry WHERE rowid > ? ORDER BY rowid LIMIT ?").use { st ->
