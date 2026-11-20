@@ -147,6 +147,19 @@ internal class FtsIndexStore private constructor(private val db: SQLiteConnectio
             true
         }
 
+    /**
+     * Up to [limit] entries with a rowid greater than [afterRowId], in rowid order (a page of [forEachEntryText] read
+     * through its own, always closed statement). An empty list means there are no more rows.
+     */
+    fun entryTexts(afterRowId: Long, limit: Int): List<EntryText> =
+        db.prepare("SELECT rowid, osis_ref, text FROM entry WHERE rowid > ? ORDER BY rowid LIMIT ?").use { st ->
+            st.bindLong(1, afterRowId)
+            st.bindLong(2, limit.toLong())
+            val out = ArrayList<EntryText>(minOf(limit, 1024))
+            while (st.step()) out += EntryText(st.getLong(0), st.getText(1), st.getText(2))
+            out
+        }
+
     fun allRowIds(): Set<Long> = longs("SELECT rowid FROM entry")
 
     override fun close() {
