@@ -7,6 +7,9 @@ import org.crosswire.jsword.book.Book
 import org.crosswire.jsword.book.BookException
 import org.crosswire.jsword.index.AbstractIndex
 import org.crosswire.jsword.index.Index
+import org.crosswire.jsword.index.RegexSearchBudget
+import org.crosswire.jsword.index.RegexSearchResult
+import org.crosswire.jsword.index.RegexSearchableIndex
 import org.crosswire.jsword.index.analysis.BookAnalyzers
 import org.crosswire.jsword.index.fts.query.FtsQueryEvaluator
 import org.crosswire.jsword.index.fts.query.LuceneSyntaxParser
@@ -23,7 +26,7 @@ import org.crosswire.jsword.versification.system.Versifications
  *
  * Queries are parsed by [LuceneSyntaxParser] and evaluated by [FtsQueryEvaluator] (K6 task 11).
  */
-class FtsIndex internal constructor(internal val book: Book, private val store: FtsIndexStore) : AbstractIndex() {
+class FtsIndex internal constructor(internal val book: Book, private val store: FtsIndexStore) : AbstractIndex(), RegexSearchableIndex {
     private val lock = SynchronizedObject()
     private var closed = false
 
@@ -97,6 +100,64 @@ class FtsIndex internal constructor(internal val book: Book, private val store: 
             passage?.lowerEventSuppressionAndTest()
         }
         return results
+    }
+
+    /**
+     * Scans the stored entry texts in build (canonical) order for [regex], skipping rows outside [restriction]
+     * before matching. The [budget] is checked before every row: when it is exhausted the scan stops with
+     * `truncated = true`; reaching [maxResults] stops it with `truncated = false`. Closed/successor forwarding and
+     * error wrapping are as in [find].
+     */
+    @Throws(BookException::class)
+    override fun findRegex(regex: Regex, restriction: Key?, maxResults: Int, budget: RegexSearchBudget): RegexSearchResult {
+        val v11n = Versifications.instance().getVersification(book.bookMetaData.getProperty("Versification"))
+        val hits = ArrayList<String>()
+        var truncated = false
+        var forward: (() -> Index)? = null
+        synchronized(lock) {
+            if (closed) {
+                forward = successor ?: throw BookException(JSMsg.gettext("Search failed."))
+                return@synchronized
+            }
+            try {
+                store.forEachEntryText { row ->
+                    if (hits.size >= maxResults) return@forEachEntryText false
+                    if (budget.exhausted) { truncated = true; return@forEachEntryText false }
+                    if (restriction != null) {
+                        val verse = VerseFactory.fromString(v11n, row.osisRef) ?: throw NoSuchVerseException(row.osisRef)
+                        if (!restriction.contains(verse)) return@forEachEntryText true
+                    }
+                    if (regex.containsMatchIn(row.text)) hits += row.osisRef
+                    true
+                }
+            } catch (e: Exception) {
+                throw BookException(JSMsg.gettext("Search failed."), e)
+            }
+        }
+        forward?.let { next ->
+            val idx = next().also { it.searchModifier = searchModifier }
+            return (idx as? RegexSearchableIndex ?: throw BookException(JSMsg.gettext("Search failed.")))
+                .findRegex(regex, restriction, maxResults, budget)
+        }
+
+        val results = book.createEmptyKeyList()
+        val passage = results as? AbstractPassage
+        passage?.raiseEventSuppresion()
+        passage?.raiseNormalizeProtection()
+        try {
+            for (ref in hits) {
+                val key = try {
+                    VerseFactory.fromString(v11n, ref) ?: throw NoSuchVerseException(ref)
+                } catch (e: NoSuchVerseException) {
+                    throw BookException(JSMsg.gettext("Search failed."), e)
+                }
+                results.addAll(key)
+            }
+        } finally {
+            passage?.lowerNormalizeProtection()
+            passage?.lowerEventSuppressionAndTest()
+        }
+        return RegexSearchResult(results, truncated)
     }
 
     @Throws(NoSuchKeyException::class)

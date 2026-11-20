@@ -66,6 +66,13 @@ class FtsIndexStoreTest {
 
     private fun FtsIndexStore.entryTexts(): List<EntryText> = ArrayList<EntryText>().also { out -> forEachEntryText { out += it; true } }
 
+    @Test fun greekRegexIsCaseInsensitive() {
+        val s = built { addEntry(1, "John.1.1", toks("αγάπη"), emptyList(), "Ἀγάπη") }
+        val texts = s.entryTexts().map { it.text }
+        assertTrue(texts.any { Regex("ἀγάπη", RegexOption.IGNORE_CASE).containsMatchIn(it) })
+        s.close()
+    }
+
     @Test fun phrasePrefixAndNot() {
         sample().use { s ->
             assertEquals(setOf(1L), s.match("\"${e("in")} ${e("the")}\""))
