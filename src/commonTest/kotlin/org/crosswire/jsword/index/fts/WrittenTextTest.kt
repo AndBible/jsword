@@ -64,6 +64,23 @@ class WrittenTextTest {
         assertEquals(OSISUtil.getCanonicalText(div), writtenText(div))
     }
 
+    @Test fun anEmptyNodeAfterAWordDoesNotInsertASpaceBeforeThePunctuationThatFollows() {
+        // "light" + empty <w> + ":" would read "light :" if the empty node counted as a word boundary.
+        val f = OSISUtil.factory()
+        val div = f.createDiv()
+        val verse = f.createVerse()
+        div.addContent(verse)
+        val light = f.createW()
+        light.addContent("light")
+        verse.addContent(light)
+        val empty = f.createW()
+        empty.addContent("")
+        verse.addContent(empty)
+        verse.addContent(":")
+        assertEquals("light:", writtenText(div))
+        assertEquals(false, separatesAtNodeBoundary('t', ""))
+    }
+
     @Test fun spacesThatAreInTheTextAreNeverRemoved() {
         assertEquals("mot : mot", writtenText(verse("mot : mot")))
         assertEquals("In the beginning  God", writtenText(verse("In the beginning  God")))
