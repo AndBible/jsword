@@ -127,7 +127,13 @@ class FtsIndex internal constructor(internal val book: Book, private val store: 
                         val verse = VerseFactory.fromString(v11n, row.osisRef) ?: throw NoSuchVerseException(row.osisRef)
                         if (!restriction.contains(verse)) return@forEachEntryText true
                     }
-                    if (regex.containsMatchIn(row.text)) hits += row.osisRef
+                    val matched = try {
+                        regex.containsMatchIn(BudgetedText(row.text, budget))
+                    } catch (_: BudgetExhaustedException) {
+                        truncated = true
+                        return@forEachEntryText false
+                    }
+                    if (matched) hits += row.osisRef
                     true
                 }
             } catch (e: Exception) {
@@ -170,4 +176,24 @@ class FtsIndex internal constructor(internal val book: Book, private val store: 
             store.close()
         }
     }
+}
+
+private class BudgetExhaustedException : RuntimeException()
+
+/**
+ * The text a regex scans, polling [budget] every [CHECK_INTERVAL] character reads so that a catastrophically
+ * backtracking pattern stops at the deadline instead of running (and holding the index lock) for minutes. Both the
+ * JVM and the Kotlin/Native regex engines read their input through [get].
+ */
+private class BudgetedText(private val text: String, private val budget: RegexSearchBudget) : CharSequence {
+    private var reads = 0
+    override val length: Int get() = text.length
+    override fun get(index: Int): Char {
+        if (++reads % CHECK_INTERVAL == 0 && budget.exhausted) throw BudgetExhaustedException()
+        return text[index]
+    }
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence = text.subSequence(startIndex, endIndex)
+    override fun toString(): String = text
+
+    private companion object { const val CHECK_INTERVAL = 1024 }
 }

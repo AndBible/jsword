@@ -12,7 +12,7 @@ class RegexSearchBudget(val deadline: TimeMark, val isCancelled: () -> Boolean =
 /** Matches of a regex scan; [truncated] is true when the scan stopped early because its budget ran out. */
 data class RegexSearchResult(val keys: Key, val truncated: Boolean)
 
-/** An [Index] that can scan its stored entry texts with a regular expression. */
+/** Implemented by an index that can scan its stored entry texts with a regular expression. */
 interface RegexSearchableIndex {
     /**
      * Entries whose text contains a match of [regex], in canonical order, limited to verses in [restriction]

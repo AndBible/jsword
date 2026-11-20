@@ -20,6 +20,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /** [FtsIndex.findRegex] over K4's generated RawText fixture (runs on the JVM and on the iOS simulator). */
@@ -96,7 +97,33 @@ class FtsRegexSearchTest {
     @Test fun cancelFlagStopsTheScan() {
         var polls = 0
         val r = index().findRegex(Regex(""), null, 100, budget { ++polls > 1 })
-        assertTrue(r.keys.getCardinality() <= 1)
+        assertEquals(1, r.keys.getCardinality())
         assertTrue(r.truncated)
+    }
+
+    @Test fun restrictionIsAppliedBeforeTheCap() {
+        val john = assertNotNull(book ?: run { index(); book }).getKey("John")
+        val r = index().findRegex(Regex("beginning", ic), john, 1, budget())
+        assertEquals(listOf("John.1.1"), refs(r.keys))
+    }
+
+    @Test fun catastrophicPatternStopsAtTheBudget() {
+        val b = assertNotNull(Books.installed().getBook("K4RawText")).also { book = it }
+        val path = root / "catastrophic.db"
+        val store = FtsIndexStore.create(path)
+        store.beginBuild()
+        store.addEntry(1, "Gen.1.1", listOf(AnalyzedToken("a", 0)), emptyList(), "a".repeat(60) + "c")
+        store.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, "simple", SearchTokenCodec.ID, "K4RawText", "1.0", "fp"))
+        store.commitBuild()
+        val idx = FtsIndex(b, store)
+        try {
+            val start = TimeSource.Monotonic.markNow()
+            val r = idx.findRegex(Regex("(a*)*\\1b"), null, 10, RegexSearchBudget(start + 200.milliseconds))
+            assertTrue(start.elapsedNow() < 2.seconds, "took ${start.elapsedNow()}")
+            assertTrue(r.truncated)
+            assertEquals(0, r.keys.getCardinality())
+        } finally {
+            idx.close()
+        }
     }
 }
