@@ -81,7 +81,7 @@ internal class FtsIndexBuilder(
             val text = if (sub is Verse && sub.verse == 0) "" else OSISUtil.getCanonicalText(osis)
             val strongs = if (includeStrongs) StrongsTokens.fromOsis(osis) else emptyList()
             if (text.isNotEmpty() || strongs.isNotEmpty()) {
-                store.addEntry(s.nextRow++, sub.getOsisRef(), analyzer.analyze(text), strongs, text)
+                store.addEntry(s.nextRow++, sub.getOsisRef(), analyzer.analyze(text), strongs, writtenText(text))
             }
 
             val rootName = sub.getRootName()
