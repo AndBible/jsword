@@ -326,6 +326,28 @@ class FtsIndexManagerTest {
         assertEquals(IndexStatus.UNDONE, b.indexStatus)
     }
 
+    @Test fun buildStoresTheCanonicalText() {
+        val b = book("K4RawText")
+        val m = manager()
+        m.scheduleIndexCreation(b)
+        m.closeAllIndexes()
+        val texts = assertNotNull(FtsIndexStore.open(finalFile(b), readOnly = true)).use { ArrayList<EntryText>().also { out -> it.forEachEntryText { e -> out += e; true } } }
+        val gen11 = texts.first { it.osisRef == "Gen.1.1" }.text
+        assertTrue(gen11.contains("beginning"), gen11)
+        assertFalse(texts.any { '<' in it.text }, "OSIS markup leaked into the stored text")
+    }
+
+    @Test fun anIndexOfSchemaOneNeedsReindexing() {
+        val b = book("K4RawText")
+        val m = manager()
+        m.scheduleIndexCreation(b)
+        assertFalse(m.needsReindexing(b))
+        m.closeAllIndexes()
+        // Schema 1 is the layout without the `text` column; its metadata file must be treated as stale.
+        assertNotNull(FtsIndexStore.open(finalFile(b))).use { it.writeMetadata(it.metadata().copy(schemaVersion = 1)) }
+        assertTrue(m.needsReindexing(b))
+    }
+
     @Test fun needsReindexingWhenAnalyzerIdOrBookVersionChanged() {
         val b = book("K4RawText")
         val m = manager()
@@ -541,7 +563,7 @@ class FtsIndexManagerTest {
         val path = root / "bad.sqlite"
         val store = FtsIndexStore.create(path)
         store.beginBuild()
-        store.addEntry(1, "not a verse", listOf(org.crosswire.jsword.index.analysis.AnalyzedToken("love", 0)), emptyList())
+        store.addEntry(1, "not a verse", listOf(org.crosswire.jsword.index.analysis.AnalyzedToken("love", 0)), emptyList(), "")
         store.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, "simple", SearchTokenCodec.ID, "K4RawText", null, "x"))
         store.commitBuild()
         val index = FtsIndex(book("K4RawText"), store)

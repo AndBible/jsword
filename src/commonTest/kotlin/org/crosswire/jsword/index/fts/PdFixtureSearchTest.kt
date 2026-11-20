@@ -86,7 +86,7 @@ class PdFixtureSearchTest {
                     val tokens = analyzer.analyze(verseText)
                     val got = render(tokens)
                     if (got != oracleTokens) failures += "$name $ref tokens: expected '$oracleTokens' but got '$got'"
-                    store.addEntry(i + 1L, ref, tokens, emptyList())
+                    store.addEntry(i + 1L, ref, tokens, emptyList(), "")
                     refByRow[i + 1L] = ref
                 }
                 store.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, BookAnalyzers.analyzerId(fx.lang), SearchTokenCodec.ID, name, "1.0", "fixture"))

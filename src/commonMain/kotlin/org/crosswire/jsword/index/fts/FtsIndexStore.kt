@@ -9,6 +9,9 @@ import okio.FileSystem
 import okio.Path
 import org.crosswire.jsword.index.analysis.AnalyzedToken
 
+/** One row of table `entry`: [text] is the canonical text that was indexed ([FtsSchema]). */
+internal data class EntryText(val rowId: Long, val osisRef: String, val text: String)
+
 /**
  * One book's search index in a SQLite FTS5 file (schema in [FtsSchema]).
  *
@@ -34,16 +37,17 @@ internal class FtsIndexStore private constructor(private val db: SQLiteConnectio
         db.execSQL("BEGIN")
         building = true
         insertFts = db.prepare("INSERT INTO entry_fts(rowid, tokens) VALUES(?, ?)")
-        insertEntry = db.prepare("INSERT INTO entry(rowid, osis_ref) VALUES(?, ?)")
+        insertEntry = db.prepare("INSERT INTO entry(rowid, osis_ref, text) VALUES(?, ?, ?)")
         insertStrongs = db.prepare("INSERT OR IGNORE INTO strongs(token, rowid) VALUES(?, ?)")
     }
 
     /**
      * Adds one entry. [tokens] need strictly increasing positions (all analyzers satisfy this); [strongs] are the
-     * Strong's tokens of the entry (stored verbatim in table `strongs`, not in the FTS table).
+     * Strong's tokens of the entry (stored verbatim in table `strongs`, not in the FTS table). [text] is the canonical
+     * text the tokens came from, kept for regex search ([forEachEntryText]).
      */
     // A huge position jump writes one gap token per missing position (no cap; unrealistic for the analyzers).
-    fun addEntry(rowId: Long, osisRef: String, tokens: List<AnalyzedToken>, strongs: List<String>) {
+    fun addEntry(rowId: Long, osisRef: String, tokens: List<AnalyzedToken>, strongs: List<String>, text: String) {
         check(building) { "beginBuild() not called" }
         val sb = StringBuilder()
         var next = 0
@@ -55,7 +59,7 @@ internal class FtsIndexStore private constructor(private val db: SQLiteConnectio
             next++
         }
         exec(insertFts!!) { bindLong(1, rowId); bindText(2, sb.toString()) }
-        exec(insertEntry!!) { bindLong(1, rowId); bindText(2, osisRef) }
+        exec(insertEntry!!) { bindLong(1, rowId); bindText(2, osisRef); bindText(3, text) }
         for (s in strongs) exec(insertStrongs!!) { bindText(1, s); bindLong(2, rowId) }
     }
 
@@ -131,6 +135,17 @@ internal class FtsIndexStore private constructor(private val db: SQLiteConnectio
         check(st.step()) { "no entry $rowId" }
         st.getText(0)
     }
+
+    /**
+     * Calls [block] with every entry's stored text in rowid order, through one prepared statement that is always closed
+     * on return. Iteration stops as soon as [block] returns false. Returns true when all rows were visited, false when
+     * [block] stopped it. Do not modify the file from [block].
+     */
+    fun forEachEntryText(block: (EntryText) -> Boolean): Boolean =
+        db.prepare("SELECT rowid, osis_ref, text FROM entry ORDER BY rowid").use { st ->
+            while (st.step()) if (!block(EntryText(st.getLong(0), st.getText(1), st.getText(2)))) return@use false
+            true
+        }
 
     fun allRowIds(): Set<Long> = longs("SELECT rowid FROM entry")
 

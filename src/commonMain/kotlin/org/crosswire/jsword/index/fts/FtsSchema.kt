@@ -12,7 +12,7 @@ package org.crosswire.jsword.index.fts
  * analyzer changes. When a guard fails because the change is intended, bump this value (and update the pinned
  * fingerprint) in the same commit.
  */
-internal const val FTS_SCHEMA_VERSION = 1
+internal const val FTS_SCHEMA_VERSION = 2
 
 /**
  * Pinned hash (FNV-1a 64, hex) of the analyzer output for the fixed sample of `AnalyzerFingerprintTest`. When that test
@@ -42,13 +42,17 @@ internal data class FtsIndexMetadata(
  * positions after a dropped over-long token; the first position can be above 0). To keep FTS5 phrase/NEAR distances
  * equal to analyzer position distances, each missing position (including leading ones) is stored as the reserved
  * gap token [GAP]. [GAP] cannot equal an encoded token (those start with `x`).
+ *
+ * `entry.text` (schema 2) is the entry's canonical text exactly as it was analyzed, so a regular-expression search can
+ * run over the original characters without opening the book again. It is `''` for an entry that has only Strong's
+ * numbers. Schema 1 had no such column; a schema-1 file is rebuilt like any other stale index.
  */
 internal object FtsSchema {
     const val GAP = "g"
 
     val statements = listOf(
         "CREATE VIRTUAL TABLE entry_fts USING fts5(tokens, tokenize='ascii')",
-        "CREATE TABLE entry(rowid INTEGER PRIMARY KEY, osis_ref TEXT NOT NULL)",
+        "CREATE TABLE entry(rowid INTEGER PRIMARY KEY, osis_ref TEXT NOT NULL, text TEXT NOT NULL DEFAULT '')",
         "CREATE TABLE strongs(token TEXT NOT NULL, rowid INTEGER NOT NULL, PRIMARY KEY(token, rowid)) WITHOUT ROWID",
         "CREATE VIRTUAL TABLE entry_vocab USING fts5vocab(entry_fts, 'row')",
         "CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT)",

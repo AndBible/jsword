@@ -30,10 +30,41 @@ class FtsIndexStoreTest {
     }
 
     private fun sample() = built {
-        addEntry(1, "Gen.1.1", toks("in", "the", "beginning", "god"), listOf("H430"))
-        addEntry(2, "Gen.1.2", toks("the", "earth", "was", "void"), listOf("H776", "H430"))
-        addEntry(3, "John.1.1", toks("αγάπη", "愛", "𝄞"), emptyList())
+        addEntry(1, "Gen.1.1", toks("in", "the", "beginning", "god"), listOf("H430"), "")
+        addEntry(2, "Gen.1.2", toks("the", "earth", "was", "void"), listOf("H776", "H430"), "")
+        addEntry(3, "John.1.1", toks("αγάπη", "愛", "𝄞"), emptyList(), "")
     }
+
+    @Test fun entryTextsAreStoredInRowOrder() {
+        val s = built {
+            addEntry(1, "Gen.1.1", toks("in", "the", "beginning", "god"), emptyList(), "In the beginning God")
+            addEntry(2, "Gen.1.2", toks("and", "the", "earth", "void"), emptyList(), "And the earth: void")
+            addEntry(3, "John.1.1", toks(), listOf("G746"), "")
+        }
+        s.use {
+            assertEquals(
+                listOf(EntryText(1, "Gen.1.1", "In the beginning God"), EntryText(2, "Gen.1.2", "And the earth: void"), EntryText(3, "John.1.1", "")),
+                it.entryTexts(),
+            )
+        }
+    }
+
+    @Test fun forEachEntryTextStopsWhenTheBlockReturnsFalse() {
+        val s = built {
+            addEntry(1, "a", toks("x"), emptyList(), "one")
+            addEntry(2, "b", toks("x"), emptyList(), "two")
+            addEntry(3, "c", toks("x"), emptyList(), "three")
+        }
+        s.use {
+            val seen = ArrayList<Long>()
+            assertEquals(false, it.forEachEntryText { e -> seen += e.rowId; e.rowId < 2 })
+            assertEquals(listOf(1L, 2L), seen)
+            assertEquals(true, it.forEachEntryText { true })
+            assertEquals(3, it.entryTexts().size) // the statement of the stopped run was released
+        }
+    }
+
+    private fun FtsIndexStore.entryTexts(): List<EntryText> = ArrayList<EntryText>().also { out -> forEachEntryText { out += it; true } }
 
     @Test fun phrasePrefixAndNot() {
         sample().use { s ->
@@ -62,7 +93,7 @@ class FtsIndexStoreTest {
     @Test fun metadataRoundTripAndReopen() {
         val path = tmp()
         FtsIndexStore.create(path).use { s ->
-            s.beginBuild(); s.addEntry(1, "a", toks("x"), emptyList()); s.writeMetadata(meta.copy(bookVersion = null)); s.commitBuild()
+            s.beginBuild(); s.addEntry(1, "a", toks("x"), emptyList(), ""); s.writeMetadata(meta.copy(bookVersion = null)); s.commitBuild()
             assertEquals(meta.copy(bookVersion = null), s.metadata())
         }
         FtsIndexStore.open(path).also { assertNotNull(it) }!!.use { assertEquals(setOf(1L), it.match(e("x"))) }
@@ -84,8 +115,8 @@ class FtsIndexStoreTest {
     @Test fun gapsKeepPositionsAndAreNotInVocabulary() {
         // positions 2 and 5: leading gap of 2, then 2 missing positions between
         val s = built {
-            addEntry(1, "a", listOf(AnalyzedToken("a", 2), AnalyzedToken("b", 3), AnalyzedToken("c", 6)), emptyList())
-            addEntry(2, "b", toks("a", "b"), emptyList())
+            addEntry(1, "a", listOf(AnalyzedToken("a", 2), AnalyzedToken("b", 3), AnalyzedToken("c", 6)), emptyList(), "")
+            addEntry(2, "b", toks("a", "b"), emptyList(), "")
         }
         s.use {
             assertEquals(setOf(1L, 2L), it.match("\"${e("a")} ${e("b")}\""))
@@ -100,8 +131,8 @@ class FtsIndexStoreTest {
 
     @Test fun emptyTermIsStoredAndMatched() {
         val s = built {
-            addEntry(1, "a", listOf(AnalyzedToken("", 0), AnalyzedToken("w", 1)), emptyList())
-            addEntry(2, "b", toks("w"), emptyList())
+            addEntry(1, "a", listOf(AnalyzedToken("", 0), AnalyzedToken("w", 1)), emptyList(), "")
+            addEntry(2, "b", toks("w"), emptyList(), "")
         }
         s.use {
             assertEquals(setOf(1L), it.match(e("")))
@@ -116,15 +147,15 @@ class FtsIndexStoreTest {
         s.use {
             it.beginBuild()
             assertFailsWith<IllegalArgumentException> {
-                it.addEntry(1, "a", listOf(AnalyzedToken("a", 1), AnalyzedToken("b", 1)), emptyList())
+                it.addEntry(1, "a", listOf(AnalyzedToken("a", 1), AnalyzedToken("b", 1)), emptyList(), "")
             }
         }
     }
 
     @Test fun entryWithNoTokens() {
         val s = built {
-            addEntry(1, "Gen.1.1", emptyList(), emptyList())
-            addEntry(2, "Gen.1.2", toks("w"), emptyList())
+            addEntry(1, "Gen.1.1", emptyList(), emptyList(), "")
+            addEntry(2, "Gen.1.2", toks("w"), emptyList(), "")
         }
         s.use {
             assertEquals(emptyList(), it.tokensOf(1))
@@ -138,9 +169,9 @@ class FtsIndexStoreTest {
         val p = tmp()
         FtsIndexStore.create(p).use {
             it.beginBuild()
-            it.addEntry(1, "a", toks("a"), emptyList())
+            it.addEntry(1, "a", toks("a"), emptyList(), "")
             assertFailsWith<IllegalArgumentException> {
-                it.addEntry(2, "b", listOf(AnalyzedToken("a", 1), AnalyzedToken("b", 1)), emptyList())
+                it.addEntry(2, "b", listOf(AnalyzedToken("a", 1), AnalyzedToken("b", 1)), emptyList(), "")
             }
         }
         assertNull(FtsIndexStore.open(p)) // no metadata was committed

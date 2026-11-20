@@ -56,13 +56,13 @@ class FtsQueryEvaluatorTest {
         val s = FtsIndexStore.create(tmp())
         stores += s
         s.beginBuild()
-        s.addEntry(1, "Gen.1.1", tokens("In the beginning God created"), listOf("H7225", "H0430"))
-        s.addEntry(2, "Gen.1.2", tokens("God said let there be light"), listOf("H0430", "H0216"))
-        s.addEntry(3, "Gen.1.3", tokens("light and darkness"), listOf("H0216"))
-        s.addEntry(4, "John.3.16", tokens("神爱世人 God"), emptyList())
-        s.addEntry(5, "John.3.17", tokens("神 世人"), emptyList())
-        s.addEntry(6, "Ps.1.1", tokens("well known light"), emptyList())
-        s.addEntry(7, "Ps.1.2", tokens("light well god known"), emptyList())
+        s.addEntry(1, "Gen.1.1", tokens("In the beginning God created"), listOf("H7225", "H0430"), "")
+        s.addEntry(2, "Gen.1.2", tokens("God said let there be light"), listOf("H0430", "H0216"), "")
+        s.addEntry(3, "Gen.1.3", tokens("light and darkness"), listOf("H0216"), "")
+        s.addEntry(4, "John.3.16", tokens("神爱世人 God"), emptyList(), "")
+        s.addEntry(5, "John.3.17", tokens("神 世人"), emptyList(), "")
+        s.addEntry(6, "Ps.1.1", tokens("well known light"), emptyList(), "")
+        s.addEntry(7, "Ps.1.2", tokens("light well god known"), emptyList(), "")
         s.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, "test", SearchTokenCodec.ID, "T", "1.0", "fp"))
         s.commitBuild()
         return s
@@ -145,8 +145,8 @@ class FtsQueryEvaluatorTest {
     @Test fun aPhraseNeverMatchesAcrossAPositionGap() {
         val g = FtsIndexStore.create(tmp()).also { stores += it }
         g.beginBuild()
-        g.addEntry(1, "A.1.1", listOf(AnalyzedToken("a", 0), AnalyzedToken("b", 2)), emptyList()) // a, gap, b
-        g.addEntry(2, "A.1.2", listOf(AnalyzedToken("a", 0), AnalyzedToken("b", 1)), emptyList())
+        g.addEntry(1, "A.1.1", listOf(AnalyzedToken("a", 0), AnalyzedToken("b", 2)), emptyList(), "") // a, gap, b
+        g.addEntry(2, "A.1.2", listOf(AnalyzedToken("a", 0), AnalyzedToken("b", 1)), emptyList(), "")
         g.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, "test", SearchTokenCodec.ID, "T", "1.0", "fp"))
         g.commitBuild()
         val ev = FtsQueryEvaluator(g, analyzer)
@@ -207,7 +207,7 @@ class FtsQueryEvaluatorTest {
         val vocab = listOf("a", "b", "c", "d", "the")
         val rs = FtsIndexStore.create(tmp()).also { stores += it }
         rs.beginBuild()
-        for (id in 1L..300L) rs.addEntry(id, "X.1.$id", tokens(List(rnd.nextInt(1, 13)) { vocab[rnd.nextInt(vocab.size)] }.joinToString(" ")), emptyList())
+        for (id in 1L..300L) rs.addEntry(id, "X.1.$id", tokens(List(rnd.nextInt(1, 13)) { vocab[rnd.nextInt(vocab.size)] }.joinToString(" ")), emptyList(), "")
         rs.writeMetadata(FtsIndexMetadata(FTS_SCHEMA_VERSION, "test", SearchTokenCodec.ID, "T", "1.0", "fp"))
         rs.commitBuild()
         val ev = FtsQueryEvaluator(rs, analyzer)
